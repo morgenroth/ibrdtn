@@ -20,7 +20,7 @@
  */
 
 #include "ibrdtn/security/SecurityBlock.h"
-#include "ibrdtn/security/MutualSerializer.h"
+#include "ibrdtn/security/MutableSerializer.h"
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/PayloadBlock.h"
 #include "ibrdtn/data/ExtensionBlock.h"
@@ -80,7 +80,7 @@ namespace dtn
 				}
 			}
 
-			throw ibrcommon::Exception("element not found");
+			throw ElementMissingException();
 		}
 
 		void SecurityBlock::TLVList::get(TLV_TYPES type, unsigned char *value, dtn::data::Length length) const
@@ -326,27 +326,27 @@ namespace dtn
 		dtn::data::Length SecurityBlock::getLength_mutable() const
 		{
 			// ciphersuite_id
-			dtn::data::Length length = MutualSerializer::sdnv_size;
+			dtn::data::Length length = MutableSerializer::sdnv_size;
 
 			// ciphersuite_flags
-			length += MutualSerializer::sdnv_size;
+			length += MutableSerializer::sdnv_size;
 
 			// correlator
 			if (_ciphersuite_flags & CONTAINS_CORRELATOR)
 			{
-				length += MutualSerializer::sdnv_size;
+				length += MutableSerializer::sdnv_size;
 			}
 
 			// ciphersuite parameters
 			if (_ciphersuite_flags & CONTAINS_CIPHERSUITE_PARAMS)
 			{
-				length += MutualSerializer::sdnv_size;
+				length += MutableSerializer::sdnv_size;
 				length += _ciphersuite_params.getLength();
 			}
 			// security result
 			if (_ciphersuite_flags & CONTAINS_SECURITY_RESULT)
 			{
-				length += MutualSerializer::sdnv_size + getSecurityResultSize();
+				length += MutableSerializer::sdnv_size + getSecurityResultSize();
 			}
 
 			return length;
@@ -462,13 +462,15 @@ namespace dtn
 			return stream;
 		}
 
-		dtn::security::MutualSerializer& SecurityBlock::serialize_mutable(dtn::security::MutualSerializer &serializer) const
+		dtn::security::MutableSerializer& SecurityBlock::serialize_mutable(dtn::security::MutableSerializer &serializer, bool include_security_result) const
 		{
 			serializer << _ciphersuite_id;
 			serializer << _ciphersuite_flags;
 
 			if (_ciphersuite_flags & CONTAINS_CORRELATOR)
-				serializer << _ciphersuite_flags;
+			{
+				serializer << _correlator;
+			}
 
 			if (_ciphersuite_flags & CONTAINS_CIPHERSUITE_PARAMS)
 			{
@@ -477,28 +479,11 @@ namespace dtn
 
 			if (_ciphersuite_flags & CONTAINS_SECURITY_RESULT)
 			{
-				serializer << _security_result;
-			}
-
-			return serializer;
-		}
-
-		dtn::security::MutualSerializer& SecurityBlock::serialize_mutable_without_security_result(dtn::security::MutualSerializer &serializer) const
-		{
-			serializer << _ciphersuite_id;
-			serializer << _ciphersuite_flags;
-
-			if (_ciphersuite_flags & CONTAINS_CORRELATOR)
-				serializer << _ciphersuite_flags;
-
-			if (_ciphersuite_flags & CONTAINS_CIPHERSUITE_PARAMS)
-			{
-				serializer << _ciphersuite_params;
-			}
-
-			if (_ciphersuite_flags & CONTAINS_SECURITY_RESULT)
-			{
-				serializer << dtn::data::Number(getSecurityResultSize());
+				if (include_security_result) {
+					serializer << _security_result;
+				} else {
+					serializer << dtn::data::Number(getSecurityResultSize());
+				}
 			}
 
 			return serializer;
@@ -628,7 +613,7 @@ namespace dtn
 			// verify the decrypt tag
 			if (!decrypt.verify(tag))
 			{
-				throw ibrcommon::Exception("decryption of block failed - tag is bad");
+				throw DecryptException("decryption of block failed - tag is bad");
 			}
 
 			// deserialize block

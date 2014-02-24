@@ -114,9 +114,10 @@ namespace dtn
 		{
 			try {
 				const dtn::data::Bundle bundle = _sentqueue.getnpop();
+				const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(bundle);
 
 				// notify bundle as delivered
-				_client.getRegistration().delivered(bundle);
+				_client.getRegistration().delivered(meta);
 
 				// set ACK to zero
 				_lastack = 0;
@@ -173,9 +174,6 @@ namespace dtn
 				{
 					dtn::data::Bundle bundle;
 					dtn::data::DefaultDeserializer(_connection) >> bundle;
-
-					// create a new sequence number
-					bundle.relabel();
 
 					// process the new bundle
 					dtn::api::Registration::processIncomingBundle(_eid, bundle);

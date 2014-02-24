@@ -8,7 +8,7 @@
     <fragment android:name="de.tubs.ibr.dtn.chat.MeFragment"
         android:id="@+id/me_fragment"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="?android:attr/listPreferredItemHeight" />
     
     <fragment android:name="de.tubs.ibr.dtn.chat.RosterFragment"
         android:id="@+id/roster_fragment"

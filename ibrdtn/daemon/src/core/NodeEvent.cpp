@@ -46,7 +46,7 @@ namespace dtn
 
 		void NodeEvent::raise(const Node &n, const EventNodeAction action)
 		{
-			dtn::core::EventDispatcher<NodeEvent>::raise( new NodeEvent(n, action) );
+			dtn::core::EventDispatcher<NodeEvent>::queue( new NodeEvent(n, action) );
 		}
 
 		NodeEvent::~NodeEvent()

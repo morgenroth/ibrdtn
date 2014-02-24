@@ -20,7 +20,7 @@
  */
 
 #include "ibrdtn/security/PayloadIntegrityBlock.h"
-#include "ibrdtn/security/MutualSerializer.h"
+#include "ibrdtn/security/MutableSerializer.h"
 #include "ibrdtn/data/Bundle.h"
 
 #include <ibrcommon/ssl/RSASHA256Stream.h>
@@ -95,7 +95,7 @@ namespace dtn
 			ibrcommon::RSASHA256Stream rs2s(pkey);
 
 			// serialize the bundle in the mutable form
-			dtn::security::MutualSerializer ms(rs2s, &ignore);
+			dtn::security::MutableSerializer ms(rs2s, &ignore);
 			(dtn::data::DefaultSerializer&)ms << bundle; rs2s << std::flush;
 
 			int return_code = rs2s.getSign().first;
@@ -112,45 +112,6 @@ namespace dtn
 			}
 		}
 
-		void PayloadIntegrityBlock::verify(const dtn::data::Bundle& bundle, const SecurityKey &key, const PayloadIntegrityBlock &sb, const bool use_eid)
-		{
-			// check if we have the public key of the security source
-			if (use_eid)
-			{
-				if (!sb.isSecuritySource(bundle, key.reference))
-				{
-					throw ibrcommon::Exception("key not match the security source");
-				}
-			}
-
-			// check the correct algorithm
-			if (sb._ciphersuite_id != SecurityBlock::PIB_RSA_SHA256)
-			{
-				throw ibrcommon::Exception("can not verify the PIB because of an invalid algorithm");
-			}
-
-			EVP_PKEY *pkey = key.getEVP();
-			if (pkey == NULL) throw ibrcommon::Exception("verification error");
-
-			ibrcommon::RSASHA256Stream rs2s(pkey, true);
-
-			// serialize the bundle in the mutable form
-			dtn::security::MutualSerializer ms(rs2s, &sb);
-			(dtn::data::DefaultSerializer&)ms << bundle; rs2s << std::flush;
-
-			int ret = rs2s.getVerification(sb._security_result.get(SecurityBlock::integrity_signature));
-			SecurityKey::free(pkey);
-
-			if (ret == 0)
-			{
-				throw ibrcommon::Exception("verification failed");
-			}
-			else if (ret < 0)
-			{
-				throw ibrcommon::Exception("verification error");
-			}
-		}
-
 		void PayloadIntegrityBlock::verify(const dtn::data::Bundle &bundle, const SecurityKey &key)
 		{
 			// iterate over all PIBs to find the right one
@@ -158,8 +119,47 @@ namespace dtn
 
 			while (it.next(bundle.end()))
 			{
-				verify(bundle, key, dynamic_cast<const PayloadIntegrityBlock&>(**it));
+				const PayloadIntegrityBlock &sb = dynamic_cast<const PayloadIntegrityBlock&>(**it);
+
+				// check if we have the public key of the security source
+				// skip this block if the given key isn't the right one
+				if (!sb.isSecuritySource(bundle, key.reference)) continue;
+
+				// check the correct algorithm
+				if (sb._ciphersuite_id != SecurityBlock::PIB_RSA_SHA256)
+				{
+					throw VerificationFailedException("can not verify the PIB because of an invalid algorithm");
+				}
+
+				EVP_PKEY *pkey = key.getEVP();
+				if (pkey == NULL) throw VerificationFailedException("verification error");
+
+				ibrcommon::RSASHA256Stream rs2s(pkey, true);
+
+				// serialize the bundle in the mutable form
+				dtn::security::MutableSerializer ms(rs2s, &sb);
+				(dtn::data::DefaultSerializer&)ms << bundle; rs2s << std::flush;
+
+				try {
+					int ret = rs2s.getVerification(sb._security_result.get(SecurityBlock::integrity_signature));
+					SecurityKey::free(pkey);
+
+					if (ret > 0)
+					{
+						// success!
+						return;
+					}
+					else if (ret < 0)
+					{
+						throw VerificationFailedException("verification error");
+					}
+				} catch (const ElementMissingException&) {
+					// This PIB can not verified due to a missing integrity signature
+					throw VerificationFailedException("Integrity signature is missing!");
+				}
 			}
+
+			throw VerificationFailedException("verification failed");
 		}
 
 		void PayloadIntegrityBlock::setResultSize(const SecurityKey &key)
@@ -181,33 +181,6 @@ namespace dtn
 			}
 
 			SecurityKey::free(pkey);
-		}
-
-		void PayloadIntegrityBlock::strip(dtn::data::Bundle& bundle, const SecurityKey &key, const bool all)
-		{
-			dtn::data::Bundle::find_iterator it(bundle.begin(), PayloadIntegrityBlock::BLOCK_TYPE);
-
-			// search for valid PIB
-			while (it.next(bundle.end()))
-			{
-				const PayloadIntegrityBlock &pib = dynamic_cast<const PayloadIntegrityBlock&>(**it);
-
-				// check if the PIB is valid
-				try {
-					verify(bundle, key, pib);
-
-					// found an valid PIB, remove it
-					bundle.remove(pib);
-
-					// remove all previous pibs if all = true
-					if (all)
-					{
-						bundle.erase(std::remove(bundle.begin(), (dtn::data::Bundle::iterator&)it, PayloadIntegrityBlock::BLOCK_TYPE), bundle.end());
-					}
-
-					return;
-				} catch (const ibrcommon::Exception&) { };
-			}
 		}
 
 		void PayloadIntegrityBlock::strip(dtn::data::Bundle& bundle)

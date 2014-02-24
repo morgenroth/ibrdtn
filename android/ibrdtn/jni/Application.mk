@@ -15,14 +15,12 @@ APP_OPTIM:=debug
 #NDK_TOOLCHAIN_VERSION=clang
 #NDK_TOOLCHAIN_VERSION=clang3.2
 # does not work with NDK < r9:
-#NDK_TOOLCHAIN_VERSION=4.6 # default
-NDK_TOOLCHAIN_VERSION=4.8
+#NDK_TOOLCHAIN_VERSION=4.6
+#NDK_TOOLCHAIN_VERSION=4.8
 
 # Build target
-APP_ABI:=armeabi armeabi-v7a x86
-# mips not working currently!
-#APP_ABI:=armeabi armeabi-v7a x86 mips
-#APP_ABI:=all
+#APP_ABI:=armeabi armeabi-v7a x86
+APP_ABI:=all
 
 # API 9 has RW Mutex implementation in pthread lib
 APP_PLATFORM:=android-9

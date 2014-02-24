@@ -83,7 +83,7 @@ namespace dtn
 					dtn::utils::Clock::setRating(1.0);
 				} else {
 					dtn::utils::Clock::setRating(0.0);
-					IBRCOMMON_LOGGER_TAG(DTNTPWorker::TAG, warning) << "The local clock seems to be wrong. Expiration disabled." << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(DTNTPWorker::TAG, warning) << "Expiration limited due to wrong local clock." << IBRCOMMON_LOGGER_ENDL;
 				}
 			} else {
 				dtn::utils::Clock::setRating(0.0);
@@ -92,7 +92,7 @@ namespace dtn
 			}
 
 			// check if we should announce our own rating via discovery
-			_announce_rating = conf.sendDiscoveryAnnouncements();
+			_announce_rating = conf.sendDiscoveryBeacons();
 
 			// store the sync threshold locally
 			_sync_state.sync_threshold = conf.getSyncLevel();
@@ -105,10 +105,16 @@ namespace dtn
 			}
 
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
+
+			// register as discovery handler for all interfaces
+			dtn::core::BundleCore::getInstance().getDiscoveryAgent().registerService(this);
 		}
 
 		DTNTPWorker::~DTNTPWorker()
 		{
+			// unregister as discovery handler for all interfaces
+			dtn::core::BundleCore::getInstance().getDiscoveryAgent().unregisterService(this);
+
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
 		}
 
@@ -221,7 +227,7 @@ namespace dtn
 						if (t.getTimestamp() > 0)
 						{
 							dtn::utils::Clock::setRating(1.0);
-							IBRCOMMON_LOGGER_TAG(DTNTPWorker::TAG, warning) << "The local clock seems to be okay again. Expiration enabled." << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_TAG(DTNTPWorker::TAG, warning) << "The local clock seems to be okay again." << IBRCOMMON_LOGGER_ENDL;
 						}
 					}
 				}
@@ -314,11 +320,8 @@ namespace dtn
 				p.state = SyncPeer::STATE_PREPARE;
 			}
 
-			// send a time sync bundle
-			dtn::data::Bundle b;
-
-			// add an age block
-			b.push_back<dtn::data::AgeBlock>();
+			// generate a time sync bundle with a zero timestamp (+age block)
+			dtn::data::Bundle b(true);
 
 			try {
 				ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
@@ -377,8 +380,7 @@ namespace dtn
 			}
 		}
 
-
-		void DTNTPWorker::update(const ibrcommon::vinterface&, DiscoveryAnnouncement &announcement) throw(NoServiceHereException)
+		void DTNTPWorker::onUpdateBeacon(const ibrcommon::vinterface&, DiscoveryBeacon &announcement) throw (NoServiceHereException)
 		{
 			if (!_announce_rating) throw NoServiceHereException("Discovery of time sync mechanisms disabled.");
 
@@ -493,7 +495,9 @@ namespace dtn
 					case TimeSyncMessage::TIMESYNC_REQUEST:
 					{
 						dtn::data::Bundle response = b;
-						response.relabel();
+
+						// relabel with a zero timestamp
+						response.relabel(true);
 
 						// set the lifetime of the bundle to 60 seconds
 						response.lifetime = 60;

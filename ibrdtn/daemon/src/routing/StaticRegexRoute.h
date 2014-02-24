@@ -25,6 +25,16 @@ namespace dtn
 			const dtn::data::Timestamp& getExpiration() const;
 
 			/**
+			 * Raise the StaticRouteChangeEvent for expiration
+			 */
+			void raiseExpired() const;
+
+			/**
+			 * Compare this static route with another one
+			 */
+			bool equals(const StaticRoute &route) const;
+
+			/**
 			 * copy and assignment operators
 			 * @param obj The object to copy
 			 * @return

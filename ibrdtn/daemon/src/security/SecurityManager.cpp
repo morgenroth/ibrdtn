@@ -26,10 +26,6 @@
 #include <ibrdtn/security/PayloadIntegrityBlock.h>
 #include <ibrcommon/Logger.h>
 
-#include <openssl/rsa.h>
-#include <openssl/pem.h>
-#include <openssl/err.h>
-
 #ifdef __DEVELOPMENT_ASSERTIONS__
 #include <cassert>
 #endif
@@ -93,45 +89,45 @@ namespace dtn
 		{
 			IBRCOMMON_LOGGER_DEBUG_TAG("SecurityManager", 10) << "verify signed bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
-			// iterate over all PIBs of this bundle
-			dtn::data::Bundle::find_iterator it(bundle.begin(), dtn::security::PayloadIntegrityBlock::BLOCK_TYPE);
-			while (it.next(bundle.end()))
+			// iterate through all blocks
+			for (dtn::data::Bundle::iterator it = bundle.begin(); it != bundle.end();)
 			{
-				const dtn::security::PayloadIntegrityBlock& pib = dynamic_cast<const dtn::security::PayloadIntegrityBlock&>(**it);
+				const dtn::data::Block &block = (**it);
+
+				if (block.getType() == dtn::security::PayloadConfidentialBlock::BLOCK_TYPE) {
+					// payload after a PCB can not verified until the payload is decrypted
+					break;
+				}
 
 				try {
+					const dtn::security::PayloadIntegrityBlock& pib = dynamic_cast<const dtn::security::PayloadIntegrityBlock&>(block);
+
 					const SecurityKey key = SecurityKeyManager::getInstance().get(pib.getSecuritySource(bundle), SecurityKey::KEY_PUBLIC);
 
-					if (pib.isSecurityDestination(bundle, dtn::core::BundleCore::local))
-					{
-						try {
-							dtn::security::PayloadIntegrityBlock::strip(bundle, key);
+					// try to verify the bundle with the key for the current PIB
+					dtn::security::PayloadIntegrityBlock::verify(bundle, key);
 
-							// set the verify bit, after verification
-							bundle.set(dtn::data::Bundle::DTNSEC_STATUS_VERIFIED, true);
-
-							IBRCOMMON_LOGGER_DEBUG_TAG("SecurityManager", 5) << "Bundle from " << bundle.source.getString() << " successfully verified using PayloadIntegrityBlock" << IBRCOMMON_LOGGER_ENDL;
-							return;
-						} catch (const ibrcommon::Exception&) {
-							throw VerificationFailedException();
-						}
+					// if we are the security destination
+					if (pib.isSecurityDestination(bundle, dtn::core::BundleCore::local)) {
+						// remove the valid PIB
+						bundle.erase(it++);
+					} else {
+						++it;
 					}
-					else
-					{
-						try {
-							dtn::security::PayloadIntegrityBlock::verify(bundle, key);
 
-							// set the verify bit, after verification
-							bundle.set(dtn::data::Bundle::DTNSEC_STATUS_VERIFIED, true);
+					// set the verify bit, after verification
+					bundle.set(dtn::data::Bundle::DTNSEC_STATUS_VERIFIED, true);
 
-							IBRCOMMON_LOGGER_DEBUG_TAG("SecurityManager", 5) << "Bundle from " << bundle.source.getString() << " successfully verified using PayloadIntegrityBlock" << IBRCOMMON_LOGGER_ENDL;
-						} catch (const ibrcommon::Exception&) {
-							throw VerificationFailedException();
-						}
-					}
-				} catch (const ibrcommon::Exception&) {
-					// key not found?
+					IBRCOMMON_LOGGER_DEBUG_TAG("SecurityManager", 5) << "Bundle " << bundle.toString() << " successfully verified" << IBRCOMMON_LOGGER_ENDL;
+					continue;
+				} catch (const SecurityKeyManager::KeyNotFoundException&) {
+					// un-set the verify bit
+					bundle.set(dtn::data::Bundle::DTNSEC_STATUS_VERIFIED, false);
+				} catch (const std::bad_cast&) {
+					// current block is not a PIB
 				}
+
+				++it;
 			}
 		}
 
@@ -165,9 +161,6 @@ namespace dtn
 					break;
 				} catch (const SecurityKeyManager::KeyNotFoundException&) {
 					// no key for this node found
-				} catch (const ibrcommon::Exception &ex) {
-					// verification failed
-					throw SecurityManager::VerificationFailedException(ex.what());
 				}
 			}
 		}

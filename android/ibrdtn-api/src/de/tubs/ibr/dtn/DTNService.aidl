@@ -20,6 +20,7 @@
  */
 
 package de.tubs.ibr.dtn;
+import android.os.Bundle;
 import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.api.DTNSession;
 import de.tubs.ibr.dtn.api.Node;
@@ -31,11 +32,6 @@ interface DTNService {
 	DaemonState getState();
 	
 	/**
-	 * Determine if the daemon is running or not.
-	 */
-	boolean isRunning();
-	
-	/**
 	 * Get the local endpoint
 	 */
 	String getEndpoint();
@@ -44,6 +40,12 @@ interface DTNService {
 	 * Returns the available neighbors of the daemon.
 	 */
 	List<Node> getNeighbors();
+	
+	/**
+	 * Returns a pending intent to launch the select neighbor
+	 * activity.
+	 */
+	Bundle getSelectNeighborIntent();
 	
 	/**
 	 * Get a previously created session.

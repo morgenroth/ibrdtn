@@ -27,6 +27,7 @@
 #include "net/TransferAbortedEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "net/ConnectionEvent.h"
+#include "core/EventDispatcher.h"
 #include "core/NodeEvent.h"
 #include "storage/SimpleBundleStorage.h"
 #include "core/TimeEvent.h"
@@ -193,7 +194,7 @@ namespace dtn
 							{
 								// this destination is not handles by any static route
 								ibrcommon::MutexLock l(db);
-								NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
+								NeighborDatabase::NeighborEntry &entry = db.get(task.eid, true);
 
 								// check if enough transfer slots available (threshold reached)
 								if (!entry.isTransferThresholdReached())
@@ -219,9 +220,12 @@ namespace dtn
 								} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 							}
 						}
-					} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
-					} catch (const NeighborDatabase::NeighborNotAvailableException&) {
-					} catch (const dtn::storage::NoBundleFoundException&) {
+					} catch (const NeighborDatabase::NoMoreTransfersAvailable &ex) {
+						IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					} catch (const NeighborDatabase::NeighborNotAvailableException &ex) {
+						IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					} catch (const dtn::storage::NoBundleFoundException &ex) {
+						IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					} catch (const std::bad_cast&) { };
 
 					try {
@@ -255,7 +259,7 @@ namespace dtn
 								iter != _routes.end();)
 						{
 							StaticRoute *route = (*iter);
-							if (route->toString() == task.route->toString())
+							if (route->equals(*task.route))
 							{
 								delete route;
 								_routes.erase(iter++);
@@ -271,10 +275,13 @@ namespace dtn
 							_routes.push_back(task.route);
 							_taskqueue.push( new SearchNextBundleTask(task.route->getDestination()) );
 
-							ibrcommon::MutexLock l(_expire_lock);
-							if (next_expire > task.route->getExpiration())
+							if (task.route->getExpiration() > 0)
 							{
-								next_expire = task.route->getExpiration();
+								ibrcommon::MutexLock l(_expire_lock);
+								if (next_expire == 0 || next_expire > task.route->getExpiration())
+								{
+									next_expire = task.route->getExpiration();
+								}
 							}
 						}
 						else
@@ -315,8 +322,9 @@ namespace dtn
 						{
 							StaticRoute *route = (*iter);
 
-							if (route->getExpiration() < task.timestamp)
+							if ((route->getExpiration() > 0) && (route->getExpiration() < task.timestamp))
 							{
+								route->raiseExpired();
 								delete route;
 								_routes.erase(iter++);
 							}
@@ -341,63 +349,27 @@ namespace dtn
 			}
 		}
 
-		void StaticRoutingExtension::notify(const dtn::core::Event *evt) throw ()
+		void StaticRoutingExtension::eventDataChanged(const dtn::data::EID &peer) throw ()
 		{
-			try {
-				const QueueBundleEvent &queued = dynamic_cast<const QueueBundleEvent&>(*evt);
-				_taskqueue.push( new ProcessBundleTask(queued.bundle, queued.origin) );
-				return;
-			} catch (const std::bad_cast&) { };
+			_taskqueue.push( new SearchNextBundleTask(peer) );
+		}
 
-			try {
-				const dtn::core::NodeEvent &nodeevent = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
-				const dtn::core::Node &n = nodeevent.getNode();
+		void StaticRoutingExtension::eventBundleQueued(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ()
+		{
+			_taskqueue.push( new ProcessBundleTask(meta, peer) );
+		}
 
-				if (nodeevent.getAction() == NODE_AVAILABLE)
-				{
-					_taskqueue.push( new SearchNextBundleTask(n.getEID()) );
-				}
-				else if (nodeevent.getAction() == NODE_DATA_ADDED)
-				{
-					_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
-				}
-
-				return;
-			} catch (const std::bad_cast&) { };
-
-			try {
-				const dtn::net::ConnectionEvent &ce = dynamic_cast<const dtn::net::ConnectionEvent&>(*evt);
-
-				if (ce.state == dtn::net::ConnectionEvent::CONNECTION_UP)
-				{
-					// send all (multi-hop) bundles in the storage to the neighbor
-					_taskqueue.push( new SearchNextBundleTask(ce.peer) );
-				}
-				return;
-			} catch (const std::bad_cast&) { };
-
-			// The bundle transfer has been aborted
-			try {
-				const dtn::net::TransferAbortedEvent &aborted = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
-				_taskqueue.push( new SearchNextBundleTask(aborted.getPeer()) );
-				return;
-			} catch (const std::bad_cast&) { };
-
-			// A bundle transfer was successful
-			try {
-				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
-				_taskqueue.push( new SearchNextBundleTask(completed.getPeer()) );
-				return;
-			} catch (const std::bad_cast&) { };
-
+		void StaticRoutingExtension::raiseEvent(const dtn::core::Event *evt) throw ()
+		{
 			// each second, look for expired routes
 			try {
-				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
+				dynamic_cast<const dtn::core::TimeEvent&>(*evt);
+				const dtn::data::Timestamp monotonic = dtn::utils::Clock::getMonotonicTimestamp();
 
 				ibrcommon::MutexLock l(_expire_lock);
-				if ((next_expire != 0) && (next_expire < time.getUnixTimestamp()))
+				if ((next_expire != 0) && (next_expire < monotonic))
 				{
-					_taskqueue.push( new ExpireTask( time.getUnixTimestamp() ) );
+					_taskqueue.push( new ExpireTask( monotonic ) );
 				}
 				return;
 			} catch (const bad_cast&) { };
@@ -419,13 +391,13 @@ namespace dtn
 #ifdef HAVE_REGEX_H
 					r = new StaticRegexRoute(route.pattern, route.nexthop);
 #else
-					dtn::data::Timestamp et = dtn::utils::Clock::getUnixTimestamp() + route.timeout;
+					dtn::data::Timestamp et = dtn::utils::Clock::getMonotonicTimestamp() + route.timeout;
 					r = new EIDRoute(route.pattern, route.nexthop, et);
 #endif
 				}
 				else
 				{
-					dtn::data::Timestamp et = dtn::utils::Clock::getUnixTimestamp() + route.timeout;
+					dtn::data::Timestamp et = dtn::utils::Clock::getMonotonicTimestamp() + route.timeout;
 					r = new EIDRoute(route.destination, route.nexthop, et);
 				}
 
@@ -449,6 +421,9 @@ namespace dtn
 
 		void StaticRoutingExtension::componentUp() throw ()
 		{
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::routing::StaticRouteChangeEvent>::add(this);
+
 			// reset the task queue
 			_taskqueue.reset();
 
@@ -463,6 +438,9 @@ namespace dtn
 
 		void StaticRoutingExtension::componentDown() throw ()
 		{
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::routing::StaticRouteChangeEvent>::remove(this);
+
 			// routine checked for throw() on 15.02.2013
 			try {
 				// stop the thread
@@ -506,6 +484,21 @@ namespace dtn
 		const dtn::data::Timestamp& StaticRoutingExtension::EIDRoute::getExpiration() const
 		{
 			return expiretime;
+		}
+
+		void StaticRoutingExtension::EIDRoute::raiseExpired() const
+		{
+			dtn::routing::StaticRouteChangeEvent::raiseEvent(dtn::routing::StaticRouteChangeEvent::ROUTE_EXPIRED, _nexthop, _match);
+		}
+
+		bool StaticRoutingExtension::EIDRoute::equals(const StaticRoute &route) const
+		{
+			try {
+				const StaticRoutingExtension::EIDRoute &r = dynamic_cast<const StaticRoutingExtension::EIDRoute&>(route);
+				return (_nexthop == r._nexthop) && (_match == r._match);
+			} catch (const std::bad_cast&) {
+				return false;
+			}
 		}
 
 		/****************************************/

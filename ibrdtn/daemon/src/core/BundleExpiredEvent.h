@@ -40,15 +40,18 @@ namespace dtn
 
 			std::string getMessage() const;
 
+			const dtn::data::BundleID& getBundle() const;
+
 			static const string className;
 
 			static void raise(const dtn::data::Bundle &bundle);
 			static void raise(const dtn::data::BundleID &bundle);
-			const dtn::data::BundleID _bundle;
 
 		private:
 			BundleExpiredEvent(const dtn::data::Bundle &bundle);
 			BundleExpiredEvent(const dtn::data::BundleID &bundle);
+
+			const dtn::data::BundleID _bundle;
 		};
 	}
 }

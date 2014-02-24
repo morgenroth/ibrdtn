@@ -101,7 +101,7 @@
 namespace ibrcommon
 {
 	namespace LogLevel {
-		enum LogLevel
+		enum Level
 		{
 			emergency =	1 << 0,	/* system is unusable */
 			alert =		1 << 1,	/* action must be taken immediately */
@@ -252,9 +252,128 @@ namespace ibrcommon
 		 */
 		static void reload();
 
+		/**
+		 * Return the log level of this Logger
+		 */
+		LogLevel getLevel() const;
+
+		/**
+		 * Return the TAG of this Logger
+		 */
+		const std::string& getTag() const;
+
+		/*
+		 * Return the debug verbosity of this Logger
+		 */
+		int getDebugVerbosity() const;
+
+		/**
+		 * Return the Log entry of this Logger
+		 */
+		struct timeval getLogTime() const;
+
 	private:
 		Logger(LogLevel level, const std::string &tag, int debug_verbosity = 0);
 
+		LogLevel _level;
+		const std::string _tag;
+		int _debug_verbosity;
+		struct timeval _logtime;
+
+		std::string _data;
+	};
+
+	class LogWriter : public ibrcommon::JoinableThread
+	{
+	public:
+		static LogWriter& getInstance();
+
+		virtual ~LogWriter();
+
+		void log(Logger &logger);
+
+		/**
+		 * Set the global verbosity of the logger.
+		 * @param verbosity A verbosity level as number. Higher value leads to more output.
+		 */
+		void setVerbosity(const int verbosity);
+
+		/**
+		 * Get the global verbosity of the logger.
+		 * @return The verbosity level as number. Higher value leads to more output.
+		 */
+		int getVerbosity() const;
+
+
+		unsigned char getLogMask() const;
+
+		/**
+		 * Add a standard output stream to the logging framework.
+		 * @param stream Standard output stream
+		 * @param logmask This mask specify what will be written to this stream. You can combine options with the or function.
+		 * @param options This mask specify what will be added to each log message. You can combine options with the or function.
+		 */
+		void addStream(std::ostream &stream, const unsigned char logmask = Logger::LOGGER_INFO, const unsigned char options = Logger::LOG_NONE);
+
+		/**
+		 * Set the logfile for the logging framework.
+		 * @param logfile The file to log into.
+		 * @param logmask This mask specify what will be written to this stream. You can combine options with the or function.
+		 * @param options This mask specify what will be added to each log message. You can combine options with the or function.
+		 */
+		void setLogfile(const ibrcommon::File &logfile, const unsigned char logmask = Logger::LOGGER_INFO, const unsigned char options = Logger::LOG_NONE);
+
+		/**
+		 * Enable logging message to the system syslog.
+		 * @param name The naming prefix for all log messages.
+		 * @param option Syslog specific options. @see syslog.h
+		 * @param facility Syslog facility. @see syslog.h
+		 * @param logmask This mask specify what will be written to the syslog. You can combine options with the or function.
+		 */
+		void enableSyslog(const char *name, int option, int facility, const unsigned char logmask = Logger::LOGGER_INFO);
+
+		/**
+		 * enable the asynchronous logging
+		 * This starts a seperate thread and a thread-safe queue to
+		 * queue all logging messages first and call the log routine by
+		 * the thread. This option is nessacary, if the stream to log into
+		 * are not thread-safe by itself.
+		 */
+		void enableAsync();
+
+		/**
+		 * Enables the internal ring-buffer.
+		 * @param size The size of the buffer.
+		 */
+		void enableBuffer(size_t size);
+
+		/**
+		 * Reload the logger. This re-opens the logfile for output.
+		 */
+		void reload();
+
+		/**
+		 * Write the buffer to a stream
+		 * @param
+		 */
+		void writeBuffer(std::ostream&, const unsigned char logmask, const unsigned char options);
+
+		/**
+		 * Return the default tag
+		 */
+		const std::string& getDefaultTag() const;
+
+		/**
+		 * set the default tag to log
+		 */
+		void setDefaultTag(const std::string &value);
+
+	protected:
+		void flush();
+		void run() throw ();
+		void __cancellation() throw ();
+
+	private:
 		class LoggerOutput
 		{
 		public:
@@ -267,123 +386,39 @@ namespace ibrcommon
 			unsigned char _level;
 			unsigned char _options;
 		};
-		
-		class LogWriter : public ibrcommon::JoinableThread
-		{
-		public:
-			LogWriter();
-			virtual ~LogWriter();
 
-			void log(Logger &logger);
+		/**
+		 * private constructor
+		 */
+		LogWriter();
 
-			/**
-			 * Set the global verbosity of the logger.
-			 * @param verbosity A verbosity level as number. Higher value leads to more output.
-			 */
-			void setVerbosity(const int verbosity);
+		/**
+		 * Flush the log message to the output/syslog.
+		 */
+		void flush(const Logger &logger);
 
-			/**
-			 * Get the global verbosity of the logger.
-			 * @return The verbosity level as number. Higher value leads to more output.
-			 */
-			int getVerbosity() const;
+		unsigned char _global_logmask;
+		int _verbosity;
+		bool _syslog;
+		unsigned char _syslog_mask;
 
+		ibrcommon::Queue<Logger> _queue;
+		bool _use_queue;
+		std::list<LoggerOutput> _logger;
 
-			unsigned char getLogMask() const;
+		ibrcommon::Mutex _buffer_mutex;
+		size_t _buffer_size;
+		std::list<Logger> *_buffer;
 
-			/**
-			 * Add a standard output stream to the logging framework.
-			 * @param stream Standard output stream
-			 * @param logmask This mask specify what will be written to this stream. You can combine options with the or function.
-			 * @param options This mask specify what will be added to each log message. You can combine options with the or function.
-			 */
-			void addStream(std::ostream &stream, const unsigned char logmask = LOGGER_INFO, const unsigned char options = LOG_NONE);
+		ibrcommon::Mutex _logfile_mutex;
+		ibrcommon::File _logfile;
+		std::ofstream _logfile_stream;
+		LoggerOutput *_logfile_output;
+		unsigned char _logfile_logmask;
+		unsigned char _logfile_options;
 
-			/**
-			 * Set the logfile for the logging framework.
-			 * @param logfile The file to log into.
-			 * @param logmask This mask specify what will be written to this stream. You can combine options with the or function.
-			 * @param options This mask specify what will be added to each log message. You can combine options with the or function.
-			 */
-			void setLogfile(const ibrcommon::File &logfile, const unsigned char logmask = LOGGER_INFO, const unsigned char options = LOG_NONE);
-
-			/**
-			 * Enable logging message to the system syslog.
-			 * @param name The naming prefix for all log messages.
-			 * @param option Syslog specific options. @see syslog.h
-			 * @param facility Syslog facility. @see syslog.h
-			 * @param logmask This mask specify what will be written to the syslog. You can combine options with the or function.
-			 */
-			void enableSyslog(const char *name, int option, int facility, const unsigned char logmask = LOGGER_INFO);
-
-			/**
-			 * enable the asynchronous logging
-			 * This starts a seperate thread and a thread-safe queue to
-			 * queue all logging messages first and call the log routine by
-			 * the thread. This option is nessacary, if the stream to log into
-			 * are not thread-safe by itself.
-			 */
-			void enableAsync();
-
-			/**
-			 * Enables the internal ring-buffer.
-			 * @param size The size of the buffer.
-			 */
-			void enableBuffer(size_t size);
-
-			/**
-			 * Reload the logger. This re-opens the logfile for output.
-			 */
-			void reload();
-
-			/**
-			 * Write the buffer to a stream
-			 * @param
-			 */
-			void writeBuffer(std::ostream&, const unsigned char logmask, const unsigned char options);
-
-		protected:
-			void flush();
-			void run() throw ();
-			void __cancellation() throw ();
-
-		private:
-			/**
-			 * Flush the log message to the output/syslog.
-			 */
-			void flush(const Logger &logger);
-
-			unsigned char _global_logmask;
-			int _verbosity;
-			bool _syslog;
-			unsigned char _syslog_mask;
-
-			ibrcommon::Queue<Logger> _queue;
-			bool _use_queue;
-			std::list<LoggerOutput> _logger;
-
-			ibrcommon::Mutex _buffer_mutex;
-			size_t _buffer_size;
-			std::list<Logger> *_buffer;
-
-			ibrcommon::Mutex _logfile_mutex;
-			ibrcommon::File _logfile;
-			std::ofstream _logfile_stream;
-			LoggerOutput *_logfile_output;
-			unsigned char _logfile_logmask;
-			unsigned char _logfile_options;
-		};
-
-		LogLevel _level;
-		const std::string _tag;
-		int _debug_verbosity;
-		struct timeval _logtime;
-
-		std::string _data;
-
-		static std::string _default_tag;
-		static std::string _android_tag_prefix;
-		static LogWriter _logwriter;
+		std::string _default_tag;
+		std::string _android_tag_prefix;
 	};
 }
 

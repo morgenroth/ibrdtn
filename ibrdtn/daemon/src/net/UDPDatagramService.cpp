@@ -42,9 +42,10 @@ namespace dtn
 			// set connection parameters
 			_params.max_msg_length = mtu - 2;	// minus 2 bytes because we encode seqno and flags into 2 bytes
 			_params.max_seq_numbers = 8;		// seqno 0..7
-			_params.flowcontrol = DatagramService::FLOW_STOPNWAIT;
+			_params.flowcontrol = DatagramService::FLOW_SLIDING_WINDOW;
 			_params.initial_timeout = 50;		// initial timeout 50ms
 			_params.seq_check = true;
+			_params.retry_limit = 5;
 		}
 
 		UDPDatagramService::~UDPDatagramService()
@@ -79,7 +80,7 @@ namespace dtn
 				// add multicast socket to receiver sockets
 				_vsocket.add(_msock);
 
-				if (_iface.empty()) {
+				if (_iface.isAny()) {
 					// bind socket to interface
 					_vsocket.add(new ibrcommon::udpsocket(_bind_port));
 				} else {
@@ -205,10 +206,10 @@ namespace dtn
 						ibrcommon::vaddress peeraddr;
 						size_t ret = sock.recvfrom(&tmp[0], length + 2, 0, peeraddr);
 
-						// first byte if the type
+						// first byte is the type
 						type = tmp[0];
 
-						// second byte if flags (4-bit) + seqno (4-bit)
+						// second byte is flags (4-bit) + seqno (4-bit)
 						flags = 0x0f & (tmp[1] >> 4);
 						seqno = 0x0f & tmp[1];
 
@@ -230,15 +231,6 @@ namespace dtn
 			}
 
 			return 0;
-		}
-
-		/**
-		 * Get the tag for this service used in discovery messages.
-		 * @return The tag as string.
-		 */
-		const std::string UDPDatagramService::getServiceTag() const
-		{
-			return "dgram:udp";
 		}
 
 		/**

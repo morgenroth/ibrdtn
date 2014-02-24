@@ -376,20 +376,14 @@ namespace dtn
 				throw IMAPException("Field \"Bundle-EMailCL-Version\" wrong formatted in mail" + mailID);
 			}
 
-			dtn::data::EID source;
-			size_t timestamp = 0, sequencenumber = 0, fragmentoffset = 0;
-
 			try {
 				newBundle.procflags = toInt(header->findField("Bundle-Flags")->getValue()->generate());
 				newBundle.destination = header->findField("Bundle-Destination")->getValue()->generate();
-				source = dtn::data::EID(header->findField("Bundle-Source")->getValue()->generate());
-				newBundle.source = source;
+				newBundle.source = dtn::data::EID(header->findField("Bundle-Source")->getValue()->generate());
 				newBundle.reportto = header->findField("Bundle-Report-To")->getValue()->generate();
 				newBundle.custodian = header->findField("Bundle-Custodian")->getValue()->generate();
-				timestamp = toInt(header->findField("Bundle-Creation-Time")->getValue()->generate());
-				newBundle.timestamp = timestamp;
-				sequencenumber = toInt(header->findField("Bundle-Sequence-Number")->getValue()->generate());
-				newBundle.sequencenumber = sequencenumber;
+				newBundle.timestamp = toInt(header->findField("Bundle-Creation-Time")->getValue()->generate());
+				newBundle.sequencenumber = toInt(header->findField("Bundle-Sequence-Number")->getValue()->generate());
 				newBundle.lifetime = toInt(header->findField("Bundle-Lifetime")->getValue()->generate());
 			}catch(vmime::exceptions::no_such_field&) {
 				throw IMAPException("Missing bundle headers in mail" + mailID);
@@ -399,20 +393,18 @@ namespace dtn
 
 			// If bundle is a fragment both fields need to be set
 			try {
-				fragmentoffset = toInt(header->findField("Bundle-Fragment-Offset")->getValue()->generate());
+				newBundle.fragmentoffset = toInt(header->findField("Bundle-Fragment-Offset")->getValue()->generate());
 				newBundle.appdatalength = toInt(header->findField("Bundle-Total-Application-Data-Unit-Length")->getValue()->generate());
 			}catch(vmime::exceptions::no_such_field&) {
-				fragmentoffset = 0;
+				newBundle.fragmentoffset = 0;
 				newBundle.appdatalength = 0;
 			}catch(InvalidConversion&) {
 				throw IMAPException("Wrong formatted fragment offset in mail" + mailID);
 			}
-			newBundle.fragmentoffset = fragmentoffset;
 
 			//Check if bundle is already in the storage
 			try {
-				dtn::data::BundleID bid(source, timestamp, sequencenumber, (fragmentoffset > 0), fragmentoffset);
-				if(dtn::core::BundleCore::getInstance().getRouter().isKnown(bid))
+				if(dtn::core::BundleCore::getInstance().getRouter().isKnown(newBundle))
 					throw IMAPException("Bundle in mail" + mailID + " already processed");
 			} catch (dtn::storage::NoBundleFoundException&) {
 				// Go ahead
@@ -579,15 +571,17 @@ namespace dtn
 
 		dtn::data::BundleID EMailImapService::extractBID(const std::string &message) {
 			try {
-				dtn::data::EID source(searchString("Bundle-Source: ", message));
-				size_t timestamp = toInt(searchString("Bundle-Creation-Time: ", message));
-				size_t sequenceNumber = toInt(searchString("Bundle-Sequence-Number: ", message));
-				size_t fragmentOffset = 0;
+				dtn::data::BundleID ret;
+
+				ret.source = searchString("Bundle-Source: ", message);
+				ret.timestamp = toInt(searchString("Bundle-Creation-Time: ", message));
+				ret.sequencenumber = toInt(searchString("Bundle-Sequence-Number: ", message));
 				try {
-					fragmentOffset = toInt(searchString("Bundle-Fragment-Offset: ", message));
+					ret.fragmentoffset = toInt(searchString("Bundle-Fragment-Offset: ", message));
+					ret.setFragment(true);
 				}catch(...){}
 
-				return dtn::data::BundleID(source, timestamp, sequenceNumber, fragmentOffset > 0, fragmentOffset);
+				return ret;
 			}catch(...) {
 				throw InvalidConversion("No bundle ID was found");
 			}

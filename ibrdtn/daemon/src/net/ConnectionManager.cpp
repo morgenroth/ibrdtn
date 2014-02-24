@@ -141,17 +141,17 @@ namespace dtn
 			try {
 				const ConnectionEvent &connection = dynamic_cast<const ConnectionEvent&>(*evt);
 
-				switch (connection.state)
+				switch (connection.getState())
 				{
 					case ConnectionEvent::CONNECTION_UP:
 					{
-						add(connection.node);
+						add(connection.getNode());
 						break;
 					}
 
 					case ConnectionEvent::CONNECTION_DOWN:
 					{
-						remove(connection.node);
+						remove(connection.getNode());
 						break;
 					}
 
@@ -200,7 +200,7 @@ namespace dtn
 					updateNeighbor(fakeNode);
 
 					// Add route to faked node
-					dtn::core::BundleCore::getInstance().addRoute(node.getEID(), fakeNode.getEID(), 0);
+					dtn::core::BundleCore::getInstance().addRoute(node.getEID(), fakeNode.getEID());
 
 					node.remove((*iter));
 
@@ -272,25 +272,14 @@ namespace dtn
 			_cl.erase( cl );
 		}
 
-		ConnectionManager::stats_list ConnectionManager::getStats()
+		void ConnectionManager::getStats(dtn::net::ConvergenceLayer::stats_data &data)
 		{
 			ibrcommon::MutexLock l(_cl_lock);
-			stats_list stats;
-
 			for (std::set<ConvergenceLayer*>::const_iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
 			{
 				ConvergenceLayer &cl = (**iter);
-				const ConvergenceLayer::stats_map &cl_stats = cl.getStats();
-				const dtn::core::Node::Protocol p = cl.getDiscoveryProtocol();
-
-				stats_pair entry;
-				entry.first = p;
-				entry.second = cl_stats;
-
-				stats.push_back(entry);
+				cl.getStats(data);
 			}
-
-			return stats;
 		}
 
 		void ConnectionManager::resetStats()
@@ -507,7 +496,7 @@ namespace dtn
 			throw ConnectionNotAvailableException();
 		}
 
-		void ConnectionManager::queue(const dtn::net::BundleTransfer &job)
+		void ConnectionManager::queue(dtn::net::BundleTransfer &job)
 		{
 			ibrcommon::MutexLock l(_node_lock);
 
@@ -523,18 +512,23 @@ namespace dtn
 
 			IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 50) << "search for node " << job.getNeighbor().getString() << IBRCOMMON_LOGGER_ENDL;
 
-			// queue to a node
-			const Node &n = getNode(job.getNeighbor());
-			IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 2) << "next hop: " << n << IBRCOMMON_LOGGER_ENDL;
-
 			try {
-				queue(n, job);
-			} catch (const P2PDialupException&) {
-				// trigger the dial-up connection
-				dialup(n);
+				// queue to a node
+				const Node &n = getNode(job.getNeighbor());
+				IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 2) << "next hop: " << n << IBRCOMMON_LOGGER_ENDL;
 
-				// re-throw P2PDialupException
-				throw;
+				try {
+					queue(n, job);
+				} catch (const P2PDialupException&) {
+					// trigger the dial-up connection
+					dialup(n);
+
+					// re-throw P2PDialupException
+					throw;
+				}
+			} catch (const dtn::net::NeighborNotAvailableException &ex) {
+				// signal interruption of the transfer
+				job.abort(dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
 			}
 		}
 

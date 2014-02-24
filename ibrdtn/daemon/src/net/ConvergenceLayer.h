@@ -68,18 +68,12 @@ namespace dtn
 			/**
 			 * statistic methods
 			 */
-			typedef std::map<std::string, size_t> stats_map;
+			typedef std::pair<string, string> stats_pair;
+			typedef std::map<string, string> stats_data;
 
 			virtual void resetStats();
 
-			virtual const stats_map& getStats();
-
-		protected:
-			virtual void addStats(const std::string &tag, const size_t value);
-			virtual void setStats(const std::string &tag, const size_t value);
-
-		private:
-			stats_map _stats;
+			virtual void getStats(ConvergenceLayer::stats_data &data) const;
 		};
 	}
 }

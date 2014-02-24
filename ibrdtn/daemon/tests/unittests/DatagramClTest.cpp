@@ -14,7 +14,6 @@
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/EID.h>
 #include <ibrcommon/thread/Thread.h>
-#include "core/TimeEvent.h"
 #include <ibrdtn/utils/Clock.h>
 #include "core/BundleCore.h"
 #include <ibrcommon/data/File.h>
@@ -152,7 +151,7 @@ void DatagramClTest::queueTest() {
 	// wait until the bundle is written
 	_storage->wait();
 
-	dtn::data::MetaBundle id(b);
+	const dtn::data::MetaBundle id = dtn::data::MetaBundle::create(b);
 
 	TestEventListener<dtn::core::NodeEvent> node_evtl;
 	TestEventListener<dtn::net::TransferCompletedEvent> completed_evtl;

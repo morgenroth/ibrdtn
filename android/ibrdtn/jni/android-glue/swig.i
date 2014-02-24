@@ -53,6 +53,7 @@
 
 %{
 #include "../ibrdtn/ibrdtn/data/EID.h"
+#include "../ibrdtn/ibrdtn/data/BundleID.h"
 #include "../ibrdtn/ibrdtn/data/PrimaryBlock.h"
 
 #include "../ibrdtn/ibrdtn/data/SDNV.h"
@@ -60,11 +61,7 @@
 
 #include "../ibrdtn/ibrdtn/data/DTNTime.h"
 
-
-#include "../ibrdtn/ibrdtn/data/BundleID.h"
-#include "../ibrdtn/ibrdtn/data/PrimaryBlock.h"
 #include "../ibrdtn/ibrdtn/data/Block.h"
-
 #include "../ibrdtn/ibrdtn/data/AdministrativeBlock.h"
 #include "../ibrdtn/ibrdtn/data/StatusReportBlock.h"
 #include "../ibrdtn/ibrdtn/data/CustodySignalBlock.h"
@@ -96,14 +93,13 @@ namespace std {
 %template(DtnNumber) dtn::data::SDNV<dtn::data::Size>;
 
 %include "../ibrdtn/ibrdtn/data/EID.h"
+%include "../ibrdtn/ibrdtn/data/BundleID.h"
 %include "../ibrdtn/ibrdtn/data/PrimaryBlock.h"
 
 %template(PrimaryBlockFlags) dtn::data::Bitset<dtn::data::PrimaryBlock::FLAGS>;
 
 %include "../ibrdtn/ibrdtn/data/DTNTime.h"
 
-%include "../ibrdtn/ibrdtn/data/BundleID.h"
-%include "../ibrdtn/ibrdtn/data/PrimaryBlock.h"
 %include "../ibrdtn/ibrdtn/data/Block.h"
 
 %template(BlockFlags) dtn::data::Bitset<dtn::data::Block::ProcFlags>;

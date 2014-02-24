@@ -162,8 +162,8 @@ namespace ibrcommon
 
 	void lowpansocket::getAddress(struct ieee802154_addr *ret, const vinterface &iface)
 	{
-#if defined HAVE_LIBNL || HAVE_LIBNL3
-#ifdef HAVE_LIBNL3
+#if defined HAVE_LIBNL || HAVE_LIBNL2 || HAVE_LIBNL3
+#if defined HAVE_LIBNL2 || HAVE_LIBNL3
 		struct nl_sock *nl = nl_socket_alloc();
 #else
 		struct nl_handle *nl = nl_handle_alloc();
@@ -205,7 +205,7 @@ namespace ibrcommon
 		free(buf);
 		nl_close(nl);
 
-#ifdef HAVE_LIBNL3
+#if defined HAVE_LIBNL2 || HAVE_LIBNL3
 		nl_socket_free(nl);
 #else
 		nl_handle_destroy(nl);

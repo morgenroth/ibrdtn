@@ -38,14 +38,16 @@ namespace dtn
 
 			std::string getMessage() const;
 
+			const dtn::data::Bundle& getBundle() const;
+
 			static const string className;
 
 			static void raise(const dtn::data::Bundle &bundle);
 
-			const dtn::data::Bundle bundle;
-
 		private:
 			BundleGeneratedEvent(const dtn::data::Bundle &bundle);
+
+			const dtn::data::Bundle _bundle;
 		};
 	}
 }

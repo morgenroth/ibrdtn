@@ -26,6 +26,7 @@
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/data/BundleString.h"
 #include "ibrdtn/data/Bundle.h"
+#include <ibrcommon/Exceptions.h>
 #include <ibrcommon/ssl/AES128Stream.h> // TODO <-- this include sucks
 #include <list>
 #include <sys/types.h>
@@ -39,7 +40,52 @@ namespace dtn
 {
 	namespace security
 	{
-		class MutualSerializer;
+		class SecurityException : public ibrcommon::Exception
+		{
+		public:
+			SecurityException(std::string what = "security has been violated") : ibrcommon::Exception(what)
+			{};
+
+			virtual ~SecurityException() throw() {};
+		};
+
+		class EncryptException : public SecurityException
+		{
+		public:
+			EncryptException(std::string what = "Encryption failed.") : SecurityException(what)
+			{};
+
+			virtual ~EncryptException() throw() {};
+		};
+
+		class DecryptException : public SecurityException
+		{
+		public:
+			DecryptException(std::string what = "Decryption failed.") : SecurityException(what)
+			{};
+
+			virtual ~DecryptException() throw() {};
+		};
+
+		class VerificationFailedException : public SecurityException
+		{
+		public:
+			VerificationFailedException(std::string what = "Verification failed.") : SecurityException(what)
+			{};
+
+			virtual ~VerificationFailedException() throw() {};
+		};
+
+		class ElementMissingException : public ibrcommon::Exception
+		{
+		public:
+			ElementMissingException(std::string what = "Requested element is missing.") : ibrcommon::Exception(what)
+			{};
+
+			virtual ~ElementMissingException() throw() {};
+		};
+
+		class MutableSerializer;
 		class StrictSerializer;
 
 		/**
@@ -58,7 +104,7 @@ namespace dtn
 		class SecurityBlock : public dtn::data::Block
 		{
 			friend class StrictSerializer;
-			friend class MutualSerializer;
+			friend class MutableSerializer;
 		public:
 			/** the block id for each block type */
 			enum BLOCK_TYPES
@@ -312,8 +358,7 @@ namespace dtn
 			@param stream the stream to be written into
 			@return the same stream as the parameter for chaining
 			*/
-			virtual MutualSerializer &serialize_mutable(MutualSerializer &serializer) const;
-			virtual MutualSerializer &serialize_mutable_without_security_result(MutualSerializer &serializer) const;
+			virtual MutableSerializer &serialize_mutable(MutableSerializer &serializer, bool include_security_result = true) const;
 
 			/**
 			Returns the size of the security result if it would be serialized, even

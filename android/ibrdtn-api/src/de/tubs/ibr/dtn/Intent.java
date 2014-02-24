@@ -38,9 +38,13 @@ public class Intent {
 	public static final String EVENT = "de.tubs.ibr.dtn.intent.EVENT";
 	
 	public static final String NEIGHBOR = "de.tubs.ibr.dtn.intent.NEIGHBOR";
+	public static final String NEIGHBOR_SELECTED = "de.tubs.ibr.dtn.intent.NEIGHBOR_SELECTED";
+	public static final String NODE_KEY = "de.tubs.ibr.dtn.intent.NODE_KEY";
 	
 	public static final String SENDFILE = "de.tubs.ibr.dtn.intent.SENDFILE";
 	public static final String SENDFILE_MULTIPLE = "de.tubs.ibr.dtn.intent.SEND_MULTIPLE";
+	
+	public static final String INTENT_KEY = "de.tubs.ibr.dtn.intent.INTENT_KEY";
 	
 	// required extras for the SENDFILE intent
     public static final String EXTRA_KEY_DESTINATION = "destination";

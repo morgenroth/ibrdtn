@@ -23,6 +23,7 @@
 #include "routing/RequeueBundleEvent.h"
 #include "core/TimeEvent.h"
 #include "core/BundleCore.h"
+#include "core/EventDispatcher.h"
 #include "core/BundleExpiredEvent.h"
 #include "net/TransferAbortedEvent.h"
 #include "net/TransferCompletedEvent.h"
@@ -44,7 +45,30 @@ namespace dtn
 		{
 		}
 
-		void RetransmissionExtension::notify(const dtn::core::Event *evt) throw ()
+		void RetransmissionExtension::componentUp() throw ()
+		{
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::routing::RequeueBundleEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::BundleExpiredEvent>::add(this);
+		}
+
+		void RetransmissionExtension::componentDown() throw ()
+		{
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::routing::RequeueBundleEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::core::BundleExpiredEvent>::remove(this);
+		}
+
+		void RetransmissionExtension::eventTransferCompleted(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ()
+		{
+			// remove the bundleid in our list
+			RetransmissionData data(meta, peer);
+			_set.erase(data);
+		}
+
+		void RetransmissionExtension::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			try {
 				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
@@ -57,11 +81,11 @@ namespace dtn
 					if ( data.getTimestamp() <= time.getTimestamp() )
 					{
 						try {
-							const dtn::data::MetaBundle meta = dtn::core::BundleCore::getInstance().getStorage().get(data);
+							const dtn::data::MetaBundle meta = dtn::core::BundleCore::getInstance().getStorage().info(data);
 
 							// retransmit the bundle
 							dtn::net::BundleTransfer transfer(data.destination, meta);
-							dtn::core::BundleCore::getInstance().transferTo(transfer);
+							dtn::core::BundleCore::getInstance().getConnectionManager().queue(transfer);
 						} catch (const dtn::core::P2PDialupException&) {
 							// do nothing here
 							dtn::routing::RequeueBundleEvent::raise(data.destination, data);
@@ -78,16 +102,6 @@ namespace dtn
 			} catch (const std::bad_cast&) { };
 
 			try {
-				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
-
-				// remove the bundleid in our list
-				RetransmissionData data(completed.getBundle(), completed.getPeer());
-				_set.erase(data);
-
-				return;
-			} catch (const std::bad_cast&) { };
-
-			try {
 				const dtn::net::TransferAbortedEvent &aborted = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
 
 				// remove the bundleid in our list
@@ -100,7 +114,7 @@ namespace dtn
 			try {
 				const dtn::routing::RequeueBundleEvent &requeue = dynamic_cast<const dtn::routing::RequeueBundleEvent&>(*evt);
 
-				const RetransmissionData data(requeue._bundle, requeue._peer);
+				const RetransmissionData data(requeue.getBundle(), requeue.getPeer());
 
 				ibrcommon::MutexLock l(_mutex);
 				std::set<RetransmissionData>::const_iterator iter = _set.find(data);
@@ -122,7 +136,7 @@ namespace dtn
 					}
 					else
 					{
-						dtn::net::TransferAbortedEvent::raise(requeue._peer, requeue._bundle, dtn::net::TransferAbortedEvent::REASON_RETRY_LIMIT_REACHED);
+						dtn::net::TransferAbortedEvent::raise(requeue.getPeer(), requeue.getBundle(), dtn::net::TransferAbortedEvent::REASON_RETRY_LIMIT_REACHED);
 					}
 				}
 				else
@@ -146,7 +160,7 @@ namespace dtn
 				{
 					const RetransmissionData &data = _queue.front();
 
-					if ((dtn::data::BundleID&)data == expired._bundle)
+					if ((dtn::data::BundleID&)data == expired.getBundle())
 					{
 						dtn::net::TransferAbortedEvent::raise(data.destination, data, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 					}

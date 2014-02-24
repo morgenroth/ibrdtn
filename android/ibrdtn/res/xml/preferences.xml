@@ -4,7 +4,7 @@
     <PreferenceCategory android:title="@string/service" >
         <CheckBoxPreference
             android:key="enabledSwitch"
-            android:title="@string/runasbackgroundservice" />
+            android:title="@string/launch_daemon" />
     </PreferenceCategory>
     <PreferenceCategory
         android:key="prefcat_general"
@@ -12,7 +12,8 @@
         <EditTextPreference
             android:key="endpoint_id"
             android:summary="@string/eid_description"
-            android:title="@string/endpoint_id" >
+            android:title="@string/endpoint_id"
+            android:singleLine="true" >
         </EditTextPreference>
 
         <ListPreference
@@ -32,44 +33,30 @@
             android:summary="@string/pref_storage_description"
             android:title="@string/pref_storage" >
         </ListPreference>
-        
-        <CheckBoxPreference
-            android:defaultValue="true"
-            android:key="RunAsForegroundService"
-            android:title="@string/runasforegroundservice"
-            android:summary="@string/runasforegroundservice_description" />
     </PreferenceCategory>
     <PreferenceCategory
         android:key="prefcat_connection"
         android:title="@string/pref_connection" >
-        <CheckBoxPreference
-            android:defaultValue="false"
-            android:key="cloud_uplink"
-            android:summary="@string/pref_cloudconnect_summary"
-            android:title="@string/pref_cloudconnect_title" >
-        </CheckBoxPreference>
-        <CheckBoxPreference
-            android:defaultValue="false"
-            android:key="cloud_uplink_3g"
-            android:summary="@string/pref_cloudconnect_3g_description"
-            android:title="@string/pref_cloudconnect_3g" >
-        </CheckBoxPreference>
-        <CheckBoxPreference
-            android:defaultValue="true"
-            android:key="discovery_announce"
-            android:summary="@string/discovery_announce_desc"
-            android:title="@string/discovery_announce" >
-        </CheckBoxPreference>
+        <ListPreference
+            android:defaultValue="smart"
+            android:entries="@array/discovery_modes_names"
+            android:entryValues="@array/discovery_modes_values"
+            android:key="discovery_mode"
+            android:title="@string/pref_discovery_title" >
+        </ListPreference>
+        <ListPreference
+            android:defaultValue="off"
+            android:entries="@array/uplink_modes_names"
+            android:entryValues="@array/uplink_modes_values"
+            android:key="uplink_mode"
+            android:summary="@string/pref_uplink_summary"
+            android:title="@string/pref_uplink_title" >
+        </ListPreference>
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="checkIdleTimeout"
             android:summary="@string/autodisconnect_desc"
             android:title="@string/autodisconnect" />
-        <CheckBoxPreference
-            android:defaultValue="true"
-            android:key="checkFragmentation"
-            android:summary="@string/pref_fragmentation_desc"
-            android:title="@string/pref_fragmentation" />
     </PreferenceCategory>
     <de.tubs.ibr.dtn.daemon.InterfacePreferenceCategory
         android:key="prefcat_interfaces"
@@ -98,7 +85,8 @@
         <EditTextPreference
             android:key="security_bab_key"
             android:summary="@string/pref_bab_key_desc"
-            android:title="@string/pref_bab_key" />
+            android:title="@string/pref_bab_key"
+            android:singleLine="true" />
     </PreferenceCategory>
     
     <PreferenceCategory
@@ -129,7 +117,9 @@
             android:defaultValue="99"
             android:key="log_debug_verbosity"
             android:summary="@string/pref_log_debug_verbosity_desc"
-            android:title="@string/pref_log_debug_verbosity" />
+            android:title="@string/pref_log_debug_verbosity"
+            android:inputType="number"
+            android:singleLine="true" />
 
         <CheckBoxPreference
             android:defaultValue="false"

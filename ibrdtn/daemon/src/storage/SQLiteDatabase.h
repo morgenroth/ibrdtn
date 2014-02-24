@@ -60,6 +60,7 @@ namespace dtn
 				BUNDLE_GET_ITERATOR,
 				BUNDLE_GET_FILTER,
 				BUNDLE_GET_ID,
+				BUNDLE_GET_LENGTH_ID,
 				GET_DISTINCT_DESTINATIONS,
 
 				EXPIRE_BUNDLES,
@@ -107,6 +108,8 @@ namespace dtn
 
 			static const std::string _select_names[3];
 
+			static const std::string _where_filter[2];
+
 			static const std::string _tables[SQL_TABLE_END];
 
 			// array of sql queries
@@ -128,8 +131,8 @@ namespace dtn
 			{
 			public:
 				virtual ~DatabaseListener() = 0;
-				virtual void eventBundleExpired(const dtn::data::BundleID&) throw () = 0;
-				virtual void iterateDatabase(const dtn::data::MetaBundle&) = 0;
+				virtual void eventBundleExpired(const dtn::data::BundleID&, const dtn::data::Length) throw () = 0;
+				virtual void iterateDatabase(const dtn::data::MetaBundle&, const dtn::data::Length) = 0;
 			};
 
 			class SQLBundleQuery
@@ -219,8 +222,9 @@ namespace dtn
 			/**
 			 * Delete an entry in the database.
 			 * @param id
+			 * @return The number of released bytes
 			 */
-			void remove(const dtn::data::BundleID &id) throw (SQLiteQueryException);
+			dtn::data::Length remove(const dtn::data::BundleID &id) throw (SQLiteQueryException);
 
 			/**
 			 * @see BundleSeeker::get(BundleSelector &cb, BundleResult &result)
@@ -245,7 +249,7 @@ namespace dtn
 			 *
 			 * @param bundle
 			 */
-			void store(const dtn::data::Bundle &bundle) throw (SQLiteQueryException);
+			void store(const dtn::data::Bundle &bundle, const dtn::data::Length &size) throw (SQLiteQueryException);
 			void store(const dtn::data::BundleID &id, int index, const dtn::data::Block &block, const ibrcommon::File &file) throw (SQLiteQueryException);
 			void transaction() throw (SQLiteQueryException);
 			void rollback() throw (SQLiteQueryException);
@@ -256,6 +260,11 @@ namespace dtn
 			dtn::data::Size count() const throw (SQLiteQueryException);
 
 			void clear() throw (SQLiteQueryException);
+
+			/**
+			 * Returns true, if the bundle ID is stored in the database
+			 */
+			bool contains(const dtn::data::BundleID &id) throw (SQLiteDatabase::SQLiteQueryException);
 
 			/**
 			 * @see BundleSeeker::getDistinctDestinations()
@@ -317,7 +326,6 @@ namespace dtn
 			const dtn::data::Timestamp& get_expire_time() const throw ();
 
 			void set_bundleid(Statement &st, const dtn::data::BundleID &id, int offset = 0) const throw (SQLiteQueryException);
-			void get_bundleid(Statement &st, dtn::data::BundleID &id, int offset = 0) const throw (SQLiteQueryException);
 
 			/**
 			 * get database version

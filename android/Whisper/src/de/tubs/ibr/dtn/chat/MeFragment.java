@@ -10,7 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 public class MeFragment extends Fragment implements View.OnClickListener {
@@ -25,7 +25,7 @@ public class MeFragment extends Fragment implements View.OnClickListener {
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View v = inflater.inflate(R.layout.me_fragment, container, false);
 		
-		LinearLayout me_layout = (LinearLayout)v.findViewById(R.id.roster_me_display);
+		RelativeLayout me_layout = (RelativeLayout)v.findViewById(R.id.roster_me_display);
 		me_layout.setOnClickListener(this);
 		
 		mNickname = (TextView)v.findViewById(R.id.me_nickname);

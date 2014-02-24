@@ -29,8 +29,7 @@
 #include "core/EventReceiver.h"
 #include "net/ConvergenceLayer.h"
 #include "net/TCPConnection.h"
-#include "net/DiscoveryService.h"
-#include "net/DiscoveryServiceProvider.h"
+#include "net/DiscoveryBeaconHandler.h"
 
 #include <ibrcommon/link/LinkManager.h>
 #include <ibrcommon/net/vsocket.h>
@@ -49,7 +48,7 @@ namespace dtn
 		 * This class implement a ConvergenceLayer for TCP/IP.
 		 * http://tools.ietf.org/html/draft-irtf-dtnrg-tcp-clayer-02
 		 */
-		class TCPConvergenceLayer : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver, public ConvergenceLayer, public DiscoveryServiceProvider, public ibrcommon::LinkManager::EventCallback
+		class TCPConvergenceLayer : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver, public ConvergenceLayer, public DiscoveryBeaconHandler, public ibrcommon::LinkManager::EventCallback
 		{
 			friend class TCPConnection;
 
@@ -101,18 +100,18 @@ namespace dtn
 			/**
 			 * this method updates the given values
 			 */
-			void update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement)
-				throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException);
+			void onUpdateBeacon(const ibrcommon::vinterface &iface, DiscoveryBeacon &beacon) throw (NoServiceHereException);
 
 			void eventNotify(const ibrcommon::LinkEvent &evt);
 
 			/**
 			 * @see EventReceiver::raiseEvent()
 			 */
-			void raiseEvent(const Event *evt) throw ();
+			void raiseEvent(const dtn::core::Event *evt) throw ();
 
 			virtual void resetStats();
-			virtual const stats_map& getStats();
+
+			virtual void getStats(ConvergenceLayer::stats_data &data) const;
 
 		protected:
 			void __cancellation() throw ();
@@ -150,6 +149,16 @@ namespace dtn
 			 */
 			void connectionDown(TCPConnection *conn);
 
+			/**
+			 * Reports inbound traffic amount
+			 */
+			void addTrafficIn(size_t) throw ();
+
+			/**
+			 * Reports outbound traffic amount
+			 */
+			void addTrafficOut(size_t) throw ();
+
 			static const int DEFAULT_PORT;
 
 			ibrcommon::vsocket _vsocket;
@@ -164,6 +173,11 @@ namespace dtn
 			ibrcommon::Mutex _portmap_lock;
 			std::map<ibrcommon::vinterface, unsigned int> _portmap;
 			unsigned int _any_port;
+
+			// stats variables
+			ibrcommon::Mutex _stats_lock;
+			size_t _stats_in;
+			size_t _stats_out;
 		};
 	}
 }

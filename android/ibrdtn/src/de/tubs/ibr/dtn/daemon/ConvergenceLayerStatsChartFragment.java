@@ -16,12 +16,14 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 
+import com.jjoe64.graphview.CustomLabelFormatter;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.GraphView.GraphViewData;
 import com.jjoe64.graphview.GraphViewSeries;
@@ -30,13 +32,15 @@ import com.jjoe64.graphview.LineGraphView;
 
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.R;
+import de.tubs.ibr.dtn.daemon.data.ConvergenceLayerStatsListAdapter;
+import de.tubs.ibr.dtn.daemon.data.ConvergenceLayerStatsLoader;
+import de.tubs.ibr.dtn.daemon.data.CurrentConvergenceLayerStatsLoader;
 import de.tubs.ibr.dtn.service.DaemonService;
 import de.tubs.ibr.dtn.service.DaemonService.LocalDTNService;
 import de.tubs.ibr.dtn.stats.ConvergenceLayerStatsEntry;
-import de.tubs.ibr.dtn.stats.ConvergenceLayerStatsLoader;
 import de.tubs.ibr.dtn.stats.StatsUtils;
 
-public class ConvergenceLayerStatsChartFragment extends Fragment {
+public class ConvergenceLayerStatsChartFragment extends Fragment implements CustomLabelFormatter {
     
     // The loader's unique id. Loader ids are specific to the Activity or
     // Fragment in which they reside.
@@ -103,21 +107,9 @@ public class ConvergenceLayerStatsChartFragment extends Fragment {
         // convert data into an structured array
         StatsUtils.convertData(getActivity(), stats, series);
         
-        // get min/max timestamp of data-set
-        Double min_timestamp = 0.0;
-        Double max_timestamp = 0.0;
+        // get line width in pixels
+        Float lineWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2, getActivity().getResources().getDisplayMetrics());
         
-        for (ArrayList<GraphViewData> dataset : series.values()) {
-            for (GraphViewData d : dataset) {
-                if ((min_timestamp == 0) || (min_timestamp > d.valueX)) min_timestamp = d.valueX;
-                if (max_timestamp < d.valueX) max_timestamp = d.valueX;
-            }
-        }
-        
-        // generate timestamp labels
-        ArrayList<String> labels = new ArrayList<String>();
-        StatsUtils.generateTimestampLabels(getActivity(), min_timestamp, max_timestamp, labels);
-
         // add one series for each data-set
         for (Map.Entry<String, ArrayList<GraphViewData>> entry : series.entrySet()) {
             ArrayList<GraphViewData> dataset = entry.getValue();
@@ -126,7 +118,7 @@ public class ConvergenceLayerStatsChartFragment extends Fragment {
             
             if (gs == null) {
                 int color = getResources().getColor(mColorProvider.getColor(entry.getKey()));
-                GraphViewSeriesStyle style = new GraphViewSeriesStyle(color, 5);
+                GraphViewSeriesStyle style = new GraphViewSeriesStyle(color, lineWidth.intValue());
                 gs = new GraphViewSeries(entry.getKey(), style, dataset.toArray(new GraphViewData[dataset.size()]));
                 mGraphView.addSeries(gs);
                 mData.put(entry.getKey(), gs);
@@ -137,9 +129,15 @@ public class ConvergenceLayerStatsChartFragment extends Fragment {
                 gs.resetData(dataset.toArray(new GraphViewData[dataset.size()]));
             }
         }
-        
-        // change the horizontal labels
-        mGraphView.setHorizontalLabels(labels.toArray(new String[labels.size()]));
+    }
+    
+    @Override
+    public String formatLabel(double value, boolean isValueX) {
+        if (isValueX) {
+            return StatsUtils.formatTimeStampString(getActivity(), Double.valueOf(value * 1000.0).longValue());
+        } else {
+            return StatsUtils.formatByteString(Double.valueOf(value).intValue(), true);
+        }
     }
     
     private LoaderManager.LoaderCallbacks<List<ConvergenceLayerStatsEntry>> mStatsLoader = new LoaderManager.LoaderCallbacks<List<ConvergenceLayerStatsEntry>>() {
@@ -173,6 +171,8 @@ public class ConvergenceLayerStatsChartFragment extends Fragment {
         
         // create a new LineGraphView
         mGraphView = new LineGraphView(getActivity(), "");
+        mGraphView.getGraphViewStyle().setTextSize(getResources().getDimension(R.dimen.stats_axis_text));
+        mGraphView.setCustomLabelFormatter(this);
         mChartView.addView(mGraphView);
         
         return v;

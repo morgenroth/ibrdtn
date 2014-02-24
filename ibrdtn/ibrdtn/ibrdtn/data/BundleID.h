@@ -22,9 +22,9 @@
 #ifndef BUNDLEID_H_
 #define BUNDLEID_H_
 
-#include <ibrdtn/data/Number.h>
+#include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/EID.h"
-#include "ibrdtn/data/Bundle.h"
+#include <ibrcommon/data/BloomFilter.h>
 
 namespace dtn
 {
@@ -33,8 +33,7 @@ namespace dtn
 		class BundleID
 		{
 		public:
-			BundleID(const dtn::data::EID source = dtn::data::EID(), const dtn::data::Timestamp &timestamp = 0, const dtn::data::Number &sequencenumber = 0, const bool fragment = false, const dtn::data::Number &offset = 0);
-			BundleID(const dtn::data::PrimaryBlock &b);
+			BundleID();
 			virtual ~BundleID();
 
 			bool operator!=(const BundleID& other) const;
@@ -42,10 +41,9 @@ namespace dtn
 			bool operator<(const BundleID& other) const;
 			bool operator>(const BundleID& other) const;
 
-			bool operator<(const PrimaryBlock& other) const;
-			bool operator>(const PrimaryBlock& other) const;
-			bool operator!=(const PrimaryBlock& other) const;
-			bool operator==(const PrimaryBlock& other) const;
+			// copy operator
+			BundleID(const BundleID &id);
+			BundleID& operator=(const BundleID &id);
 
 			std::string toString() const;
 
@@ -56,8 +54,33 @@ namespace dtn
 			dtn::data::Timestamp timestamp;
 			dtn::data::Number sequencenumber;
 
-			bool fragment;
-			dtn::data::Number offset;
+			dtn::data::Number fragmentoffset;
+
+			virtual dtn::data::Length getPayloadLength() const;
+			virtual void setPayloadLength(const dtn::data::Length &value);
+
+			virtual bool isFragment() const;
+			virtual void setFragment(bool val);
+
+			/**
+			 * Add this BundleID to the BloomFilter
+			 */
+			void addTo(ibrcommon::BloomFilter &bf) const;
+
+			/**
+			 * Check if this BundleID is part of the BloomFilter
+			 */
+			bool isIn(const ibrcommon::BloomFilter &bf) const;
+
+			/**
+			 * Generate a RAW data array of the BundleID
+			 */
+			size_t raw(unsigned char *data, size_t len) const;
+
+		private:
+			static const unsigned int RAW_LENGTH_MAX;
+			bool _fragment;
+			dtn::data::Length _payloadlength;
 		};
 	}
 }

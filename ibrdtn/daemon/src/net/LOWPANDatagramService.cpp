@@ -40,11 +40,12 @@ namespace dtn
 		 : _panid(panid), _iface(iface)
 		{
 			// set connection parameters
-			_params.max_msg_length = 114;
+			_params.max_msg_length = 115;
 			_params.max_seq_numbers = 4;
 			_params.flowcontrol = DatagramService::FLOW_STOPNWAIT;
 			_params.initial_timeout = 2000;		// initial timeout 2 seconds
 			_params.seq_check = true;			// no sequence number checks
+			_params.retry_limit = 5;
 
 			// convert the panid into a string
 			std::stringstream ss;
@@ -231,10 +232,18 @@ namespace dtn
 					// decode the header (1 byte)
 					// IGNORE: compat: 00
 
+					// reset flags to zero
+					flags = 0;
+
 					// type: 01 = DATA, 10 = DISCO, 11 = ACK, 00 = NACK
 					switch (tmp[0] & (0x03 << 4)) {
 					case (0x01 << 4):
 						type = DatagramConvergenceLayer::HEADER_SEGMENT;
+
+						// flags: 10 = first, 00 = middle, 01 = last, 11 = both
+						if (tmp[0] & 0x02) flags |= DatagramService::SEGMENT_FIRST;
+						if (tmp[0] & 0x01) flags |= DatagramService::SEGMENT_LAST;
+
 						break;
 					case (0x02 << 4):
 						type = DatagramConvergenceLayer::HEADER_BROADCAST;
@@ -244,16 +253,15 @@ namespace dtn
 						break;
 					default:
 						type = DatagramConvergenceLayer::HEADER_NACK;
+
+						// flags: 10 = temporary
+						if (tmp[0] & 0x02) flags |= DatagramService::NACK_TEMPORARY;
+
 						break;
 					}
 
 					// seq.no: xx (2 bit)
 					seqno = (tmp[0] & (0x03 << 2)) >> 2;
-
-					// flags: 10 = first, 00 = middle, 01 = last, 11 = both
-					flags = 0;
-					if (tmp[0] & 0x02) flags |= DatagramService::SEGMENT_FIRST;
-					if (tmp[0] & 0x01) flags |= DatagramService::SEGMENT_LAST;
 
 					if (ret > 1) {
 						// copy payload into the buffer
@@ -272,15 +280,6 @@ namespace dtn
 			}
 
 			return 0;
-		}
-
-		/**
-		 * Get the tag for this service used in discovery messages.
-		 * @return The tag as string.
-		 */
-		const std::string LOWPANDatagramService::getServiceTag() const
-		{
-			return "dgram:lowpan";
 		}
 
 		/**

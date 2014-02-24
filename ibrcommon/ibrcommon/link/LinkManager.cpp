@@ -29,7 +29,7 @@
 #include <typeinfo>
 #include <unistd.h>
 
-#if defined HAVE_LIBNL || HAVE_LIBNL3
+#if defined HAVE_LIBNL || HAVE_LIBNL2 || HAVE_LIBNL3
 #include "ibrcommon/link/NetLinkManager.h"
 #elif __WIN32__
 #include "ibrcommon/link/Win32LinkManager.h"
@@ -44,7 +44,7 @@ namespace ibrcommon
 
 	LinkManager& LinkManager::getInstance()
 	{
-#if defined HAVE_LIBNL || HAVE_LIBNL3
+#if defined HAVE_LIBNL || HAVE_LIBNL2 || HAVE_LIBNL3
 		static NetLinkManager lm;
 #elif __WIN32__
 		static Win32LinkManager lm;

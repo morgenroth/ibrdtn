@@ -21,6 +21,7 @@
 
 #include "Configuration.h"
 #include "security/SecurityKeyManager.h"
+#include <ibrdtn/data/DTNTime.h>
 #include <ibrcommon/Logger.h>
 #include <sstream>
 #include <iomanip>

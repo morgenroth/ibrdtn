@@ -28,7 +28,6 @@ namespace dtn
 {
 	namespace routing
 	{
-		BaseRouter *RoutingExtension::_router = NULL;
 		const std::string RoutingExtension::TAG = "RoutingExtension";
 
 		/**
@@ -42,7 +41,7 @@ namespace dtn
 
 		BaseRouter& RoutingExtension::operator*()
 		{
-			return *_router;
+			return dtn::core::BundleCore::getInstance().getRouter();
 		}
 
 		/**
@@ -55,10 +54,10 @@ namespace dtn
 			// acquire the transfer of this bundle, could throw already in transit or no resource left exception
 			{
 				// lock the list of neighbors
-				ibrcommon::MutexLock l(_router->getNeighborDB());
+				ibrcommon::MutexLock l((**this).getNeighborDB());
 
 				// get the neighbor entry for the next hop
-				NeighborDatabase::NeighborEntry &entry = _router->getNeighborDB().get(destination);
+				NeighborDatabase::NeighborEntry &entry = (**this).getNeighborDB().get(destination, true);
 
 				// acquire the transfer, could throw already in transit or no resource left exception
 				entry.acquireTransfer(meta);
@@ -69,21 +68,23 @@ namespace dtn
 				dtn::net::BundleTransfer transfer(destination, meta);
 
 				// transfer the bundle to the next hop
-				dtn::core::BundleCore::getInstance().transferTo(transfer);
+				dtn::core::BundleCore::getInstance().getConnectionManager().queue(transfer);
 
 				IBRCOMMON_LOGGER_DEBUG_TAG(RoutingExtension::TAG, 20) << "bundle " << meta.toString() << " queued for " << destination.getString() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const dtn::core::P2PDialupException&) {
 				// lock the list of neighbors
-				ibrcommon::MutexLock l(_router->getNeighborDB());
+				ibrcommon::MutexLock l((**this).getNeighborDB());
 
 				// get the neighbor entry for the next hop
-				NeighborDatabase::NeighborEntry &entry = _router->getNeighborDB().get(destination);
+				NeighborDatabase::NeighborEntry &entry = (**this).getNeighborDB().get(destination);
 
 				// release the transfer
 				entry.releaseTransfer(meta);
 
 				// and abort the query
 				throw NeighborDatabase::NeighborNotAvailableException();
+			} catch (const ibrcommon::Exception &e) {
+				// ignore any other error
 			}
 		}
 

@@ -101,26 +101,38 @@ namespace dtn
 			// routine checked for throw() on 15.02.2013
 			onConfigurationChanged(dtn::daemon::Configuration::getInstance());
 
+			// initialize connection manager
 			_connectionmanager.initialize();
+
+			// initialize wall clock
 			_clock.initialize();
+
+			// initialize discovery agent
+			_disco_agent.initialize();
 
 			// start a clock
 			_clock.startup();
+
+			// start discovery agent
+			_disco_agent.startup();
 		}
 
 		void BundleCore::componentDown() throw ()
 		{
 			ibrcommon::LinkManager::getInstance().removeEventListener(this);
 
+			// terminate discovery agent
+			_disco_agent.terminate();
+
+			// terminate connection manager
 			_connectionmanager.terminate();
+
+			// terminate wall clock
 			_clock.terminate();
 		}
 
 		void BundleCore::onConfigurationChanged(const dtn::daemon::Configuration &config) throw ()
 		{
-			// set the timezone
-			dtn::utils::Clock::setTimezone(config.getTimezone());
-
 			// set local eid
 			dtn::core::BundleCore::local = config.getNodename();
 			IBRCOMMON_LOGGER_TAG(BundleCore::TAG, info) << "Local node name: " << config.getNodename() << IBRCOMMON_LOGGER_ENDL;
@@ -256,6 +268,11 @@ namespace dtn
 			return _connectionmanager;
 		}
 
+		dtn::net::DiscoveryAgent& BundleCore::getDiscoveryAgent()
+		{
+			return _disco_agent;
+		}
+
 		void BundleCore::addRoute(const dtn::data::EID &destination, const dtn::data::EID &nexthop, const dtn::data::Timeout timeout)
 		{
 			dtn::routing::StaticRouteChangeEvent::raiseEvent(dtn::routing::StaticRouteChangeEvent::ROUTE_ADD, nexthop, destination, timeout);
@@ -280,7 +297,7 @@ namespace dtn
 				const dtn::data::MetaBundle &meta = queued.bundle;
 
 				// ignore fragments
-				if (meta.fragment) return;
+				if (meta.isFragment()) return;
 
 				// if the destination is equal this node...
 				if (meta.destination == local)
@@ -290,12 +307,12 @@ namespace dtn
 					bool delivered = false;
 
 					// process this bundle locally
-					dtn::data::Bundle bundle = getStorage().get(meta);
+					const dtn::data::Bundle bundle = getStorage().get(meta);
 
 					if (bundle.get(dtn::data::Bundle::APPDATA_IS_ADMRECORD))
 					try {
 						// check for a custody signal
-						dtn::data::PayloadBlock &payload = bundle.find<dtn::data::PayloadBlock>();
+						const dtn::data::PayloadBlock &payload = bundle.find<dtn::data::PayloadBlock>();
 
 						CustodySignalBlock custody;
 						custody.read(payload);
@@ -364,7 +381,8 @@ namespace dtn
 				const dtn::data::BundleID &id = aborted.getBundleID();
 
 				try {
-					const dtn::data::MetaBundle meta = this->getStorage().get(id);
+					// create meta bundle for futher processing
+					const dtn::data::MetaBundle meta = getStorage().info(id);
 
 					if (!(meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON)) return;
 
@@ -372,7 +390,7 @@ namespace dtn
 					if (meta.destination.sameHost(peer))
 					{
 						// bundle is not deliverable
-						dtn::core::BundlePurgeEvent::raise(meta, dtn::data::StatusReportBlock::NO_KNOWN_ROUTE_TO_DESTINATION_FROM_HERE);
+						dtn::core::BundlePurgeEvent::raise(meta, dtn::core::BundlePurgeEvent::NO_ROUTE_KNOWN);
 					}
 				} catch (const dtn::storage::NoBundleFoundException&) { };
 
@@ -396,7 +414,7 @@ namespace dtn
 
 		void BundleCore::validate(const dtn::data::MetaBundle &obj) const throw (dtn::data::Validator::RejectedException)
 		{
-			if (dtn::utils::Clock::isExpired(obj.expiretime)) {
+			if (dtn::utils::Clock::isExpired(obj)) {
 				// ... bundle is expired
 				IBRCOMMON_LOGGER_DEBUG_TAG("BundleCore", 35) << "bundle rejected: bundle has expired (" << obj.toString() << ")" << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::data::Validator::RejectedException("bundle is expired");
@@ -430,6 +448,13 @@ namespace dtn
 
 		void BundleCore::validate(const dtn::data::PrimaryBlock &p) const throw (dtn::data::Validator::RejectedException)
 		{
+			// check if the bundle is expired
+			if (dtn::utils::Clock::isExpired(p.timestamp, p.lifetime))
+			{
+				IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "bundle rejected: bundle has expired (" << p.toString() << ")" << IBRCOMMON_LOGGER_ENDL;
+				throw dtn::data::Validator::RejectedException("bundle is expired");
+			}
+
 			// if we do not forward bundles
 			if (!BundleCore::forwarding)
 			{
@@ -514,8 +539,8 @@ namespace dtn
 				throw dtn::data::Validator::RejectedException("bundle destination is none");
 			}
 
-			// check if the bundle is expired
-			if (dtn::utils::Clock::isExpired(b))
+			// check bundle expiration again for bundles with age block
+			if ((b.timestamp == 0) && dtn::utils::Clock::isExpired(b))
 			{
 				IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "bundle rejected: bundle has expired (" << b.toString() << ")" << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::data::Validator::RejectedException("bundle is expired");
@@ -525,7 +550,7 @@ namespace dtn
 			// do a fast security check
 			try {
 				dtn::security::SecurityManager::getInstance().fastverify(b);
-			} catch (const dtn::security::SecurityManager::VerificationFailedException &ex) {
+			} catch (const dtn::security::VerificationFailedException &ex) {
 				IBRCOMMON_LOGGER_DEBUG_TAG("BundleCore", 5) << "[bundle rejected] security checks failed, reason: " << ex.what() << ", bundle: " << b.toString() << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::data::Validator::RejectedException("security checks failed");
 			}
@@ -546,7 +571,7 @@ namespace dtn
 					if (e.get(dtn::data::Block::TRANSMIT_STATUSREPORT_IF_NOT_PROCESSED))
 					{
 						// transmit status report, because we can not process this block
-						dtn::core::BundleEvent::raise(b, BUNDLE_RECEIVED, dtn::data::StatusReportBlock::BLOCK_UNINTELLIGIBLE);
+						dtn::core::BundleEvent::raise(dtn::data::MetaBundle::create(b), BUNDLE_RECEIVED, dtn::data::StatusReportBlock::BLOCK_UNINTELLIGIBLE);
 					}
 				} catch (const std::bad_cast&) { }
 			}
@@ -572,7 +597,7 @@ namespace dtn
 					} catch (const dtn::security::SecurityManager::KeyMissingException&) {
 						// decrypt needed, but no key is available
 						IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "No key available for decrypt bundle." << IBRCOMMON_LOGGER_ENDL;
-					} catch (const dtn::security::SecurityManager::DecryptException &ex) {
+					} catch (const dtn::security::DecryptException &ex) {
 						// decrypt failed
 						IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "Decryption of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}

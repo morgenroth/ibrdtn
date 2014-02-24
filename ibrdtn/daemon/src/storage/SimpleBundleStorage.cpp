@@ -36,6 +36,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <cstring>
 #include <cerrno>
@@ -47,7 +48,7 @@ namespace dtn
 		const std::string SimpleBundleStorage::TAG = "SimpleBundleStorage";
 
 		SimpleBundleStorage::SimpleBundleStorage(const ibrcommon::File &workdir, const dtn::data::Length maxsize, const unsigned int buffer_limit)
-		 : BundleStorage(maxsize), _datastore(*this, workdir, buffer_limit), _metastore(*this)
+		 : BundleStorage(maxsize), _datastore(*this, workdir, buffer_limit), _metastore(this)
 		{
 		}
 
@@ -74,7 +75,7 @@ namespace dtn
 
 				// get the reference to the bundle
 				const dtn::data::Bundle &b = _pending_bundles[hash];
-				meta = dtn::data::MetaBundle(b);
+				meta = dtn::data::MetaBundle::create(b);
 			}
 
 			{
@@ -86,11 +87,8 @@ namespace dtn
 
 			ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READWRITE);
 
-			// decrement the storage size
-			freeSpace( _metastore.getSize(meta) );
-
-			// remove it
-			_metastore.remove(meta);
+			// remove bundle and decrement the storage size
+			freeSpace( _metastore.remove(meta) );
 		}
 
 		void SimpleBundleStorage::eventDataStorageRemoved(const dtn::storage::DataStorage::Hash &hash)
@@ -102,15 +100,12 @@ namespace dtn
 			for (MetaStorage::const_iterator it = _metastore.begin(); it != _metastore.end(); ++it)
 			{
 				const dtn::data::MetaBundle &meta = (*it);
-				DataStorage::Hash it_hash(meta.toString());
+				DataStorage::Hash it_hash(BundleContainer::createId(meta));
 
 				if (it_hash == hash)
 				{
-					// decrement the storage size
-					freeSpace( _metastore.getSize(meta) );
-
-					// remove it
-					_metastore.remove(meta);
+					// remove bundle and decrement the storage size
+					freeSpace( _metastore.remove(meta) );
 
 					return;
 				}
@@ -134,12 +129,25 @@ namespace dtn
 				// load a bundle into the storage
 				ds >> bundle;
 				
-				// allocate space for the bundle
-				dtn::data::Length bundle_size = static_cast<dtn::data::Length>( (*stream).tellg() );
-				allocSpace(bundle_size);
-
 				// extract meta data
-				dtn::data::MetaBundle meta(bundle);
+				const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(bundle);
+
+				// check if the hash is different
+				DataStorage::Hash hash2(BundleContainer::createId(meta));
+				if (hash != hash2)
+				{
+					// if hash does not match, remove old file
+					_datastore.remove(hash);
+
+					// and store bundle again
+					store(bundle);
+
+					return;
+				}
+
+				// allocate space for the bundle
+				const dtn::data::Length bundle_size = static_cast<dtn::data::Length>( (*stream).tellg() );
+				allocSpace(bundle_size);
 
 				// lock the bundle lists
 				ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READWRITE);
@@ -148,12 +156,12 @@ namespace dtn
 				_metastore.store(meta, bundle_size);
 
 				// raise bundle added event
-				eventBundleAdded(bundle);
+				eventBundleAdded(meta);
 
 				IBRCOMMON_LOGGER_DEBUG_TAG(SimpleBundleStorage::TAG, 10) << "bundle restored " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const std::exception&) {
 				// report this error to the console
-				IBRCOMMON_LOGGER_TAG(SimpleBundleStorage::TAG, error) << "Unable to restore bundle in file " << hash.value << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(SimpleBundleStorage::TAG, error) << "Unable to restore bundle from file " << hash.value << IBRCOMMON_LOGGER_ENDL;
 
 				// error while reading file
 				_datastore.remove(hash);
@@ -198,6 +206,7 @@ namespace dtn
 				// clear all data structures
 				ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READWRITE);
 				_metastore.clear();
+				clearSpace();
 			} catch (const ibrcommon::Exception &ex) {
 				IBRCOMMON_LOGGER_TAG("SimpleBundleStorage", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
@@ -261,7 +270,7 @@ namespace dtn
 				const dtn::data::MetaBundle &meta = (*iter);
 
 				// skip expired bundles
-				if ( dtn::utils::Clock::isExpired( meta.timestamp, meta.lifetime ) ) continue;
+				if ( dtn::utils::Clock::isExpired( meta ) ) continue;
 
 				if ( cb.shouldAdd(meta) )
 				{
@@ -284,10 +293,10 @@ namespace dtn
 				}
 
 				// search for the bundle in the meta storage
-				const dtn::data::MetaBundle &meta = _metastore.find(dtn::data::MetaBundle::mockUp(id));
+				const dtn::data::MetaBundle &meta = _metastore.find(dtn::data::MetaBundle::create(id));
 
 				// create a hash for the data storage
-				DataStorage::Hash hash(meta.toString());
+				DataStorage::Hash hash(BundleContainer::createId(meta));
 
 				// check pending bundles
 				{
@@ -350,7 +359,7 @@ namespace dtn
 		{
 			// get the bundle size
 			dtn::data::DefaultSerializer s(std::cout);
-			dtn::data::Length bundle_size = s.getLength(bundle);
+			const dtn::data::Length bundle_size = s.getLength(bundle);
 			
 			// allocate space for the bundle
 			allocSpace(bundle_size);
@@ -358,9 +367,10 @@ namespace dtn
 			// accept custody if requested
 			try {
 				// create meta data object
-				dtn::data::MetaBundle meta(bundle);
+				const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(bundle);
 
-				dtn::data::EID custodian = BundleStorage::acceptCustody(meta);
+				// accept custody
+				const dtn::data::EID custodian = BundleStorage::acceptCustody(meta);
 
 				// container for the custody accepted bundle
 				dtn::data::Bundle ca_bundle = bundle;
@@ -376,10 +386,26 @@ namespace dtn
 			}
 		}
 
+		bool SimpleBundleStorage::contains(const dtn::data::BundleID &id)
+		{
+			ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READONLY);
+
+			// search for the bundle in the meta storage
+			return _metastore.contains(id);
+		}
+
+		dtn::data::MetaBundle SimpleBundleStorage::info(const dtn::data::BundleID &id)
+		{
+			ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READONLY);
+
+			// search for the bundle in the meta storage
+			return _metastore.find(dtn::data::MetaBundle::create(id));
+		}
+
 		void SimpleBundleStorage::remove(const dtn::data::BundleID &id)
 		{
 			ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READONLY);
-			const dtn::data::MetaBundle &meta = _metastore.find(dtn::data::MetaBundle::mockUp(id));
+			const dtn::data::MetaBundle &meta = _metastore.find(dtn::data::MetaBundle::create(id));
 
 			// first check if the bundles is already marked as removed
 			if (!_metastore.isRemoved(meta))
@@ -388,7 +414,7 @@ namespace dtn
 				_metastore.markRemoved(meta);
 
 				// create the hash for data storage removal
-				DataStorage::Hash hash(meta.toString());
+				DataStorage::Hash hash(BundleContainer::createId(meta));
 
 				// create a background task for removing the bundle
 				_datastore.remove(hash);
@@ -401,7 +427,7 @@ namespace dtn
 		void SimpleBundleStorage::__store(const dtn::data::Bundle &bundle, const dtn::data::Length &bundle_size)
 		{
 			// create meta bundle object
-			const dtn::data::MetaBundle meta(bundle);
+			const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(bundle);
 
 			// create a new container and hash
 			std::auto_ptr<BundleContainer> bc(new BundleContainer(bundle));
@@ -443,7 +469,7 @@ namespace dtn
 				_metastore.markRemoved(meta);
 
 				// create the hash for data storage removal
-				DataStorage::Hash hash(meta.toString());
+				DataStorage::Hash hash(BundleContainer::createId(meta));
 
 				// create a background task for removing the bundle
 				_datastore.remove(hash);
@@ -465,18 +491,16 @@ namespace dtn
 				// remove item in the bundlelist
 				const dtn::data::MetaBundle &meta = (*iter);
 
-				DataStorage::Hash hash(meta.toString());
+				DataStorage::Hash hash(BundleContainer::createId(meta));
 
 				// create a background task for removing the bundle
 				_datastore.remove(hash);
 			}
-
-			_metastore.clear();
 		}
 
 		void SimpleBundleStorage::eventBundleExpired(const dtn::data::MetaBundle &b) throw ()
 		{
-			DataStorage::Hash hash(b.toString());
+			DataStorage::Hash hash(BundleContainer::createId(b));
 
 			// create a background task for removing the bundle
 			_datastore.remove(hash);
@@ -498,9 +522,24 @@ namespace dtn
 		SimpleBundleStorage::BundleContainer::~BundleContainer()
 		{ }
 
-		std::string SimpleBundleStorage::BundleContainer::getKey() const
+		std::string SimpleBundleStorage::BundleContainer::getId() const
 		{
-			return dtn::data::BundleID(_bundle).toString();
+			return createId(_bundle);
+		}
+
+		std::string SimpleBundleStorage::BundleContainer::createId(const dtn::data::BundleID &id)
+		{
+			std::stringstream ss_hash, ss_raw;
+			ss_raw << id;
+
+			int c = 0xff & ss_raw.get();
+			while (ss_raw.good())
+			{
+				ss_hash << std::hex << std::setw( 2 ) << std::setfill( '0' ) << c;
+				c = 0xff & ss_raw.get();
+			}
+
+			return ss_hash.str();
 		}
 
 		std::ostream& SimpleBundleStorage::BundleContainer::serialize(std::ostream &stream)

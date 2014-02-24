@@ -10,6 +10,13 @@
         android:label="@string/permlab_dtnCommunication"
         android:permissionGroup="android.permission-group.NETWORK"
         android:protectionLevel="normal" />
+    
+    <permission
+        android:name="de.tubs.ibr.dtn.permission.DTN_CONTROL"
+        android:description="@string/permdesc_dtnControl"
+        android:label="@string/permlab_dtnControl"
+        android:permissionGroup="android.permission-group.NETWORK"
+        android:protectionLevel="dangerous" />
 
 	<permission android:name="de.tubs.ibr.dtn.permission.DTN_SERVER"
 	        android:label="@string/permlab_dtnCommunicationServer"
@@ -34,16 +41,16 @@
 
     <uses-sdk
         android:minSdkVersion="9"
-        android:targetSdkVersion="18" />
+        android:targetSdkVersion="19" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>
 
     <application
         android:allowBackup="true"
-        android:icon="@drawable/icon"
+        android:icon="@drawable/ic_launcher"
         android:label="@string/app_name" >
         <activity
             android:name=".daemon.Preferences"
-            android:icon="@drawable/icon"
+            android:icon="@drawable/ic_launcher"
             android:label="@string/app_name"
             android:uiOptions="splitActionBarWhenNarrow" >
             <intent-filter>
@@ -63,11 +70,26 @@
                 <action android:name="de.tubs.ibr.dtn.DTNService" />
             </intent-filter>
         </service>
+
+        <service
+            android:name=".service.DaemonManager"
+            android:permission="de.tubs.ibr.dtn.permission.DTN_CONTROL"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="de.tubs.ibr.dtn.DtnManager" />
+            </intent-filter>
+        </service>
         
         <activity
             android:name="de.tubs.ibr.dtn.daemon.NeighborActivity"
             android:icon="@drawable/ic_neighbors"
             android:label="@string/list_neighbors" />
+        <activity
+            android:name="de.tubs.ibr.dtn.daemon.api.SelectNeighborActivity"
+            android:icon="@drawable/ic_neighbors"
+            android:label="@string/select_neighbor"
+            android:permission="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"
+            android:exported="true" />
         <activity
             android:name=".daemon.LogActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"

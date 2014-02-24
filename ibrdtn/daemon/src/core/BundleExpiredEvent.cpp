@@ -47,13 +47,13 @@ namespace dtn
 		void BundleExpiredEvent::raise(const dtn::data::Bundle &bundle)
 		{
 			// raise the new event
-			dtn::core::EventDispatcher<BundleExpiredEvent>::raise( new BundleExpiredEvent(bundle) );
+			dtn::core::EventDispatcher<BundleExpiredEvent>::queue( new BundleExpiredEvent(bundle) );
 		}
 
 		void BundleExpiredEvent::raise(const dtn::data::BundleID &bundle)
 		{
 			// raise the new event
-			dtn::core::EventDispatcher<BundleExpiredEvent>::raise( new BundleExpiredEvent(bundle) );
+			dtn::core::EventDispatcher<BundleExpiredEvent>::queue( new BundleExpiredEvent(bundle) );
 		}
 
 		const string BundleExpiredEvent::getName() const
@@ -64,6 +64,11 @@ namespace dtn
 		std::string BundleExpiredEvent::getMessage() const
 		{
 			return "Bundle has been expired " + _bundle.toString();
+		}
+
+		const dtn::data::BundleID& BundleExpiredEvent::getBundle() const
+		{
+			return _bundle;
 		}
 
 		const string BundleExpiredEvent::className = "BundleExpiredEvent";

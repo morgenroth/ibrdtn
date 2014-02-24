@@ -25,7 +25,6 @@
 #include "Configuration.h"
 #include <ibrdtn/security/SecurityKey.h>
 #include <ibrdtn/data/EID.h>
-#include <ibrdtn/data/DTNTime.h>
 #include <ibrdtn/data/BundleString.h>
 #include <ibrdtn/data/SDNV.h>
 #include <ibrcommon/data/File.h>
@@ -39,6 +38,8 @@ namespace dtn
 	{
 		class SecurityKeyManager : public dtn::daemon::Configuration::OnChangeListener
 		{
+			static const std::string TAG;
+
 		public:
 			class KeyNotFoundException : public ibrcommon::Exception
 			{
@@ -48,8 +49,6 @@ namespace dtn
 
 				virtual ~KeyNotFoundException() throw() {};
 			};
-
-			static const std::string TAG;
 
 			static SecurityKeyManager& getInstance();
 

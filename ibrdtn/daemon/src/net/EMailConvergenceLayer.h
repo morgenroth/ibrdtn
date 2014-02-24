@@ -27,7 +27,7 @@
 
 #include "core/EventReceiver.h"
 #include "net/ConvergenceLayer.h"
-#include "net/DiscoveryServiceProvider.h"
+#include "net/DiscoveryBeaconHandler.h"
 #include "net/EMailSmtpService.h"
 #include "net/EMailImapService.h"
 
@@ -37,8 +37,8 @@ namespace dtn
 	{
 		class EMailConvergenceLayer : public dtn::net::ConvergenceLayer,
 			public dtn::core::EventReceiver,
-			public dtn::net::DiscoveryServiceProvider,
-			public dtn::daemon::IndependentComponent
+			public dtn::net::DiscoveryBeaconHandler,
+			public dtn::daemon::IntegratedComponent
 		{
 		public:
 			/**
@@ -63,9 +63,9 @@ namespace dtn
 			 * This method updates the given values for discovery service.
 			 * It publishes the email address of the EMail Convergence Layer
 			 */
-			void update(const ibrcommon::vinterface&,
-					DiscoveryAnnouncement &announcement)
-					throw (DiscoveryServiceProvider::NoServiceHereException);
+			void onAdvertiseBeacon(const ibrcommon::vinterface&,
+					DiscoveryBeacon &beacon)
+					throw (DiscoveryBeaconHandler::NoServiceHereException);
 
 			/**
 			 * Returns the discovery protocol type:
@@ -98,7 +98,6 @@ namespace dtn
 			void __cancellation() throw ();
 
 			void componentUp() throw ();
-			void componentRun() throw ();
 			void componentDown() throw ();
 
 		private:

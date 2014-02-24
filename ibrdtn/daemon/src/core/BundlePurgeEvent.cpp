@@ -26,7 +26,7 @@ namespace dtn
 {
 	namespace core
 	{
-		BundlePurgeEvent::BundlePurgeEvent(const dtn::data::MetaBundle &meta, dtn::data::StatusReportBlock::REASON_CODE r)
+		BundlePurgeEvent::BundlePurgeEvent(const dtn::data::MetaBundle &meta, REASON_CODE r)
 		 : bundle(meta), reason(r)
 		{
 		}
@@ -35,10 +35,10 @@ namespace dtn
 		{
 		}
 
-		void BundlePurgeEvent::raise(const dtn::data::MetaBundle &meta, dtn::data::StatusReportBlock::REASON_CODE reason)
+		void BundlePurgeEvent::raise(const dtn::data::MetaBundle &meta, REASON_CODE reason)
 		{
 			// raise the new event
-			dtn::core::EventDispatcher<BundlePurgeEvent>::raise( new BundlePurgeEvent(meta, reason) );
+			dtn::core::EventDispatcher<BundlePurgeEvent>::queue( new BundlePurgeEvent(meta, reason) );
 		}
 
 		const std::string BundlePurgeEvent::getName() const

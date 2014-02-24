@@ -23,14 +23,11 @@
 #define DATAGRAMCONVERGENCELAYER_H_
 
 #include "Component.h"
-#include "core/EventReceiver.h"
+#include "net/DiscoveryBeaconHandler.h"
 #include "net/DatagramService.h"
 #include "net/DatagramConnection.h"
 #include "net/ConvergenceLayer.h"
-#include "net/DiscoveryAgent.h"
-#include "net/DiscoveryServiceProvider.h"
-
-#include <ibrcommon/thread/RWMutex.h>
+#include "core/EventReceiver.h"
 
 #include <list>
 
@@ -38,12 +35,12 @@ namespace dtn
 {
 	namespace net
 	{
-		class DatagramConvergenceLayer : public ConvergenceLayer, public dtn::daemon::IndependentComponent,
-			public EventReceiver, public DatagramConnectionCallback
+		class DatagramConvergenceLayer : public dtn::net::ConvergenceLayer, public dtn::daemon::IndependentComponent,
+			public dtn::net::DatagramConnectionCallback, public DiscoveryBeaconHandler, public dtn::core::EventReceiver
 		{
-		public:
 			static const std::string TAG;
 
+		public:
 			enum HEADER_FLAGS
 			{
 				HEADER_UNKOWN = 0,
@@ -55,6 +52,11 @@ namespace dtn
 
 			DatagramConvergenceLayer(DatagramService *ds);
 			virtual ~DatagramConvergenceLayer();
+
+			/**
+			 * method to receive global events
+			 */
+			void raiseEvent(const dtn::core::Event *evt) throw ();
 
 			/**
 			 * Returns the protocol identifier
@@ -75,20 +77,17 @@ namespace dtn
 			 */
 			virtual const std::string getName() const;
 
-			/**
-			 * Public method for event callbacks
-			 * @param evt
-			 */
-			virtual void raiseEvent(const dtn::core::Event *evt) throw ();
+			virtual void resetStats();
+
+			virtual void getStats(ConvergenceLayer::stats_data &data) const;
+
+			void onAdvertiseBeacon(const ibrcommon::vinterface &iface, const DiscoveryBeacon &beacon) throw ();
 
 		protected:
 			virtual void componentUp() throw ();
 			virtual void componentRun() throw ();
 			virtual void componentDown() throw ();
 			void __cancellation() throw ();
-
-			void sendAnnoucement();
-
 			/**
 			 * callback send for connections
 			 * @param connection
@@ -100,8 +99,15 @@ namespace dtn
 
 			void callback_ack(DatagramConnection &connection, const unsigned int &seqno, const std::string &destination) throw (DatagramException);
 
+			void callback_nack(DatagramConnection &connection, const unsigned int &seqno, const std::string &destination) throw (DatagramException);
+
 			void connectionUp(const DatagramConnection *conn);
 			void connectionDown(const DatagramConnection *conn);
+
+			void reportSuccess(size_t retries, double rtt);
+			void reportFailure();
+
+			void receive() throw ();
 
 		private:
 			class ConnectionNotAvailableException : public ibrcommon::Exception {
@@ -115,6 +121,101 @@ namespace dtn
 			};
 
 			/**
+			 * The receiver is a thread and receives data from the
+			 * datagram service and generates actions to process.
+			 */
+			class Receiver : public ibrcommon::JoinableThread {
+			public:
+				Receiver(DatagramConvergenceLayer &cl);
+				virtual ~Receiver();
+
+				void init() throw ();
+
+				void run() throw ();
+				void __cancellation() throw ();
+
+			private:
+				DatagramConvergenceLayer &_cl;
+			};
+
+			class Action {
+			public:
+				Action() {};
+				virtual ~Action() {};
+			};
+
+			class SegmentReceived : public Action {
+			public:
+				SegmentReceived(size_t maxlen) : seqno(0), flags(0), data(maxlen), len(0) {};
+				virtual ~SegmentReceived() {};
+
+				std::string address;
+				unsigned int seqno;
+				char flags;
+				std::vector<char> data;
+				size_t len;
+			};
+
+			class BeaconReceived : public Action {
+			public:
+				BeaconReceived() {};
+				virtual ~BeaconReceived() {};
+
+				std::string address;
+				DiscoveryBeacon data;
+			};
+
+			class AckReceived : public Action {
+			public:
+				AckReceived() : seqno(0) {};
+				virtual ~AckReceived() {};
+
+				std::string address;
+				unsigned int seqno;
+			};
+
+			class NackReceived : public Action {
+			public:
+				NackReceived() : seqno(0), temporary(false) {};
+				virtual ~NackReceived() {};
+
+				std::string address;
+				unsigned int seqno;
+				bool temporary;
+			};
+
+			class QueueBundle : public Action {
+			public:
+				QueueBundle(const BundleTransfer &bt) : job(bt) {};
+				virtual ~QueueBundle() {};
+
+				BundleTransfer job;
+				std::string uri;
+			};
+
+			class ConnectionDown : public Action {
+			public:
+				ConnectionDown() {};
+				virtual ~ConnectionDown() {};
+
+				std::string id;
+			};
+
+			class NodeGone : public Action {
+			public:
+				NodeGone() {};
+				virtual ~NodeGone() {};
+
+				dtn::data::EID eid;
+			};
+
+			class Shutdown : public Action {
+			public:
+				Shutdown() {};
+				virtual ~Shutdown() {};
+			};
+
+			/**
 			 * Returns a connection matching the given identifier.
 			 * To use this method securely a lock on _cond_connections is required.
 			 *
@@ -123,28 +224,34 @@ namespace dtn
 			 */
 			DatagramConnection& getConnection(const std::string &identifier, bool create) throw (ConnectionNotAvailableException);
 
+			// associated datagram service
 			DatagramService *_service;
 
+			// this thread receives data from the datagram service
+			// and generates actions to process
+			Receiver _receiver;
+
+			// actions are queued here until they get processed
+			ibrcommon::Queue<Action*> _action_queue;
+
+			// on any send operation this mutex should be locked
 			ibrcommon::Mutex _send_lock;
 
 			// conditional to protect _active_conns
 			ibrcommon::Conditional _cond_connections;
 
-			// this lock is used to protect a connection reference from
-			// being deleted while using it
-			ibrcommon::RWMutex _mutex_connection;
-
 			typedef std::list<DatagramConnection*> connection_list;
 			connection_list _connections;
-
-			// the number of active connections
-			// (lock _cond_connections while modifying it)
-			int _active_conns;
 
 			// false, if the main thread is cancelled
 			bool _running;
 
-			uint16_t _discovery_sn;
+			// stats variables
+			size_t _stats_in;
+			size_t _stats_out;
+			double _stats_rtt;
+			size_t _stats_retries;
+			size_t _stats_failure;
 		};
 	} /* namespace data */
 } /* namespace dtn */

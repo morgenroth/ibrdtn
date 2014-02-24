@@ -62,17 +62,17 @@ namespace dtn
 
 					// use payloadlength for not fragmented bundles and
 					// appdatalength for fragments
-					dtn::data::Number complete_payloadlength_lhs, complete_payloadlength_rhs;
+					dtn::data::Length complete_payloadlength_lhs, complete_payloadlength_rhs;
 
-					if (lhs.fragment)
-						complete_payloadlength_lhs = lhs.appdatalength;
+					if (lhs.isFragment())
+						complete_payloadlength_lhs = lhs.appdatalength.get<dtn::data::Length>();
 					else
-						complete_payloadlength_lhs = lhs.payloadlength;
+						complete_payloadlength_lhs = lhs.getPayloadLength();
 
-					if (rhs.fragment)
-						complete_payloadlength_rhs = rhs.appdatalength;
+					if (rhs.isFragment())
+						complete_payloadlength_rhs = rhs.appdatalength.get<dtn::data::Length>();
 					else
-						complete_payloadlength_rhs = rhs.payloadlength;
+						complete_payloadlength_rhs = rhs.getPayloadLength();
 
 
 					if (complete_payloadlength_lhs < complete_payloadlength_rhs)

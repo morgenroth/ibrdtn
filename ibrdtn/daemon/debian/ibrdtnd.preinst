@@ -46,7 +46,7 @@ stop_daemon
 
 # creating dtnd user if he isn't already there
 if ! getent passwd ${DTND_USER} >/dev/null; then
-	# Adding system user: mysql.
+	# Adding system user: dtnd.
 	adduser \
 	  --system \
           --disabled-login \

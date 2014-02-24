@@ -56,9 +56,9 @@ namespace ibrcommon
 		getTime(diff);
 
 		// merge seconds and nanoseconds
-		double delay_us = ((double)diff.tv_sec * 1000.0) + ((double)diff.tv_nsec / 1000000.0);
+		double delay_ms = ((double)diff.tv_sec * 1000.0) + ((double)diff.tv_nsec / 1000000.0);
 
-		return delay_us;
+		return delay_ms;
 	}
 
 	double TimeMeasurement::getMicroseconds() const

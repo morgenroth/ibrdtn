@@ -35,6 +35,8 @@ import android.view.MenuItem;
 import android.widget.AbsListView;
 import android.widget.ListView;
 import de.tubs.ibr.dtn.R;
+import de.tubs.ibr.dtn.daemon.data.LogListAdapter;
+import de.tubs.ibr.dtn.daemon.data.LogLoader;
 
 public class LogListFragment extends ListFragment implements
         LoaderManager.LoaderCallbacks<LogMessage> {

@@ -38,9 +38,9 @@ namespace dtn
 	{
 		class Registration
 		{
-		public:
 			static const std::string TAG;
 
+		public:
 			enum NOTIFY_CALL
 			{
 				NOTIFY_BUNDLE_AVAILABLE = 0,
@@ -85,6 +85,12 @@ namespace dtn
 			 * constructor of the registration
 			 */
 			Registration();
+
+			/**
+			 * create a registration with a pre-defined handle
+			 * (used to resume a session with an external manager)
+			 */
+			Registration(const std::string &handle);
 
 			/**
 			 * destructor of the registration
@@ -310,9 +316,12 @@ namespace dtn
 
 			ibrcommon::Queue<NOTIFY_CALL> _notify_queue;
 
-			static const std::string alloc_handle();
+			static const std::string gen_handle();
+			static const std::string& alloc_handle();
+			static const std::string& alloc_handle(const std::string &handle);
 			static void free_handle(const std::string &handle);
 
+			static ibrcommon::Mutex _handle_lock;
 			static std::set<std::string> _handles;
 
 			bool _persistent;

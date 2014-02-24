@@ -44,9 +44,9 @@ void DataStorageTest::testHashTest()
 		DataContainer() {};
 		~DataContainer() {};
 
-		std::string getKey() const
+		std::string getId() const
 		{
-			return "[123456789.12] dtn://test/tester";
+			return "5b3132333435363738392e31325d2064746e3a2f2f746573742f746573746572";
 		}
 
 		std::ostream& serialize(std::ostream &stream)
@@ -102,9 +102,9 @@ void DataStorageTest::testStoreTest()
 		DataContainer() {};
 		~DataContainer() {};
 
-		std::string getKey() const
+		std::string getId() const
 		{
-			return "[123456789.12] dtn://test/tester";
+			return "5b3132333435363738392e31325d2064746e3a2f2f746573742f746573746572";
 		}
 
 		std::ostream& serialize(std::ostream &stream)
@@ -181,9 +181,9 @@ void DataStorageTest::testRemoveTest()
 		DataContainer() {};
 		~DataContainer() {};
 
-		std::string getKey() const
+		std::string getId() const
 		{
-			return "[123456789.12] dtn://test/tester";
+			return "5b3132333435363738392e31325d2064746e3a2f2f746573742f746573746572";
 		}
 
 		std::ostream& serialize(std::ostream &stream)
@@ -272,7 +272,7 @@ void DataStorageTest::testStressTest()
 
 		~DataContainer() {};
 
-		std::string getKey() const
+		std::string getId() const
 		{
 			std::stringstream ss; ss << "datastorage-" << _id;
 			return ss.str();

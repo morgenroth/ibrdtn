@@ -19,6 +19,7 @@
  *
  */
 
+#include "config.h"
 #include "routing/NodeHandshakeExtension.h"
 #include "routing/NodeHandshakeEvent.h"
 
@@ -26,10 +27,15 @@
 #include "net/ConnectionEvent.h"
 #include "core/BundleCore.h"
 #include "core/BundleEvent.h"
+#include "core/EventDispatcher.h"
 
 #include <ibrdtn/data/AgeBlock.h>
 #include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <ibrdtn/utils/Clock.h>
+
+#ifdef WITH_COMPRESSION
+#include <ibrdtn/data/CompressedPayloadBlock.h>
+#endif
 
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrcommon/thread/RWLock.h>
@@ -99,7 +105,7 @@ namespace dtn
 				 */
 				NeighborDatabase &db = (**this).getNeighborDB();
 				ibrcommon::MutexLock l(db);
-				db.create(source.getNode()).update(filter, answer.getLifetime());
+				db.get(source.getNode()).update(filter, answer.getLifetime());
 			} catch (std::exception&) { };
 
 			try {
@@ -137,7 +143,7 @@ namespace dtn
 							return false;
 
 						// select the bundle if it is in the filter
-						return _filter.contains(meta.toString());
+						return meta.isIn(_filter);
 					};
 
 					const ibrcommon::BloomFilter &_filter;
@@ -178,7 +184,17 @@ namespace dtn
 			_endpoint.query(eid);
 		}
 
-		void NodeHandshakeExtension::notify(const dtn::core::Event *evt) throw ()
+		void NodeHandshakeExtension::componentUp() throw ()
+		{
+			dtn::core::EventDispatcher<dtn::core::NodeEvent>::add(this);
+		}
+
+		void NodeHandshakeExtension::componentDown() throw ()
+		{
+			dtn::core::EventDispatcher<dtn::core::NodeEvent>::remove(this);
+		}
+
+		void NodeHandshakeExtension::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			// If a new neighbor comes available, send him a request for the summary vector
 			// If a neighbor went away we can free the stored summary vector
@@ -234,13 +250,18 @@ namespace dtn
 			// create a new request for the summary vector of the neighbor
 			NodeHandshake request(NodeHandshake::HANDSHAKE_REQUEST);
 
+#ifdef WITH_COMPRESSION
+			// request compressed answer
+			request.addRequest(NodeHandshakeItem::REQUEST_COMPRESSED_ANSWER);
+#endif
+
 			// walk through all extensions to generate a request
 			(*_callback).requestHandshake(origin, request);
 
 			IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 15) << "handshake query from " << origin.getString() << ": " << request.toString() << IBRCOMMON_LOGGER_ENDL;
 
-			// create a new bundle
-			dtn::data::Bundle req;
+			// create a new bundle with a zero timestamp (+age block)
+			dtn::data::Bundle req(true);
 
 			// set the source of the bundle
 			req.source = getWorkerURI();
@@ -272,9 +293,6 @@ namespace dtn
 			dtn::data::ScopeControlHopLimitBlock &schl = req.push_front<dtn::data::ScopeControlHopLimitBlock>();
 			schl.setLimit(1);
 
-			// add an age block (to prevent expiring due to wrong clocks)
-			req.push_front<dtn::data::AgeBlock>();
-
 			// send the bundle
 			transmit(req);
 		}
@@ -305,8 +323,8 @@ namespace dtn
 
 				IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 15) << "handshake reply to " << bundle.source.getString() << ": " << response.toString() << IBRCOMMON_LOGGER_ENDL;
 
-				// create a new bundle
-				dtn::data::Bundle answer;
+				// create a new bundle with a zero timestamp (+age block)
+				dtn::data::Bundle answer(true);
 
 				// set the source of the bundle
 				answer.source = _endpoint.getWorkerURI();
@@ -335,8 +353,17 @@ namespace dtn
 				dtn::data::ScopeControlHopLimitBlock &schl = answer.push_front<dtn::data::ScopeControlHopLimitBlock>();
 				schl.setLimit(1);
 
-				// add an age block (to prevent expiring due to wrong clocks)
-				answer.push_front<dtn::data::AgeBlock>();
+#ifdef WITH_COMPRESSION
+				// compress bundle if requested
+				if (handshake.hasRequest(NodeHandshakeItem::REQUEST_COMPRESSED_ANSWER))
+				{
+					try {
+						dtn::data::CompressedPayloadBlock::compress(answer, dtn::data::CompressedPayloadBlock::COMPRESSION_ZLIB);
+					} catch (const ibrcommon::Exception &ex) {
+						IBRCOMMON_LOGGER_TAG(TAG, warning) << "compression of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					};
+				}
+#endif
 
 				// transfer the bundle to the neighbor
 				_endpoint.send(answer);

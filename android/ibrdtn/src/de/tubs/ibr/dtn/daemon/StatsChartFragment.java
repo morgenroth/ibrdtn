@@ -2,6 +2,7 @@ package de.tubs.ibr.dtn.daemon;
 
 import java.util.ArrayList;
 
+import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -14,12 +15,14 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.util.Log;
 import android.util.SparseArray;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 
+import com.jjoe64.graphview.CustomLabelFormatter;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.GraphView.GraphViewData;
 import com.jjoe64.graphview.GraphViewSeries;
@@ -28,13 +31,15 @@ import com.jjoe64.graphview.LineGraphView;
 
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.R;
+import de.tubs.ibr.dtn.daemon.data.CurrentStatsLoader;
+import de.tubs.ibr.dtn.daemon.data.StatsListAdapter;
+import de.tubs.ibr.dtn.daemon.data.StatsLoader;
 import de.tubs.ibr.dtn.service.DaemonService;
 import de.tubs.ibr.dtn.service.DaemonService.LocalDTNService;
 import de.tubs.ibr.dtn.stats.StatsEntry;
-import de.tubs.ibr.dtn.stats.StatsLoader;
 import de.tubs.ibr.dtn.stats.StatsUtils;
 
-public abstract class StatsChartFragment extends Fragment {
+public abstract class StatsChartFragment extends Fragment implements CustomLabelFormatter {
     
     // The loader's unique id. Loader ids are specific to the Activity or
     // Fragment in which they reside.
@@ -102,20 +107,8 @@ public abstract class StatsChartFragment extends Fragment {
         // convert data into an structured array
         StatsUtils.convertData(getActivity(), stats, data, mAdapter);
         
-        // get min/max timestamp of data-set
-        Double min_timestamp = 0.0;
-        Double max_timestamp = 0.0;
-        
-        for (ArrayList<GraphViewData> dataset : data) {
-            for (GraphViewData d : dataset) {
-                if ((min_timestamp == 0) || (min_timestamp > d.valueX)) min_timestamp = d.valueX;
-                if (max_timestamp < d.valueX) max_timestamp = d.valueX;
-            }
-        }
-        
-        // generate timestamp labels
-        ArrayList<String> labels = new ArrayList<String>();
-        StatsUtils.generateTimestampLabels(getActivity(), min_timestamp, max_timestamp, labels);
+        // get line width in pixels
+        Float lineWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2, getActivity().getResources().getDisplayMetrics());
         
         // add one series for each data-set
         for (int i = 0; i < charts_count; i++) {
@@ -124,7 +117,8 @@ public abstract class StatsChartFragment extends Fragment {
             GraphViewSeries gs = mData.get(i);
             
             if (gs == null) {
-                GraphViewSeriesStyle style = new GraphViewSeriesStyle(getResources().getColor(mAdapter.getDataColor(i)), 5);
+                GraphViewSeriesStyle style = new GraphViewSeriesStyle(getResources().getColor(mAdapter.getDataColor(i)), lineWidth.intValue());
+                
                 String text = StatsListAdapter.getRowTitle(getActivity(), i);
                 gs = new GraphViewSeries(text, style, dataset.toArray(new GraphViewData[dataset.size()]));
                 mGraphView.addSeries(gs);
@@ -136,9 +130,15 @@ public abstract class StatsChartFragment extends Fragment {
                 gs.resetData(dataset.toArray(new GraphViewData[dataset.size()]));
             }
         }
-        
-        // change the horizontal labels
-        mGraphView.setHorizontalLabels(labels.toArray(new String[labels.size()]));
+    }
+    
+    @SuppressLint("DefaultLocale")
+    @Override
+    public String formatLabel(double value, boolean isValueX) {
+        if (isValueX) {
+            return StatsUtils.formatTimeStampString(getActivity(), Double.valueOf(value * 1000.0).longValue());
+        }
+        return String.format("%.2f", value);
     }
     
     private LoaderManager.LoaderCallbacks<StatsEntry> mStatsLoader = new LoaderManager.LoaderCallbacks<StatsEntry>() {
@@ -179,6 +179,8 @@ public abstract class StatsChartFragment extends Fragment {
         
         // create a new LineGraphView
         mGraphView = new LineGraphView(getActivity(), "");
+        mGraphView.getGraphViewStyle().setTextSize(getResources().getDimension(R.dimen.stats_axis_text));
+        mGraphView.setCustomLabelFormatter(this);
         mChartView.addView(mGraphView);
         
         return v;

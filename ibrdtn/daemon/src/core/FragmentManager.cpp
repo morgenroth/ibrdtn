@@ -23,7 +23,6 @@
 #include "core/EventDispatcher.h"
 #include "core/FragmentManager.h"
 #include "core/BundleCore.h"
-#include "core/TimeEvent.h"
 #include "core/BundlePurgeEvent.h"
 #include "net/BundleReceivedEvent.h"
 #include "routing/QueueBundleEvent.h"
@@ -70,6 +69,9 @@ namespace dtn
 
 		void FragmentManager::componentRun() throw ()
 		{
+			// get reference to the storage
+			dtn::storage::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
+
 			// TODO: scan storage for fragments to reassemble on startup
 
 			dtn::storage::BundleResultList list;
@@ -80,22 +82,27 @@ namespace dtn
 				{
 					dtn::data::MetaBundle meta = _incoming.getnpop(true);
 
+					// skip merge if complete bundle is already in the storage
+					dtn::data::BundleID origin(meta);
+					origin.setFragment(false);
+					if (storage.contains(origin)) continue;
+
 					// search for matching bundles
 					list.clear();
 					search(meta, list);
 
 					IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 20) << "found " << list.size() << " fragments similar to bundle " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
-					// TODO: drop fragments if other fragments available containing the same payload
+					// TODO: drop fragments if other fragments available containing the same payload or larger payload
 
 					// check first if all fragment are available
 					std::set<BundleMerger::Chunk> chunks;
 					for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 					{
 						const dtn::data::MetaBundle &m = (*iter);
-						if (meta.payloadlength > 0)
+						if (meta.getPayloadLength() > 0)
 						{
-							BundleMerger::Chunk chunk(m.offset.get<dtn::data::Length>(), m.payloadlength.get<dtn::data::Length>());
+							BundleMerger::Chunk chunk(m.fragmentoffset.get<dtn::data::Length>(), m.getPayloadLength());
 							chunks.insert(chunk);
 						}
 					}
@@ -110,13 +117,13 @@ namespace dtn
 					{
 						const dtn::data::MetaBundle &meta = (*iter);
 
-						if (meta.payloadlength > 0)
+						if (meta.getPayloadLength() > 0)
 						{
 							IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 20) << "fragment: " << (*iter).toString() << IBRCOMMON_LOGGER_ENDL;
 
 							try {
 								// load bundle from storage
-								dtn::data::Bundle bundle = dtn::core::BundleCore::getInstance().getStorage().get(*iter);
+								const dtn::data::Bundle bundle = dtn::core::BundleCore::getInstance().getStorage().get(*iter);
 
 								// merge the bundle
 								c << bundle;
@@ -136,9 +143,9 @@ namespace dtn
 						dtn::net::BundleReceivedEvent::raise(dtn::core::BundleCore::local, merged, true);
 
 						// delete all fragments of the merged bundle
-						for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
+						if (merged.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
 						{
-							if ((*iter).get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+							for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 							{
 								dtn::core::BundlePurgeEvent::raise(*iter);
 							}
@@ -156,13 +163,13 @@ namespace dtn
 			join();
 		}
 
-		void FragmentManager::raiseEvent(const Event *evt) throw ()
+		void FragmentManager::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			try {
 				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);
 
 				// process fragments
-				if (queued.bundle.fragment) signal(queued.bundle);
+				if (queued.bundle.isFragment()) signal(queued.bundle);
 			} catch (const std::bad_cast&) {}
 		}
 
@@ -198,7 +205,7 @@ namespace dtn
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
 					// fragments only
-					if (!meta.fragment) return false;
+					if (!meta.isFragment()) return false;
 
 					// with the same unique bundle id
 					if (meta.source != _similar.source) return false;
@@ -315,6 +322,18 @@ namespace dtn
 				if (payloadLength <= maxPayloadLength)
 					throw FragmentationNotNecessaryException("Fragmentation not necessary. The payload block is smaller than the max. payload length.");
 
+				// copy the origin bundle as template for the new fragment
+				Bundle fragment = bundle;
+
+				// clear all the blocks
+				fragment.clear();
+
+				// set bundle is fragment flag
+				fragment.set(dtn::data::Bundle::FRAGMENT, true);
+
+				// set application data length
+				fragment.appdatalength = payloadLength;
+
 				ibrcommon::BLOB::Reference ref = payloadBlock.getBLOB();
 				ibrcommon::BLOB::iostream stream = ref.iostream();
 
@@ -323,17 +342,8 @@ namespace dtn
 
 				while (!(*stream).eof() && (payloadLength > offset))
 				{
-					// copy the origin bundle as template for the new fragment
-					Bundle fragment = bundle;
-
 					// clear all the blocks
 					fragment.clear();
-
-					// set bundle is fragment flag
-					fragment.set(dtn::data::Bundle::FRAGMENT, true);
-
-					// set application data length
-					fragment.appdatalength = payloadLength;
 
 					// set fragment offset
 					fragment.fragmentoffset = offset;

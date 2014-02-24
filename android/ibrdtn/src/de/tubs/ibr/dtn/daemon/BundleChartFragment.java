@@ -3,6 +3,7 @@ package de.tubs.ibr.dtn.daemon;
 import android.content.Context;
 import android.os.Bundle;
 import de.tubs.ibr.dtn.R;
+import de.tubs.ibr.dtn.daemon.data.StatsListAdapter;
 
 public class BundleChartFragment extends StatsChartFragment {
     

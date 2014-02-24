@@ -53,6 +53,18 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 15) << "Session created" << IBRCOMMON_LOGGER_ENDL;
 		}
 
+		NativeSession::NativeSession(NativeSessionCallback *session_cb, NativeSerializerCallback *serializer_cb, const std::string &handle)
+		 : _registration(handle), _receiver(*this), _session_cb(session_cb), _serializer_cb(serializer_cb)
+		{
+			// set the local endpoint to the default
+			_endpoint = _registration.getDefaultEID();
+
+			// listen to QueueBundleEvents
+			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(&_receiver);
+
+			IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 15) << "Session created" << IBRCOMMON_LOGGER_ENDL;
+		}
+
 		NativeSession::~NativeSession()
 		{
 			// invalidate the callback pointer
@@ -294,7 +306,7 @@ namespace dtn
 		{
 			try {
 				// announce this bundle as delivered
-				dtn::data::MetaBundle meta = dtn::core::BundleCore::getInstance().getStorage().get(id);
+				const dtn::data::MetaBundle meta = dtn::core::BundleCore::getInstance().getStorage().info(id);
 				_registration.delivered(meta);
 
 				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Bundle " << id.toString() << " marked as delivered" << IBRCOMMON_LOGGER_ENDL;
@@ -305,9 +317,6 @@ namespace dtn
 
 		dtn::data::BundleID NativeSession::send(RegisterIndex ri) throw ()
 		{
-			// create a new sequence number
-			_bundle[ri].relabel();
-
 			// forward the bundle to the storage processing
 			dtn::api::Registration::processIncomingBundle(_endpoint, _bundle[ri]);
 
@@ -402,7 +411,7 @@ namespace dtn
 				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);
 
 				// ignore fragments - we can not deliver them directly to the client
-				if (queued.bundle.fragment) return;
+				if (queued.bundle.isFragment()) return;
 
 				if (_session._registration.hasSubscribed(queued.bundle.destination))
 				{
@@ -477,6 +486,11 @@ namespace dtn
 			} catch (const dtn::data::CustodySignalBlock::WrongRecordException&) {
 				// this is not a custody report
 			}
+		}
+
+		const std::string& NativeSession::getHandle() const
+		{
+			return _registration.getHandle();
 		}
 	} /* namespace net */
 } /* namespace dtn */

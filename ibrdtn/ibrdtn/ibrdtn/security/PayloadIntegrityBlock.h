@@ -77,14 +77,6 @@ namespace dtn
 				static void verify(const dtn::data::Bundle &bundle, const SecurityKey &key);
 
 				/**
-				Seeks for a valid PIB in the stack and removes all blocks above and the 
-				PIB block itself.
-				@param bundle the bundle to be tested
-				@return the number of removed blocks
-				*/
-				static void strip(dtn::data::Bundle& bundle, const SecurityKey &key, const bool all = false);
-
-				/**
 				Removes all PayloadIntegrityBlocks from a bundle
 				@param bundle the bundle, which shall be cleaned from pibs
 				*/
@@ -123,18 +115,6 @@ namespace dtn
 				@return a string with the signature
 				*/
 				static const std::string calcHash(const dtn::data::Bundle &bundle, const SecurityKey &key, PayloadIntegrityBlock& ignore);
-
-				/**
-				Checks if the signature of sb matches to the bundle.
-				@param bundle the bundle to be checked
-				@param sb the PIB containing the signature
-				@param use_eid if set to true, the security source and destination will 
-				be checked before the bundle, to avoid computation on bundles with the 
-				wrong key
-				@return returns 1 for a correct signature, 0 for failure and -1 if some 
-				other error occurred.
-				*/
-				static void verify(const dtn::data::Bundle& bundle, const SecurityKey &key, const PayloadIntegrityBlock &sb, const bool use_eid = true);
 
 				/**
 				Set key_size to new_size, when _security_result is empty at the mutable

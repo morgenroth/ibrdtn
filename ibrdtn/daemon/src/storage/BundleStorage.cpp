@@ -62,7 +62,7 @@ namespace dtn
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
 					// select the bundle if it is in the filter
-					return _filter.contains(meta.toString());
+					return meta.isIn(_filter);
 				};
 
 				const ibrcommon::BloomFilter &_filter;
@@ -156,7 +156,7 @@ namespace dtn
 			dtn::core::BundleGeneratedEvent::raise(b);
 
 			// raise the custody rejected event
-			dtn::core::CustodyEvent::raise(b, dtn::core::CUSTODY_REJECT);
+			dtn::core::CustodyEvent::raise(dtn::data::MetaBundle::create(b), dtn::core::CUSTODY_REJECT);
 		}
 
 		dtn::data::Length BundleStorage::size() const

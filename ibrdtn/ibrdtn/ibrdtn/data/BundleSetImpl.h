@@ -71,6 +71,11 @@ namespace dtn
 
 			virtual std::set<dtn::data::MetaBundle> getNotIn(const ibrcommon::BloomFilter &filter) const throw () = 0;
 
+			/**
+			 * Synchronize the bundle-set with the persistent set on the disk.
+			 */
+			virtual void sync() throw () { };
+
 			virtual std::ostream& serialize(std::ostream &stream) const = 0;
 			virtual std::istream& deserialize(std::istream &stream) = 0;
 

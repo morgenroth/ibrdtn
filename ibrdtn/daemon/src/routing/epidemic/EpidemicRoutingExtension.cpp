@@ -26,12 +26,12 @@
 #include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
 #include "core/NodeEvent.h"
-#include "core/TimeEvent.h"
 #include "core/Node.h"
 #include "net/ConnectionEvent.h"
 #include "net/ConnectionManager.h"
 #include "Configuration.h"
 #include "core/BundleCore.h"
+#include "core/EventDispatcher.h"
 #include "core/BundleEvent.h"
 
 #include <ibrdtn/data/MetaBundle.h>
@@ -73,55 +73,31 @@ namespace dtn
 			request.addRequest(BloomFilterSummaryVector::identifier);
 		}
 
-		void EpidemicRoutingExtension::notify(const dtn::core::Event *evt) throw ()
+		void EpidemicRoutingExtension::eventDataChanged(const dtn::data::EID &peer) throw ()
 		{
-			// If an incoming bundle is received, forward it to all connected neighbors
-			try {
-				const QueueBundleEvent &queued = dynamic_cast<const QueueBundleEvent&>(*evt);
+			// transfer the next bundle to this destination
+			_taskqueue.push( new SearchNextBundleTask( peer ) );
+		}
 
-				// new bundles trigger a recheck for all neighbors
-				const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
+		void EpidemicRoutingExtension::eventBundleQueued(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ()
+		{
+			// new bundles trigger a recheck for all neighbors
+			const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
 
-				for (std::set<dtn::core::Node>::const_iterator iter = nl.begin(); iter != nl.end(); ++iter)
+			for (std::set<dtn::core::Node>::const_iterator iter = nl.begin(); iter != nl.end(); ++iter)
+			{
+				const dtn::core::Node &n = (*iter);
+
+				if (n.getEID() != peer)
 				{
-					const dtn::core::Node &n = (*iter);
-
-					if (n.getEID() != queued.origin) {
-						// transfer the next bundle to this destination
-						_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
-					}
+					// trigger all routing modules to search for bundles to forward
+					eventDataChanged(n.getEID());
 				}
-				return;
-			} catch (const std::bad_cast&) { };
+			}
+		}
 
-			// If a new neighbor comes available search for bundles
-			try {
-				const dtn::core::NodeEvent &nodeevent = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
-				const dtn::core::Node &n = nodeevent.getNode();
-
-				if (nodeevent.getAction() == NODE_AVAILABLE)
-				{
-					_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
-				}
-				else if (nodeevent.getAction() == NODE_DATA_ADDED)
-				{
-					_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
-				}
-
-				return;
-			} catch (const std::bad_cast&) { };
-
-			try {
-				const dtn::net::ConnectionEvent &ce = dynamic_cast<const dtn::net::ConnectionEvent&>(*evt);
-
-				if (ce.state == dtn::net::ConnectionEvent::CONNECTION_UP)
-				{
-					// send all (multi-hop) bundles in the storage to the neighbor
-					_taskqueue.push( new SearchNextBundleTask(ce.peer) );
-				}
-				return;
-			} catch (const std::bad_cast&) { };
-
+		void EpidemicRoutingExtension::raiseEvent(const dtn::core::Event *evt) throw ()
+		{
 			try {
 				const NodeHandshakeEvent &handshake = dynamic_cast<const NodeHandshakeEvent&>(*evt);
 
@@ -137,29 +113,12 @@ namespace dtn
 				}
 				return;
 			} catch (const std::bad_cast&) { };
-
-			// The bundle transfer has been aborted
-			try {
-				const dtn::net::TransferAbortedEvent &aborted = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
-
-				// transfer the next bundle to this destination
-				_taskqueue.push( new SearchNextBundleTask( aborted.getPeer() ) );
-
-				return;
-			} catch (const std::bad_cast&) { };
-
-			// A bundle transfer was successful
-			try {
-				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
-
-				// transfer the next bundle to this destination
-				_taskqueue.push( new SearchNextBundleTask( completed.getPeer() ) );
-				return;
-			} catch (const std::bad_cast&) { };
 		}
 
 		void EpidemicRoutingExtension::componentUp() throw ()
 		{
+			dtn::core::EventDispatcher<dtn::routing::NodeHandshakeEvent>::add(this);
+
 			// reset the task queue
 			_taskqueue.reset();
 
@@ -174,6 +133,8 @@ namespace dtn
 
 		void EpidemicRoutingExtension::componentDown() throw ()
 		{
+			dtn::core::EventDispatcher<dtn::routing::NodeHandshakeEvent>::remove(this);
+
 			try {
 				// stop the thread
 				stop();
@@ -193,8 +154,8 @@ namespace dtn
 			class BundleFilter : public dtn::storage::BundleSelector
 			{
 			public:
-				BundleFilter(const NeighborDatabase::NeighborEntry &entry)
-				 : _entry(entry)
+				BundleFilter(const NeighborDatabase::NeighborEntry &entry, const std::set<dtn::core::Node> &neighbors)
+				 : _entry(entry), _neighbors(neighbors)
 				{};
 
 				virtual ~BundleFilter() {};
@@ -237,6 +198,18 @@ namespace dtn
 						return false;
 					}
 
+					// if this is a singleton bundle ...
+					if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+					{
+						const dtn::core::Node n(meta.destination.getNode());
+
+						// do not forward the bundle if the final destination is available
+						if (_neighbors.find(n) != _neighbors.end())
+						{
+							return false;
+						}
+					}
+
 					// do not forward bundles already known by the destination
 					// throws BloomfilterNotAvailableException if no filter is available or it is expired
 					try {
@@ -253,10 +226,14 @@ namespace dtn
 
 			private:
 				const NeighborDatabase::NeighborEntry &_entry;
+				const std::set<dtn::core::Node> &_neighbors;
 			};
 
 			// list for bundles
 			dtn::storage::BundleResultList list;
+
+			// set of known neighbors
+			std::set<dtn::core::Node> neighbors;
 
 			while (true)
 			{
@@ -279,14 +256,22 @@ namespace dtn
 							try {
 								NeighborDatabase &db = (**this).getNeighborDB();
 								ibrcommon::MutexLock l(db);
-								NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
+								NeighborDatabase::NeighborEntry &entry = db.get(task.eid, true);
 
 								// check if enough transfer slots available (threshold reached)
 								if (!entry.isTransferThresholdReached())
 									throw NeighborDatabase::NoMoreTransfersAvailable();
 
+								if (dtn::daemon::Configuration::getInstance().getNetwork().doPreferDirect()) {
+									// get current neighbor list
+									neighbors = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
+								} else {
+									// "prefer direct" option disabled - clear the list of neighbors
+									neighbors.clear();
+								}
+
 								// get the bundle filter of the neighbor
-								BundleFilter filter(entry);
+								const BundleFilter filter(entry, neighbors);
 
 								// some debug output
 								IBRCOMMON_LOGGER_DEBUG_TAG(EpidemicRoutingExtension::TAG, 40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
@@ -307,9 +292,12 @@ namespace dtn
 									transferTo(task.eid, *iter);
 								} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 							}
-						} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
-						} catch (const NeighborDatabase::NeighborNotAvailableException&) {
-						} catch (const dtn::storage::NoBundleFoundException&) {
+						} catch (const NeighborDatabase::NoMoreTransfersAvailable &ex) {
+							IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						} catch (const NeighborDatabase::NeighborNotAvailableException &ex) {
+							IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						} catch (const dtn::storage::NoBundleFoundException &ex) {
+							IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 						} catch (const std::bad_cast&) { };
 					} catch (const ibrcommon::Exception &ex) {
 						IBRCOMMON_LOGGER_DEBUG_TAG(EpidemicRoutingExtension::TAG, 20) << "task failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;

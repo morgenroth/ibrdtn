@@ -23,6 +23,7 @@
 #include "net/P2PDialupEvent.h"
 #include "net/TCPConvergenceLayer.h"
 #include "net/ConnectionEvent.h"
+#include "net/DiscoveryAgent.h"
 #include "core/BundleCore.h"
 #include "core/EventDispatcher.h"
 
@@ -53,7 +54,7 @@ namespace dtn
 		const int TCPConvergenceLayer::DEFAULT_PORT = 4556;
 
 		TCPConvergenceLayer::TCPConvergenceLayer()
-		 : _vsocket_state(false), _any_port(0)
+		 : _vsocket_state(false), _any_port(0), _stats_in(0), _stats_out(0)
 		{
 		}
 
@@ -61,6 +62,9 @@ namespace dtn
 		{
 			// unsubscribe to NetLink events
 			ibrcommon::LinkManager::getInstance().removeEventListener(this);
+
+			// un-register as discovery handler
+			dtn::core::BundleCore::getInstance().getDiscoveryAgent().unregisterService(this);
 
 			join();
 
@@ -73,7 +77,7 @@ namespace dtn
 			// do not allow any futher binding if we already bound to any interface
 			if (_any_port > 0) return;
 
-			if (net.empty()) {
+			if (net.isAny()) {
 				// bind to any interface
 				_vsocket.add(new ibrcommon::tcpserversocket(port));
 				_any_port = port;
@@ -98,6 +102,9 @@ namespace dtn
 
 				// subscribe to NetLink events on our interfaces
 				ibrcommon::LinkManager::getInstance().addEventListener(net, this);
+
+				// register as discovery handler for this interface
+				dtn::core::BundleCore::getInstance().getDiscoveryAgent().registerService(net, this);
 
 				// store port of the interface
 				{
@@ -126,6 +133,8 @@ namespace dtn
 							ibrcommon::tcpserversocket *sock = new ibrcommon::tcpserversocket(addr);
 							if (_vsocket_state) sock->up();
 							_vsocket.add(sock, net);
+
+							IBRCOMMON_LOGGER_DEBUG_TAG(TCPConvergenceLayer::TAG, 25) << "bound to " << net.toString() << " (" << addr.toString() << ", family: " << addr.family() << ")" << IBRCOMMON_LOGGER_ENDL;
 							break;
 						}
 						default:
@@ -137,8 +146,6 @@ namespace dtn
 						IBRCOMMON_LOGGER_TAG(TCPConvergenceLayer::TAG, warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 				}
-
-				IBRCOMMON_LOGGER_DEBUG_TAG(TCPConvergenceLayer::TAG, 25) << "bound to " << net.toString() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::vinterface::interface_not_set &ex) {
 				IBRCOMMON_LOGGER_TAG(TCPConvergenceLayer::TAG, warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
@@ -171,7 +178,7 @@ namespace dtn
 			return dtn::core::Node::CONN_TCPIP;
 		}
 
-		void TCPConvergenceLayer::update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement) throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException)
+		void TCPConvergenceLayer::onUpdateBeacon(const ibrcommon::vinterface &iface, DiscoveryBeacon &beacon) throw (dtn::net::DiscoveryBeaconHandler::NoServiceHereException)
 		{
 			ibrcommon::MutexLock l(_interface_lock);
 
@@ -181,7 +188,7 @@ namespace dtn
 				// ... set the port only
 				ibrcommon::MutexLock l(_portmap_lock);
 				service << "port=" << _portmap[iface] << ";";
-				announcement.addService( DiscoveryService("tcpcl", service.str()));
+				beacon.addService( DiscoveryService(getDiscoveryProtocol(), service.str()));
 				return;
 			}
 
@@ -222,7 +229,7 @@ namespace dtn
 								// fill in the ip address
 								ibrcommon::MutexLock l(_portmap_lock);
 								service << "ip=" << addr.address() << ";port=" << _portmap[iface] << ";";
-								announcement.addService( DiscoveryService("tcpcl", service.str()));
+								beacon.addService( DiscoveryService(getDiscoveryProtocol(), service.str()));
 
 								// set the announce mark
 								announced = true;
@@ -241,13 +248,13 @@ namespace dtn
 						// ... set the port only
 						ibrcommon::MutexLock l(_portmap_lock);
 						service << "port=" << _portmap[iface] << ";";
-						announcement.addService( DiscoveryService("tcpcl", service.str()));
+						beacon.addService( DiscoveryService(getDiscoveryProtocol(), service.str()));
 					}
 					return;
 				}
 			}
 
-			throw dtn::net::DiscoveryServiceProvider::NoServiceHereException();
+			throw dtn::net::DiscoveryBeaconHandler::NoServiceHereException();
 		}
 
 		const std::string TCPConvergenceLayer::getName() const
@@ -255,7 +262,7 @@ namespace dtn
 			return TCPConvergenceLayer::TAG;
 		}
 
-		void TCPConvergenceLayer::raiseEvent(const Event *evt) throw ()
+		void TCPConvergenceLayer::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			try {
 				const dtn::net::P2PDialupEvent &dialup = dynamic_cast<const dtn::net::P2PDialupEvent&>(*evt);
@@ -284,6 +291,9 @@ namespace dtn
 
 						// un-subscribe to NetLink events on our interfaces
 						ibrcommon::LinkManager::getInstance().removeEventListener(dialup.iface, this);
+
+						// un-register as discovery handler for this interface
+						dtn::core::BundleCore::getInstance().getDiscoveryAgent().unregisterService(dialup.iface, this);
 
 						// remove all sockets on this interface
 						unlisten(dialup.iface);
@@ -494,6 +504,18 @@ namespace dtn
 			}
 		}
 
+		void TCPConvergenceLayer::addTrafficIn(size_t amount) throw ()
+		{
+			ibrcommon::MutexLock l(_stats_lock);
+			_stats_in += amount;
+		}
+
+		void TCPConvergenceLayer::addTrafficOut(size_t amount) throw ()
+		{
+			ibrcommon::MutexLock l(_stats_lock);
+			_stats_out += amount;
+		}
+
 		void TCPConvergenceLayer::componentRun() throw ()
 		{
 			try {
@@ -611,37 +633,24 @@ namespace dtn
 		}
 	}
 
-	const ConvergenceLayer::stats_map& TCPConvergenceLayer::getStats()
+	void TCPConvergenceLayer::getStats(ConvergenceLayer::stats_data &data) const
 	{
-		size_t in = 0;
-		size_t out = 0;
+		std::stringstream ss_format;
 
-		// collect stats of all connections
-		ibrcommon::MutexLock l(_connections_cond);
+		static const std::string IN_TAG = dtn::core::Node::toString(getDiscoveryProtocol()) + "|in";
+		static const std::string OUT_TAG = dtn::core::Node::toString(getDiscoveryProtocol()) + "|out";
 
-		for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); ++iter)
-		{
-			TCPConnection &conn = *(*iter);
-			in += conn.getTrafficStats(0);
-			out += conn.getTrafficStats(1);
-			conn.resetTrafficStats();
-		}
+		ss_format << _stats_in;
+		data[IN_TAG] = ss_format.str();
+		ss_format.str("");
 
-		addStats("in", in);
-		addStats("out", out);
-
-		return ConvergenceLayer::getStats();
+		ss_format << _stats_out;
+		data[OUT_TAG] = ss_format.str();
 	}
 
 	void TCPConvergenceLayer::resetStats()
 	{
-		// reset the stats of all connections
-		ibrcommon::MutexLock l(_connections_cond);
-
-		for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); ++iter)
-		{
-			TCPConnection &conn = *(*iter);
-			conn.resetTrafficStats();
-		}
+		_stats_in = 0;
+		_stats_out = 0;
 	}
 }

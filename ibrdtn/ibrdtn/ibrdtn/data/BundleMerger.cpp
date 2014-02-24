@@ -75,7 +75,7 @@ namespace dtn
 			_chunks.insert(chunk);
 		}
 
-		BundleMerger::Container &operator<<(BundleMerger::Container &c, dtn::data::Bundle &obj)
+		BundleMerger::Container &operator<<(BundleMerger::Container &c, const dtn::data::Bundle &obj)
 		{
 			// check if the given bundle is a fragment
 			if (!obj.get(dtn::data::Bundle::FRAGMENT))
@@ -116,7 +116,7 @@ namespace dtn
 			ibrcommon::BLOB::iostream stream = c._blob.iostream();
 			(*stream).seekp(obj.fragmentoffset.get<std::streampos>());
 
-			dtn::data::PayloadBlock &p = obj.find<dtn::data::PayloadBlock>();
+			const dtn::data::PayloadBlock &p = obj.find<dtn::data::PayloadBlock>();
 			const Length plength = p.getLength();
 
 			// skip write operation if chunk is already in the merged bundle
@@ -138,16 +138,16 @@ namespace dtn
 			{
 				c._hasFirstFragBlocksAdded = true;
 
-				dtn::data::Bundle::iterator payload_it = obj.find(dtn::data::PayloadBlock::BLOCK_TYPE);
+				dtn::data::Bundle::const_iterator payload_it = obj.find(dtn::data::PayloadBlock::BLOCK_TYPE);
 
 				// abort if the bundle do not contains a payload block
 				if (payload_it == obj.end()) throw ibrcommon::Exception("Payload block missing.");
 
 				// iterate from begin to the payload block
-				for (dtn::data::Bundle::iterator block_it = obj.begin(); block_it != payload_it; ++block_it)
+				for (dtn::data::Bundle::const_iterator block_it = obj.begin(); block_it != payload_it; ++block_it)
 				{
 					// get the current block and type
-					Block &current_block = (**block_it);
+					const Block &current_block = (**block_it);
 					block_t block_type = current_block.getType();
 
 					// search the position of the payload block
@@ -183,7 +183,7 @@ namespace dtn
 				c._hasLastFragBlocksAdded = true;
 
 				// start to iterate after the payload block
-				dtn::data::Bundle::iterator payload_it = obj.find(dtn::data::PayloadBlock::BLOCK_TYPE);
+				dtn::data::Bundle::const_iterator payload_it = obj.find(dtn::data::PayloadBlock::BLOCK_TYPE);
 
 				// abort if the bundle do not contains a payload block
 				if (payload_it == obj.end()) throw ibrcommon::Exception("Payload block missing.");
@@ -192,7 +192,7 @@ namespace dtn
 				for (payload_it++; payload_it != obj.end(); ++payload_it)
 				{
 					//get the current block and type
-					Block &current_block = (**payload_it);
+					const Block &current_block = (**payload_it);
 					block_t block_type = current_block.getType();
 
 					try

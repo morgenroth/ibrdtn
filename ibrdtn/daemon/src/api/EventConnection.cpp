@@ -191,11 +191,11 @@ namespace dtn
 				// write the destination eid
 				_stream << "Destination: " << custody.getBundle().destination.getString() << std::endl;
 
-				if (custody.getBundle().fragment)
+				if (custody.getBundle().isFragment())
 				{
 					// write fragmentation values
 					_stream << "Appdatalength: " << custody.getBundle().appdatalength.toString() << std::endl;
-					_stream << "Fragmentoffset: " << custody.getBundle().offset.toString() << std::endl;
+					_stream << "Fragmentoffset: " << custody.getBundle().fragmentoffset.toString() << std::endl;
 				}
 
 				// close the event
@@ -214,10 +214,11 @@ namespace dtn
 				_stream << "Timestamp: " << aborted.getBundleID().timestamp.toString() << std::endl;
 				_stream << "Sequencenumber: " << aborted.getBundleID().sequencenumber.toString() << std::endl;
 
-				if (aborted.getBundleID().fragment)
+				if (aborted.getBundleID().isFragment())
 				{
 					// write fragmentation values
-					_stream << "Fragmentoffset: " << aborted.getBundleID().offset.toString() << std::endl;
+					_stream << "Fragmentoffset: " << aborted.getBundleID().fragmentoffset.toString() << std::endl;
+					_stream << "Fragmentpayload: " << aborted.getBundleID().getPayloadLength() << std::endl;
 				}
 
 				// close the event
@@ -242,11 +243,11 @@ namespace dtn
 				// write the destination eid
 				_stream << "Destination: " << completed.getBundle().destination.getString() << std::endl;
 
-				if (completed.getBundle().fragment)
+				if (completed.getBundle().isFragment())
 				{
 					// write fragmentation values
 					_stream << "Appdatalength: " << completed.getBundle().appdatalength.toString() << std::endl;
-					_stream << "Fragmentoffset: " << completed.getBundle().offset.toString() << std::endl;
+					_stream << "Fragmentoffset: " << completed.getBundle().fragmentoffset.toString() << std::endl;
 				}
 
 				// close the event
@@ -261,7 +262,7 @@ namespace dtn
 				_stream << "Event: " << connection.getName() << std::endl;
 				_stream << "Action: ";
 
-				switch (connection.state)
+				switch (connection.getState())
 				{
 				case dtn::net::ConnectionEvent::CONNECTION_UP:
 					_stream << "up";
@@ -281,7 +282,7 @@ namespace dtn
 				_stream << std::endl;
 
 				// write the peer eid
-				_stream << "Peer: " << connection.peer.getString() << std::endl;
+				_stream << "Peer: " << connection.getNode().getEID().getString() << std::endl;
 
 				// close the event
 				_stream << std::endl;
@@ -303,11 +304,11 @@ namespace dtn
 				// write the destination eid
 				_stream << "Destination: " << queued.bundle.destination.getString() << std::endl;
 
-				if (queued.bundle.fragment)
+				if (queued.bundle.isFragment())
 				{
 					// write fragmentation values
 					_stream << "Appdatalength: " << queued.bundle.appdatalength.toString() << std::endl;
-					_stream << "Fragmentoffset: " << queued.bundle.offset.toString() << std::endl;
+					_stream << "Fragmentoffset: " << queued.bundle.fragmentoffset.toString() << std::endl;
 				}
 
 				// close the event

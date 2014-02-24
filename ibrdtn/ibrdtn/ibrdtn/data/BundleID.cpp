@@ -23,24 +23,41 @@
 #include "ibrdtn/data/BundleID.h"
 #include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/BundleString.h"
+#include <string.h>
+
+// include code for platform-independent endianess conversion
+#include "ibrdtn/data/Endianess.h"
 
 namespace dtn
 {
 	namespace data
 	{
-		BundleID::BundleID(const dtn::data::EID s, const dtn::data::Timestamp &t, const dtn::data::Number &sq, const bool f, const dtn::data::Number &o)
-		: source(s), timestamp(t), sequencenumber(sq), fragment(f), offset(o)
+		const unsigned int BundleID::RAW_LENGTH_MAX = 33 + 1024 + 1 + 1024;
+
+		BundleID::BundleID()
+		 : source(), timestamp(0), sequencenumber(0), fragmentoffset(0), _fragment(false), _payloadlength(0)
 		{
 		}
 
-		BundleID::BundleID(const dtn::data::PrimaryBlock &b)
-		: source(b.source), timestamp(b.timestamp), sequencenumber(b.sequencenumber),
-		fragment(b.get(dtn::data::Bundle::FRAGMENT)), offset(b.fragmentoffset)
+		BundleID::BundleID(const BundleID &id)
+		 : source(id.source), timestamp(id.timestamp), sequencenumber(id.sequencenumber),
+		   fragmentoffset(id.fragmentoffset), _fragment(id.isFragment()), _payloadlength(id.getPayloadLength())
 		{
 		}
 
 		BundleID::~BundleID()
 		{
+		}
+
+		BundleID& BundleID::operator=(const BundleID &id)
+		{
+			source = id.source;
+			timestamp = id.timestamp;
+			sequencenumber = id.sequencenumber;
+			fragmentoffset = id.fragmentoffset;
+			setFragment(id.isFragment());
+			setPayloadLength(id.getPayloadLength());
+			return (*this);
 		}
 
 		bool BundleID::operator<(const BundleID& other) const
@@ -54,10 +71,13 @@ namespace dtn
 			if (sequencenumber < other.sequencenumber) return true;
 			if (sequencenumber != other.sequencenumber) return false;
 
-			if (other.fragment)
+			if (other.isFragment())
 			{
-				if (!fragment) return true;
-				return (offset < other.offset);
+				if (!isFragment()) return true;
+				if (fragmentoffset < other.fragmentoffset) return true;
+				if (fragmentoffset != other.fragmentoffset) return false;
+
+				return (getPayloadLength() < other.getPayloadLength());
 			}
 
 			return false;
@@ -78,59 +98,93 @@ namespace dtn
 			if (other.timestamp != timestamp) return false;
 			if (other.sequencenumber != sequencenumber) return false;
 			if (other.source != source) return false;
-			if (other.fragment != fragment) return false;
+			if (other.isFragment() != isFragment()) return false;
 
-			if (fragment)
+			if (isFragment())
 			{
-				if (other.offset != offset) return false;
+				if (other.fragmentoffset != fragmentoffset) return false;
+				if (other.getPayloadLength() != getPayloadLength()) return false;
 			}
 
 			return true;
 		}
 
-		bool BundleID::operator<(const PrimaryBlock& other) const
+		dtn::data::Length BundleID::getPayloadLength() const
 		{
-			if (source < other.source) return true;
-			if (source != other.source) return false;
+			return _payloadlength;
+		}
 
-			if (timestamp < other.timestamp) return true;
-			if (timestamp != other.timestamp) return false;
+		void BundleID::setPayloadLength(const dtn::data::Length &value)
+		{
+			_payloadlength = value;
+		}
 
-			if (sequencenumber < other.sequencenumber) return true;
-			if (sequencenumber != other.sequencenumber) return false;
+		bool BundleID::isFragment() const
+		{
+			return _fragment;
+		}
 
-			if (other.get(PrimaryBlock::FRAGMENT))
-			{
-				if (!fragment) return true;
-				return (offset < other.fragmentoffset);
+		void BundleID::setFragment(bool val)
+		{
+			_fragment = val;
+		}
+
+		void BundleID::addTo(ibrcommon::BloomFilter &bf) const
+		{
+			unsigned char data[RAW_LENGTH_MAX];
+			const size_t data_len = raw((unsigned char*)&data, RAW_LENGTH_MAX);
+			bf.insert((unsigned char*)&data, data_len);
+		}
+
+		bool BundleID::isIn(const ibrcommon::BloomFilter &bf) const
+		{
+			unsigned char data[RAW_LENGTH_MAX];
+			const size_t data_len = raw((unsigned char*)&data, RAW_LENGTH_MAX);
+			return bf.contains((unsigned char*)&data, data_len);
+		}
+
+		size_t BundleID::raw(unsigned char *data, size_t len) const
+		{
+			uint64_t tmp = 0;
+
+			// stop here if there is not enough space
+			if (len < 33) return 0;
+
+			// add timestamp data
+			tmp = GUINT64_TO_BE(timestamp.get<uint64_t>());
+			::memcpy(data, reinterpret_cast<unsigned char*>(&tmp), sizeof(tmp));
+			data += sizeof(tmp);
+
+			// add sequencenumber
+			tmp = GUINT64_TO_BE(sequencenumber.get<uint64_t>());
+			::memcpy(data, reinterpret_cast<unsigned char*>(&tmp), sizeof(tmp));
+			data += sizeof(tmp);
+
+			// add fragment yes/no
+			(uint8_t&)(*data) = isFragment() ? 1 : 0;
+			data += sizeof(uint8_t);
+
+			// add fragment offset
+			tmp = isFragment() ? GUINT64_TO_BE(fragmentoffset.get<uint64_t>()) : 0;
+			::memcpy(data, reinterpret_cast<unsigned char*>(&tmp), sizeof(tmp));
+			data += sizeof(tmp);
+
+			// add fragment length
+			tmp = isFragment() ? GUINT64_TO_BE(getPayloadLength()) : 0;
+			::memcpy(data, reinterpret_cast<unsigned char*>(&tmp), sizeof(tmp));
+			data += sizeof(tmp);
+
+			// get source endpoint string
+			const std::string s = source.getString();
+
+			// copy source endpoint into data array
+			::strncpy((char*)data, s.c_str(), len - 33);
+
+			if ((len - 33) < s.length()) {
+				return len;
+			} else {
+				return 33 + s.length();
 			}
-
-			return false;
-		}
-
-		bool BundleID::operator>(const PrimaryBlock& other) const
-		{
-			return !(((*this) < other) || ((*this) == other));
-		}
-
-		bool BundleID::operator!=(const PrimaryBlock& other) const
-		{
-			return !((*this) == other);
-		}
-
-		bool BundleID::operator==(const PrimaryBlock& other) const
-		{
-			if (other.timestamp != timestamp) return false;
-			if (other.sequencenumber != sequencenumber) return false;
-			if (other.source != source) return false;
-			if (other.get(PrimaryBlock::FRAGMENT) != fragment) return false;
-
-			if (fragment)
-			{
-				if (other.fragmentoffset != offset) return false;
-			}
-
-			return true;
 		}
 
 		std::string BundleID::toString() const
@@ -138,9 +192,10 @@ namespace dtn
 			stringstream ss;
 			ss << "[" << timestamp.toString() << "." << sequencenumber.toString();
 
-			if (fragment)
+			if (isFragment())
 			{
-				ss << "." << offset.toString();
+				ss << "." << fragmentoffset.toString();
+				ss << "." << getPayloadLength();
 			}
 
 			ss << "] " << source.getString();
@@ -152,7 +207,17 @@ namespace dtn
 		{
 			dtn::data::BundleString source(obj.source.getString());
 
-			stream << obj.timestamp << obj.sequencenumber << obj.offset << source;
+			stream << obj.timestamp << obj.sequencenumber;
+
+			if (obj.isFragment()) {
+				stream.put(1);
+				stream << obj.fragmentoffset;
+				stream << dtn::data::Number(obj.getPayloadLength());
+			} else {
+				stream.put(0);
+			}
+
+			stream << source;
 
 			return stream;
 		}
@@ -161,8 +226,22 @@ namespace dtn
 		{
 			dtn::data::BundleString source;
 
-			stream >> obj.timestamp >> obj.sequencenumber >> obj.offset >> source;
+			stream >> obj.timestamp >> obj.sequencenumber;
 
+			uint8_t frag = 0;
+			stream.get((char&)frag);
+
+			if (frag == 1) {
+				stream >> obj.fragmentoffset;
+				dtn::data::Number tmp;
+				stream >> tmp;
+				obj.setPayloadLength(tmp.get<dtn::data::Length>());
+				obj.setFragment(true);
+			} else {
+				obj.setFragment(false);
+			}
+
+			stream >> source;
 			obj.source = dtn::data::EID(source);
 
 			return stream;

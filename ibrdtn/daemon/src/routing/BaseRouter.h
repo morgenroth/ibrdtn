@@ -34,7 +34,6 @@
 #include "routing/RetransmissionExtension.h"
 
 #include <ibrdtn/data/BundleSet.h>
-#include <ibrdtn/data/DTNTime.h>
 #include <ibrdtn/data/BundleID.h>
 #include <ibrdtn/data/MetaBundle.h>
 
@@ -230,7 +229,9 @@ namespace dtn
 			virtual void componentDown() throw ();
 
 		private:
-			void __forward_event(const dtn::core::Event *evt) throw ();
+			void __eventDataChanged(const dtn::data::EID &peer) throw ();
+			void __eventTransferCompleted(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ();
+			void __eventBundleQueued(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ();
 
 			ibrcommon::Mutex _known_bundles_lock;
 			dtn::data::BundleSet _known_bundles;

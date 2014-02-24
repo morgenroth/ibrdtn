@@ -73,8 +73,9 @@ AC_ARG_ENABLE([win32],
 		AC_DEFINE(WIN32, [1], [Compiling for Win32!])
 		AC_DEFINE(WINVER, [0x0601], [Minimum platform is Windows 7])
 		AC_DEFINE(_WIN32_WINNT, [0x0601], [Minimum platform is Windows 7])
-
-		# do win32 related library checking
+		
+		# set activate win32 check exceptions
+		enable_win32=yes
 	])
 
 # ANDROID configuration
@@ -98,6 +99,9 @@ AS_IF([test "x$enable_android" = "xyes"], [
 
 	ibrcommon_LIBS="-librcommon"
 	AC_SUBST(ibrcommon_LIBS)
+	
+	# define have endian.h header
+	AC_DEFINE(HAVE_ENDIAN_H, [1], [])
 
 	# OpenSSL
 	AC_DEFINE(WITH_BUNDLE_SECURITY, [1], [])
@@ -142,6 +146,34 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	AC_FUNC_MALLOC
 	AC_FUNC_MKTIME
 	AC_CHECK_FUNCS([gettimeofday sqrt])
+	
+	# at least one endian header is required on non-WIN32
+	has_endian_h=no
+
+	# check POSIX endian.h
+	AC_CHECK_HEADERS([endian.h], [has_endian_h=yes])
+
+	# check OSX endian.h
+	AC_CHECK_HEADERS([machine/endian.h], [has_endian_h=yes])
+
+	dnl -----------------------------------------------
+	dnl check for glib support
+	dnl -----------------------------------------------
+	PKG_CHECK_MODULES([GLIB], [glib-2.0], [
+		AC_SUBST(GLIB_CFLAGS)
+		AC_SUBST(GLIB_LIBS)
+		AC_DEFINE(HAVE_GLIB, [1], ["glib library is available"])
+		REQUIRES_LIBS="$REQUIRES_LIBS glib-2.0"
+	], [
+		AS_IF([test "x$has_endian_h" = "xyes"],[
+			AC_MSG_NOTICE([use endian.h for endianess conversion])
+		],[
+			# stop configure on non-win32 platforms
+			AS_IF([test "x$enable_win32" = "xyes"], [], [
+				AC_MSG_ERROR([whether glib2 or endian.h was found])
+			])
+		])
+	])
 
 	dnl -----------------------------------------------
 	dnl optional parameter: DTN security support
@@ -158,23 +190,6 @@ AS_IF([test "x$enable_android" = "xyes"], [
 				AC_SUBST(OPENSSL_CFLAGS)
 				AC_SUBST(OPENSSL_LIBS)
 				REQUIRES_LIBS="$REQUIRES_LIBS openssl"
-				
-				dnl -----------------------------------------------
-				dnl check for glib support
-				dnl -----------------------------------------------
-				PKG_CHECK_MODULES([GLIB], [glib-2.0], [
-					AC_SUBST(GLIB_CFLAGS)
-					AC_SUBST(GLIB_LIBS)
-					AC_DEFINE(HAVE_GLIB, [1], ["glib library is available"])
-					REQUIRES_LIBS="$REQUIRES_LIBS glib-2.0"
-				], [
-					# alternatively endian header is required
-					AC_CHECK_HEADERS([endian.h], [
-						AC_MSG_NOTICE([use endian.h instead of glib.])
-					], [
-						AC_MSG_ERROR([glib or endian.h is necessary to include bundle security protocol!])
-					])
-				])
 			], [
 				with_dtnsec="no"
 				AC_MSG_WARN([DTNSEC enabled, but no openssl libraries are found. Security extensions are disabled.])

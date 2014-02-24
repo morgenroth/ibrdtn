@@ -54,6 +54,9 @@ namespace dtn
 			// do not destroy this instance as long as
 			// the sender thread is running
 			_sender.join();
+
+			// join ourself
+			join();
 		}
 
 		void DatagramConnection::shutdown()
@@ -82,16 +85,26 @@ namespace dtn
 			try {
 				while(_stream.good())
 				{
-					dtn::data::Bundle bundle;
+					try {
+						dtn::data::Bundle bundle;
 
-					// read the bundle out of the stream
-					deserializer >> bundle;
+						// read the bundle out of the stream
+						deserializer >> bundle;
 
-					// raise default bundle received event
-					dtn::net::BundleReceivedEvent::raise(_peer_eid, bundle, false);
+						// raise default bundle received event
+						dtn::net::BundleReceivedEvent::raise(_peer_eid, bundle, false);
+					} catch (const dtn::data::Validator::RejectedException &ex) {
+						IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 25) << "Bundle rejected: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+
+						// TODO: send NACK
+						_stream.reject();
+					} catch (const dtn::InvalidDataException &ex) {
+						IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 25) << "Received an invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+
+						// TODO: send NACK
+						_stream.reject();
+					}
 				}
-			} catch (const dtn::InvalidDataException &ex) {
-				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 25) << "Received an invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			} catch (std::exception &ex) {
 				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 25) << "Main-thread died: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
@@ -173,7 +186,7 @@ namespace dtn
 					IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 45) << "full segment received" << IBRCOMMON_LOGGER_ENDL;
 
 					// forward the last segment to the stream
-					_stream.queue(buf, len);
+					_stream.queue(buf, len, true);
 
 					// switch to IDLE state
 					_recv_state = RECV_IDLE;
@@ -216,7 +229,7 @@ namespace dtn
 					if (_recv_state == RECV_HEAD)
 					{
 						// forward HEAD buffer to the stream
-						_stream.queue(&_head_buf[0], _head_len);
+						_stream.queue(&_head_buf[0], _head_len, true);
 						_head_len = 0;
 
 						// switch to TRANSMISSION state
@@ -224,7 +237,7 @@ namespace dtn
 					}
 
 					// forward the current segment to the stream
-					_stream.queue(buf, len);
+					_stream.queue(buf, len, false);
 
 					if (flags & DatagramService::SEGMENT_LAST)
 					{
@@ -239,7 +252,7 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 15) << "sequence number received " << seqno << ", expected " << ex.expected_seqno << IBRCOMMON_LOGGER_ENDL;
 			}
 
-			if (_params.flowcontrol == DatagramService::FLOW_STOPNWAIT)
+			if (_params.flowcontrol != DatagramService::FLOW_NONE)
 			{
 				// send ack for this message
 				_callback.callback_ack(*this, _next_seqno, getIdentifier());
@@ -248,9 +261,6 @@ namespace dtn
 
 		void DatagramConnection::stream_send(const char *buf, const dtn::data::Length &len, bool last) throw (DatagramException)
 		{
-			// measure the time until the ack is received
-			ibrcommon::TimeMeasurement tm;
-
 			// build the right flags
 			char flags = 0;
 
@@ -267,11 +277,14 @@ namespace dtn
 
 			if (_params.flowcontrol == DatagramService::FLOW_STOPNWAIT)
 			{
+				// measure the time until the ack is received
+				ibrcommon::TimeMeasurement tm;
+
 				// start time measurement
 				tm.start();
 
 				// max. 5 retries
-				for (int i = 0; i < 5; ++i)
+				for (size_t i = 0; i < _params.retry_limit; ++i)
 				{
 					IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 30) << "transmit frame seqno: " << seqno << IBRCOMMON_LOGGER_ENDL;
 
@@ -294,54 +307,257 @@ namespace dtn
 							_ack_cond.wait(&ts);
 						}
 
-						// success!
-						_send_state = last ? SEND_IDLE : SEND_NEXT;
-
 						// stop the measurement
 						tm.stop();
+
+						// success!
+						_send_state = last ? SEND_IDLE : SEND_NEXT;
 
 						// adjust the average rtt
 						adjust_rtt(tm.getMilliseconds());
 
+						// report result
+						_callback.reportSuccess(i, tm.getMilliseconds());
+
 						return;
 					} catch (const ibrcommon::Conditional::ConditionalAbortException &e) {
-						IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 20) << "ack timeout for seqno " << seqno << IBRCOMMON_LOGGER_ENDL;
+						if (e.reason == ibrcommon::Conditional::ConditionalAbortException::COND_TIMEOUT)
+						{
+							IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 20) << "ack timeout for seqno " << seqno << IBRCOMMON_LOGGER_ENDL;
 
-						// fail -> increment the future timeout
-						adjust_rtt(static_cast<double>(_avg_rtt) * 2);
+							// fail -> increment the future timeout
+							adjust_rtt(static_cast<double>(_avg_rtt) * 2);
 
-						// retransmit the frame
-						continue;
+							// retransmit the frame
+							continue;
+						}
+						else
+						{
+							// aborted
+							break;
+						}
 					}
 				}
 
 				// maximum number of retransmissions hit
 				_send_state = SEND_ERROR;
 
+				// report failure
+				_callback.reportFailure();
+
 				// transmission failed - abort the stream
 				throw DatagramException("transmission failed - abort the stream");
 			}
+			else if (_params.flowcontrol == DatagramService::FLOW_SLIDING_WINDOW)
+			{
+				try {
+					// lock the ACK variables and frame window
+					ibrcommon::MutexLock l(_ack_cond);
 
-			// if this is the last segment switch directly to IDLE
-			_send_state = last ? SEND_IDLE : SEND_NEXT;
+					// timeout value
+					struct timespec ts;
 
-			// increment next sequence number
-			ibrcommon::MutexLock l(_ack_cond);
-			_last_ack = (seqno + 1) % _params.max_seq_numbers;
+					// set timeout to twice the average round-trip-time
+					ibrcommon::Conditional::gettimeout(static_cast<size_t>(_avg_rtt * 2) + 1, &ts);
+
+					// wait until window has at least one free slot
+					while (sw_frames_full()) _ack_cond.wait(&ts);
+
+					// add new frame to the window
+					_sw_frames.push_back(window_frame());
+
+					window_frame &new_frame = _sw_frames.back();
+
+					new_frame.flags = flags;
+					new_frame.seqno = seqno;
+					new_frame.buf.assign(buf, buf+len);
+					new_frame.retry = 0;
+
+					// start RTT measurement
+					new_frame.tm.start();
+
+					// send the datagram
+					_callback.callback_send(*this, new_frame.flags, new_frame.seqno, getIdentifier(), &new_frame.buf[0], new_frame.buf.size());
+
+					// increment next sequence number
+					_last_ack = (seqno + 1) % _params.max_seq_numbers;
+
+					// enter the wait state
+					_send_state = SEND_WAIT_ACK;
+
+					// set timeout to twice the average round-trip-time
+					ibrcommon::Conditional::gettimeout(static_cast<size_t>(_avg_rtt * 2) + 1, &ts);
+
+					// wait until one more slot is available
+					// or no more frames are to ACK (if this was the last frame)
+					while ((last && !_sw_frames.empty()) || (!last && sw_frames_full()))
+					{
+						_ack_cond.wait(&ts);
+					}
+				} catch (const ibrcommon::Conditional::ConditionalAbortException &e) {
+					if (e.reason == ibrcommon::Conditional::ConditionalAbortException::COND_TIMEOUT)
+					{
+						// timeout - retransmit the whole window
+						sw_timeout(last);
+					}
+					else
+					{
+						// maximum number of retransmissions hit
+						_send_state = SEND_ERROR;
+
+						// report failure
+						_callback.reportFailure();
+
+						// transmission failed - abort the stream
+						throw DatagramException("transmission failed - abort the stream");
+					}
+				}
+
+				// if this is the last segment switch directly to IDLE
+				_send_state = last ? SEND_IDLE : SEND_NEXT;
+			}
+			else
+			{
+				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 30) << "transmit frame seqno: " << seqno << IBRCOMMON_LOGGER_ENDL;
+
+				// send the datagram
+				_callback.callback_send(*this, flags, seqno, getIdentifier(), buf, len);
+
+				// if this is the last segment switch directly to IDLE
+				_send_state = last ? SEND_IDLE : SEND_NEXT;
+
+				// increment next sequence number
+				ibrcommon::MutexLock l(_ack_cond);
+				_last_ack = (seqno + 1) % _params.max_seq_numbers;
+			}
+		}
+
+		bool DatagramConnection::sw_frames_full()
+		{
+			return _sw_frames.size() >= (_params.max_seq_numbers / 2);
+		}
+
+		void DatagramConnection::sw_timeout(bool last)
+		{
+			// timeout value
+			struct timespec ts;
+
+			while (true) {
+				try {
+					ibrcommon::MutexLock l(_ack_cond);
+
+					// fail -> increment the future timeout
+					adjust_rtt(static_cast<double>(_avg_rtt) * 2);
+
+					if (_sw_frames.size() > 0)
+					{
+						window_frame &front_frame = _sw_frames.front();
+
+						IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 20) << "ack timeout for seqno " << front_frame.seqno << IBRCOMMON_LOGGER_ENDL;
+
+						if (front_frame.retry > _params.retry_limit) {
+							// maximum number of retransmissions hit
+							_send_state = SEND_ERROR;
+
+							// report failure
+							_callback.reportFailure();
+
+							// transmission failed - abort the stream
+							throw DatagramException("transmission failed - abort the stream");
+						}
+					}
+
+					// retransmit the window
+					for (std::list<window_frame>::iterator it = _sw_frames.begin(); it != _sw_frames.end(); ++it)
+					{
+						window_frame &retry_frame = (*it);
+
+						// send the datagram
+						_callback.callback_send(*this, retry_frame.flags, retry_frame.seqno, getIdentifier(), &retry_frame.buf[0], retry_frame.buf.size());
+
+						// increment retry counter
+						retry_frame.retry++;
+					}
+
+					// enter the wait state
+					_send_state = SEND_WAIT_ACK;
+
+					// set timeout to twice the average round-trip-time
+					ibrcommon::Conditional::gettimeout(static_cast<size_t>(_avg_rtt * 2) + 1, &ts);
+
+					// wait until one more slot is available
+					// or no more frames are to ACK (if this was the last frame)
+					while ((last && !_sw_frames.empty()) || (!last && sw_frames_full()))
+					{
+						_ack_cond.wait(&ts);
+					}
+				} catch (const ibrcommon::Conditional::ConditionalAbortException &e) {
+					if (e.reason == ibrcommon::Conditional::ConditionalAbortException::COND_TIMEOUT)
+					{
+						// timeout again - repeat at while loop
+						continue;
+					}
+				}
+
+				// done
+				return;
+			}
+		}
+
+		void DatagramConnection::nack(const unsigned int &seqno, const bool temporary)
+		{
+			// if the NACK is temporary skip ignore it
+			// and repeat the frame after the timeout
+			if (temporary) return;
+
+			// skip the currently transmitted bundle
+			_sender.skip();
+
+			// handle the NACK as an ACK to move on with the next frame
+			ack(seqno);
 		}
 
 		void DatagramConnection::ack(const unsigned int &seqno)
 		{
-			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 20) << "ack received for seqno " << seqno << IBRCOMMON_LOGGER_ENDL;
-
 			ibrcommon::MutexLock l(_ack_cond);
-			_last_ack = seqno;
+
+			switch (_params.flowcontrol) {
+				case DatagramService::FLOW_SLIDING_WINDOW:
+					if (_sw_frames.size() > 0) {
+						window_frame &f = _sw_frames.front();
+
+						if (seqno == ((f.seqno + 1) % _params.max_seq_numbers)) {
+							// stop the measurement
+							f.tm.stop();
+
+							// adjust the average rtt
+							adjust_rtt(f.tm.getMilliseconds());
+
+							// report result
+							_callback.reportSuccess(f.retry, f.tm.getMilliseconds());
+
+							// remove front element
+							_sw_frames.pop_front();
+						}
+					}
+					break;
+
+				default:
+					_last_ack = seqno;
+					break;
+			}
+
 			_ack_cond.signal(true);
 		}
 
 		void DatagramConnection::setPeerEID(const dtn::data::EID &peer)
 		{
 			_peer_eid = peer;
+		}
+
+		const dtn::data::EID& DatagramConnection::getPeerEID()
+		{
+			return _peer_eid;
 		}
 
 		void DatagramConnection::adjust_rtt(double value)
@@ -359,10 +575,10 @@ namespace dtn
 		}
 
 		DatagramConnection::Stream::Stream(DatagramConnection &conn, const dtn::data::Length &maxmsglen)
-		 : std::iostream(this), _buf_size(maxmsglen), _last_segment(false),
-		   _queue_buf(_buf_size), _queue_buf_len(0),
+		 : std::iostream(this), _buf_size(maxmsglen), _first_segment(true), _last_segment(false),
+		   _queue_buf(_buf_size), _queue_buf_len(0), _queue_buf_head(false),
 		   _out_buf(_buf_size), _in_buf(_buf_size),
-		   _abort(false), _callback(conn)
+		   _abort(false), _skip(false), _reject(false), _callback(conn)
 		{
 			// Initialize get pointer. This should be zero so that underflow
 			// is called upon first read.
@@ -378,7 +594,7 @@ namespace dtn
 		{
 		}
 
-		void DatagramConnection::Stream::queue(const char *buf, const dtn::data::Length &len) throw (DatagramException)
+		void DatagramConnection::Stream::queue(const char *buf, const dtn::data::Length &len, bool isFirst) throw (DatagramException)
 		{
 			try {
 				ibrcommon::MutexLock l(_queue_buf_cond);
@@ -387,6 +603,7 @@ namespace dtn
 				// wait until the buffer is free
 				while (_queue_buf_len > 0)
 				{
+					if (_abort) throw DatagramException("stream aborted");
 					_queue_buf_cond.wait();
 				}
 
@@ -395,12 +612,29 @@ namespace dtn
 
 				// store the buffer length
 				_queue_buf_len = len;
+				_queue_buf_head = isFirst;
 
 				// notify waiting threads
 				_queue_buf_cond.signal();
 			} catch (ibrcommon::Conditional::ConditionalAbortException &ex) {
 				throw DatagramException("stream aborted");
 			}
+		}
+
+		void DatagramConnection::Stream::skip()
+		{
+			ibrcommon::MutexLock l(_queue_buf_cond);
+			_skip = true;
+			_queue_buf_cond.signal(true);
+		}
+
+		void DatagramConnection::Stream::reject()
+		{
+			ibrcommon::MutexLock l(_queue_buf_cond);
+
+			// set reject flag for futher frames
+			_reject = true;
+			_queue_buf_cond.signal(true);
 		}
 
 		void DatagramConnection::Stream::close()
@@ -412,15 +646,13 @@ namespace dtn
 
 		int DatagramConnection::Stream::sync()
 		{
-			// Here we know we get the last segment. Mark it so.
+			// We process the last segment in the set. Set this variable, so
+			// that this information is available for the overflow method.
 			_last_segment = true;
 
 			int ret = std::char_traits<char>::eq_int_type(this->overflow(
 					std::char_traits<char>::eof()), std::char_traits<char>::eof()) ? -1
 					: 0;
-
-			// initialize the first byte with SEGMENT_FIRST flag
-			_last_segment = false;
 
 			return ret;
 		}
@@ -455,8 +687,15 @@ namespace dtn
 			}
 
 			try {
-				// Send segment to CL, use callback interface
-				_callback.stream_send(&_out_buf[0], bytes, _last_segment);
+				// disable skipping if this is the first segment
+				if (_first_segment) _skip = false;
+
+				// send segment to CL, use callback interface
+				if (!_skip) _callback.stream_send(&_out_buf[0], bytes, _last_segment);
+
+				// set the flags for the next segment
+				_first_segment = _last_segment;
+				_last_segment = false;
 			} catch (const DatagramException &ex) {
 				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 35) << "Stream::overflow() exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 
@@ -476,12 +715,21 @@ namespace dtn
 
 			try {
 				ibrcommon::MutexLock l(_queue_buf_cond);
+				if (_abort) throw ibrcommon::Exception("stream aborted");
 
-				while (_queue_buf_len == 0)
+				// ignore this frame if this frame set is rejected
+				while ((_queue_buf_len == 0) || (_reject && !_queue_buf_head))
 				{
+					// clear the buffer
+					_queue_buf_len = 0;
+					_queue_buf_cond.signal(true);
+
 					if (_abort) throw ibrcommon::Exception("stream aborted");
 					_queue_buf_cond.wait();
 				}
+
+				// reset reject
+				_reject = false;
 
 				// copy the queue buffer to an internal buffer
 				::memcpy(&_in_buf[0], &_queue_buf[0], _queue_buf_len);
@@ -501,12 +749,19 @@ namespace dtn
 		}
 
 		DatagramConnection::Sender::Sender(DatagramConnection &conn, Stream &stream)
-		 : _stream(stream), _connection(conn)
+		 : _stream(stream), _connection(conn), _skip(false)
 		{
 		}
 
 		DatagramConnection::Sender::~Sender()
 		{
+		}
+
+		void DatagramConnection::Sender::skip() throw ()
+		{
+			// skip all data of the current transmission
+			_skip = true;
+			_stream.skip();
 		}
 
 		void DatagramConnection::Sender::run() throw ()
@@ -530,14 +785,23 @@ namespace dtn
 						// read the bundle out of the storage
 						const dtn::data::Bundle bundle = storage.get(job.getBundle());
 
+						// reset skip flag
+						_skip = false;
+
 						// write the bundle into the stream
 						serializer << bundle; _stream.flush();
 
-						// the transmission was successful if the stream is still marked as good
+						// check if the stream is still marked as good
 						if (_stream.good())
 						{
-							// bundle send completely - raise bundle event
-							job.complete();
+							// check if last transmission was refused
+							if (_skip) {
+								// send transfer aborted event
+								job.abort(dtn::net::TransferAbortedEvent::REASON_REFUSED);
+							} else {
+								// bundle send completely - raise bundle event
+								job.complete();
+							}
 						}
 					} catch (const dtn::storage::NoBundleFoundException&) {
 						// could not load the bundle, abort the job

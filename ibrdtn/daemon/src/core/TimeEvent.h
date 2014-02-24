@@ -41,20 +41,18 @@ namespace dtn
 
 			TimeEventAction getAction() const;
 			const dtn::data::Timestamp& getTimestamp() const;
-			const dtn::data::Timestamp& getUnixTimestamp() const;
 			const std::string getName() const;
 
-			static void raise(const dtn::data::Timestamp &timestamp, const dtn::data::Timestamp &unixtimestamp, const TimeEventAction action);
+			static void raise(const dtn::data::Timestamp &timestamp, const TimeEventAction action);
 
 			std::string getMessage() const;
 
 			static const std::string className;
 
 		private:
-			TimeEvent(const dtn::data::Timestamp &timestamp, const dtn::data::Timestamp &unixtimestamp, const TimeEventAction action);
+			TimeEvent(const dtn::data::Timestamp &timestamp, const TimeEventAction action);
 
 			const dtn::data::Timestamp m_timestamp;
-			const dtn::data::Timestamp m_unixtimestamp;
 			const TimeEventAction m_action;
 		};
 	}

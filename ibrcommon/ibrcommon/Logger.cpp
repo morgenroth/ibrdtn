@@ -44,10 +44,6 @@
 
 namespace ibrcommon
 {
-	std::string Logger::_default_tag = "Core";
-	std::string Logger::_android_tag_prefix = "IBR-DTN/";
-	Logger::LogWriter Logger::_logwriter;
-
 	Logger::Logger(LogLevel level, const std::string &tag, int debug_verbosity)
 	 : _level(level), _tag(tag), _debug_verbosity(debug_verbosity)
 	{
@@ -115,61 +111,61 @@ namespace ibrcommon
 
 	void Logger::setVerbosity(const int verbosity)
 	{
-		Logger::_logwriter.setVerbosity(verbosity);
+		LogWriter::getInstance().setVerbosity(verbosity);
 	}
 
-	void Logger::LogWriter::setVerbosity(const int verbosity)
+	void LogWriter::setVerbosity(const int verbosity)
 	{
 		_verbosity = verbosity;
 	}
 
 	unsigned char Logger::getLogMask()
 	{
-		return Logger::_logwriter.getLogMask();
+		return LogWriter::getInstance().getLogMask();
 	}
 
 	int Logger::getVerbosity()
 	{
-		return Logger::_logwriter.getVerbosity();
+		return LogWriter::getInstance().getVerbosity();
 	}
 
-	unsigned char Logger::LogWriter::getLogMask() const
+	unsigned char LogWriter::getLogMask() const
 	{
 		return _global_logmask;
 	}
 
-	int Logger::LogWriter::getVerbosity() const
+	int LogWriter::getVerbosity() const
 	{
 		return _verbosity;
 	}
 
 	void Logger::addStream(std::ostream &stream, const unsigned char logmask, const unsigned char options)
 	{
-		Logger::_logwriter.addStream(stream, logmask, options);
+		LogWriter::getInstance().addStream(stream, logmask, options);
 	}
 
 	void Logger::setLogfile(const ibrcommon::File &logfile, const unsigned char logmask, const unsigned char options)
 	{
-		Logger::_logwriter.setLogfile(logfile, logmask, options);
+		LogWriter::getInstance().setLogfile(logfile, logmask, options);
 	}
 
-	void Logger::LogWriter::addStream(std::ostream &stream, const unsigned char logmask, const unsigned char options)
+	void LogWriter::addStream(std::ostream &stream, const unsigned char logmask, const unsigned char options)
 	{
 		_global_logmask |= logmask;
-		_logger.push_back( Logger::LoggerOutput(stream, logmask, options) );
+		_logger.push_back( LogWriter::LoggerOutput(stream, logmask, options) );
 	}
 
 	void Logger::enableSyslog(const char *name, int option, int facility, const unsigned char logmask)
 	{
-		Logger::_logwriter.enableSyslog(name, option, facility, logmask);
+		LogWriter::getInstance().enableSyslog(name, option, facility, logmask);
 	}
 
 	void Logger::print()
 	{
-		Logger::_logwriter.log(*this);
+		LogWriter::getInstance().log(*this);
 	}
 
-	void Logger::LogWriter::enableSyslog(const char *name, int option, int facility, const unsigned char logmask)
+	void LogWriter::enableSyslog(const char *name, int option, int facility, const unsigned char logmask)
 	{
 #if ( defined HAVE_SYSLOG_H || defined ANDROID )
 #ifdef HAVE_SYSLOG_H
@@ -182,9 +178,9 @@ namespace ibrcommon
 #endif
 	}
 
-	void Logger::LogWriter::flush(const Logger &logger)
+	void LogWriter::flush(const Logger &logger)
 	{
-		if (_verbosity >= logger._debug_verbosity)
+		if (_verbosity >= logger.getDebugVerbosity())
 		{
 			for (std::list<LoggerOutput>::iterator iter = _logger.begin(); iter != _logger.end(); ++iter)
 			{
@@ -205,48 +201,48 @@ namespace ibrcommon
 			// additionally log to the syslog/android logcat
 			if (_syslog)
 			{
-				if (logger._level & _syslog_mask)
+				if (logger.getLevel() & _syslog_mask)
 				{
 #ifdef ANDROID
-					std::string log_tag = Logger::_default_tag;
-					if (logger._tag.length() > 0) {
-						log_tag = logger._tag;
+					std::string log_tag = LogWriter::getInstance().getDefaultTag();
+					if (logger.getTag().length() > 0) {
+						log_tag = logger.getTag();
 					}
 
 					// add additional prefix for android tags to seperate them from other logcat messages
-					log_tag = Logger::_android_tag_prefix + log_tag;
+					log_tag = _android_tag_prefix + log_tag;
 
-					switch (logger._level)
+					switch (logger.getLevel())
 					{
-					case LOGGER_EMERG:
+					case Logger::LOGGER_EMERG:
 						__android_log_print(ANDROID_LOG_FATAL, log_tag.c_str(), "%s", logger.str().c_str());
 						break;
 
-					case LOGGER_ALERT:
+					case Logger::LOGGER_ALERT:
 						__android_log_print(ANDROID_LOG_FATAL, log_tag.c_str(), "%s", logger.str().c_str());
 						break;
 
-					case LOGGER_CRIT:
+					case Logger::LOGGER_CRIT:
 						__android_log_print(ANDROID_LOG_FATAL, log_tag.c_str(), "%s", logger.str().c_str());
 						break;
 
-					case LOGGER_ERR:
+					case Logger::LOGGER_ERR:
 						__android_log_print(ANDROID_LOG_ERROR, log_tag.c_str(), "%s", logger.str().c_str());
 						break;
 
-					case LOGGER_WARNING:
+					case Logger::LOGGER_WARNING:
 						__android_log_print(ANDROID_LOG_WARN, log_tag.c_str(), "%s", logger.str().c_str());
 						break;
 
-					case LOGGER_NOTICE:
+					case Logger::LOGGER_NOTICE:
 						__android_log_print(ANDROID_LOG_INFO, log_tag.c_str(), "%s", logger.str().c_str());
 						break;
 
-					case LOGGER_INFO:
+					case Logger::LOGGER_INFO:
 						__android_log_print(ANDROID_LOG_INFO, log_tag.c_str(), "%s", logger.str().c_str());
 						break;
 
-					case LOGGER_DEBUG:
+					case Logger::LOGGER_DEBUG:
 						__android_log_print(ANDROID_LOG_DEBUG, log_tag.c_str(), "%s", logger.str().c_str());
 						break;
 
@@ -255,37 +251,37 @@ namespace ibrcommon
 						break;
 					}
 #else
-					switch (logger._level)
+					switch (logger.getLevel())
 					{
-					case LOGGER_EMERG:
+					case Logger::LOGGER_EMERG:
 						::syslog( LOG_EMERG, "%s", logger.str().c_str() );
 						break;
 
-					case LOGGER_ALERT:
+					case Logger::LOGGER_ALERT:
 						::syslog( LOG_ALERT, "%s", logger.str().c_str() );
 						break;
 
-					case LOGGER_CRIT:
+					case Logger::LOGGER_CRIT:
 						::syslog( LOG_CRIT, "%s", logger.str().c_str() );
 						break;
 
-					case LOGGER_ERR:
+					case Logger::LOGGER_ERR:
 						::syslog( LOG_ERR, "%s", logger.str().c_str() );
 						break;
 
-					case LOGGER_WARNING:
+					case Logger::LOGGER_WARNING:
 						::syslog( LOG_WARNING, "%s", logger.str().c_str() );
 						break;
 
-					case LOGGER_NOTICE:
+					case Logger::LOGGER_NOTICE:
 						::syslog( LOG_NOTICE, "%s", logger.str().c_str() );
 						break;
 
-					case LOGGER_INFO:
+					case Logger::LOGGER_INFO:
 						::syslog( LOG_INFO, "%s", logger.str().c_str() );
 						break;
 
-					case LOGGER_DEBUG:
+					case Logger::LOGGER_DEBUG:
 						::syslog( LOG_DEBUG, "%s", logger.str().c_str() );
 						break;
 
@@ -300,68 +296,68 @@ namespace ibrcommon
 		}
 	}
 
-	void Logger::LoggerOutput::log(const Logger &log)
+	void LogWriter::LoggerOutput::log(const Logger &log)
 	{
-		if (_level & log._level)
+		if (_level & log.getLevel())
 		{
 			std::list<std::string> prefixes;
 
 			// check for prefixes
-			if (_options & LOG_DATETIME)
+			if (_options & Logger::LOG_DATETIME)
 			{
 				// get timestamp
-				time_t secs = log._logtime.tv_sec;
+				time_t secs = log.getLogTime().tv_sec;
 				std::string timestamp(asctime( localtime(&secs) ));
 				timestamp.erase(std::remove(timestamp.begin(), timestamp.end(), '\n'), timestamp.end());
 				prefixes.push_back(timestamp);
 			}
 
 			// check for prefixes
-			if (_options & LOG_TIMESTAMP)
+			if (_options & Logger::LOG_TIMESTAMP)
 			{
 				std::stringstream ss;
 				ss.fill('0');
-				ss << log._logtime.tv_sec << "." << std::setw(6) << log._logtime.tv_usec;
+				ss << log.getLogTime().tv_sec << "." << std::setw(6) << log.getLogTime().tv_usec;
 				prefixes.push_back(ss.str());
 			}
 
-			if (_options & LOG_LEVEL)
+			if (_options & Logger::LOG_LEVEL)
 			{
 				// print log level
-				switch (log._level)
+				switch (log.getLevel())
 				{
-					case LOGGER_EMERG:
+					case Logger::LOGGER_EMERG:
 						prefixes.push_back("EMERGENCY");
 						break;
 
-					case LOGGER_ALERT:
+					case Logger::LOGGER_ALERT:
 						prefixes.push_back("ALERT");
 						break;
 
-					case LOGGER_CRIT:
+					case Logger::LOGGER_CRIT:
 						prefixes.push_back("CRTITICAL");
 						break;
 
-					case LOGGER_ERR:
+					case Logger::LOGGER_ERR:
 						prefixes.push_back("ERROR");
 						break;
 
-					case LOGGER_WARNING:
+					case Logger::LOGGER_WARNING:
 						prefixes.push_back("WARNING");
 						break;
 
-					case LOGGER_NOTICE:
+					case Logger::LOGGER_NOTICE:
 						prefixes.push_back("NOTICE");
 						break;
 
-					case LOGGER_INFO:
+					case Logger::LOGGER_INFO:
 						prefixes.push_back("INFO");
 						break;
 
-					case LOGGER_DEBUG:
+					case Logger::LOGGER_DEBUG:
 					{
 						std::stringstream ss;
-						ss << "DEBUG." << log._debug_verbosity;
+						ss << "DEBUG." << log.getDebugVerbosity();
 						prefixes.push_back(ss.str());
 						break;
 					}
@@ -371,7 +367,7 @@ namespace ibrcommon
 				}
 			}
 
-			if (_options & LOG_HOSTNAME)
+			if (_options & Logger::LOG_HOSTNAME)
 			{
 				std::vector<char> hostname_array(64);
 				if ( gethostname(&hostname_array[0], 64) == 0 )
@@ -381,12 +377,12 @@ namespace ibrcommon
 				}
 			}
 
-			if (_options & LOG_TAG)
+			if (_options & Logger::LOG_TAG)
 			{
-				if (log._tag.length() > 0) {
-					prefixes.push_back(log._tag);
+				if (log.getTag().length() > 0) {
+					prefixes.push_back(log.getTag());
 				} else {
-					prefixes.push_back(Logger::_default_tag);
+					prefixes.push_back(LogWriter::getInstance().getDefaultTag());
 				}
 			}
 
@@ -412,23 +408,23 @@ namespace ibrcommon
 		}
 	}
 
-	Logger::LoggerOutput::LoggerOutput(std::ostream &stream, const unsigned char logmask, const unsigned char options)
+	LogWriter::LoggerOutput::LoggerOutput(std::ostream &stream, const unsigned char logmask, const unsigned char options)
 	 : _stream(stream), _level(logmask), _options(options)
 	{
 	}
 
-	Logger::LoggerOutput::~LoggerOutput()
+	LogWriter::LoggerOutput::~LoggerOutput()
 	{
 	}
 
 	void Logger::enableAsync()
 	{
-		Logger::_logwriter.enableAsync();
+		LogWriter::getInstance().enableAsync();
 	}
 
 	void Logger::enableBuffer(size_t size)
 	{
-		Logger::_logwriter.enableBuffer(size);
+		LogWriter::getInstance().enableBuffer(size);
 	}
 
 	void Logger::writeBuffer(std::ostream &stream)
@@ -436,10 +432,10 @@ namespace ibrcommon
 		unsigned char logmask = ibrcommon::Logger::LOGGER_ALL;
 		unsigned char options = ibrcommon::Logger::LOG_DATETIME | ibrcommon::Logger::LOG_LEVEL;
 
-		Logger::_logwriter.writeBuffer(stream, logmask, options);
+		LogWriter::getInstance().writeBuffer(stream, logmask, options);
 	}
 
-	void Logger::LogWriter::enableAsync()
+	void LogWriter::enableAsync()
 	{
 		try {
 			_use_queue = true;
@@ -451,29 +447,55 @@ namespace ibrcommon
 	
 	void Logger::setDefaultTag(const std::string &tag)
 	{
-		Logger::_default_tag = tag;
+		LogWriter::getInstance().setDefaultTag(tag);
 	}
 
 	void Logger::stop()
 	{
 		// stop the LogWriter::run() thread (this is needed with uclibc)
-		_logwriter.stop();
+		LogWriter::getInstance().stop();
 	}
 
 	void Logger::reload()
 	{
 		//reload the logger
-		_logwriter.reload();
+		LogWriter::getInstance().reload();
 	}
 
-	Logger::LogWriter::LogWriter()
+	Logger::LogLevel Logger::getLevel() const
+	{
+		return _level;
+	}
+
+	const std::string& Logger::getTag() const
+	{
+		return _tag;
+	}
+
+	int Logger::getDebugVerbosity() const
+	{
+		return _debug_verbosity;
+	}
+
+	struct timeval Logger::getLogTime() const
+	{
+		return _logtime;
+	}
+
+	LogWriter& LogWriter::getInstance()
+	{
+		static LogWriter instance;
+		return instance;
+	}
+
+	LogWriter::LogWriter()
 	 : _global_logmask(0), _verbosity(0), _syslog(0), _syslog_mask(0), _queue(50), _use_queue(false), _buffer_size(0), _buffer(NULL),
-	   _logfile_output(NULL), _logfile_logmask(0), _logfile_options(0)
+	   _logfile_output(NULL), _logfile_logmask(0), _logfile_options(0), _default_tag("Core"), _android_tag_prefix("IBR-DTN/")
 	// limit queue to 50 entries
 	{
 	}
 
-	Logger::LogWriter::~LogWriter()
+	LogWriter::~LogWriter()
 	{
 		// do cleanup only if the thread was running before
 		if (_use_queue) stop();
@@ -486,14 +508,14 @@ namespace ibrcommon
 		if (_buffer != NULL) delete _buffer;
 	}
 
-	void Logger::LogWriter::enableBuffer(size_t size)
+	void LogWriter::enableBuffer(size_t size)
 	{
 		ibrcommon::MutexLock l(_buffer_mutex);
 		_buffer_size = size;
 		_buffer = new std::list<Logger>();
 	}
 
-	void Logger::LogWriter::setLogfile(const ibrcommon::File &logfile, const unsigned char logmask, const unsigned char options)
+	void LogWriter::setLogfile(const ibrcommon::File &logfile, const unsigned char logmask, const unsigned char options)
 	{
 		ibrcommon::MutexLock l(_logfile_mutex);
 		if (_logfile_output != NULL)
@@ -529,7 +551,7 @@ namespace ibrcommon
 		}
 	}
 
-	void Logger::LogWriter::reload()
+	void LogWriter::reload()
 	{
 		ibrcommon::MutexLock l(_logfile_mutex);
 		if (_logfile_output != NULL)
@@ -556,7 +578,7 @@ namespace ibrcommon
 		}
 	}
 
-	void Logger::LogWriter::writeBuffer(std::ostream &stream, const unsigned char logmask, const unsigned char options)
+	void LogWriter::writeBuffer(std::ostream &stream, const unsigned char logmask, const unsigned char options)
 	{
 		ibrcommon::MutexLock l(_buffer_mutex);
 		if (_buffer == NULL) return;
@@ -570,7 +592,17 @@ namespace ibrcommon
 		}
 	}
 
-	void Logger::LogWriter::log(Logger &logger)
+	const std::string& LogWriter::getDefaultTag() const
+	{
+		return _default_tag;
+	}
+
+	void LogWriter::setDefaultTag(const std::string &value)
+	{
+		_default_tag = value;
+	}
+
+	void LogWriter::log(Logger &logger)
 	{
 		if (_use_queue)
 		{
@@ -582,7 +614,7 @@ namespace ibrcommon
 		}
 	}
 
-	void Logger::LogWriter::run() throw ()
+	void LogWriter::run() throw ()
 	{
 		try {
 			while (true)
@@ -621,7 +653,7 @@ namespace ibrcommon
 		}
 	}
 
-	void Logger::LogWriter::__cancellation() throw ()
+	void LogWriter::__cancellation() throw ()
 	{
 		// cancel the main thread in here
 		_queue.abort();

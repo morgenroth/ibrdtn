@@ -47,7 +47,7 @@ namespace dtn
 		void BundleReceivedEvent::raise(const dtn::data::EID &peer, const dtn::data::Bundle &bundle, const bool local)
 		{
 			// raise the new event
-			dtn::core::EventDispatcher<BundleReceivedEvent>::raise( new BundleReceivedEvent(peer, bundle, local), true );
+			dtn::core::EventDispatcher<BundleReceivedEvent>::queue( new BundleReceivedEvent(peer, bundle, local) );
 		}
 
 		const std::string BundleReceivedEvent::getName() const

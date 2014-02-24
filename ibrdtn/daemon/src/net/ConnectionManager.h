@@ -85,7 +85,7 @@ namespace dtn
 			/**
 			 * queue a bundle for transmission
 			 */
-			void queue(const dtn::net::BundleTransfer &job);
+			void queue(dtn::net::BundleTransfer &job);
 
 			/**
 			 * method to receive new events from the EventSwitch
@@ -137,10 +137,7 @@ namespace dtn
 			/**
 			 * Returns statistic data about all convergence-layers
 			 */
-			typedef std::pair<dtn::core::Node::Protocol, ConvergenceLayer::stats_map> stats_pair;
-			typedef std::list<stats_pair> stats_list;
-
-			stats_list getStats();
+			void getStats(dtn::net::ConvergenceLayer::stats_data &data);
 			void resetStats();
 
 		protected:

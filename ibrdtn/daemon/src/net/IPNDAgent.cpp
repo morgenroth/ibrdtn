@@ -22,10 +22,10 @@
 #include "Configuration.h"
 
 #include "net/IPNDAgent.h"
+#include "net/DiscoveryAgent.h"
 #include "net/P2PDialupEvent.h"
 #include "core/BundleCore.h"
 #include "core/EventDispatcher.h"
-#include "core/GlobalEvent.h"
 
 #include <ibrdtn/data/Exceptions.h>
 
@@ -52,27 +52,12 @@ namespace dtn
 		const std::string IPNDAgent::TAG = "IPNDAgent";
 
 		IPNDAgent::IPNDAgent(int port)
-		 : DiscoveryAgent(dtn::daemon::Configuration::getInstance().getDiscovery()),
+		 :
 #ifndef __WIN32__
 		   _virtual_mcast_iface("__virtual_multicast_interface__"),
 #endif
-		   _version(DiscoveryAnnouncement::DISCO_VERSION_01), _state(false), _port(port), _enabled(true)
+		   _state(false), _port(port)
 		{
-			switch (_config.version())
-			{
-			case 2:
-				_version = DiscoveryAnnouncement::DISCO_VERSION_01;
-				break;
-
-			case 1:
-				_version = DiscoveryAnnouncement::DISCO_VERSION_00;
-				break;
-
-			case 0:
-				IBRCOMMON_LOGGER_TAG("DiscoveryAgent", info) << "DTN2 compatibility mode" << IBRCOMMON_LOGGER_ENDL;
-				_version = DiscoveryAnnouncement::DTND_IPDISCOVERY;
-				break;
-			};
 		}
 
 		IPNDAgent::~IPNDAgent()
@@ -101,6 +86,11 @@ namespace dtn
 
 		void IPNDAgent::join(const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr) throw ()
 		{
+			IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "Join on " << iface.toString() << " (" << addr.toString() << ", family: " << addr.family() << ")" << IBRCOMMON_LOGGER_ENDL;
+
+			// only join IPv6 and IPv4 addresses
+			if ((addr.family() != AF_INET) && (addr.family() != AF_INET6)) return;
+
 			// create a multicast socket and bind to given addr
 			ibrcommon::multicastsocket *msock = new ibrcommon::multicastsocket(addr);
 
@@ -117,18 +107,18 @@ namespace dtn
 							msock->join(*it_addr, iface);
 						} catch (const ibrcommon::socket_raw_error &e) {
 							if (e.error() == EADDRINUSE) {
-								// silence error
+								// silent error
 							} else if (e.error() == 92) {
-								// silence error - protocol not available
+								// silent error - protocol not available
 							} else {
-								IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << "join failed on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
+								IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, warning) << "Join to " << (*it_addr).toString() << " failed on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
 							}
 						} catch (const ibrcommon::socket_exception &e) {
-							IBRCOMMON_LOGGER_DEBUG_TAG(IPNDAgent::TAG, 10) << "can not join " << (*it_addr).toString() << " on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG(IPNDAgent::TAG, 10) << "Join to " << (*it_addr).toString() << " failed on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
 						}
 					}
 				} catch (const ibrcommon::socket_exception &ex) {
-					IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << "failed to set-up socket on " << iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << "Join failed on " << iface.toString() << " (" << addr.toString() << ", family: " << addr.family() << ")" << "; " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					delete msock;
 					return;
 				}
@@ -140,6 +130,8 @@ namespace dtn
 
 		void IPNDAgent::leave(const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr) throw ()
 		{
+			IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "Leave " << iface.toString() << " (" << addr.toString() << ", family: " << addr.family() << ")" << IBRCOMMON_LOGGER_ENDL;
+
 			// get all sockets bound to the given interface
 			ibrcommon::socketset ifsocks = _socket.get(iface);
 
@@ -204,10 +196,10 @@ namespace dtn
 			}
 		}
 
-		void IPNDAgent::send(const DiscoveryAnnouncement &a, const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr)
+		void IPNDAgent::onAdvertiseBeacon(const ibrcommon::vinterface &iface, const DiscoveryBeacon &beacon) throw ()
 		{
 			// serialize announcement
-			stringstream ss; ss << a;
+			stringstream ss; ss << beacon;
 			const std::string data = ss.str();
 
 			// get all sockets for the given interface
@@ -220,15 +212,21 @@ namespace dtn
 				try {
 					ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**iter);
 
-					try {
-						// prevent broadcasting in the wrong address family
-						if (addr.family() != sock.get_family()) continue;
+					// send beacon to all addresses
+					for (std::set<ibrcommon::vaddress>::const_iterator addr_it = _destinations.begin(); addr_it != _destinations.end(); ++addr_it)
+					{
+						const ibrcommon::vaddress &addr = (*addr_it);
 
-						sock.sendto(data.c_str(), data.length(), 0, addr);
-					} catch (const ibrcommon::socket_exception &e) {
-						IBRCOMMON_LOGGER_DEBUG_TAG(IPNDAgent::TAG, 5) << "can not send message to " << addr.toString() << " via " << sock.get_address().toString() << "/" << iface.toString() << "; socket exception: " << e.what() << IBRCOMMON_LOGGER_ENDL;
-					} catch (const ibrcommon::vaddress::address_exception &ex) {
-						IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						try {
+							// prevent broadcasting in the wrong address family
+							if (addr.family() != sock.get_family()) continue;
+
+							sock.sendto(data.c_str(), data.length(), 0, addr);
+						} catch (const ibrcommon::socket_exception &e) {
+							IBRCOMMON_LOGGER_DEBUG_TAG(IPNDAgent::TAG, 5) << "can not send message to " << addr.toString() << " via " << sock.get_address().toString() << "/" << iface.toString() << "; socket exception: " << e.what() << IBRCOMMON_LOGGER_ENDL;
+						} catch (const ibrcommon::vaddress::address_exception &ex) {
+							IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						}
 					}
 				} catch (const std::bad_cast&) {
 					IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << "Socket for sending isn't a udpsocket." << IBRCOMMON_LOGGER_ENDL;
@@ -236,49 +234,7 @@ namespace dtn
 			}
 		}
 
-		void IPNDAgent::sendAnnoucement(const uint16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &providers)
-		{
-			// stop send announcements if discovery beacons are disabled
-			if (!_enabled) return;
-
-			DiscoveryAnnouncement announcement(_version, dtn::core::BundleCore::local);
-
-			// set sequencenumber
-			announcement.setSequencenumber(sn);
-
-			ibrcommon::MutexLock l(_interface_lock);
-
-			for (std::set<ibrcommon::vinterface>::const_iterator it_iface = _interfaces.begin(); it_iface != _interfaces.end(); ++it_iface)
-			{
-				const ibrcommon::vinterface &iface = (*it_iface);
-
-				// clear all services
-				announcement.clearServices();
-
-				if (!_config.shortbeacon())
-				{
-					// add services
-					for (std::list<DiscoveryServiceProvider*>::iterator iter = providers.begin(); iter != providers.end(); ++iter)
-					{
-						DiscoveryServiceProvider &provider = (**iter);
-
-						try {
-							// update service information
-							provider.update(iface, announcement);
-						} catch (const dtn::net::DiscoveryServiceProvider::NoServiceHereException&) {
-
-						}
-					}
-				}
-
-				for (std::set<ibrcommon::vaddress>::iterator iter = _destinations.begin(); iter != _destinations.end(); ++iter) {
-					send(announcement, iface, (*iter));
-				}
-			}
-		}
-
-
-		void IPNDAgent::raiseEvent(const Event *evt) throw ()
+		void IPNDAgent::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			try {
 				const dtn::net::P2PDialupEvent &dialup = dynamic_cast<const dtn::net::P2PDialupEvent&>(*evt);
@@ -301,6 +257,9 @@ namespace dtn
 						// subscribe to NetLink events on our interfaces
 						ibrcommon::LinkManager::getInstance().addEventListener(dialup.iface, this);
 
+						// register as discovery handler for this interface
+						dtn::core::BundleCore::getInstance().getDiscoveryAgent().registerService(dialup.iface, this);
+
 						// join to all multicast addresses on this interface
 						join(dialup.iface);
 						break;
@@ -322,26 +281,15 @@ namespace dtn
 						// subscribe to NetLink events on our interfaces
 						ibrcommon::LinkManager::getInstance().removeEventListener(dialup.iface, this);
 
+						// un-register as discovery handler for this interface
+						dtn::core::BundleCore::getInstance().getDiscoveryAgent().unregisterService(dialup.iface, this);
+
 						// leave the multicast groups on the interface
 						leave(dialup.iface);
 						break;
 					}
 				}
 			} catch (std::bad_cast&) {
-
-			}
-
-			try {
-				const dtn::core::GlobalEvent &global = dynamic_cast<const dtn::core::GlobalEvent&>(*evt);
-				if (global.getAction() == dtn::core::GlobalEvent::GLOBAL_START_DISCOVERY) {
-					// start sending discovery beacons
-					_enabled = true;
-				}
-				else if (global.getAction() == dtn::core::GlobalEvent::GLOBAL_STOP_DISCOVERY) {
-					// suspend discovery beacons
-					_enabled = false;
-				}
-			} catch (const std::bad_cast&) {
 
 			}
 		}
@@ -438,10 +386,7 @@ namespace dtn
 			// listen to P2P dial-up events
 			dtn::core::EventDispatcher<dtn::net::P2PDialupEvent>::add(this);
 
-			// listen to global events (discovery start/stop)
-			dtn::core::EventDispatcher<dtn::core::GlobalEvent>::add(this);
-
-			// join multicast groups
+			// join multicast groups and register as discovery handler
 			ibrcommon::MutexLock l(_interface_lock);
 
 			for (std::set<ibrcommon::vinterface>::const_iterator it_iface = _interfaces.begin(); it_iface != _interfaces.end(); ++it_iface)
@@ -451,6 +396,9 @@ namespace dtn
 				// subscribe to NetLink events on our interfaces
 				ibrcommon::LinkManager::getInstance().addEventListener(iface, this);
 
+				// register as discovery handler for this interface
+				dtn::core::BundleCore::getInstance().getDiscoveryAgent().registerService(iface, this);
+
 				// join to all multicast addresses on this interface
 				join(iface);
 			}
@@ -458,14 +406,14 @@ namespace dtn
 
 		void IPNDAgent::componentDown() throw ()
 		{
-			// un-listen to global events (discovery start/stop)
-			dtn::core::EventDispatcher<dtn::core::GlobalEvent>::remove(this);
-
 			// un-listen to P2P dial-up events
 			dtn::core::EventDispatcher<dtn::net::P2PDialupEvent>::remove(this);
 
 			// unsubscribe to NetLink events
 			ibrcommon::LinkManager::getInstance().removeEventListener(this);
+
+			// un-register as discovery handler for this interface
+			dtn::core::BundleCore::getInstance().getDiscoveryAgent().unregisterService(this);
 
 			// mark the send socket as down
 			_state = false;
@@ -485,6 +433,9 @@ namespace dtn
 			tv.tv_sec = 1;
 			tv.tv_usec = 0;
 
+			// get the reference to the discovery agent
+			dtn::net::DiscoveryAgent &agent = dtn::core::BundleCore::getInstance().getDiscoveryAgent();
+
 			try {
 				while (true)
 				{
@@ -501,10 +452,7 @@ namespace dtn
 
 							char data[1500];
 							ibrcommon::vaddress sender;
-							DiscoveryAnnouncement announce(_version);
-
-							std::list<DiscoveryService> ret_services;
-							dtn::data::EID ret_source;
+							DiscoveryBeacon beacon = agent.obtainBeacon();
 
 							ssize_t len = sock.recvfrom(data, 1500, 0, sender);
 
@@ -514,48 +462,33 @@ namespace dtn
 							ss.write(data, len);
 
 							try {
-								ss >> announce;
+								ss >> beacon;
 
-								if (announce.isShort())
+								if (beacon.isShort())
 								{
 									// generate name with the sender address
-									ret_source = dtn::data::EID("udp://[" + sender.address() + "]:4556");
-								}
-								else
-								{
-									ret_source = announce.getEID();
-								}
+									beacon.setEID( dtn::data::EID("udp://[" + sender.address() + "]:4556") );
 
-								// get the list of services
-								const std::list<DiscoveryService> &services = announce.getServices();
-
-								if (services.empty() && announce.isShort())
-								{
-									ret_services.push_back(dtn::net::DiscoveryService("tcpcl", "ip=" + sender.address() + ";port=4556;"));
+									// add generated tcpcl service if the services list is empty
+									beacon.addService(dtn::net::DiscoveryService(dtn::core::Node::CONN_TCPIP, "ip=" + sender.address() + ";port=4556;"));
 								}
 
-								// add all services to the return set
-								for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); ++iter) {
-									const DiscoveryService &service = (*iter);
+								DiscoveryBeacon::service_list &services = beacon.getServices();
 
-									// add source address if not set
+								// add source address if not set
+								for (dtn::net::DiscoveryBeacon::service_list::iterator iter = services.begin(); iter != services.end(); ++iter) {
+									DiscoveryService &service = (*iter);
+
 									if ( (service.getParameters().find("port=") != std::string::npos) &&
 											(service.getParameters().find("ip=") == std::string::npos) ) {
-										// create a new service object
-										dtn::net::DiscoveryService ret_service(service.getName(), "ip=" + sender.address() + ";" + service.getParameters());
 
-										// add service to the return set
-										ret_services.push_back(ret_service);
-									}
-									else
-									{
-										// add service to the return set
-										ret_services.push_back(service);
+										// update service entry
+										service.update("ip=" + sender.address() + ";" + service.getParameters());
 									}
 								}
 
-								// announce the received services
-								received(ret_source, ret_services);
+								// announce the received beacon
+								agent.onBeaconReceived(beacon);
 							} catch (const dtn::InvalidDataException&) {
 							} catch (const ibrcommon::IOException&) {
 							}
@@ -563,12 +496,9 @@ namespace dtn
 
 						// trigger an artificial timeout if the remaining timeout value is zero or below
 						if ( tv.tv_sec <= 0 && tv.tv_usec <= 0 )
-            				throw ibrcommon::vsocket_timeout("timeout");
+							throw ibrcommon::vsocket_timeout("timeout");
 
 					} catch (const ibrcommon::vsocket_timeout&) {
-						// timeout reached
-						timeout();
-
 						// reset timeout to 1 second
 						tv.tv_sec = 1;
 						tv.tv_usec = 0;

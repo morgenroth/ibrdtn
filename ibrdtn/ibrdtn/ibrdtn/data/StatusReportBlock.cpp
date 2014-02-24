@@ -31,8 +31,8 @@ namespace dtn
 	namespace data
 	{
 		StatusReportBlock::StatusReportBlock()
-		 : AdministrativeBlock(16), status(0), reasoncode(0),
-		 fragment_length(0), timeof_receipt(), timeof_custodyaccept(),
+		 : status(0), reasoncode(0),
+		 timeof_receipt(), timeof_custodyaccept(),
 		 timeof_forwarding(), timeof_delivery(), timeof_deletion()
 		{
 		}
@@ -49,14 +49,16 @@ namespace dtn
 			// clear the whole data first
 			stream.clear();
 
-			(*stream).put(_admfield);
+			char admfield = bundleid.isFragment() ? 17 : 16;
+
+			(*stream).put(admfield);
 			(*stream).put(status);
 			(*stream).put(reasoncode);
 
-			if ( refsFragment() )
+			if ( bundleid.isFragment() )
 			{
-				(*stream) << bundleid.offset;
-				(*stream) << fragment_length;
+				(*stream) << bundleid.fragmentoffset;
+				(*stream) << dtn::data::Number(bundleid.getPayloadLength());
 			}
 
 			if (status & RECEIPT_OF_BUNDLE)
@@ -84,20 +86,24 @@ namespace dtn
 			ibrcommon::BLOB::Reference r = p.getBLOB();
 			ibrcommon::BLOB::iostream stream = r.iostream();
 
-			(*stream).get(_admfield);
+			char admfield;
+			(*stream).get(admfield);
 
 			// check type field
-			if ((_admfield >> 4) != 1) throw WrongRecordException();
+			if ((admfield >> 4) != 1) throw WrongRecordException();
 
 			(*stream).get(status);
 			(*stream).get(reasoncode);
 
-			if ( refsFragment() )
+			if ( admfield & 0x01 )
 			{
-				bundleid.fragment = true;
+				bundleid.setFragment(true);
 
-				(*stream) >> bundleid.offset;
-				(*stream) >> fragment_length;
+				(*stream) >> bundleid.fragmentoffset;
+
+				dtn::data::Number tmp;
+				(*stream) >> tmp;
+				bundleid.setPayloadLength(tmp.get<dtn::data::Length>());
 			}
 
 			if (status & RECEIPT_OF_BUNDLE)

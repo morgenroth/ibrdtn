@@ -20,12 +20,8 @@
  */
 
 #include "Debugger.h"
-#include "ibrdtn/utils/Utils.h"
 #include <ibrcommon/Logger.h>
-
-using namespace dtn::data;
-using namespace dtn::core;
-using namespace std;
+#include <sstream>
 
 namespace dtn
 {
@@ -33,7 +29,29 @@ namespace dtn
 	{
 		void Debugger::callbackBundleReceived(const Bundle &b)
 		{
-			IBRCOMMON_LOGGER_DEBUG_TAG("Debugger", 5) << "Bundle received " << b.toString() << IBRCOMMON_LOGGER_ENDL;
+			// do not print anything if debugging is disabled
+			if (ibrcommon::Logger::getVerbosity() < 1) return;
+
+			std::stringstream ss_blocks;
+
+			for (dtn::data::Bundle::const_iterator iter = b.begin(); iter != b.end(); ++iter)
+			{
+				const dtn::data::Block &block = (**iter);
+				ss_blocks << "[T=" << (unsigned int)block.getType() << ";F=" << block.getProcessingFlags().get<size_t>() << ";LEN=" << block.getLength() << ";]";
+			}
+
+			IBRCOMMON_LOGGER_DEBUG_TAG("Debugger", 1) << "F=" << b.procflags.get<size_t>() <<
+					";SRC=" << b.source.getString() <<
+					";DST=" << b.destination.getString() <<
+					";RPT=" << b.reportto.getString() <<
+					";CSD=" << b.custodian.getString() <<
+					";TS=" << b.timestamp.get<size_t>() <<
+					";SQ=" << b.sequencenumber.get<size_t>() <<
+					";LT=" << b.lifetime.get<size_t>() <<
+					";FO=" << b.fragmentoffset.get<size_t>() <<
+					";AL=" << b.appdatalength.get<size_t>() <<
+					";" << ss_blocks.str() <<
+					IBRCOMMON_LOGGER_ENDL;
 		}
 	}
 }

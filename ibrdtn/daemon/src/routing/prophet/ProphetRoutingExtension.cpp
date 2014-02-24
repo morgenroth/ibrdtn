@@ -23,6 +23,7 @@
 #include "routing/prophet/DeliveryPredictabilityMap.h"
 
 #include "core/BundleCore.h"
+#include "core/EventDispatcher.h"
 
 #include <algorithm>
 #include <memory>
@@ -113,32 +114,19 @@ namespace dtn
 				// strip possible application part off the neighbor EID
 				const dtn::data::EID neighbor_node = neighbor.getNode();
 
-				IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "delivery predictability map received from " << neighbor.getString() << IBRCOMMON_LOGGER_ENDL;
-
-				// update the encounter on every routing handshake
-				{
-					ibrcommon::MutexLock l(_deliveryPredictabilityMap);
-
-					age();
-
-					/* update predictability for this neighbor */
-					updateNeighbor(neighbor_node);
-				}
+				IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "delivery predictability map received from " << neighbor_node.getString() << IBRCOMMON_LOGGER_ENDL;
 
 				// store a copy of the map in the neighbor database
-				{
+				try {
 					NeighborDatabase &db = (**this).getNeighborDB();
 					NeighborDataset ds(new DeliveryPredictabilityMap(neighbor_dp_map));
 
 					ibrcommon::MutexLock l(db);
-					db.create(neighbor_node).putDataset(ds);
-				}
+					db.get(neighbor_node).putDataset(ds);
+				} catch (const NeighborNotAvailableException&) { };
 
-				ibrcommon::MutexLock l(_deliveryPredictabilityMap);
-
-				/* update the dp_map */
-				_deliveryPredictabilityMap.update(neighbor_node, neighbor_dp_map, _p_encounter_first);
-
+				/* update predictability for this neighbor */
+				updateNeighbor(neighbor_node, neighbor_dp_map);
 			} catch (std::exception&) { }
 
 			try {
@@ -196,7 +184,7 @@ namespace dtn
 
 					if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
 					{
-						dtn::core::BundlePurgeEvent::raise(meta);
+						dtn::core::BundlePurgeEvent::raise(meta, dtn::core::BundlePurgeEvent::ACK_RECIEVED);
 						IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "Bundle removed due to prophet ack: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 					}
 					else
@@ -211,7 +199,39 @@ namespace dtn
 			} catch (std::exception&) { }
 		}
 
-		void ProphetRoutingExtension::notify(const dtn::core::Event *evt) throw ()
+		void ProphetRoutingExtension::eventDataChanged(const dtn::data::EID &peer) throw ()
+		{
+			// transfer the next bundle to this destination
+			_taskqueue.push( new SearchNextBundleTask( peer ) );
+		}
+
+		void ProphetRoutingExtension::eventTransferCompleted(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ()
+		{
+			// add forwarded entry to GTMX strategy
+			try {
+				GTMX_Strategy &gtmx = dynamic_cast<GTMX_Strategy&>(*_forwardingStrategy);
+				gtmx.addForward(meta);
+			} catch (const std::bad_cast &ex) { };
+		}
+
+		void ProphetRoutingExtension::eventBundleQueued(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ()
+		{
+			// new bundles trigger a recheck for all neighbors
+			const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
+
+			for (std::set<dtn::core::Node>::const_iterator iter = nl.begin(); iter != nl.end(); ++iter)
+			{
+				const dtn::core::Node &n = (*iter);
+
+				if (n.getEID() != peer)
+				{
+					// trigger all routing modules to search for bundles to forward
+					eventDataChanged(n.getEID());
+				}
+			}
+		}
+
+		void ProphetRoutingExtension::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			try {
 				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
@@ -219,7 +239,7 @@ namespace dtn
 				// expire bundles in the acknowledgement set
 				{
 					ibrcommon::MutexLock l(_acknowledgementSet);
-					_acknowledgementSet.expire(time.getUnixTimestamp());
+					_acknowledgementSet.expire(time.getTimestamp());
 				}
 
 				ibrcommon::MutexLock l(_next_exchange_mutex);
@@ -231,53 +251,6 @@ namespace dtn
 
 					// define the next exchange timestamp
 					_next_exchange_timestamp = now + _next_exchange_timeout;
-				}
-				return;
-			} catch (const std::bad_cast&) { };
-
-			// If an incoming bundle is received, forward it to all connected neighbors
-			try {
-				const QueueBundleEvent &queued = dynamic_cast<const QueueBundleEvent&>(*evt);
-
-				// new bundles trigger a recheck for all neighbors
-				const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
-
-				for (std::set<dtn::core::Node>::const_iterator iter = nl.begin(); iter != nl.end(); ++iter)
-				{
-					const dtn::core::Node &n = (*iter);
-
-					if (n.getEID() != queued.origin) {
-						// transfer the next bundle to this destination
-						_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
-					}
-				}
-				return;
-			} catch (const std::bad_cast&) { };
-
-			// If a new neighbor comes available search for bundles
-			try {
-				const dtn::core::NodeEvent &nodeevent = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
-				const dtn::core::Node &n = nodeevent.getNode();
-
-				if (nodeevent.getAction() == NODE_AVAILABLE)
-				{
-					_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
-				}
-				else if (nodeevent.getAction() == NODE_DATA_ADDED)
-				{
-					_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
-				}
-
-				return;
-			} catch (const std::bad_cast&) { };
-
-			try {
-				const dtn::net::ConnectionEvent &ce = dynamic_cast<const dtn::net::ConnectionEvent&>(*evt);
-
-				if (ce.state == dtn::net::ConnectionEvent::CONNECTION_UP)
-				{
-					// send all (multi-hop) bundles in the storage to the neighbor
-					_taskqueue.push( new SearchNextBundleTask(ce.peer) );
 				}
 				return;
 			} catch (const std::bad_cast&) { };
@@ -298,45 +271,27 @@ namespace dtn
 				return;
 			} catch (const std::bad_cast&) { };
 
-			// The bundle transfer has been aborted
 			try {
-				const dtn::net::TransferAbortedEvent &aborted = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
+				const dtn::core::BundlePurgeEvent &purge = dynamic_cast<const dtn::core::BundlePurgeEvent&>(*evt);
 
-				// transfer the next bundle to this destination
-				_taskqueue.push( new SearchNextBundleTask( aborted.getPeer() ) );
-
-				return;
-			} catch (const std::bad_cast&) { };
-
-			// A bundle transfer was successful
-			try {
-				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
-				const dtn::data::MetaBundle &meta = completed.getBundle();
-				const dtn::data::EID &peer = completed.getPeer();
-
-				if (meta.destination.sameHost(peer)
-						/* send prophet ack only for singleton */
-						&& (meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
+				if (purge.reason == dtn::core::BundlePurgeEvent::DELIVERED)
 				{
-					/* the bundle was transferred, mark it as acknowledged */
+					/* the bundle was finally delivered, mark it as acknowledged */
 					ibrcommon::MutexLock l(_acknowledgementSet);
-					_acknowledgementSet.add(meta);
+					_acknowledgementSet.add(purge.bundle);
 				}
 
-				// add forwarded entry to GTMX strategy
-				try {
-					GTMX_Strategy &gtmx = dynamic_cast<GTMX_Strategy&>(*_forwardingStrategy);
-					gtmx.addForward(meta);
-				} catch (const std::bad_cast &ex) { };
-
-				// search for the next bundle
-				_taskqueue.push( new SearchNextBundleTask( completed.getPeer() ) );
+				// since no routing module is interested in purge events yet - we exit here
 				return;
-			} catch (const std::bad_cast&) { };
+			} catch (const std::bad_cast&) { }
 		}
 
 		void ProphetRoutingExtension::componentUp() throw ()
 		{
+			dtn::core::EventDispatcher<dtn::routing::NodeHandshakeEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::BundlePurgeEvent>::add(this);
+
 			// reset task queue
 			_taskqueue.reset();
 
@@ -351,6 +306,10 @@ namespace dtn
 
 		void ProphetRoutingExtension::componentDown() throw ()
 		{
+			dtn::core::EventDispatcher<dtn::routing::NodeHandshakeEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::core::BundlePurgeEvent>::remove(this);
+
 			try {
 				// stop the thread
 				stop();
@@ -384,8 +343,8 @@ namespace dtn
 			class BundleFilter : public dtn::storage::BundleSelector
 			{
 			public:
-				BundleFilter(const NeighborDatabase::NeighborEntry &entry, ForwardingStrategy &strategy, const DeliveryPredictabilityMap &dpm)
-				 : _entry(entry), _strategy(strategy), _dpm(dpm)
+				BundleFilter(const NeighborDatabase::NeighborEntry &entry, ForwardingStrategy &strategy, const DeliveryPredictabilityMap &dpm, const std::set<dtn::core::Node> &neighbors)
+				 : _entry(entry), _strategy(strategy), _dpm(dpm), _neighbors(neighbors)
 				{ };
 
 				virtual ~BundleFilter() {};
@@ -428,6 +387,27 @@ namespace dtn
 						return false;
 					}
 
+					// if this is a singleton bundle ...
+					if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+					{
+						const dtn::core::Node n(meta.destination.getNode());
+
+						// do not forward the bundle if the final destination is available
+						if (_neighbors.find(n) != _neighbors.end())
+						{
+							return false;
+						}
+					}
+					else
+					{
+						// if this is a non-singleton, check if the peer knows a way to the source
+						try {
+							if (_dpm.get(meta.source.getNode()) <= 0.0) return false;
+						} catch (const dtn::routing::DeliveryPredictabilityMap::ValueNotFoundException&) {
+							return false;
+						}
+					}
+
 					// do not forward bundles already known by the destination
 					// throws BloomfilterNotAvailableException if no filter is available or it is expired
 					try {
@@ -452,9 +432,14 @@ namespace dtn
 				const NeighborDatabase::NeighborEntry &_entry;
 				const ForwardingStrategy &_strategy;
 				const DeliveryPredictabilityMap &_dpm;
+				const std::set<dtn::core::Node> &_neighbors;
 			};
 
+			// list for bundles
 			dtn::storage::BundleResultList list;
+
+			// set of known neighbors
+			std::set<dtn::core::Node> neighbors;
 
 			while (true)
 			{
@@ -478,7 +463,7 @@ namespace dtn
 								NeighborDatabase &db = (**this).getNeighborDB();
 
 								ibrcommon::MutexLock l(db);
-								NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
+								NeighborDatabase::NeighborEntry &entry = db.get(task.eid, true);
 
 								// check if enough transfer slots available (threshold reached)
 								if (!entry.isTransferThresholdReached())
@@ -487,8 +472,16 @@ namespace dtn
 								// get the DeliveryPredictabilityMap of the potentially next hop
 								const DeliveryPredictabilityMap &dpm = entry.getDataset<DeliveryPredictabilityMap>();
 
+								if (dtn::daemon::Configuration::getInstance().getNetwork().doPreferDirect()) {
+									// get current neighbor list
+									neighbors = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
+								} else {
+									// "prefer direct" option disabled - clear the list of neighbors
+									neighbors.clear();
+								}
+
 								// get the bundle filter of the neighbor
-								BundleFilter filter(entry, *_forwardingStrategy, dpm);
+								const BundleFilter filter(entry, *_forwardingStrategy, dpm, neighbors);
 
 								// some debug output
 								IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
@@ -561,7 +554,7 @@ namespace dtn
 			age_map::const_iterator it = _ageMap.find(neighbor);
 			if(it == _ageMap.end())
 			{
-				/* In this case, we got a transitive update for the node earlier but havent encountered it ourselves */
+				/* In this case, we got a transitive update for the node we have not encountered before */
 				return _p_encounter_max;
 			}
 
@@ -576,12 +569,18 @@ namespace dtn
 			}
 			else
 			{
-				return _p_encounter_max * static_cast<float>(time_diff.get<size_t>() / _i_typ);
+				return _p_encounter_max * time_diff.get<float>() / static_cast<float>(_i_typ);
 			}
 		}
 
-		void ProphetRoutingExtension::updateNeighbor(const dtn::data::EID &neighbor)
+		void ProphetRoutingExtension::updateNeighbor(const dtn::data::EID &neighbor, const DeliveryPredictabilityMap& neighbor_dp_map)
 		{
+			// update the encounter on every routing handshake
+			ibrcommon::MutexLock l(_deliveryPredictabilityMap);
+
+			// age the local predictability map
+			age();
+
 			/**
 			 * Calculate new value for this encounter
 			 */
@@ -603,6 +602,9 @@ namespace dtn
 			}
 
 			_ageMap[neighbor] = dtn::utils::Clock::getMonotonicTimestamp();
+
+			/* update the dp_map */
+			_deliveryPredictabilityMap.update(neighbor, neighbor_dp_map, _p_encounter_first);
 		}
 
 		void ProphetRoutingExtension::age()

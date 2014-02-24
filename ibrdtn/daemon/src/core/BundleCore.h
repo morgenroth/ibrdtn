@@ -33,6 +33,7 @@
 
 #include "net/ConnectionManager.h"
 #include "net/ConvergenceLayer.h"
+#include "net/DiscoveryAgent.h"
 
 #include <ibrdtn/data/Serializer.h>
 #include <ibrdtn/data/EID.h>
@@ -62,9 +63,9 @@ namespace dtn
 		 */
 		class BundleCore : public dtn::daemon::IntegratedComponent, public dtn::core::EventReceiver, public dtn::data::Validator, public ibrcommon::LinkManager::EventCallback, public dtn::daemon::Configuration::OnChangeListener
 		{
-		public:
 			static const std::string TAG;
 
+		public:
 			static dtn::data::EID local;
 
 			static BundleCore& getInstance();
@@ -89,6 +90,11 @@ namespace dtn
 			 * @return The connection manager reference
 			 */
 			dtn::net::ConnectionManager& getConnectionManager();
+
+			/**
+			 * Make the discovery agent avilable to other modules.
+			 */
+			dtn::net::DiscoveryAgent& getDiscoveryAgent();
 
 			/**
 			 * Add a static route to the static routing module.
@@ -144,7 +150,6 @@ namespace dtn
 			 * Define if forwarding is allowed. If set to false, this daemon only accepts bundles for local applications.
 			 */
 			static bool forwarding;
-
 
 			/**
 			 * Defines how many bundles should be in transit at once
@@ -202,6 +207,9 @@ namespace dtn
 
 			// manager class for connections
 			dtn::net::ConnectionManager _connectionmanager;
+
+			// discovery agent handling all the discovery stuff
+			dtn::net::DiscoveryAgent _disco_agent;
 
 			/**
 			 * In this boolean we store the connection state.

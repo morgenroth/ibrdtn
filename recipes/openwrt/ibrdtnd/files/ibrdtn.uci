@@ -6,9 +6,6 @@ config 'daemon' 'main'
 	# The local eid of the dtn node. Default is the hostname.
 #	option uri			dtn://node.dtn
 	
-	# timezone offset in hours
-#	option timezone		+1
-	
 	# logfile for standard output
 	option logfile		/tmp/ibrdtn.log
 	option errfile		/tmp/ibrdtn.err
@@ -57,7 +54,7 @@ config 'daemon' 'storage'
 #
 config 'daemon' 'main'
 	# values: none | default | epidemic | flooding | prophet
-	option	routing		default
+	option	routing		prophet
 #	option	forwarding	no
 #	option	fragmentation	yes
 

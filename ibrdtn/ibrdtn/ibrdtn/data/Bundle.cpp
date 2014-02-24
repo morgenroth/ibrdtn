@@ -30,7 +30,8 @@ namespace dtn
 {
 	namespace data
 	{
-		Bundle::Bundle()
+		Bundle::Bundle(bool zero_timestamp)
+		 : PrimaryBlock(zero_timestamp)
 		{
 			// if the timestamp is not set, add a ageblock
 			if (timestamp == 0)
@@ -115,20 +116,24 @@ namespace dtn
 				_blocks.erase(it++);
 			}
 
-			// set the last block bit
-			iterator last = end();
-			--last;
-			(**last).set(dtn::data::Block::LAST_BLOCK, true);
+			if (size() > 0) {
+				// set the last block bit
+				iterator last = end();
+				--last;
+				(**last).set(dtn::data::Block::LAST_BLOCK, true);
+			}
 		}
 
 		void Bundle::erase(iterator it)
 		{
 			_blocks.erase(it);
 
-			// set the last block bit
-			iterator last = end();
-			--last;
-			(**last).set(dtn::data::Block::LAST_BLOCK, true);
+			if (size() > 0) {
+				// set the last block bit
+				iterator last = end();
+				--last;
+				(**last).set(dtn::data::Block::LAST_BLOCK, true);
+			}
 		}
 
 		void Bundle::clear()
@@ -250,11 +255,6 @@ namespace dtn
 			return (*block);
 		}
 
-		string Bundle::toString() const
-		{
-			return PrimaryBlock::toString();
-		}
-
 		Size Bundle::size() const
 		{
 			return _blocks.size();
@@ -286,6 +286,16 @@ namespace dtn
 			else
 			{
 				return false;
+			}
+		}
+
+		dtn::data::Length Bundle::getPayloadLength() const
+		{
+			try {
+				const dtn::data::PayloadBlock &payload = find<dtn::data::PayloadBlock>();
+				return payload.getLength();
+			} catch (const NoSuchBlockFoundException&) {
+				return 0;
 			}
 		}
 

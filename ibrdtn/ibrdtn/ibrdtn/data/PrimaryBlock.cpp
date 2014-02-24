@@ -29,13 +29,14 @@ namespace dtn
 	namespace data
 	{
 		Number PrimaryBlock::__sequencenumber = 0;
+		Number PrimaryBlock::__sequencenumber_abs = 0;
 		Timestamp PrimaryBlock::__last_timestamp = 0;
 		ibrcommon::Mutex PrimaryBlock::__sequence_lock;
 
-		PrimaryBlock::PrimaryBlock()
-		 : timestamp(0), sequencenumber(0), lifetime(3600), fragmentoffset(0), appdatalength(0)
+		PrimaryBlock::PrimaryBlock(bool zero_timestamp)
+		 : lifetime(3600), appdatalength(0)
 		{
-			relabel();
+			relabel(zero_timestamp);
 
 			// by default set destination as singleton bit
 			set(DESTINATION_IS_SINGLETON, true);
@@ -92,81 +93,61 @@ namespace dtn
 			}
 		}
 
+		bool PrimaryBlock::isFragment() const
+		{
+			return get(FRAGMENT);
+		}
+
+		void PrimaryBlock::setFragment(bool val)
+		{
+			set(FRAGMENT, val);
+		}
+
 		bool PrimaryBlock::operator!=(const PrimaryBlock& other) const
 		{
-			return !((*this) == other);
+			return (const BundleID&)*this != (const BundleID&)other;
 		}
 
 		bool PrimaryBlock::operator==(const PrimaryBlock& other) const
 		{
-			if (other.timestamp != timestamp) return false;
-			if (other.sequencenumber != sequencenumber) return false;
-			if (other.source != source) return false;
-			if (other.get(PrimaryBlock::FRAGMENT) != get(PrimaryBlock::FRAGMENT)) return false;
-
-			if (get(PrimaryBlock::FRAGMENT))
-			{
-				if (other.fragmentoffset != fragmentoffset) return false;
-				if (other.appdatalength != appdatalength) return false;
-			}
-
-			return true;
+			return (const BundleID&)*this == (const BundleID&)other;
 		}
 
 		bool PrimaryBlock::operator<(const PrimaryBlock& other) const
 		{
-			if (source < other.source) return true;
-			if (source != other.source) return false;
-
-			if (timestamp < other.timestamp) return true;
-			if (timestamp != other.timestamp) return false;
-
-			if (sequencenumber < other.sequencenumber) return true;
-			if (sequencenumber != other.sequencenumber) return false;
-
-			if (other.get(PrimaryBlock::FRAGMENT))
-			{
-				if (!get(PrimaryBlock::FRAGMENT)) return true;
-				return (fragmentoffset < other.fragmentoffset);
-			}
-
-			return false;
+			return (const BundleID&)*this < other;
 		}
 
 		bool PrimaryBlock::operator>(const PrimaryBlock& other) const
 		{
-			return !(((*this) < other) || ((*this) == other));
+			return (const BundleID&)*this > other;
 		}
 
-		bool PrimaryBlock::isExpired() const
+		void PrimaryBlock::relabel(bool zero_timestamp)
 		{
-			return dtn::utils::Clock::isExpired(lifetime + timestamp, lifetime);
-		}
-
-		std::string PrimaryBlock::toString() const
-		{
-			return dtn::data::BundleID(*this).toString();
-		}
-
-		void PrimaryBlock::relabel()
-		{
-			if (dtn::utils::Clock::isBad())
+			if ((dtn::utils::Clock::getRating() > 0.0) && !zero_timestamp)
 			{
-				timestamp = 0;
+				timestamp = dtn::utils::Clock::getTime();
+
+				ibrcommon::MutexLock l(__sequence_lock);
+				if (timestamp > __last_timestamp) {
+					__last_timestamp = timestamp;
+					__sequencenumber = 0;
+				}
+
+				sequencenumber = __sequencenumber;
+				__sequencenumber++;
 			}
 			else
 			{
-				timestamp = dtn::utils::Clock::getTime();
-			}
+				// set timestamp to zero
+				timestamp = 0;
 
-			ibrcommon::MutexLock l(__sequence_lock);
-			if (timestamp > __last_timestamp) {
-				__last_timestamp = timestamp;
-				__sequencenumber = 0;
+				// assign absolute sequence number
+				ibrcommon::MutexLock l(__sequence_lock);
+				sequencenumber = __sequencenumber_abs;
+				__sequencenumber_abs++;
 			}
-
-			sequencenumber = __sequencenumber;
-			__sequencenumber++;
 		}
 	}
 }

@@ -34,11 +34,17 @@ import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
+import android.widget.Toast;
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.api.Node;
+import de.tubs.ibr.dtn.daemon.data.NeighborListAdapter;
+import de.tubs.ibr.dtn.daemon.data.NeighborListLoader;
 import de.tubs.ibr.dtn.service.DaemonService;
 
 public class NeighborListFragment extends ListFragment implements
@@ -112,6 +118,9 @@ public class NeighborListFragment extends ListFragment implements
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        
+        // We have a menu item to show in action bar.
+        setHasOptionsMenu(true);
 
         setEmptyText(getActivity().getResources().getString(R.string.list_no_neighbors));
 
@@ -123,6 +132,30 @@ public class NeighborListFragment extends ListFragment implements
         
         // Start out with a progress indicator.
         setListShown(false);
+    }
+    
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.neighbor_menu, menu);
+    }
+    
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.itemDiscovery: {
+                // start discovery
+                final Intent discoIntent = new Intent(getActivity(), DaemonService.class);
+                discoIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_START_DISCOVERY);
+                discoIntent.putExtra(DaemonService.EXTRA_DISCOVERY_DURATION, 120L);
+                getActivity().startService(discoIntent);
+                
+                Toast.makeText(getActivity(), R.string.toast_discovery_started, Toast.LENGTH_SHORT).show();
+            }
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
 	@Override

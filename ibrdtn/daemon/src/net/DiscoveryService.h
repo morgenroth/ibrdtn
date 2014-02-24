@@ -22,6 +22,7 @@
 #ifndef DISCOVERYSERVICE_H_
 #define DISCOVERYSERVICE_H_
 
+#include "core/Node.h"
 #include <ibrdtn/data/Number.h>
 #include <stdlib.h>
 #include <iostream>
@@ -34,15 +35,29 @@ namespace dtn
 		{
 		public:
 			DiscoveryService();
-			DiscoveryService(std::string name, std::string parameters);
+			DiscoveryService(const dtn::core::Node::Protocol p, const std::string &parameters);
+			DiscoveryService(const std::string &name, const std::string &parameters);
 			virtual ~DiscoveryService();
 
 			dtn::data::Length getLength() const;
 
+			dtn::core::Node::Protocol getProtocol() const;
 			const std::string& getName() const;
 			const std::string& getParameters() const;
 
+			/**
+			 * Update the parameters of this service
+			 */
+			void update(const std::string &parameters);
+
+			/**
+			 * convert a protocol identifier to a tag
+			 */
+			static std::string asTag(const dtn::core::Node::Protocol proto);
+			static dtn::core::Node::Protocol asProtocol(const std::string &tag);
+
 		protected:
+			dtn::core::Node::Protocol _service_protocol;
 			std::string _service_name;
 			std::string _service_parameters;
 

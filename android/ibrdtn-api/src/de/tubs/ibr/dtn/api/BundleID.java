@@ -27,7 +27,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import de.tubs.ibr.dtn.api.Bundle.ProcFlags;
 
-public class BundleID implements Parcelable {
+public class BundleID implements Parcelable, Comparable<BundleID> {
 	
 	private SingletonEndpoint source = null;
 	private Timestamp timestamp = null;
@@ -35,6 +35,7 @@ public class BundleID implements Parcelable {
 	
 	private boolean fragment = false;
 	private Long fragment_offset = 0L;
+	private Long fragment_payload = 0L;
 
 	public BundleID()
 	{
@@ -48,6 +49,7 @@ public class BundleID implements Parcelable {
 		
 		this.fragment = b.get(ProcFlags.FRAGMENT);
 		this.fragment_offset = b.getFragmentOffset();
+		this.fragment_payload = b.getFragmentPayload();
 	}
 	
 	public BundleID(SingletonEndpoint source, Timestamp timestamp, Long sequencenumber)
@@ -84,6 +86,9 @@ public class BundleID implements Parcelable {
 	            
 	            if (fragment_offset != null)
 	                if (!fragment_offset.equals(foreign_id.fragment_offset)) return false;
+	            
+                if (fragment_payload != null)
+                    if (!fragment_payload.equals(foreign_id.fragment_payload)) return false;
 	        }
 	        
 	        return true;
@@ -98,6 +103,7 @@ public class BundleID implements Parcelable {
 			return ((this.timestamp == null) ? "null" : String.valueOf(this.timestamp.getValue())) + 
 					" " + String.valueOf(this.sequencenumber) + 
 					" " + String.valueOf(this.fragment_offset) + 
+					" " + String.valueOf(this.fragment_payload) + 
 					" " + this.source;
 		}
 		else
@@ -129,9 +135,13 @@ public class BundleID implements Parcelable {
 	        
 	        // read the fragment offset
 	        ret.fragment_offset = Long.valueOf(tokenizer.nextToken());
+	        
+            // read the fragment payload
+            ret.fragment_payload = Long.valueOf(tokenizer.nextToken());
 	    } else {
 	        ret.fragment = false;
 	        ret.fragment_offset = 0L;
+	        ret.fragment_payload = 0L;
 	    }
 	    
 	    // read the source endpoint
@@ -156,7 +166,31 @@ public class BundleID implements Parcelable {
 		this.sequencenumber = sequencenumber;
 	}
 	
-	public int describeContents() {
+	public boolean isFragment() {
+	    return fragment;
+	}
+	
+	public void setFragment(boolean val) {
+	    fragment = val;
+	}
+	
+	public Long getFragmentOffset() {
+        return fragment_offset;
+    }
+
+    public void setFragmentOffset(Long fragment_offset) {
+        this.fragment_offset = fragment_offset;
+    }
+
+    public Long getFragmentPayload() {
+        return fragment_payload;
+    }
+
+    public void setFragmentPayload(Long fragment_payload) {
+        this.fragment_payload = fragment_payload;
+    }
+
+    public int describeContents() {
 		return 0;
 	}
 
@@ -169,6 +203,7 @@ public class BundleID implements Parcelable {
 		
 		dest.writeBooleanArray(new boolean[] {fragment});
 		dest.writeLong( (fragment_offset == null) ? 0L : fragment_offset );
+        dest.writeLong( (fragment_payload == null) ? 0L : fragment_payload );
 	}
 	
     public static final Creator<BundleID> CREATOR = new Creator<BundleID>() {
@@ -187,6 +222,7 @@ public class BundleID implements Parcelable {
         	source.readBooleanArray(barray);
         	id.fragment = barray[0];
         	id.fragment_offset = source.readLong();
+        	id.fragment_payload = source.readLong();
         	return id;
         }
 
@@ -194,4 +230,32 @@ public class BundleID implements Parcelable {
             return new BundleID[size];
         }
     };
+
+    @Override
+    public int compareTo(BundleID another) {
+        if (another == null) return 1;
+        
+        if (source.compareTo(another.source) > 0) return 1;
+        if (source.compareTo(another.source) < 0) return -1;
+        
+        if (timestamp.compareTo(another.timestamp) > 0) return 1;
+        if (timestamp.compareTo(another.timestamp) < 0) return -1;
+        
+        if (sequencenumber.compareTo(another.sequencenumber) > 0) return 1;
+        if (sequencenumber.compareTo(another.sequencenumber) < 0) return -1;
+        
+        if (fragment) {
+            if (!another.fragment) return 1;
+            
+            if (fragment_offset.compareTo(another.fragment_offset) > 0) return 1;
+            if (fragment_offset.compareTo(another.fragment_offset) < 0) return -1;
+            
+            return fragment_payload.compareTo(another.fragment_payload);
+        }
+        else {
+            if (another.fragment) return -1;
+        }
+        
+        return 0;
+    }
 }

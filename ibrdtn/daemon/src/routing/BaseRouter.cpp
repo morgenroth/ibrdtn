@@ -30,16 +30,12 @@
 #include "net/BundleReceivedEvent.h"
 #include "net/ConnectionEvent.h"
 #include "routing/QueueBundleEvent.h"
-#include "routing/RequeueBundleEvent.h"
 #include "storage/BundleStorage.h"
 #include "core/BundleGeneratedEvent.h"
-#include "core/BundleExpiredEvent.h"
 #include "core/BundleEvent.h"
 #include "core/NodeEvent.h"
 #include "core/TimeEvent.h"
 #include "core/BundlePurgeEvent.h"
-#include "routing/NodeHandshakeEvent.h"
-#include "routing/StaticRouteChangeEvent.h"
 
 #include <ibrdtn/data/AgeBlock.h>
 #include <ibrdtn/data/TrackingBlock.h>
@@ -66,12 +62,15 @@ namespace dtn
 		BaseRouter::BaseRouter()
 		 : _known_bundles("router-known-bundles"), _purged_bundles("router-purged-bundles"), _extension_state(false), _next_expiration(0)
 		{
-			// register myself for all extensions
-			RoutingExtension::_router = this;
+			// make the router globally available
+			dtn::core::BundleCore::getInstance().setRouter(this);
 		}
 
 		BaseRouter::~BaseRouter()
 		{
+			// unregister this router from the core
+			dtn::core::BundleCore::getInstance().setRouter(NULL);
+
 			// delete all extensions
 			clearExtensions();
 		}
@@ -215,11 +214,7 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
-			dtn::core::EventDispatcher<dtn::routing::RequeueBundleEvent>::add(this);
-			dtn::core::EventDispatcher<dtn::routing::NodeHandshakeEvent>::add(this);
-			dtn::core::EventDispatcher<dtn::routing::StaticRouteChangeEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::core::NodeEvent>::add(this);
-			dtn::core::EventDispatcher<dtn::core::BundleExpiredEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::core::BundleGeneratedEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::add(this);
@@ -233,11 +228,7 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::remove(this);
-			dtn::core::EventDispatcher<dtn::routing::RequeueBundleEvent>::remove(this);
-			dtn::core::EventDispatcher<dtn::routing::NodeHandshakeEvent>::remove(this);
-			dtn::core::EventDispatcher<dtn::routing::StaticRouteChangeEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::core::NodeEvent>::remove(this);
-			dtn::core::EventDispatcher<dtn::core::BundleExpiredEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::core::BundleGeneratedEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::remove(this);
@@ -249,28 +240,6 @@ namespace dtn
 		 */
 		void BaseRouter::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
-			// If a new neighbor comes available, send him a request for the summary vector
-			// If a neighbor went away we can free the stored database
-			try {
-				const dtn::core::NodeEvent &event = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
-
-				if (event.getAction() == NODE_AVAILABLE)
-				{
-					ibrcommon::MutexLock l(_neighbor_database);
-					_neighbor_database.create( event.getNode().getEID() );
-				}
-				else if (event.getAction() == NODE_UNAVAILABLE)
-				{
-					ibrcommon::MutexLock l(_neighbor_database);
-					_neighbor_database.create( event.getNode().getEID() ).reset();
-				}
-
-				// pass event to all extensions
-				ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READONLY);
-				__forward_event(evt);
-				return;
-			} catch (const std::bad_cast&) { };
-
 			try {
 				const dtn::net::TransferCompletedEvent &event = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
 
@@ -285,74 +254,52 @@ namespace dtn
 					entry.add(event.getBundle());
 				} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 
-				// pass event to all extensions
-				ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READONLY);
-				__forward_event(evt);
+				// trigger all routing modules to search for bundles to forward
+				__eventTransferCompleted(event.getPeer(), event.getBundle());
+
+				// trigger all routing modules to search for bundles to forward
+				__eventDataChanged(event.getPeer());
+
+				return;
+			} catch (const std::bad_cast&) { };
+
+			// If an incoming bundle is received, forward it to all connected neighbors
+			try {
+				const QueueBundleEvent &event = dynamic_cast<const QueueBundleEvent&>(*evt);
+
+				// trigger all routing modules to forward the new bundle
+				__eventBundleQueued(event.origin, event.bundle);
+
 				return;
 			} catch (const std::bad_cast&) { };
 
 			try {
-				const dtn::net::TransferAbortedEvent &event = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
-
-				// if a transfer is aborted, then release the transfer resource of the peer
-				try {
-					// lock the list of neighbors
-					ibrcommon::MutexLock l(_neighbor_database);
-					NeighborDatabase::NeighborEntry &entry = _neighbor_database.create(event.getPeer());
-					entry.releaseTransfer(event.getBundleID());
-
-					if (event.reason == dtn::net::TransferAbortedEvent::REASON_REFUSED)
-					{
-						const dtn::data::MetaBundle meta = getStorage().get(event.getBundleID());
-
-						// add the transferred bundle to the bloomfilter of the receiver
-						entry.add(meta);
-					}
-				} catch (const dtn::storage::NoBundleFoundException&) { };
-
-				// pass event to all extensions
-				ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READONLY);
-				__forward_event(evt);
-				return;
-			} catch (const std::bad_cast&) { };
-
-			try {
-				const dtn::net::BundleReceivedEvent &received = dynamic_cast<const dtn::net::BundleReceivedEvent&>(*evt);
+				const dtn::net::BundleReceivedEvent &event = dynamic_cast<const dtn::net::BundleReceivedEvent&>(*evt);
+				const dtn::data::MetaBundle m = dtn::data::MetaBundle::create(event.bundle);
 
 				// Store incoming bundles into the storage
 				try {
-					if (received.fromlocal)
+					if (event.fromlocal)
 					{
 						// store the bundle into a storage module
-						getStorage().store(received.bundle);
+						getStorage().store(event.bundle);
 
 						// set the bundle as known
-						setKnown(received.bundle);
+						setKnown(m);
 
 						// raise the queued event to notify all receivers about the new bundle
-						QueueBundleEvent::raise(received.bundle, received.peer);
+						QueueBundleEvent::raise(m, event.peer);
 					}
 					// if the bundle is not known
-					else if (!filterKnown(received.bundle))
+					else if (!filterKnown(m))
 					{
 						// security methods modifies the bundle, thus we need a copy of it
-						dtn::data::Bundle bundle = received.bundle;
+						dtn::data::Bundle bundle = event.bundle;
 
 #ifdef WITH_BUNDLE_SECURITY
 						// lets see if signatures and hashes are correct and remove them if possible
 						dtn::security::SecurityManager::getInstance().verify(bundle);
 #endif
-
-						// add age block if local clock is bad
-						if (dtn::utils::Clock::isBad()) {
-							// check for ageblock
-							try {
-								bundle.find<dtn::data::AgeBlock>();
-							} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
-								// add a new ageblock
-								bundle.push_front<dtn::data::AgeBlock>();
-							}
-						}
 
 						// increment value in the scope control hop limit block
 						try {
@@ -371,84 +318,165 @@ namespace dtn
 							ibrcommon::MutexLock l(_neighbor_database);
 
 							// add the bundle to the summary vector of the neighbor
-							_neighbor_database.get(received.peer).add(received.bundle);
+							_neighbor_database.get(event.peer).add(m);
 						} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 
 						// store the bundle into a storage module
 						getStorage().store(bundle);
 
 						// raise the queued event to notify all receivers about the new bundle
-						QueueBundleEvent::raise(received.bundle, received.peer);
+						QueueBundleEvent::raise(m, event.peer);
 					}
 					else
 					{
-						IBRCOMMON_LOGGER_DEBUG_TAG(BaseRouter::TAG, 5) << "Duplicate bundle " << received.bundle.toString() << " from " << received.peer.getString() << " ignored." << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG(BaseRouter::TAG, 5) << "Duplicate bundle " << event.bundle.toString() << " from " << event.peer.getString() << " ignored." << IBRCOMMON_LOGGER_ENDL;
 					}
 
 					// finally create a bundle received event
-					dtn::core::BundleEvent::raise(received.bundle, dtn::core::BUNDLE_RECEIVED);
+					dtn::core::BundleEvent::raise(m, dtn::core::BUNDLE_RECEIVED);
 #ifdef WITH_BUNDLE_SECURITY
-				} catch (const dtn::security::SecurityManager::VerificationFailedException &ex) {
-					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "Security checks failed (" << ex.what() << "), bundle will be dropped: " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+				} catch (const dtn::security::VerificationFailedException &ex) {
+					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "Security checks failed (" << ex.what() << "), bundle will be dropped: " << event.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 #endif
 				} catch (const ibrcommon::IOException &ex) {
-					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "Unable to store bundle " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "Unable to store bundle " << event.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 					// raise BundleEvent because we have to drop the bundle
-					dtn::core::BundleEvent::raise(received.bundle, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
+					dtn::core::BundleEvent::raise(m, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
 				} catch (const dtn::storage::BundleStorage::StorageSizeExeededException &ex) {
-					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "No space left for bundle " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "No space left for bundle " << event.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 					// raise BundleEvent because we have to drop the bundle
-					dtn::core::BundleEvent::raise(received.bundle, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
+					dtn::core::BundleEvent::raise(m, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
 				} catch (const ibrcommon::Exception &ex) {
-					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, error) << "Bundle " << received.bundle.toString() << " dropped: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, error) << "Bundle " << event.bundle.toString() << " dropped: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 
 					// raise BundleEvent because we have to drop the bundle
-					dtn::core::BundleEvent::raise(received.bundle, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
+					dtn::core::BundleEvent::raise(m, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
 				}
 
-				// no routing extension should be interested in this event
-				// everybody should listen to QueueBundleEvent instead
 				return;
 			} catch (const std::bad_cast&) { };
 
 			try {
-				const dtn::core::BundleGeneratedEvent &generated = dynamic_cast<const dtn::core::BundleGeneratedEvent&>(*evt);
+				const dtn::core::BundleGeneratedEvent &event = dynamic_cast<const dtn::core::BundleGeneratedEvent&>(*evt);
 				
+				const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(event.getBundle());
+
 				// set the bundle as known
-				setKnown(generated.bundle);
+				setKnown(meta);
 
 				// Store incoming bundles into the storage
 				try {
 					// store the bundle into a storage module
-					getStorage().store(generated.bundle);
+					getStorage().store(event.getBundle());
 
 					// raise the queued event to notify all receivers about the new bundle
- 					QueueBundleEvent::raise(generated.bundle, dtn::core::BundleCore::local);
+ 					QueueBundleEvent::raise(meta, dtn::core::BundleCore::local);
 				} catch (const ibrcommon::IOException &ex) {
-					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "Unable to store bundle " << generated.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "Unable to store bundle " << event.getBundle().toString() << IBRCOMMON_LOGGER_ENDL;
 				} catch (const dtn::storage::BundleStorage::StorageSizeExeededException &ex) {
-					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "No space left for bundle " << generated.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "No space left for bundle " << event.getBundle().toString() << IBRCOMMON_LOGGER_ENDL;
 				}
 
-				// do not pass this event to any extension
 				return;
 			} catch (const std::bad_cast&) { };
 
 			try {
-				const dtn::core::BundlePurgeEvent &purge = dynamic_cast<const dtn::core::BundlePurgeEvent&>(*evt);
+				const dtn::net::TransferAbortedEvent &event = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
 
-				// add the purged bundle to the purge vector
-				setPurged(purge.bundle);
+				// if a transfer is aborted, then release the transfer resource of the peer
+				try {
+					// lock the list of neighbors
+					ibrcommon::MutexLock l(_neighbor_database);
+					NeighborDatabase::NeighborEntry &entry = _neighbor_database.get(event.getPeer());
+					entry.releaseTransfer(event.getBundleID());
 
-				// since no routing module is interested in purge events yet - we exit here
+					if (event.reason == dtn::net::TransferAbortedEvent::REASON_REFUSED)
+					{
+						const dtn::data::MetaBundle meta = getStorage().info(event.getBundleID());
+
+						// add the transferred bundle to the bloomfilter of the receiver
+						entry.add(meta);
+					}
+				} catch (const NeighborDatabase::NeighborNotAvailableException&) {
+				} catch (const dtn::storage::NoBundleFoundException&) { };
+
+				// trigger all routing modules to search for bundles to forward
+				__eventDataChanged(event.getPeer());
+
+				return;
+			} catch (const std::bad_cast&) { };
+
+			// If a new neighbor comes available, send him a request for the summary vector
+			// If a neighbor went away we can free the stored database
+			try {
+				const dtn::core::NodeEvent &event = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
+
+				if (event.getAction() == NODE_AVAILABLE)
+				{
+					{
+						ibrcommon::MutexLock l(_neighbor_database);
+						_neighbor_database.create( event.getNode().getEID() );
+					}
+
+					// trigger all routing modules to search for bundles to forward
+					__eventDataChanged(event.getNode().getEID());
+				}
+				else if (event.getAction() == NODE_DATA_ADDED)
+				{
+					// trigger all routing modules to search for bundles to forward
+					__eventDataChanged(event.getNode().getEID());
+				}
+				else if (event.getAction() == NODE_UNAVAILABLE)
+				{
+					try {
+						ibrcommon::MutexLock l(_neighbor_database);
+						_neighbor_database.get( event.getNode().getEID() ).reset();
+					} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
+
+					// new bundles trigger a re-check for all neighbors
+					const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
+
+					for (std::set<dtn::core::Node>::const_iterator iter = nl.begin(); iter != nl.end(); ++iter)
+					{
+						const dtn::core::Node &n = (*iter);
+
+						// trigger all routing modules to search for bundles to forward
+						__eventDataChanged( n.getEID() );
+					}
+				}
+
+				return;
+			} catch (const std::bad_cast&) { };
+
+			try {
+				const dtn::net::ConnectionEvent &event = dynamic_cast<const dtn::net::ConnectionEvent&>(*evt);
+
+				if (event.getState() == dtn::net::ConnectionEvent::CONNECTION_UP)
+				{
+					// trigger all routing modules to search for bundles to forward
+					__eventDataChanged( event.getNode().getEID() );
+				}
+				return;
+			} catch (const std::bad_cast&) { };
+
+			try {
+				const dtn::core::BundlePurgeEvent &event = dynamic_cast<const dtn::core::BundlePurgeEvent&>(*evt);
+
+				if ((event.reason == dtn::core::BundlePurgeEvent::DELIVERED) ||
+					(event.reason == dtn::core::BundlePurgeEvent::ACK_RECIEVED))
+				{
+					// add the purged bundle to the purge vector
+					setPurged(event.bundle);
+				}
+
 				return;
 			} catch (const std::bad_cast&) { }
 
 			try {
-				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
-				dtn::data::Timestamp expire_time = time.getTimestamp();
+				const dtn::core::TimeEvent &event = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
+				dtn::data::Timestamp expire_time = event.getTimestamp();
 
 				// do the expiration only every 60 seconds
 				if (expire_time > _next_expiration) {
@@ -462,11 +490,17 @@ namespace dtn
 					{
 						ibrcommon::MutexLock l(_known_bundles_lock);
 						_known_bundles.expire(expire_time);
+
+						// sync known bundles to disk
+						_known_bundles.sync();
 					}
 
 					{
 						ibrcommon::MutexLock l(_purged_bundles_lock);
 						_purged_bundles.expire(expire_time);
+
+						// sync purged bundles to disk
+						_purged_bundles.sync();
 					}
 
 					{
@@ -477,37 +511,62 @@ namespace dtn
 
 						// touch all active neighbors
 						for (std::set<dtn::core::Node>::const_iterator it = neighbors.begin(); it != neighbors.end(); ++it) {
-							_neighbor_database.create( (*it).getEID() );
+							try {
+								_neighbor_database.get( (*it).getEID() );
+							} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 						}
 
 						// check all neighbor entries for expiration
-						_neighbor_database.expire(time.getTimestamp());
+						_neighbor_database.expire(event.getTimestamp());
 					}
 				}
 
-				// pass event to all extensions
-				ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READONLY);
-				__forward_event(evt);
 				return;
 			} catch (const std::bad_cast&) { };
-
-			// pass event to all extensions
-			ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READONLY);
-			__forward_event(evt);
 		}
 
-		void BaseRouter::__forward_event(const dtn::core::Event *evt) throw ()
+		void BaseRouter::__eventDataChanged(const dtn::data::EID &peer) throw ()
 		{
 			// do not forward the event if the extensions are down
 			if (!_extension_state) return;
 
-			_nh_extension.notify(evt);
-			_retransmission_extension.notify(evt);
+			_nh_extension.eventDataChanged(peer);
+			_retransmission_extension.eventDataChanged(peer);
 
 			// notify all underlying extensions
 			for (extension_list::const_iterator iter = _extensions.begin(); iter != _extensions.end(); ++iter)
 			{
-				(*iter)->notify(evt);
+				(*iter)->eventDataChanged(peer);
+			}
+		}
+
+		void BaseRouter::__eventBundleQueued(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ()
+		{
+			// do not forward the event if the extensions are down
+			if (!_extension_state) return;
+
+			_nh_extension.eventBundleQueued(peer, meta);
+			_retransmission_extension.eventBundleQueued(peer, meta);
+
+			// notify all underlying extensions
+			for (extension_list::const_iterator iter = _extensions.begin(); iter != _extensions.end(); ++iter)
+			{
+				(*iter)->eventBundleQueued(peer, meta);
+			}
+		}
+
+		void BaseRouter::__eventTransferCompleted(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ()
+		{
+			// do not forward the event if the extensions are down
+			if (!_extension_state) return;
+
+			_nh_extension.eventTransferCompleted(peer, meta);
+			_retransmission_extension.eventTransferCompleted(peer, meta);
+
+			// notify all underlying extensions
+			for (extension_list::const_iterator iter = _extensions.begin(); iter != _extensions.end(); ++iter)
+			{
+				(*iter)->eventTransferCompleted(peer, meta);
 			}
 		}
 

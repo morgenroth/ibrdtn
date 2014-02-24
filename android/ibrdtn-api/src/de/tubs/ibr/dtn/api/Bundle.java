@@ -35,6 +35,7 @@ public class Bundle implements Parcelable {
 	private Long procflags = 0L;
 	private Long app_data_length = null;
 	private Long fragment_offset = null;
+	private Long fragment_payload = null;
 	
 	public enum Priority {
 		LOW,
@@ -210,6 +211,14 @@ public class Bundle implements Parcelable {
 	public void setFragmentOffset(Long fragment_offset) {
 		this.fragment_offset = fragment_offset;
 	}
+	
+    public Long getFragmentPayload() {
+        return fragment_payload;
+    }
+
+    public void setFragmentPayload(Long fragment_payload) {
+        this.fragment_payload = fragment_payload;
+    }
 
 	public Long getProcflags() {
 		return procflags;
@@ -229,7 +238,8 @@ public class Bundle implements Parcelable {
 			timestamp != null,
 			sequencenumber != null,
 			app_data_length != null,
-			fragment_offset != null
+			fragment_offset != null,
+			fragment_payload != null
 		};
 		
 		// write processing flags
@@ -247,6 +257,7 @@ public class Bundle implements Parcelable {
 		if (nullMarker[6]) dest.writeLong( sequencenumber );
 		if (nullMarker[7]) dest.writeLong( app_data_length );
 		if (nullMarker[8]) dest.writeLong( fragment_offset );
+		if (nullMarker[9]) dest.writeLong( fragment_payload );
 	}
 	
     public static final Creator<Bundle> CREATOR = new Creator<Bundle>() {
@@ -258,7 +269,7 @@ public class Bundle implements Parcelable {
         	b.procflags = source.readLong();
         	
         	// read null marker array
-        	boolean nullMarker[] = { false, false, false, false, false, false, false, false, false };
+        	boolean nullMarker[] = { false, false, false, false, false, false, false, false, false, false };
         	source.readBooleanArray(nullMarker);
         	
         	// read destination
@@ -295,6 +306,9 @@ public class Bundle implements Parcelable {
         	
         	if (nullMarker[8]) b.fragment_offset = source.readLong();
         	else b.fragment_offset = null;
+        	
+            if (nullMarker[9]) b.fragment_payload = source.readLong();
+            else b.fragment_payload = null;
         	
         	return b;
         }

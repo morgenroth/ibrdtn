@@ -57,23 +57,21 @@ namespace dtn
 			}
 
 			/**
-			 * deliver this event to all subscribers
+			 * Directly deliver this event to all subscribers
 			 */
-			void _raise(Event *evt, bool detach)
+			void _raise(Event *evt)
 			{
-				if (!detach)
-				{
-					_processor.process(evt);
-					delete evt;
+				_processor.process(evt);
+				delete evt;
+			}
 
-					ibrcommon::MutexLock l(_dispatch_lock);
-					_stat_count++;
-				}
-				else
-				{
-					// raise the new event
-					dtn::core::EventSwitch::queue( _processor, evt );
-				}
+			/**
+			 * Queue the event for later delivery
+			 */
+			void _queue(Event *evt)
+			{
+				// raise the new event
+				dtn::core::EventSwitch::queue( _processor, evt );
 			}
 
 			void _add(EventReceiver *receiver) {
@@ -102,10 +100,17 @@ namespace dtn
 			virtual ~EventDispatcher() { };
 
 			/**
-			 * deliver this event to all subscribers
+			 * Directly deliver this event to all subscribers
 			 */
-			static void raise(Event *evt, bool detach = true) {
-				instance()._raise(evt, detach);
+			static void raise(Event *evt) {
+				instance()._raise(evt);
+			}
+
+			/**
+			 * Queue the event for later delivery
+			 */
+			static void queue(Event *evt) {
+				instance()._queue(evt);
 			}
 
 			static void add(EventReceiver *receiver) {

@@ -26,8 +26,7 @@
 #define IPNDAGENT_H_
 
 #include "Component.h"
-#include "net/DiscoveryAgent.h"
-#include "net/DiscoveryAnnouncement.h"
+#include "net/DiscoveryBeaconHandler.h"
 #include "core/EventReceiver.h"
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/net/vsocket.h>
@@ -42,11 +41,11 @@ namespace dtn
 {
 	namespace net
 	{
-		class IPNDAgent : public DiscoveryAgent, public dtn::core::EventReceiver, public dtn::daemon::IndependentComponent, public ibrcommon::LinkManager::EventCallback
+		class IPNDAgent : public dtn::core::EventReceiver, public dtn::daemon::IndependentComponent, public ibrcommon::LinkManager::EventCallback, public DiscoveryBeaconHandler
 		{
-		public:
 			static const std::string TAG;
 
+		public:
 			IPNDAgent(int port);
 			virtual ~IPNDAgent();
 
@@ -63,10 +62,14 @@ namespace dtn
 			/**
 			 * @see EventReceiver::raiseEvent()
 			 */
-			void raiseEvent(const Event *evt) throw ();
+			void raiseEvent(const dtn::core::Event *evt) throw ();
+
+			/**
+			 * This method is called by the DiscoveryAgent every time a beacon is ready for advertisement
+			 */
+			void onAdvertiseBeacon(const ibrcommon::vinterface &iface, const DiscoveryBeacon &beacon) throw ();
 
 		protected:
-			void sendAnnoucement(const uint16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &provider);
 			virtual void componentRun() throw ();
 			virtual void componentUp() throw ();
 			virtual void componentDown() throw ();
@@ -79,17 +82,15 @@ namespace dtn
 			void join(const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr) throw ();
 			void leave(const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr) throw ();
 
-			void send(const DiscoveryAnnouncement &a, const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr);
+			void send(const DiscoveryBeacon &a, const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr);
 
 #ifndef __WIN32__
 			ibrcommon::vinterface _virtual_mcast_iface;
 #endif
 
-			DiscoveryAnnouncement::DiscoveryVersion _version;
 			ibrcommon::vsocket _socket;
 			bool _state;
 			int _port;
-			bool _enabled;
 
 			std::set<ibrcommon::vaddress> _destinations;
 

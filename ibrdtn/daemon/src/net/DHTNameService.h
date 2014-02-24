@@ -30,7 +30,7 @@
 #include "Configuration.h"
 #include "core/Event.h"
 #include "core/EventReceiver.h"
-#include "net/DiscoveryServiceProvider.h"
+#include "net/DiscoveryBeaconHandler.h"
 
 #include <ibrdtn/data/EID.h>
 
@@ -56,7 +56,7 @@ namespace dht {
  */
 class DHTNameService: public dtn::daemon::IndependentComponent,
 		public dtn::core::EventReceiver,
-		public dtn::net::DiscoveryServiceProvider {
+		public dtn::net::DiscoveryBeaconHandler {
 private:
 	// All DHT configured sockets and needed setting are saved this structure
 	struct dtn_dht_context _context;
@@ -151,8 +151,8 @@ public:
 	 * this method updates the given values for discovery service
 	 * It publishes the port number of the DHT instance
 	 */
-	void update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement)
-			throw (dtn::net::DiscoveryServiceProvider::NoServiceHereException);
+	void onUpdateBeacon(const ibrcommon::vinterface &iface, DiscoveryBeacon &beacon)
+			throw (dtn::net::DiscoveryBeaconHandler::NoServiceHereException);
 
 
 protected:

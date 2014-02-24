@@ -22,6 +22,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <ibrdtn/data/BundleID.h>
 #include <ibrcommon/data/File.h>
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/MutexLock.h>
@@ -51,7 +52,7 @@ namespace dtn
 			{
 			public:
 				virtual ~Container() = 0;
-				virtual std::string getKey() const = 0;
+				virtual std::string getId() const = 0;
 				virtual std::ostream& serialize(std::ostream &stream) = 0;
 			};
 
@@ -59,18 +60,16 @@ namespace dtn
 			{
 			public:
 				Hash();
-				Hash(const std::string &key);
+				Hash(const std::string &value);
 				Hash(const DataStorage::Container &container);
 				Hash(const ibrcommon::File &file);
 				virtual ~Hash();
 
+				bool operator!=(const Hash &other) const;
 				bool operator==(const Hash &other) const;
 				bool operator<(const Hash &other) const;
 
 				std::string value;
-
-			private:
-				static std::string hash(const std::string &value);
 			};
 
 			class istream : public ibrcommon::File

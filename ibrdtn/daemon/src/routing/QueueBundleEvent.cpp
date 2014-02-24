@@ -41,7 +41,7 @@ namespace dtn
 		void QueueBundleEvent::raise(const dtn::data::MetaBundle &bundle, const dtn::data::EID &origin)
 		{
 			// raise the new event
-			dtn::core::EventDispatcher<QueueBundleEvent>::raise( new QueueBundleEvent(bundle, origin) );
+			dtn::core::EventDispatcher<QueueBundleEvent>::queue( new QueueBundleEvent(bundle, origin) );
 		}
 
 		const string QueueBundleEvent::getName() const

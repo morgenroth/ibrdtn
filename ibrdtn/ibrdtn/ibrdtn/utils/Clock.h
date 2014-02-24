@@ -78,16 +78,15 @@ namespace dtn
 			static dtn::data::Timestamp getMonotonicTimestamp();
 
 			/**
-			 * Return the current unix timestamp adjusted by
-			 * the configured timezone offset
-			 */
-			static dtn::data::Timestamp getUnixTimestamp();
-
-			/**
-			 * Return the current DTN timestamp adjusted by
-			 * the configured timezone offset
+			 * Return the current DTN timestamp
 			 */
 			static dtn::data::Timestamp getTime();
+
+			/**
+			 * Check if a timestamp is expired
+			 * @return True if the timestamp is expired
+			 */
+			static bool isExpired(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime);
 
 			/**
 			 * Check if a bundle is expired
@@ -96,10 +95,10 @@ namespace dtn
 			static bool isExpired(const dtn::data::Bundle &b);
 
 			/**
-			 * This method is deprecated because it does not recognize the AgeBlock
-			 * as alternative age verification.
+			 * Check if a meta bundle is expired
+			 * @return True if the meta bundle is expired
 			 */
-			static bool isExpired(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime = 0) __attribute__ ((deprecated));
+			static bool isExpired(const dtn::data::MetaBundle &m);
 
 			/**
 			 * Return the time of expiration of the given bundle
@@ -121,12 +120,6 @@ namespace dtn
 			static dtn::data::Timestamp getExpireTime(const dtn::data::Number &lifetime);
 
 			/**
-			 * Returns the calculated lifetime in seconds based on the BundleID and the
-			 * expiretime
-			 */
-			static dtn::data::Number getLifetime(const dtn::data::BundleID &id, const dtn::data::Timestamp &expiretime);
-
-			/**
 			 * Tells the internal clock the offset to the common network time.
 			 */
 			static void settimeofday(struct timeval *tv);
@@ -137,6 +130,14 @@ namespace dtn
 			 * @param tv
 			 */
 			static void gettimeofday(struct timeval *tv);
+
+			/**
+			 * Get the time of the day like ::gettimeofday(), but
+			 * correct the value by the known clock offset and the bundle
+			 * protocol time offset.
+			 * @param tv
+			 */
+			static void getdtntimeofday(struct timeval *tv);
 
 			/**
 			 * set the local offset of the clock
@@ -151,28 +152,6 @@ namespace dtn
 			static const struct timeval& getOffset();
 
 			static const dtn::data::Timestamp TIMEVAL_CONVERSION;
-
-			/**
-			 * If set to true, all time based functions assume a bad clock and try to use other mechanisms
-			 * to detect expiration.
-			 * @return True, if the local clock is marked as bad
-			 */
-			static bool isBad();
-
-			/**
-			 * Set the bad state of the clock returned by Clock::isBad()
-			 */
-			static void setBad(bool val);
-
-			/**
-			 * Specify a timezone offset in hours
-			 */
-			static int getTimezone();
-
-			/**
-			 * Set a timezone offset in hours
-			 */
-			static void setTimezone(int val);
 
 			/**
 			 * Defines an estimation about the precision of the local time. If the clock is definitely wrong
@@ -209,22 +188,11 @@ namespace dtn
 
 		private:
 			/**
-			 * Timezone offset in hours
-			 */
-			static int _timezone;
-
-			/**
 			 * Defines an estimation about the precision of the local time. If the clock is definitely wrong
 			 * the value is zero and one when we have a perfect time sync. Everything between one and zero gives
 			 * an abstract knowledge about the rating of the local clock.
 			 */
 			static double _rating;
-
-			/**
-			 * If set to true, all time based functions assume a bad clock and try to use other mechanisms
-			 * to detect expiration.
-			 */
-			static bool _badclock;
 
 			/**
 			 * if set to true, the function settimeofday() and setOffset() will modify the clock of the host
@@ -235,7 +203,6 @@ namespace dtn
 			Clock();
 			virtual ~Clock();
 
-			static bool __isExpired(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime = 0);
 			static dtn::data::Timestamp __getExpireTime(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime);
 
 			static struct timeval _offset;

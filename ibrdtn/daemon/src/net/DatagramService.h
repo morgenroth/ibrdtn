@@ -43,24 +43,35 @@ namespace dtn
 			enum FLOWCONTROL
 			{
 				FLOW_NONE = 0,
-				FLOW_STOPNWAIT = 1
+				FLOW_STOPNWAIT = 1,
+				FLOW_SLIDING_WINDOW = 2
 			};
 
 			enum HEADER_FLAGS
 			{
 				SEGMENT_FIRST = 0x02,
 				SEGMENT_LAST = 0x01,
-				SEGMENT_MIDDLE = 0x00
+				SEGMENT_MIDDLE = 0x00,
+				NACK_TEMPORARY = 0x04
 			};
 
 			class Parameter
 			{
 			public:
+				// default constructor
+				Parameter()
+				: flowcontrol(FLOW_NONE), max_seq_numbers(2), max_msg_length(1024),
+				  initial_timeout(50), seq_check(true), retry_limit(5) { }
+
+				// destructor
+				virtual ~Parameter() { }
+
 				FLOWCONTROL flowcontrol;
 				unsigned int max_seq_numbers;
 				size_t max_msg_length;
 				size_t initial_timeout;
 				bool seq_check;
+				size_t retry_limit;
 			};
 
 			virtual ~DatagramService() = 0;
@@ -107,7 +118,7 @@ namespace dtn
 			 * Get the tag for this service used in discovery messages.
 			 * @return The tag as string.
 			 */
-			virtual const std::string getServiceTag() const = 0;
+			virtual const std::string getServiceTag() const;
 
 			/**
 			 * Get the service description for this convergence layer. This

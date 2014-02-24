@@ -25,7 +25,7 @@
 #include "Component.h"
 #include "net/ConvergenceLayer.h"
 #include <ibrcommon/Exceptions.h>
-#include "net/DiscoveryServiceProvider.h"
+#include "net/DiscoveryBeaconHandler.h"
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/net/socket.h>
 #include <ibrcommon/net/vsocket.h>
@@ -40,7 +40,7 @@ namespace dtn
 		 * This class implement a ConvergenceLayer for UDP/IP.
 		 * Each bundle is sent in exact one UDP datagram.
 		 */
-		class UDPConvergenceLayer : public ConvergenceLayer, public dtn::daemon::IndependentComponent, public DiscoveryServiceProvider, public ibrcommon::LinkManager::EventCallback
+		class UDPConvergenceLayer : public ConvergenceLayer, public dtn::daemon::IndependentComponent, public DiscoveryBeaconHandler, public ibrcommon::LinkManager::EventCallback
 		{
 		public:
 			/**
@@ -60,8 +60,8 @@ namespace dtn
 			/**
 			 * this method updates the given values
 			 */
-			void update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement)
-				throw (dtn::net::DiscoveryServiceProvider::NoServiceHereException);
+			void onUpdateBeacon(const ibrcommon::vinterface &iface, DiscoveryBeacon &announcement)
+				throw (dtn::net::DiscoveryBeaconHandler::NoServiceHereException);
 
 			dtn::core::Node::Protocol getDiscoveryProtocol() const;
 
@@ -73,6 +73,10 @@ namespace dtn
 			virtual const std::string getName() const;
 
 			void eventNotify(const ibrcommon::LinkEvent &evt);
+
+			virtual void resetStats();
+
+			virtual void getStats(ConvergenceLayer::stats_data &data) const;
 
 		protected:
 			virtual void componentUp() throw ();
@@ -97,7 +101,9 @@ namespace dtn
 
 			bool _running;
 
-
+			// stats variables
+			size_t _stats_in;
+			size_t _stats_out;
 		};
 	}
 }

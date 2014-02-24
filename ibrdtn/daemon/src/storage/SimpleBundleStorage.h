@@ -72,6 +72,17 @@ namespace dtn
 			virtual void store(const dtn::data::Bundle &bundle);
 
 			/**
+			 * This method returns true if the requested bundle is
+			 * stored in the storage.
+			 */
+			virtual bool contains(const dtn::data::BundleID &id);
+
+			/**
+			 * Get meta data about a specific bundle ID
+			 */
+			virtual dtn::data::MetaBundle info(const dtn::data::BundleID &id);
+
+			/**
 			 * This method returns a specific bundle which is identified by
 			 * its id.
 			 * @param id The ID of the bundle to return.
@@ -167,7 +178,19 @@ namespace dtn
 				BundleContainer(const dtn::data::Bundle &b);
 				virtual ~BundleContainer();
 
-				std::string getKey() const;
+				/**
+				 * create a unique identifier from the bundle ID
+				 */
+				static std::string createId(const dtn::data::BundleID &id);
+
+				/**
+				 * get the unique identifier for this bundle container
+				 */
+				std::string getId() const;
+
+				/**
+				 * write the container to a stream object
+				 */
 				std::ostream& serialize(std::ostream &stream);
 
 			private:

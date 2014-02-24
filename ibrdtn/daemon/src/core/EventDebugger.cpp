@@ -105,7 +105,7 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::routing::RequeueBundleEvent>::remove(this);
 		}
 
-		void EventDebugger::raiseEvent(const Event *evt) throw ()
+		void EventDebugger::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			// print event
 			if (evt->isLoggable())

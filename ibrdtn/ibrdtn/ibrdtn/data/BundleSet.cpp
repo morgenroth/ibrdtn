@@ -127,6 +127,11 @@ namespace dtn
 			return _set_impl->getNotIn(filter);
 		}
 
+		void BundleSet::sync() throw ()
+		{
+			return _set_impl->sync();
+		}
+
 		Length BundleSet::getLength() const throw ()
 		{
 			return _set_impl->getLength();

@@ -77,7 +77,7 @@ namespace dtn
 		{
 			if (_filter_state == FILTER_AVAILABLE)
 			{
-				if (_filter.contains(id.toString()))
+				if (id.isIn(_filter))
 					return true;
 			}
 			else if (require_bloomfilter)
@@ -142,8 +142,6 @@ namespace dtn
 
 		void NeighborDatabase::NeighborEntry::acquireTransfer(const dtn::data::BundleID &id) throw (NoMoreTransfersAvailable, AlreadyInTransitException)
 		{
-			ibrcommon::MutexLock l(_transit_lock);
-
 			// check if enough resources available to transfer the bundle
 			if (_transit_bundles.size() >= dtn::core::BundleCore::max_bundles_in_transit) throw NoMoreTransfersAvailable();
 
@@ -153,7 +151,7 @@ namespace dtn
 			// insert the bundle into the transit list
 			_transit_bundles.insert(id);
 
-			IBRCOMMON_LOGGER_DEBUG_TAG("NeighborDatabase", 20) << "acquire transfer of " << id.toString() << " (" << _transit_bundles.size() << " bundles in transit)" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("NeighborDatabase", 20) << "acquire transfer of " << id.toString() << " to " << eid.getString() << " (" << _transit_bundles.size() << " bundles in transit)" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		dtn::data::Size NeighborDatabase::NeighborEntry::getFreeTransferSlots() const
@@ -171,10 +169,9 @@ namespace dtn
 
 		void NeighborDatabase::NeighborEntry::releaseTransfer(const dtn::data::BundleID &id)
 		{
-			ibrcommon::MutexLock l(_transit_lock);
 			_transit_bundles.erase(id);
 
-			IBRCOMMON_LOGGER_DEBUG_TAG("NeighborDatabase", 20) << "release transfer of " << id.toString() << " (" << _transit_bundles.size() << " bundles in transit)" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("NeighborDatabase", 20) << "release transfer of " << id.toString() << " to " << eid.getString() << " (" << _transit_bundles.size() << " bundles in transit)" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void NeighborDatabase::NeighborEntry::putDataset(NeighborDataset &dset)
@@ -218,9 +215,9 @@ namespace dtn
 			return *(*iter).second;
 		}
 
-		NeighborDatabase::NeighborEntry& NeighborDatabase::get(const dtn::data::EID &eid) throw (NeighborNotAvailableException)
+		NeighborDatabase::NeighborEntry& NeighborDatabase::get(const dtn::data::EID &eid, bool noCached) throw (NeighborNotAvailableException)
 		{
-			if (!dtn::core::BundleCore::getInstance().getConnectionManager().isNeighbor(eid))
+			if (noCached && !dtn::core::BundleCore::getInstance().getConnectionManager().isNeighbor(eid))
 				throw NeighborDatabase::NeighborNotAvailableException();
 
 			neighbor_map::iterator iter = _entries.find(eid);

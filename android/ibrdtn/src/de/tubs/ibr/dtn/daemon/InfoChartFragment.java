@@ -1,8 +1,11 @@
 package de.tubs.ibr.dtn.daemon;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Bundle;
 import de.tubs.ibr.dtn.R;
+import de.tubs.ibr.dtn.daemon.data.StatsListAdapter;
+import de.tubs.ibr.dtn.stats.StatsUtils;
 
 public class InfoChartFragment extends StatsChartFragment {
     
@@ -38,4 +41,11 @@ public class InfoChartFragment extends StatsChartFragment {
             return mChartColors[position];
         }
     };
+    
+    @SuppressLint("DefaultLocale")
+    @Override
+    public String formatLabel(double value, boolean isValueX) {
+        if (isValueX) return super.formatLabel(value, isValueX);
+        return StatsUtils.formatTimeString(value);
+    }
 }

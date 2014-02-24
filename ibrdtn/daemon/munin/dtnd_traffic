@@ -26,6 +26,9 @@ class DtnTrafficPlugin(MuninPlugin):
             tag_label[0] = tag_label[0].replace(":", "_")
             label = tag_label[0].lower() + "_" + tag_label[1].lower()
 
+            if tag_label[1].lower() not in self.allowedTags:
+                continue
+
             desc = dict(
                     label = tag_label[0],
                     info = 'Throughput of ' + tag_label[0] + ' convergence layer',
@@ -54,6 +57,10 @@ class DtnTrafficPlugin(MuninPlugin):
             tag_label = t.split("|")
             tag_label[0] = tag_label[0].replace(":", "_")
             label = tag_label[0].lower() + "_" + tag_label[1].lower()
+
+            if tag_label[1].lower() not in self.allowedTags:
+                continue
+
             ret[label] = v
 
         return ret

@@ -71,9 +71,7 @@ namespace dtn
 					NETWORK_EMAIL = 9
 				};
 
-				NetConfig(std::string name, NetType type, const std::string &url);
-				NetConfig(std::string name, NetType type, const ibrcommon::vinterface &iface, int port);
-				NetConfig(std::string name, NetType type, int port);
+				NetConfig(const std::string &name, NetType type);
 				virtual ~NetConfig();
 
 				std::string name;
@@ -108,13 +106,6 @@ namespace dtn
 			std::string getNodename() const;
 
 			/**
-			 * Returns the manual timezone difference in hours.
-			 * @return A positive or negative number containing the
-			 * timezone offset in hours.
-			 */
-			int getTimezone() const;
-
-			/**
 			 * Generic command to get a specific path. If "name" is
 			 * set to "foo" then the parameter "foo_path" is returned.
 			 * @param name The prefix of the path to get.
@@ -147,11 +138,7 @@ namespace dtn
 			 * returns, whether Persistent BundleSets are used (stored in SQL database)
 			 */
 
-			std::string getUsePersistentBundleSets() const;
-			/**
-			 * Returns true if traffic stats should be recorded
-			 */
-			bool enableTrafficStats() const;
+			bool getUsePersistentBundleSets() const;
 
 			enum RoutingExtension
 			{
@@ -318,6 +305,7 @@ namespace dtn
 				std::list<NetConfig> _interfaces;
 				std::string _routing;
 				bool _forwarding;
+				bool _prefer_direct;
 				bool _tcp_nodelay;
 				dtn::data::Length _tcp_chunksize;
 				dtn::data::Timeout _tcp_idle_timeout;
@@ -356,6 +344,13 @@ namespace dtn
 				 * @return True, if forwarding is enabled.
 				 */
 				bool doForwarding() const;
+
+				/**
+				 * Define if direct routes are preferred instead of spreading bundles to all
+				 * neighbors.
+				 * @return True, if direct routes should preferred
+				 */
+				bool doPreferDirect() const;
 
 				/**
 				 * @return True, is tcp options NODELAY should be set.
@@ -542,7 +537,7 @@ namespace dtn
 			public:
 				bool hasReference() const;
 				bool doSync() const;
-				bool sendDiscoveryAnnouncements() const;
+				bool sendDiscoveryBeacons() const;
 
 				float getSigma() const;
 				float getPsi() const;

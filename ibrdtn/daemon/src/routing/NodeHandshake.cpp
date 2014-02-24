@@ -172,7 +172,7 @@ namespace dtn
 
 				for (NodeHandshake::item_set::const_iterator iter = hs._items.begin(); iter != hs._items.end(); ++iter)
 				{
-					const NodeHandshakeItem &item (**iter);
+					const NodeHandshakeItem &item = (**iter);
 
 					// first the identifier of the item
 					dtn::data::Number id(item.getIdentifier());

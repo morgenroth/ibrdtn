@@ -496,7 +496,7 @@ namespace dtn
 								dtn::data::BundleID id = readBundleID(cmd, 2);
 
 								// announce this bundle as delivered
-								dtn::data::MetaBundle meta = dtn::core::BundleCore::getInstance().getStorage().get(id);
+								dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(dtn::core::BundleCore::getInstance().getStorage().get(id));
 								_client.getRegistration().delivered(meta);
 
 								ibrcommon::MutexLock l(_write_lock);
@@ -520,9 +520,6 @@ namespace dtn
 						}
 						else if (cmd[1] == "send")
 						{
-							// create a new sequence number
-							_bundle_reg.relabel();
-
 							// forward the bundle to the storage processing
 							dtn::api::Registration::processIncomingBundle(_endpoint, _bundle_reg);
 
@@ -942,8 +939,8 @@ namespace dtn
 				// format the bundle ID and write it to the stream
 				_stream << report.bundleid.timestamp.toString() << "." << report.bundleid.sequencenumber.toString();
 
-				if (report.refsFragment()) {
-					_stream << "." << report.bundleid.offset.toString() << ":" << report.fragment_length.toString() << " ";
+				if (report.bundleid.isFragment()) {
+					_stream << "." << report.bundleid.fragmentoffset.toString() << ":" << report.bundleid.getPayloadLength() << " ";
 				} else {
 					_stream << " ";
 				}
@@ -999,8 +996,8 @@ namespace dtn
 				// format the bundle ID and write it to the stream
 				_stream << custody.bundleid.timestamp.toString() << "." << custody.bundleid.sequencenumber.toString();
 
-				if (custody.refsFragment()) {
-					_stream << "." << custody.bundleid.offset.toString() << ":" << custody.fragment_length.toString() << " ";
+				if (custody.bundleid.isFragment()) {
+					_stream << "." << custody.bundleid.fragmentoffset.toString() << ":" << custody.bundleid.getPayloadLength() << " ";
 				} else {
 					_stream << " ";
 				}
@@ -1030,9 +1027,10 @@ namespace dtn
 		{
 			stream << id.timestamp.toString() << " " << id.sequencenumber.toString() << " ";
 
-			if (id.fragment)
+			if (id.isFragment())
 			{
-				stream << id.offset.toString() << " ";
+				stream << id.fragmentoffset.toString() << " ";
+				stream << id.getPayloadLength() << " ";
 			}
 
 			stream << id.source.getString();
@@ -1042,10 +1040,7 @@ namespace dtn
 		{
 			// load bundle id
 			std::stringstream ss;
-			dtn::data::Timestamp timestamp = 0;
-			dtn::data::Number sequencenumber = 0;
-			bool fragment = false;
-			dtn::data::Number offset = 0;
+			dtn::data::BundleID id;
 
 			if ((data.size() - start) < 3)
 			{
@@ -1054,7 +1049,7 @@ namespace dtn
 
 			// read timestamp
 			ss.clear(); ss.str(data[start]);
-			timestamp.read(ss);
+			id.timestamp.read(ss);
 
 			if(ss.fail())
 			{
@@ -1063,7 +1058,7 @@ namespace dtn
 
 			// read sequence number
 			ss.clear(); ss.str(data[start+1]);
-			sequencenumber.read(ss);
+			id.sequencenumber.read(ss);
 
 			if(ss.fail())
 			{
@@ -1073,11 +1068,17 @@ namespace dtn
 			// read fragment offset
 			if ((data.size() - start) > 3)
 			{
-				fragment = true;
+				id.setFragment(true);
 
 				// read sequence number
 				ss.clear(); ss.str(data[start+2]);
-				offset.read(ss);
+				id.fragmentoffset.read(ss);
+
+				// read sequence number
+				ss.clear(); ss.str(data[start+3]);
+				dtn::data::Length len = 0;
+				ss >> len;
+				id.setPayloadLength(len);
 
 				if(ss.fail())
 				{
@@ -1086,10 +1087,10 @@ namespace dtn
 			}
 
 			// read EID
-			ss.clear(); dtn::data::EID eid(data[data.size() - 1]);
+			id.source = dtn::data::EID(data[data.size() - 1]);
 
-			// construct bundle id
-			return dtn::data::BundleID(eid, timestamp, sequencenumber, fragment, offset);
+			// return bundle id
+			return id;
 		}
 	}
 }

@@ -53,7 +53,7 @@ namespace dtn
 
 		bool AcknowledgementSet::has(const dtn::data::BundleID &id) const throw ()
 		{
-			dtn::data::BundleList::const_iterator iter = _bundles.find(dtn::data::MetaBundle::mockUp(id));
+			dtn::data::BundleList::const_iterator iter = _bundles.find(dtn::data::MetaBundle::create(id));
 			return !(iter == _bundles.end());
 		}
 
@@ -90,6 +90,7 @@ namespace dtn
 				const dtn::data::MetaBundle &ack = (*it);
 				stream << (const dtn::data::BundleID&)ack;
 				ack.expiretime.encode(stream);
+				ack.lifetime.encode(stream);
 			}
 
 			return stream;
@@ -108,7 +109,7 @@ namespace dtn
 				dtn::data::MetaBundle ack;
 				stream >> (dtn::data::BundleID&)ack;
 				ack.expiretime.decode(stream);
-				ack.lifetime = dtn::utils::Clock::getLifetime(ack, ack.expiretime);
+				ack.lifetime.decode(stream);
 
 				ack_set.add(ack);
 			}

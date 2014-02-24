@@ -55,6 +55,7 @@ public class InterfacePreferenceCategory extends PreferenceCategory {
                 
                 // skip rmnet
                 if (i.getDisplayName().startsWith("rmnet")) continue;
+                if (i.getDisplayName().startsWith("rev_rmnet")) continue;
                 
                 if (    iface.contains("wlan") ||
                         iface.contains("wifi") ||

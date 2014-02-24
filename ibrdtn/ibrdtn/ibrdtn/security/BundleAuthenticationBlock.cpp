@@ -74,7 +74,7 @@ namespace dtn
 			bab_end._security_result.set(SecurityBlock::integrity_signature, sizehash_hash);
 		}
 
-		void BundleAuthenticationBlock::verify(const dtn::data::Bundle &bundle, const dtn::security::SecurityKey &key) throw (ibrcommon::Exception)
+		void BundleAuthenticationBlock::verify(const dtn::data::Bundle &bundle, const dtn::security::SecurityKey &key) throw (SecurityException)
 		{
 			// store the correlator of the verified BABs
 			dtn::data::Number correlator;
@@ -110,7 +110,7 @@ namespace dtn
 			bundle.erase(std::remove(bundle.begin(), bundle.end(), BundleAuthenticationBlock::BLOCK_TYPE), bundle.end());
 		}
 
-		void BundleAuthenticationBlock::verify(const dtn::data::Bundle& bundle, const dtn::security::SecurityKey &key, dtn::data::Number &correlator) throw (ibrcommon::Exception)
+		void BundleAuthenticationBlock::verify(const dtn::data::Bundle& bundle, const dtn::security::SecurityKey &key, dtn::data::Number &correlator) throw (SecurityException)
 		{
 			// get the blocks, with which the key should match
 			std::set<dtn::data::Number> correlators;
@@ -153,7 +153,7 @@ namespace dtn
 				}
 			}
 
-			throw ibrcommon::Exception("verification failed");
+			throw VerificationFailedException();
 		}
 
 		std::string BundleAuthenticationBlock::calcMAC(const dtn::data::Bundle& bundle, const dtn::security::SecurityKey &key, const bool with_correlator, const dtn::data::Number &correlator)

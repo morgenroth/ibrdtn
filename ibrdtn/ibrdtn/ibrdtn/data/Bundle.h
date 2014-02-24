@@ -90,7 +90,7 @@ namespace dtn
 			iterator find(const Block &block);
 			const_iterator find(const Block &block) const;
 
-			Bundle();
+			Bundle(bool zero_timestamp = false);
 			virtual ~Bundle();
 
 			bool operator==(const BundleID& other) const;
@@ -131,11 +131,11 @@ namespace dtn
 
 			void clear();
 
-			std::string toString() const;
-
 			Size size() const;
 
 			bool allEIDsInCBHE() const;
+
+			dtn::data::Length getPayloadLength() const;
 
 		private:
 			block_list _blocks;

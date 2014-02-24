@@ -90,14 +90,11 @@ namespace dtn
 			bundle.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
 			bundle.destination = b.reportto;
 
+			// set lifetime to the origin bundle lifetime
+			bundle.lifetime = b.lifetime;
+
 			// set bundle parameter
 			report.bundleid = b;
-
-			if (b.get(Bundle::FRAGMENT))
-			{
-				report.fragment_length = b.appdatalength;
-				report._admfield |= 1;
-			}
 
 			dtn::data::PayloadBlock &payload = bundle.push_back<dtn::data::PayloadBlock>();
 			report.write(payload);
@@ -105,7 +102,7 @@ namespace dtn
 			dtn::core::BundleGeneratedEvent::raise(bundle);
 		}
 
-		void StatusReportGenerator::raiseEvent(const Event *evt) throw ()
+		void StatusReportGenerator::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			try {
 				const BundleEvent &bundleevent = dynamic_cast<const BundleEvent&>(*evt);

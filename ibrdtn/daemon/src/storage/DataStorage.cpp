@@ -40,16 +40,22 @@ namespace dtn
 		 : value("this-hash-value-is-empty")
 		{}
 
-		DataStorage::Hash::Hash(const std::string &key)
-		 : value(DataStorage::Hash::hash(key))
-		{ }
+		DataStorage::Hash::Hash(const std::string &v)
+		 : value(v)
+		{
+		}
 
 		DataStorage::Hash::Hash(const DataStorage::Container &container)
-		 : value(DataStorage::Hash::hash(container.getKey()))
+		 : value(container.getId())
 		{ }
 
 		DataStorage::Hash::Hash(const ibrcommon::File &file) : value(file.getBasename()) {}
 		DataStorage::Hash::~Hash() {}
+
+		bool DataStorage::Hash::operator!=(const DataStorage::Hash &other) const
+		{
+			return (value != other.value);
+		}
 
 		bool DataStorage::Hash::operator==(const DataStorage::Hash &other) const
 		{
@@ -59,16 +65,6 @@ namespace dtn
 		bool DataStorage::Hash::operator<(const DataStorage::Hash &other) const
 		{
 			return (value < other.value);
-		}
-
-		std::string DataStorage::Hash::hash(const std::string &value)
-		{
-			std::stringstream ss;
-			for (std::string::const_iterator iter = value.begin(); iter != value.end(); ++iter)
-			{
-				ss << std::hex << std::setw( 2 ) << std::setfill( '0' ) << (int)(*iter);
-			}
-			return ss.str();
 		}
 
 		DataStorage::istream::istream(ibrcommon::Mutex &mutex, const ibrcommon::File &file)
@@ -150,7 +146,7 @@ namespace dtn
 
 			for (std::list<ibrcommon::File>::const_iterator iter = files.begin(); iter != files.end(); ++iter)
 			{
-				if (!(*iter).isSystem())
+				if (!(*iter).isSystem() && !(*iter).isDirectory())
 				{
 					DataStorage::Hash hash(*iter);
 					DataStorage::istream stream(_global_mutex, *iter);

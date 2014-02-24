@@ -74,12 +74,6 @@ namespace dtn
 			virtual size_t recvfrom(char *buf, size_t length, char &type, char &flags, unsigned int &seqno, std::string &address) throw (DatagramException);
 
 			/**
-			 * Get the tag for this service used in discovery messages.
-			 * @return The tag as string.
-			 */
-			virtual const std::string getServiceTag() const;
-
-			/**
 			 * Get the service description for this convergence layer. This
 			 * data is used to contact this node.
 			 * @return The service description as string.

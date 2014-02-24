@@ -57,7 +57,6 @@ void BaseRouterTest::testGetRouter()
 		ExtensionTest() {};
 		~ExtensionTest() {};
 
-		void notify(const dtn::core::Event*) throw () {};
 		void componentUp() throw () {};
 		void componentDown() throw () {};
 
@@ -84,7 +83,6 @@ void BaseRouterTest::testAddExtension()
 		ExtensionTest() {};
 		~ExtensionTest() {};
 
-		void notify(const dtn::core::Event*) throw () {};
 		void componentUp() throw () {};
 		void componentDown() throw () {};
 
@@ -108,7 +106,6 @@ void BaseRouterTest::testTransferTo()
 		ExtensionTest() {};
 		~ExtensionTest() {};
 
-		void notify(const dtn::core::Event*) throw () {};
 		void componentUp() throw () {};
 		void componentDown() throw () {};
 	};
@@ -138,7 +135,7 @@ void BaseRouterTest::testTransferTo()
 	}
 
 	try {
-		ex->transferTo(neighbor, b);
+		ex->transferTo(neighbor, dtn::data::MetaBundle::create(b));
 		router.terminate();
 	} catch (const ibrcommon::Exception &ex) {
 		std::cout << ex.what() << std::endl;
@@ -194,7 +191,7 @@ void BaseRouterTest::testIsKnown()
 
 	CPPUNIT_ASSERT_EQUAL(false, router.isKnown(b));
 
-	router.setKnown(b);
+	router.setKnown(dtn::data::MetaBundle::create(b));
 
 	CPPUNIT_ASSERT_EQUAL(true, router.isKnown(b));
 }
@@ -207,7 +204,7 @@ void BaseRouterTest::testSetKnown()
 	dtn::data::Bundle b;
 	b.source = dtn::data::EID("dtn://testcase-one/foo");
 
-	router.setKnown(b);
+	router.setKnown(dtn::data::MetaBundle::create(b));
 	CPPUNIT_ASSERT_EQUAL(true, router.isKnown(b));
 }
 
@@ -221,7 +218,7 @@ void BaseRouterTest::testGetSummaryVector()
 
 	CPPUNIT_ASSERT_EQUAL(false, router.isKnown(b));
 
-	router.setKnown(b);
+	router.setKnown(dtn::data::MetaBundle::create(b));
 
 	CPPUNIT_ASSERT_EQUAL(true, router.getKnownBundles().has(b));
 }

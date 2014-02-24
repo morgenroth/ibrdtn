@@ -100,8 +100,11 @@ public class TalkieService extends IntentService {
     }
 	
 	private SessionConnection _session_listener = new SessionConnection() {
-		public void onSessionConnected(Session arg0) {
+		public void onSessionConnected(Session session) {
 			Log.d(TAG, "DTN session connected");
+			
+			// register own data handler for incoming bundles
+			session.setDataHandler(_data_handler);
 		}
 
 		public void onSessionDisconnected() {
@@ -259,7 +262,6 @@ public class TalkieService extends IntentService {
 		
 		// register own data handler for incoming bundles
     	mClient = new DTNClient(_session_listener);
-    	mClient.setDataHandler(_data_handler);
 		
 		try {
 		    mClient.initialize(this, reg);

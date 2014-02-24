@@ -84,11 +84,11 @@ namespace dtn
 				URI(const Type t, const Protocol proto, const std::string &uri, const dtn::data::Number &timeout = 0, const int priority = 0);
 				~URI();
 
-				const Type type;
-				const Protocol protocol;
-				const std::string value;
-				const dtn::data::Timestamp expire;
-				const int priority;
+				Type type;
+				Protocol protocol;
+				std::string value;
+				dtn::data::Timestamp expire;
+				int priority;
 
 				void decode(std::string &address, unsigned int &port) const;
 
@@ -107,11 +107,11 @@ namespace dtn
 				Attribute(const Type t, const std::string &name, const std::string &value, const dtn::data::Number &timeout = 0, const int priority = 0);
 				~Attribute();
 
-				const Type type;
-				const std::string name;
-				const std::string value;
-				const dtn::data::Timestamp expire;
-				const int priority;
+				Type type;
+				std::string name;
+				std::string value;
+				dtn::data::Timestamp expire;
+				int priority;
 
 				bool operator<(const Attribute &other) const;
 				bool operator==(const Attribute &other) const;

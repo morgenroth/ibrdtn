@@ -60,10 +60,11 @@ public class DaemonProcess {
 	private NativeDaemon mDaemon = null;
 	private DaemonProcessHandler mHandler = null;
 	private Context mContext = null;
-	private DaemonState _state = DaemonState.OFFLINE;
+	private DaemonState mState = DaemonState.OFFLINE;
 	private Boolean mDiscoveryEnabled = null;
+	private Boolean mDiscoveryActive = null;
 	
-    private WifiManager.MulticastLock _mcast_lock = null;
+    private WifiManager.MulticastLock mMcastLock = null;
 
 	private final static String GNUSTL_NAME = "gnustl_shared";
 	private final static String CRYPTO_NAME = "crypto";
@@ -122,7 +123,8 @@ public class DaemonProcess {
 		this.mDaemon = new NativeDaemon(mDaemonCallback, mEventCallback);
 		this.mContext = context;
 		this.mHandler = handler;
-		this.mDiscoveryEnabled = true;
+		this.mDiscoveryEnabled = false;
+		this.mDiscoveryActive = true;
 	}
 
 	public String[] getVersion() {
@@ -159,13 +161,13 @@ public class DaemonProcess {
 	}
 	
 	public DaemonState getState() {
-	    return _state;
+	    return mState;
 	}
 	
     private void setState(DaemonState newState) {
-        if (_state.equals(newState)) return;
-        _state = newState;
-        mHandler.onStateChanged(_state);
+        if (mState.equals(newState)) return;
+        mState = newState;
+        mHandler.onStateChanged(mState);
     }
     
     public synchronized void initiateConnection(String endpoint) {
@@ -181,9 +183,6 @@ public class DaemonProcess {
     	// get daemon preferences
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         
-        // listen to preference changes
-        preferences.registerOnSharedPreferenceChangeListener(_pref_listener);
-
         // enable debug based on prefs
         int logLevel = 0;
         try {
@@ -239,6 +238,9 @@ public class DaemonProcess {
         } catch (NativeDaemonException e) {
             Log.e(TAG, "error while initializing the daemon process", e);
         }
+        
+        // listen to preference changes
+        preferences.registerOnSharedPreferenceChangeListener(mPrefListener);
     }
 	
 	public synchronized void start() {
@@ -295,7 +297,7 @@ public class DaemonProcess {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         
         // unlisten to preference changes
-        preferences.unregisterOnSharedPreferenceChangeListener(_pref_listener);
+        preferences.unregisterOnSharedPreferenceChangeListener(mPrefListener);
         
         // stop the running daemon
         try {
@@ -305,27 +307,25 @@ public class DaemonProcess {
         }
     }
     
-    final HashMap<String, DaemonRunLevel> mRestartMap = initializeRestartMap();
+    private final static HashMap<String, DaemonRunLevel> mRestartMap = initializeRestartMap();
     
-    private HashMap<String, DaemonRunLevel> initializeRestartMap() {
+    private final static HashMap<String, DaemonRunLevel> initializeRestartMap() {
         HashMap<String, DaemonRunLevel> ret = new HashMap<String, DaemonRunLevel>();
         
         ret.put("endpoint_id", DaemonRunLevel.RUNLEVEL_CORE);
         ret.put("routing", DaemonRunLevel.RUNLEVEL_ROUTING_EXTENSIONS);
         ret.put("interface_", DaemonRunLevel.RUNLEVEL_NETWORK);
-        ret.put("discovery_announce", DaemonRunLevel.RUNLEVEL_NETWORK);
         ret.put("checkIdleTimeout", DaemonRunLevel.RUNLEVEL_NETWORK);
-        ret.put("checkFragmentation", DaemonRunLevel.RUNLEVEL_NETWORK);
         ret.put("timesync_mode", DaemonRunLevel.RUNLEVEL_API);
         ret.put("storage_mode", DaemonRunLevel.RUNLEVEL_CORE);
-        ret.put("cloud_uplink_3g", DaemonRunLevel.RUNLEVEL_NETWORK);
+        ret.put("uplink_mode", DaemonRunLevel.RUNLEVEL_NETWORK);
         
         return ret;
     }
     
-    final HashSet<String> mConfigurationSet = initializeConfigurationSet();
+    private final static HashSet<String> mConfigurationSet = initializeConfigurationSet();
     
-    private HashSet<String> initializeConfigurationSet() {
+    private final static HashSet<String> initializeConfigurationSet() {
         HashSet<String> ret = new HashSet<String>();
               
         ret.add("constrains_lifetime");
@@ -339,7 +339,7 @@ public class DaemonProcess {
         return ret;
     }
     
-    private SharedPreferences.OnSharedPreferenceChangeListener _pref_listener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+    private SharedPreferences.OnSharedPreferenceChangeListener mPrefListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
         @Override
         public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
             if (mRestartMap.containsKey(key)) {
@@ -375,15 +375,15 @@ public class DaemonProcess {
                 // check runlevel and restart some runlevels if necessary
                 final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
                 intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
-                intent.putExtra("runlevel", mRestartMap.get(key).swigValue() - 1);
+                intent.putExtra("runlevel", mRestartMap.get("interface_").swigValue() - 1);
                 DaemonProcess.this.mContext.startService(intent);
             }
-            else if (key.equals("cloud_uplink"))
+            else if (key.equals("uplink_mode"))
             {
-                Log.d(TAG, "Preference " + key + " has changed to " + String.valueOf( prefs.getBoolean(key, false) ));
+                Log.d(TAG, "Preference " + key + " has changed to " + String.valueOf( prefs.getString(key, "off") ));
                 
                 synchronized(DaemonProcess.this) {
-                    if (prefs.getBoolean(key, false)) {
+                    if (!"off".equals(prefs.getString(key, "off"))) {
                         mDaemon.addConnection(__CLOUD_EID__.toString(),
                                 __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
                     } else {
@@ -532,7 +532,7 @@ public class DaemonProcess {
 			if (DaemonRunLevel.RUNLEVEL_ROUTING_EXTENSIONS.equals(level)) {
 			    // enable cloud-uplink
 			    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DaemonProcess.this.mContext);
-                if (prefs.getBoolean("cloud_uplink", false)) {
+                if (!"off".equals(prefs.getString("uplink_mode", "off"))) {
                     mDaemon.addConnection(__CLOUD_EID__.toString(),
                             __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
                 }
@@ -682,18 +682,11 @@ public class DaemonProcess {
 				p.println("tcp_idle_timeout = 30");
 			}
 			
-			if (preferences.getBoolean("checkFragmentation", true)) {
-			    p.println("fragmentation = yes");
-			}
+			// enable fragmentation support
+			p.println("fragmentation = yes");
 
 			// set multicast address for discovery
 			p.println("discovery_address = ff02::142 224.0.0.142");
-
-			if (preferences.getBoolean("discovery_announce", true)) {
-				p.println("discovery_announce = 1");
-			} else {
-				p.println("discovery_announce = 0");
-			}
 
 			String internet_ifaces = "";
 			String ifaces = "";
@@ -718,7 +711,7 @@ public class DaemonProcess {
 
 			p.println("net_interfaces = " + ifaces);
 			
-			if (!preferences.getBoolean("cloud_uplink_3g", false)) {
+			if ("on".equals(preferences.getString("uplink_mode", "off"))) {
 			    p.println("net_internet = " + internet_ifaces);
 			}
 
@@ -743,6 +736,7 @@ public class DaemonProcess {
     			File bundlePath = DaemonStorageUtils.getStoragePath("bundles");
     			if (bundlePath != null) {
     				p.println("storage_path = " + bundlePath.getPath());
+    				p.println("use_persistent_bundlesets = yes");
     			}
 			}
 
@@ -760,22 +754,28 @@ public class DaemonProcess {
 	}
 	
 	public synchronized void startDiscovery() {
+	    if (mDiscoveryActive) return;
+	    
         // set discovery flag to true
         mDiscoveryEnabled = true;
         
         WifiManager wifi_manager = (WifiManager)mContext.getSystemService(Context.WIFI_SERVICE);
 
-        if (_mcast_lock == null) {
+        if (mMcastLock == null) {
             // listen to multicast packets
-            _mcast_lock = wifi_manager.createMulticastLock(TAG);
-            _mcast_lock.acquire();
+            mMcastLock = wifi_manager.createMulticastLock(TAG);
+            mMcastLock.acquire();
         }
         
         // start discovery mechanism in the daemon
         mDaemon.startDiscovery();
+        
+        mDiscoveryActive = true;
 	}
 	
 	public synchronized void stopDiscovery() {
+	    if (!mDiscoveryActive) return;
+	    
 	    // set discovery flag to false
 	    mDiscoveryEnabled = false;
 	    
@@ -783,9 +783,11 @@ public class DaemonProcess {
 	    mDaemon.stopDiscovery();
 	    
 	    // release multicast lock
-        if (_mcast_lock != null) {
-            _mcast_lock.release();
-            _mcast_lock = null;
+        if (mMcastLock != null) {
+            mMcastLock.release();
+            mMcastLock = null;
         }
+        
+        mDiscoveryActive = false;
 	}
 }

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="lcars1">#9999cc</color>
+    <color name="lcars2">#9999ff</color>
+    <color name="lcars3">#cc99cc</color>
+    <color name="lcars4">#cc6699</color>
+    <color name="lcars5">#cc6666</color>
+    <color name="lcars6">#ff9966</color>
+    <color name="lcars7">#ff9900</color>
+    <color name="lcars8">#ffcc66</color>
+</resources>

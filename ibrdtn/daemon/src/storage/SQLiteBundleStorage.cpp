@@ -326,7 +326,7 @@ namespace dtn
 				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 
 				// try to purge all referenced data
-				purge(id);
+				remove(id);
 
 				throw dtn::storage::NoBundleFoundException();
 			}
@@ -340,15 +340,23 @@ namespace dtn
 
 			ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READWRITE);
 
+			// get size of the bundle
+			dtn::data::DefaultSerializer s(std::cout);
+			dtn::data::Length size = s.getLength(bundle);
+
+			// increment the storage size
+			allocSpace(size);
+
 			// start transaction to store the bundle
 			_database.transaction();
 
 			try {
 				// store the bundle data in the database
-				_database.store(bundle);
+				_database.store(bundle, size);
 
 				// create a bundle id
-				const dtn::data::BundleID id(bundle);
+				const dtn::data::BundleID &id = bundle;
+				const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(bundle);
 
 				// index number for order of the blocks
 				int index = 1;
@@ -430,7 +438,7 @@ namespace dtn
 
 				try {
 					// the bundle is stored sucessfully, we could accept custody if it is requested
-					const dtn::data::EID custodian = acceptCustody(bundle);
+					const dtn::data::EID custodian = acceptCustody(meta);
 
 					// update the custody address of this bundle
 					_database.update(SQLiteDatabase::UPDATE_CUSTODIAN, bundle, custodian);
@@ -441,10 +449,35 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG_TAG(SQLiteBundleStorage::TAG, 10) << "bundle " << bundle.toString() << " stored" << IBRCOMMON_LOGGER_ENDL;
 
 				// raise bundle added event
-				eventBundleAdded(bundle);
+				eventBundleAdded(meta);
 			} catch (const ibrcommon::Exception &ex) {
 				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				_database.rollback();
+
+				// free the previously allocated space
+				freeSpace(size);
+			}
+		}
+
+		bool SQLiteBundleStorage::contains(const dtn::data::BundleID &id)
+		{
+			try {
+				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READONLY);
+				return _database.contains(id);
+			} catch (const SQLiteDatabase::SQLiteQueryException&) {
+				return false;
+			}
+		}
+
+		dtn::data::MetaBundle SQLiteBundleStorage::info(const dtn::data::BundleID &id)
+		{
+			try {
+				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READONLY);
+				dtn::data::MetaBundle ret;
+				_database.get(id, ret);
+				return ret;
+			} catch (const SQLiteDatabase::SQLiteQueryException&) {
+				throw dtn::storage::NoBundleFoundException();
 			}
 		}
 
@@ -453,27 +486,13 @@ namespace dtn
 			// remove the bundle in locked state
 			try {
 				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READWRITE);
-				_database.remove(id);
+				freeSpace( _database.remove(id) );
 
 				// raise bundle removed event
 				eventBundleRemoved(id);
 			} catch (const ibrcommon::Exception &ex) {
 				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
-		}
-
-		void SQLiteBundleStorage::purge(const dtn::data::BundleID &id) throw ()
-		{
-			try {
-				remove(id);
-			} catch (const ibrcommon::Exception &ex) {
-				// do nothing here.
-			}
-		}
-
-		void SQLiteBundleStorage::clearAll()
-		{
-			clear();
 		}
 
 		void SQLiteBundleStorage::clear()
@@ -489,6 +508,9 @@ namespace dtn
 			//Delete Folder SQL_TABLE_BLOCK containing Blocks
 			_blockPath.remove(true);
 			ibrcommon::File::createDirectory(_blockPath);
+
+			// set the storage size to zero
+			clearSpace();
 		}
 
 		bool SQLiteBundleStorage::empty()
@@ -603,16 +625,22 @@ namespace dtn
 			}
 		}
 
-		void SQLiteBundleStorage::iterateDatabase(const dtn::data::MetaBundle &bundle)
+		void SQLiteBundleStorage::iterateDatabase(const dtn::data::MetaBundle &bundle, const dtn::data::Length size)
 		{
 			// raise bundle added event
 			eventBundleAdded(bundle);
+
+			// allocate consumed space of the bundle
+			allocSpace(size);
 		}
 
-		void SQLiteBundleStorage::eventBundleExpired(const dtn::data::BundleID &id) throw ()
+		void SQLiteBundleStorage::eventBundleExpired(const dtn::data::BundleID &id, const dtn::data::Length size) throw ()
 		{
 			// raise bundle removed event
 			eventBundleRemoved(id);
+
+			// release consumed space of this bundle
+			freeSpace(size);
 		}
 
 		void SQLiteBundleStorage::wait()

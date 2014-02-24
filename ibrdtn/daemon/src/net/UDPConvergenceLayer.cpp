@@ -58,11 +58,8 @@ namespace dtn
 		const int UDPConvergenceLayer::DEFAULT_PORT = 4556;
 
 		UDPConvergenceLayer::UDPConvergenceLayer(ibrcommon::vinterface net, int port, dtn::data::Length mtu)
-		 : _net(net), _port(port), m_maxmsgsize(mtu), _running(false)
+		 : _net(net), _port(port), m_maxmsgsize(mtu), _running(false), _stats_in(0), _stats_out(0)
 		{
-			// initialize stats
-			addStats("out", 0.0);
-			addStats("in", 0.0);
 		}
 
 		UDPConvergenceLayer::~UDPConvergenceLayer()
@@ -70,24 +67,45 @@ namespace dtn
 			componentDown();
 		}
 
+		void UDPConvergenceLayer::resetStats()
+		{
+			_stats_in = 0;
+			_stats_out = 0;
+		}
+
+		void UDPConvergenceLayer::getStats(ConvergenceLayer::stats_data &data) const
+		{
+			std::stringstream ss_format;
+
+			static const std::string IN_TAG = dtn::core::Node::toString(getDiscoveryProtocol()) + "|in";
+			static const std::string OUT_TAG = dtn::core::Node::toString(getDiscoveryProtocol()) + "|out";
+
+			ss_format << _stats_in;
+			data[IN_TAG] = ss_format.str();
+			ss_format.str("");
+
+			ss_format << _stats_out;
+			data[OUT_TAG] = ss_format.str();
+		}
+
 		dtn::core::Node::Protocol UDPConvergenceLayer::getDiscoveryProtocol() const
 		{
 			return dtn::core::Node::CONN_UDPIP;
 		}
 
-		void UDPConvergenceLayer::update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement) throw (dtn::net::DiscoveryServiceProvider::NoServiceHereException)
+		void UDPConvergenceLayer::onUpdateBeacon(const ibrcommon::vinterface &iface, DiscoveryBeacon &announcement) throw (dtn::net::DiscoveryBeaconHandler::NoServiceHereException)
 		{
 			// announce port only if we are bound to any interface
-			if (_net.empty()) {
+			if (_net.isAny()) {
 				std::stringstream service;
 				// ... set the port only
 				service << "port=" << _port << ";";
-				announcement.addService( DiscoveryService("udpcl", service.str()));
+				announcement.addService( DiscoveryService(getDiscoveryProtocol(), service.str()));
 				return;
 			}
 
 			// do not announce if this is not our interface
-			if (iface != _net) throw dtn::net::DiscoveryServiceProvider::NoServiceHereException();
+			if (iface != _net) throw dtn::net::DiscoveryBeaconHandler::NoServiceHereException();
 			
 			// determine if we should enable crosslayer discovery by sending out our own address
 			bool crosslayer = dtn::daemon::Configuration::getInstance().getDiscovery().enableCrosslayer();
@@ -120,7 +138,7 @@ namespace dtn
 						std::stringstream service;
 						// fill in the ip address
 						service << "ip=" << addr.address() << ";port=" << _port << ";";
-						announcement.addService( DiscoveryService("udpcl", service.str()));
+						announcement.addService( DiscoveryService(getDiscoveryProtocol(), service.str()));
 
 						// set the announce mark
 						announced = true;
@@ -137,7 +155,7 @@ namespace dtn
 				// announce at least our local port
 				std::stringstream service;
 				service << "port=" << _port << ";";
-				announcement.addService( DiscoveryService("udpcl", service.str()));
+				announcement.addService( DiscoveryService(getDiscoveryProtocol(), service.str()));
 			}
 		}
 
@@ -252,7 +270,7 @@ namespace dtn
 				sock.sendto(data.c_str(), data.length(), 0, addr);
 
 				// add statistic data
-				addStats("out", data.length());
+				_stats_out += data.length();
 
 				// success
 				return;
@@ -281,7 +299,7 @@ namespace dtn
 				size_t len = sock->recvfrom(&data[0], m_maxmsgsize, 0, fromaddr);
 
 				// add statistic data
-				addStats("int", len);
+				_stats_in += len;
 
 				std::stringstream ss; ss << "udp://" << fromaddr.toString();
 				sender = dtn::data::EID(ss.str());
@@ -385,6 +403,9 @@ namespace dtn
 
 				// subscribe to NetLink events on our interfaces
 				ibrcommon::LinkManager::getInstance().addEventListener(_net, this);
+
+				// register as discovery handler for this interface
+				dtn::core::BundleCore::getInstance().getDiscoveryAgent().registerService(_net, this);
 			} catch (const ibrcommon::socket_exception &ex) {
 				IBRCOMMON_LOGGER_TAG("UDPConvergenceLayer", error) << "bind failed (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 			}
@@ -394,6 +415,9 @@ namespace dtn
 		{
 			// unsubscribe to NetLink events
 			ibrcommon::LinkManager::getInstance().removeEventListener(this);
+
+			// unregister as discovery handler for this interface
+			dtn::core::BundleCore::getInstance().getDiscoveryAgent().unregisterService(_net, this);
 
 			_vsocket.destroy();
 			stop();

@@ -1,7 +1,13 @@
 package de.tubs.ibr.dtn.ping;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import android.app.IntentService;
 import android.content.Intent;
@@ -25,6 +31,12 @@ import de.tubs.ibr.dtn.api.SessionConnection;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.api.TransferMode;
+import de.tubs.ibr.dtn.streaming.DtnStreamReceiver;
+import de.tubs.ibr.dtn.streaming.DtnStreamTransmitter;
+import de.tubs.ibr.dtn.streaming.Frame;
+import de.tubs.ibr.dtn.streaming.MediaType;
+import de.tubs.ibr.dtn.streaming.StreamFilter;
+import de.tubs.ibr.dtn.streaming.StreamId;
 
 public class PingService extends IntentService {
     
@@ -39,12 +51,20 @@ public class PingService extends IntentService {
     
     // this intent send out a PING message
     public static final String PING_INTENT = "de.tubs.ibr.dtn.example.PING";
+    
+    public static final String STREAM_START_INTENT = "de.tubs.ibr.dtn.example.STREAM_START";
+    public static final String STREAM_STOP_INTENT = "de.tubs.ibr.dtn.example.STREAM_STOP";
+    public static final String STREAM_SWITCH_GROUP = "de.tubs.ibr.dtn.example.STREAM_SWITCH";
 
     // indicates updated data to other components
     public static final String DATA_UPDATED = "de.tubs.ibr.dtn.example.DATA_UPDATED";
     
     // group EID of this app
     public static final GroupEndpoint PING_GROUP_EID = new GroupEndpoint("dtn://broadcast.dtn/ping");
+    public static final GroupEndpoint STREAM_GROUP1_EID = new GroupEndpoint("dtn://broadcast.dtn/streaming1");
+    public static final GroupEndpoint STREAM_GROUP2_EID = new GroupEndpoint("dtn://broadcast.dtn/streaming2");
+    
+    private GroupEndpoint mStreamGroup = null;
     
     // This is the object that receives interactions from clients.  See
     // RemoteService for a more complete example.
@@ -53,11 +73,17 @@ public class PingService extends IntentService {
     // The communication with the DTN service is done using the DTNClient
     private DTNClient mClient = null;
     
+    private DtnStreamReceiver mReceiver = null;
+    private DtnStreamTransmitter mTransmitter = null;
+    
     // Hold the last ping result
     private Double mLastMeasurement = 0.0;
     
     // Hold the start time of the last ping
     private Long mStart = 0L;
+    
+    ScheduledExecutorService mExecutor = null;
+    Future<?> mStreamJob = null;
     
     public PingService() {
         super(TAG);
@@ -91,6 +117,25 @@ public class PingService extends IntentService {
             }
         } catch (RemoteException e) {
             e.printStackTrace();
+        }
+        
+        return null;
+    }
+    
+    public Intent getSelectNeighborIntent() {
+        try {
+            // wait until the session is available
+            mClient.getSession();
+            
+            // get pending intent for neighbor list
+            android.os.Bundle b = mClient.getDTNService().getSelectNeighborIntent();
+            return b.getParcelable(de.tubs.ibr.dtn.Intent.INTENT_KEY);
+        } catch (SessionDestroyedException e) {
+            Log.e(TAG, "can not query for neighbors", e);
+        } catch (InterruptedException e) {
+            Log.e(TAG, "can not query for neighbors", e);
+        } catch (RemoteException e) {
+            Log.e(TAG, "can not query for neighbors", e);
         }
         
         return null;
@@ -205,13 +250,121 @@ public class PingService extends IntentService {
             // send out the ping
             doPing(destination);
         }
+        else if (STREAM_START_INTENT.equals(action))
+        {
+            Log.d(TAG, "create stream");
+            
+            // create DTN stream
+            try {
+                mTransmitter = new DtnStreamTransmitter(PingService.this, mClient.getSession());
+                mTransmitter.connect(mStreamGroup, MediaType.BINARY, null);
+                mTransmitter.setLifetime(10);
+                
+                mStreamJob = mExecutor.scheduleWithFixedDelay(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.d(TAG, "send stream packet");
+                        try {
+                            mTransmitter.write("Hello World!".getBytes());
+                        } catch (InterruptedException e) {
+                            Log.d(TAG, "interrupted while sending", e);
+                        } catch (IOException e) {
+                            Log.d(TAG, "error while sending", e);
+                        }
+                    }
+                }, 0, 1, TimeUnit.SECONDS);
+            } catch (SessionDestroyedException e1) {
+                Log.e(TAG, "could not start the stream", e1);
+            } catch (InterruptedException e1) {
+                Log.e(TAG, "could not start the stream", e1);
+            }
+        }
+        else if (STREAM_STOP_INTENT.equals(action))
+        {
+            if (mStreamJob != null) {
+                mStreamJob.cancel(false);
+                mStreamJob = null;
+                
+                try {
+                    mTransmitter.close();
+                } catch (InterruptedException e) {
+                    Log.d(TAG, "interrupted while closing", e);
+                } catch (IOException e) {
+                    Log.d(TAG, "error while closing", e);
+                }
+            }
+        }
+        else if (STREAM_SWITCH_GROUP.equals(action))
+        {
+            try {
+                mClient.getSession().leave(mStreamGroup);
+    
+                if (STREAM_GROUP2_EID.equals(mStreamGroup)) {
+                    // set current stream group
+                    mStreamGroup = STREAM_GROUP1_EID;
+                } else {
+                    // set current stream group
+                    mStreamGroup = STREAM_GROUP2_EID;
+                }
+                
+                mClient.getSession().join(mStreamGroup);
+            } catch (SessionDestroyedException e) {
+                Log.e(TAG, "session destroyed", e);
+            } catch (InterruptedException e) {
+                Log.e(TAG, "interrupted", e);
+            }
+        }
     }
     
-    SessionConnection mSession = new SessionConnection() {
+    DtnStreamReceiver.StreamListener mStreamListener = new DtnStreamReceiver.StreamListener() {
+        @Override
+        public void onInitial(StreamId id, MediaType type, byte[] data) {
+            Log.d(TAG, "stream initiated: " + id);
+        }
+
+        @Override
+        public void onFrameReceived(StreamId id, Frame frame) {
+            Log.d(TAG, "stream packet received: " + id);
+            try {
+                Log.d(TAG, "payload: " + new String(frame.data, "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                // hm? UTF-8 not supported?
+            }
+        }
+
+        @Override
+        public void onFinish(StreamId id) {
+            Log.d(TAG, "stream closed: " + id);
+        }
+    };
+    
+    SessionConnection mSessionConnection = new SessionConnection() {
 
         @Override
         public void onSessionConnected(Session session) {
             Log.d(TAG, "Session connected");
+            
+            try {
+                // list all registered endpoints
+                for (GroupEndpoint group : session.getGroups()) {
+                    Log.d(TAG, "Group: " + group);
+                }
+            } catch (SessionDestroyedException e) {
+                Log.e(TAG, "can not get group list", e);
+            }
+            
+            // create streaming endpoint with own data handler as fallback
+            mReceiver = new DtnStreamReceiver(PingService.this, session, mStreamListener, mDataHandler);
+            
+            StreamFilter filter = new StreamFilter() {
+                @Override
+                public boolean onHandleStream(Bundle bundle) {
+                    return bundle.getDestination().toString().contains("stream");
+                }
+            };
+            
+            // set filter to decide with bundles are handles as stream
+            mReceiver.setFilter(filter);
             
             String localeid = getLocalEndpoint();
             if (localeid != null) {
@@ -233,8 +386,11 @@ public class PingService extends IntentService {
     public void onCreate() {
         super.onCreate();
         
+        // get new executor
+        mExecutor = Executors.newScheduledThreadPool(1);
+        
         // create a new DTN client
-        mClient = new DTNClient(mSession);
+        mClient = new DTNClient(mSessionConnection);
         
         // create registration with "ping" as endpoint
         // if the EID of this device is "dtn://device" then the
@@ -243,9 +399,10 @@ public class PingService extends IntentService {
         
         // additionally join a group
         registration.add(PING_GROUP_EID);
-        
-        // register own data handler for incoming bundles
-        mClient.setDataHandler(mDataHandler);
+        registration.add(STREAM_GROUP1_EID);
+
+        // set current stream group
+        mStreamGroup = STREAM_GROUP1_EID;
         
         try {
             // initialize the connection to the DTN service
@@ -262,9 +419,30 @@ public class PingService extends IntentService {
 
     @Override
     public void onDestroy() {
+        // release stream endpoint
+        if (mReceiver != null) {
+            mReceiver.release();
+        }
+        
         // terminate the DTN service
         mClient.terminate();
         mClient = null;
+        
+        if (mStreamJob != null) {
+            mStreamJob.cancel(false);
+            mStreamJob = null;
+            
+            try {
+                mTransmitter.close();
+            } catch (InterruptedException e) {
+                Log.d(TAG, "interrupted while closing", e);
+            } catch (IOException e) {
+                Log.d(TAG, "error while closing", e);
+            }
+        }
+        
+        // shutdown executor
+        mExecutor.shutdown();
         
         super.onDestroy();
     }

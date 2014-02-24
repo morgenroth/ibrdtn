@@ -32,9 +32,9 @@ namespace dtn
 	{
 		class LOWPANDatagramService : public dtn::net::DatagramService
 		{
-		public:
 			static const std::string TAG;
 
+		public:
 			LOWPANDatagramService(const ibrcommon::vinterface &iface, uint16_t panid);
 			virtual ~LOWPANDatagramService();
 
@@ -73,12 +73,6 @@ namespace dtn
 			 * @return The number of received bytes.
 			 */
 			virtual size_t recvfrom(char *buf, size_t length, char &type, char &flags, unsigned int &seqno, std::string &address) throw (DatagramException);
-
-			/**
-			 * Get the tag for this service used in discovery messages.
-			 * @return The tag as string.
-			 */
-			virtual const std::string getServiceTag() const;
 
 			/**
 			 * Get the service description for this convergence layer. This

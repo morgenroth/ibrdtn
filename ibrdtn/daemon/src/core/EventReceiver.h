@@ -32,7 +32,7 @@ namespace dtn
 		{
 		public:
 			virtual ~EventReceiver() = 0;
-			virtual void raiseEvent(const Event *evt) throw () = 0;
+			virtual void raiseEvent(const dtn::core::Event *evt) throw () = 0;
 		};
 	}
 }

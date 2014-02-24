@@ -50,10 +50,11 @@ namespace dtn
 		/*!
 		 * \brief This class is a manager to handle certificates
 		 */
-		class SecurityCertificateManager : public dtn::daemon::Component, public dtn::daemon::Configuration::OnChangeListener {
-		public:
+		class SecurityCertificateManager : public dtn::daemon::IntegratedComponent, public dtn::daemon::Configuration::OnChangeListener
+		{
 			static const std::string TAG;
 
+		public:
 			SecurityCertificateManager();
 			virtual ~SecurityCertificateManager();
 
@@ -94,10 +95,10 @@ namespace dtn
 			 */
 			const ibrcommon::File& getTrustedCAPath() const;
 
-			/* functions from Component */
-			virtual void initialize() throw ();
-			virtual void startup() throw ();
-			virtual void terminate() throw ();
+			/* functions from IntegratedComponent */
+			virtual void componentUp() throw ();
+			virtual void componentDown() throw ();
+
 			virtual const std::string getName() const;
 
 		private:

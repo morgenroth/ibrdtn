@@ -1,0 +1,91 @@
+Asynchronous Packet Streaming
+-----------------------------
+
+Packet streaming is used to transfer potential low latency data over
+a DTN. The size of each bundle is determined by the round-trip time to
+the first receiver.
+
+### Sender Algorithm
+
+1. Send an *initial bundle*. This bundle may include additional meta data
+   and is flagged with the "Acknowledgement by application is requested"
+   bit in the processing flags.
+
+2. The sender starts streaming and put all data into a buffer. Depending
+   on the used API it would be possible to stream directly into a bundle
+   payload.
+
+3. If the sender receives the ACK of the previous bundle the buffer is
+   written to a *data bundle* and gets cleared. Each *data bundle* is
+   also flagged with the "Acknowledgement by application is requested" bit
+   in the processing flags.
+
+4. If there is more data to stream, start-over with step 2.
+
+5. If there is no more data, a *final bundle* is sent indicating the end
+   of the stream to the receiver(s). 
+
+
+### Receiver Algorithm
+
+Receiving an packet stream might start with several different cases.
+
+Each received bundle is put in an ordered list.
+Each correlator gets its own list.
+
+If an *initial bundle* is received ...
+  -   
+
+If an *data bundle* is received ...
+  - ... has *initial bundle* ...
+  - ... *initial bundle* not yet received
+
+If an *final bundle* is received ...
+
+
+Reordering is required!
+
+Timeout if twice the lifetime has passed after the last bundle.
+Discard any cached or further bundle of this stream.
+
+### Initial bundle
+
+The each bundle payload must include an correlator value to identify the
+corresponding stream. This value must be unique within the namespace of the
+sender.
+
+CHAR	version
+CHAR	type { INITIAL, DATA, FIN } = INITIAL
+SDNV	correlator
+CHAR	stream-type { BINARY, MEDIA_AUDIO, MEDIA_VIDEO, MEDIA_MIXED }
+<frame>	meta-data
+
+### Data bundle
+
+Each data bundle contains 0..n frames. Each frame is delivered separately
+to the receiving application.
+
+CHAR	version
+CHAR	type { INITIAL, DATA, FIN } = DATA
+SDNV	correlator
+SDNV	stream offset
+<frame>	frame 1
+<frame>	frame 2
+	...
+<frame>	frame n
+
+### Frame
+
+A frame is a single unit for delivery to the application. Each *data bundle*
+may contains serveral or none of them.
+
+SDNV	payload length
+	payload
+
+### Final bundle
+
+CHAR	version
+CHAR	type { INITIAL, DATA, FIN } = FIN
+SDNV	correlator
+SDNV	stream offset (offset of the last data bundle + 1)
+

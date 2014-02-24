@@ -78,7 +78,7 @@ namespace dtn
 				 * @param bundle
 				 * @param key
 				 */
-				static void verify(const dtn::data::Bundle &bundle, const dtn::security::SecurityKey &key) throw (ibrcommon::Exception);
+				static void verify(const dtn::data::Bundle &bundle, const dtn::security::SecurityKey &key) throw (SecurityException);
 
 				/**
 				 * strips verified BABs off the bundle
@@ -126,7 +126,7 @@ namespace dtn
 				the matching pair. otherwise the first is false, if there was no
 				matching
 				*/
-				static void verify(const dtn::data::Bundle& bundle, const dtn::security::SecurityKey &key, dtn::data::Number &correlator) throw (ibrcommon::Exception);
+				static void verify(const dtn::data::Bundle& bundle, const dtn::security::SecurityKey &key, dtn::data::Number &correlator) throw (SecurityException);
 
 				/**
 				Returns the size of the security result field. This is used for strict 

@@ -29,6 +29,7 @@
 #include <ibrcommon/link/LinkManager.h>
 #include <ibrdtn/utils/Clock.h>
 #include <ibrdtn/utils/Utils.h>
+#include <ibrdtn/data/MemoryBundleSet.h>
 #include <list>
 
 #include "storage/BundleStorage.h"
@@ -245,7 +246,7 @@ namespace dtn
 			{
 				// add fragmentation values
 				data.push_back("Appdatalength: " + b.appdatalength.toString());
-				data.push_back("Fragmentoffset: " + b.offset.toString());
+				data.push_back("Fragmentoffset: " + b.fragmentoffset.toString());
 			}
 		}
 
@@ -256,14 +257,15 @@ namespace dtn
 			data.push_back("Timestamp: " + b.timestamp.toString());
 			data.push_back("Sequencenumber: " + b.sequencenumber.toString());
 
-			if (b.fragment)
+			if (b.isFragment())
 			{
 				// add fragmentation values
-				data.push_back("Fragmentoffset: " + b.offset.toString());
+				data.push_back("Fragmentoffset: " + b.fragmentoffset.toString());
+				data.push_back("Fragmentpayload: " + b.getPayloadLength());
 			}
 		}
 
-		void NativeDaemon::raiseEvent(const Event *evt) throw ()
+		void NativeDaemon::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			const std::string event = evt->getName();
 			std::string action;
@@ -397,7 +399,7 @@ namespace dtn
 				const dtn::net::ConnectionEvent &connection = dynamic_cast<const dtn::net::ConnectionEvent&>(*evt);
 
 				// set action
-				switch (connection.state)
+				switch (connection.getState())
 				{
 				case dtn::net::ConnectionEvent::CONNECTION_UP:
 					action = "up";
@@ -416,7 +418,7 @@ namespace dtn
 				}
 
 				// write the peer eid
-				data.push_back("Peer: " + connection.peer.getString());
+				data.push_back("Peer: " + connection.getNode().getEID().getString());
 			} catch (const std::bad_cast&) { };
 
 			try {
@@ -463,16 +465,12 @@ namespace dtn
 			using dtn::net::ConnectionManager;
 			using dtn::net::ConvergenceLayer;
 
-			ConnectionManager::stats_list list = dtn::core::BundleCore::getInstance().getConnectionManager().getStats();
+			dtn::net::ConvergenceLayer::stats_data data;
+			dtn::core::BundleCore::getInstance().getConnectionManager().getStats(data);
 
-			for (ConnectionManager::stats_list::const_iterator iter = list.begin(); iter != list.end(); ++iter) {
-				const ConnectionManager::stats_pair &pair = (*iter);
-				const ConvergenceLayer::stats_map &map = pair.second;
-
-				for (ConvergenceLayer::stats_map::const_iterator map_it = map.begin(); map_it != map.end(); ++map_it) {
-					std::string tag = dtn::core::Node::toString(pair.first) + "|" + (*map_it).first;
-					ret.addData(tag, (*map_it).second);
-				}
+			for (dtn::net::ConvergenceLayer::stats_data::const_iterator iter = data.begin(); iter != data.end(); ++iter) {
+				const dtn::net::ConvergenceLayer::stats_pair &pair = (*iter);
+				ret.addData(pair.first, pair.second);
 			}
 
 			return ret;
@@ -952,12 +950,14 @@ namespace dtn
 
 
 					dtn::storage::SQLiteBundleStorage *sbs;
-					if(conf.getUsePersistentBundleSets() == "yes")
+					if (conf.getUsePersistentBundleSets())
 					{
-						sbs = new dtn::storage::SQLiteBundleStorage(path, conf.getLimit("storage"),true);
-						IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "using persistent bundlesets" << IBRCOMMON_LOGGER_ENDL;
-					} else {
-						sbs = new dtn::storage::SQLiteBundleStorage(path, conf.getLimit("storage"),false );
+						sbs = new dtn::storage::SQLiteBundleStorage(path, conf.getLimit("storage"), true);
+						IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "using persistent bundle-sets" << IBRCOMMON_LOGGER_ENDL;
+					}
+					else
+					{
+						sbs = new dtn::storage::SQLiteBundleStorage(path, conf.getLimit("storage"), false);
 					}
 
 					_components[RUNLEVEL_STORAGE].push_back(sbs);
@@ -979,9 +979,12 @@ namespace dtn
 					ibrcommon::File path = conf.getPath("storage");
 
 					// create workdir if needed
-					if (!path.exists())
+					if (!path.exists()) ibrcommon::File::createDirectory(path);
+
+					if (conf.getUsePersistentBundleSets())
 					{
-						ibrcommon::File::createDirectory(path);
+						dtn::data::MemoryBundleSet::setPath(path.get("bundle-set"));
+						IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "using persistent bundle-sets" << IBRCOMMON_LOGGER_ENDL;
 					}
 
 					IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "using simple bundle storage in " << path.getPath() << IBRCOMMON_LOGGER_ENDL;
@@ -1066,17 +1069,12 @@ namespace dtn
 			// create the base router
 			dtn::routing::BaseRouter *router = new dtn::routing::BaseRouter();
 
-			// make the router globally available
-			dtn::core::BundleCore::getInstance().setRouter(router);
-
 			// add the router to the components list
 			_components[RUNLEVEL_ROUTING].push_back(router);
 		}
 
 		void NativeDaemon::shutdown_routing() const throw (NativeDaemonException)
 		{
-			// set the global router to NULL
-			dtn::core::BundleCore::getInstance().setRouter(NULL);
 		}
 
 		void NativeDaemon::init_api() throw (NativeDaemonException)
@@ -1356,17 +1354,7 @@ namespace dtn
 				// get the discovery port
 				int disco_port = conf.getDiscovery().port();
 
-				// collect all interfaces of convergence layer instances
-				std::set<ibrcommon::vinterface> interfaces;
-
-				const std::list<dtn::daemon::Configuration::NetConfig> &nets = conf.getNetwork().getInterfaces();
-				for (std::list<dtn::daemon::Configuration::NetConfig>::const_iterator iter = nets.begin(); iter != nets.end(); ++iter)
-				{
-					const dtn::daemon::Configuration::NetConfig &net = (*iter);
-					if (!net.iface.empty())
-						interfaces.insert(net.iface);
-				}
-
+				// create the IPND agent
 				dtn::net::IPNDAgent *ipnd = new dtn::net::IPNDAgent( disco_port );
 
 				try {
@@ -1380,40 +1368,13 @@ namespace dtn
 					ipnd->add(ibrcommon::vaddress("224.0.0.142", disco_port, AF_INET));
 				}
 
-				for (std::set<ibrcommon::vinterface>::const_iterator iter = interfaces.begin(); iter != interfaces.end(); ++iter)
+				// add all CL interfaces to discovery
+				for (std::list<dtn::daemon::Configuration::NetConfig>::const_iterator iter = nets.begin(); iter != nets.end(); ++iter)
 				{
-					const ibrcommon::vinterface &i = (*iter);
-
-					// add interfaces to discovery
-					ipnd->bind(i);
+					const dtn::daemon::Configuration::NetConfig &net = (*iter);
+					if (!net.iface.empty())
+						ipnd->bind(net.iface);
 				}
-
-				/**
-				 * register apps at the IPND
-				 */
-				for (app_list::iterator it = _apps.begin(); it != _apps.end(); ++it)
-				{
-			 		try {
-			 			DiscoveryServiceProvider *dsp = dynamic_cast<DiscoveryServiceProvider*>(*it);
-			 			if (dsp != NULL) {
-			 				ipnd->addService(dsp);
-			 			}
-			 		} catch (const std::bad_cast&) { }
-				}
-
-				/**
-				 * register convergence layers at the IPND
-				 */
-			 	component_list &clist = _components[RUNLEVEL_NETWORK];
-			 	for (component_list::iterator it = clist.begin(); it != clist.end(); ++it)
-			 	{
-			 		try {
-			 			DiscoveryServiceProvider *dsp = dynamic_cast<DiscoveryServiceProvider*>(*it);
-			 			if (dsp != NULL) {
-			 				ipnd->addService(dsp);
-			 			}
-			 		} catch (const std::bad_cast&) { }
-			 	}
 
 				_components[RUNLEVEL_NETWORK].push_back(ipnd);
 			}

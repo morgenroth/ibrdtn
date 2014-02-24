@@ -3,6 +3,7 @@ package de.tubs.ibr.dtn.stats;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 import android.text.format.DateUtils;
@@ -10,25 +11,10 @@ import android.text.format.Time;
 
 import com.jjoe64.graphview.GraphView.GraphViewData;
 
-import de.tubs.ibr.dtn.daemon.StatsListAdapter;
-import de.tubs.ibr.dtn.daemon.StatsListAdapter.RowType;
+import de.tubs.ibr.dtn.daemon.data.StatsListAdapter;
+import de.tubs.ibr.dtn.daemon.data.StatsListAdapter.RowType;
 
 public class StatsUtils {
-    public static void generateTimestampLabels(Context context, Double min_timestamp, Double max_timestamp, ArrayList<String> labels) {
-        if (max_timestamp > min_timestamp) {
-            // adjust labels
-            Double step_value = (max_timestamp - min_timestamp) / 6.0;
-            
-            for (Double i = min_timestamp; i < max_timestamp; i += step_value) {
-                String date_text = StatsUtils.formatTimeStampString(context, Double.valueOf(i * 1000.0).longValue());
-                labels.add(date_text);
-            }
-        }
-        
-        String date_text = StatsUtils.formatTimeStampString(context, Double.valueOf(max_timestamp * 1000.0).longValue());
-        labels.add(date_text);
-    }
-    
     public static void convertData(Context context, Cursor stats, HashMap<String, ArrayList<GraphViewData>> series) {
         ConvergenceLayerStatsEntry.ColumnsMap cmap = new ConvergenceLayerStatsEntry.ColumnsMap();
         
@@ -62,7 +48,7 @@ public class StatsUtils {
                 Double last_timestamp = Double.valueOf(last_entry.getTimestamp().getTime()) / 1000.0;
                 Double timestamp_diff = timestamp - last_timestamp;
 
-                Long last_value = last_entry.getDataValue();
+                Double last_value = last_entry.getDataValue();
 
                 GraphViewData p = null;
 
@@ -130,6 +116,29 @@ public class StatsUtils {
             // store the last entry for the next round
             last_entry = e;
         }
+    }
+    
+    @SuppressLint("DefaultLocale")
+    public static String formatByteString(long bytes, boolean si) {
+        int unit = si ? 1000 : 1024;
+        if (bytes < unit) return bytes + " B";
+        int exp = (int) (Math.log(bytes) / Math.log(unit));
+        String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp-1) + (si ? "" : "i");
+        return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
+    }
+    
+    @SuppressLint("DefaultLocale")
+    public static String formatTimeString(double seconds) {
+        if (seconds > 86400) {
+            return String.format("%.0fd", seconds / 86400.0);
+        }
+        else if (seconds > 3600) {
+            return String.format("%.0fh", seconds / 3600.0);
+        }
+        else if (seconds > 60) {
+            return String.format("%.0fm", seconds / 60.0);
+        }
+        return String.format("%.0fs", seconds);
     }
     
     public static String formatTimeStampString(Context context, long when) {

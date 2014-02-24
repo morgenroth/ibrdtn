@@ -136,6 +136,16 @@ namespace dtn
 				 * This method is called if a connection went down.
 				 */
 				virtual void eventConnectionDown() throw () = 0;
+
+				/**
+				 * Reports inbound traffic amount
+				 */
+				virtual void addTrafficIn(size_t) throw () { };
+
+				/**
+				 * Reports outbound traffic amount
+				 */
+				virtual void addTrafficOut(size_t) throw () { };
 			};
 
 			/**
@@ -196,13 +206,6 @@ namespace dtn
 			 * @param seconds
 			 */
 			void enableIdleTimeout(const dtn::data::Timeout &seconds);
-
-			/**
-			 * traffic monitoring
-			 */
-			void setMonitor(bool val);
-			void resetMonitorStats();
-			size_t getMonitorStat(int index);
 
 		private:
 			/**
@@ -346,10 +349,6 @@ namespace dtn
 				State _underflow_state;
 
 				ibrcommon::Timer _idle_timer;
-
-				// traffic monitoring
-				bool _monitor;
-				std::vector<size_t> _monitor_stats;
 			};
 
 			void connectionTimeout();

@@ -38,7 +38,7 @@ namespace dtn
 				SCHEME_DTN = 0,
 				SCHEME_CBHE = 1,
 				SCHEME_EXTENDED = 2
-			} _scheme_type;
+			};
 
 			/**
 			 * Resolves a scheme in a string to the corresponding enum
@@ -140,6 +140,7 @@ namespace dtn
 			static void extractDTN(const std::string &ssp, std::string &node, std::string &application);
 
 			// abstract values
+			Scheme _scheme_type;
 			std::string _scheme;
 			std::string _ssp;
 

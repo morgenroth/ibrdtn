@@ -109,7 +109,7 @@ namespace dtn
 			}
 		}
 
-		void SecurityCertificateManager::initialize() throw ()
+		void SecurityCertificateManager::componentUp() throw ()
 		{
 			ibrcommon::MutexLock l(_initialization_lock);
 
@@ -117,23 +117,17 @@ namespace dtn
 				IBRCOMMON_LOGGER_TAG(SecurityCertificateManager::TAG, info) << "already initialized." << IBRCOMMON_LOGGER_ENDL;
 				return;
 			}
+			else {
+				// load configuration
+				onConfigurationChanged( dtn::daemon::Configuration::getInstance() );
 
-			// load configuration
-			onConfigurationChanged( dtn::daemon::Configuration::getInstance() );
-
-			IBRCOMMON_LOGGER_TAG(SecurityCertificateManager::TAG, info) << "Initialization succeeded." << IBRCOMMON_LOGGER_ENDL;
-		}
-
-		void
-		SecurityCertificateManager::startup() throw ()
-		{
-			if (_initialized) {
 				ibrcommon::TLSStream::init(_cert, _privateKey, _trustedCAPath, !dtn::daemon::Configuration::getInstance().getSecurity().TLSEncryptionDisabled());
+
+				IBRCOMMON_LOGGER_TAG(SecurityCertificateManager::TAG, info) << "Initialization succeeded." << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
-		void
-		SecurityCertificateManager::terminate() throw ()
+		void SecurityCertificateManager::componentDown() throw ()
 		{
 			/* nothing to do */
 		}

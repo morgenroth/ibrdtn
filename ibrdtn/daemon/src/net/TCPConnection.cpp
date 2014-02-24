@@ -310,6 +310,16 @@ namespace dtn
 			_lastack = ack;
 		}
 
+		void TCPConnection::addTrafficIn(size_t amount) throw ()
+		{
+			_callback.addTrafficIn(amount);
+		}
+
+		void TCPConnection::addTrafficOut(size_t amount) throw ()
+		{
+			_callback.addTrafficOut(amount);
+		}
+
 		void TCPConnection::initialize() throw ()
 		{
 			// start the receiver for incoming bundles + handshake
@@ -401,11 +411,6 @@ namespace dtn
 			if (_protocol_stream != NULL) delete _protocol_stream;
 			_protocol_stream = new dtn::streams::StreamConnection(*this, (_sec_stream == NULL) ? *_socket_stream : *_sec_stream, chunksize);
 			_protocol_stream->exceptions(std::ios::badbit | std::ios::eofbit);
-
-			if (dtn::daemon::Configuration::getInstance().enableTrafficStats()) {
-				// enable traffic monitoring
-				_protocol_stream->setMonitor(true);
-			}
 		}
 
 		void TCPConnection::connect()
@@ -765,25 +770,6 @@ namespace dtn
 		{
 			const dtn::core::Node &n = evt.getNode();
 			return match(n);
-		}
-
-		size_t TCPConnection::getTrafficStats(int index)
-		{
-			try {
-				safe_streamconnection sc = getProtocolStream();
-				return (*sc).getMonitorStat(index);
-			} catch (const ibrcommon::Exception&) {
-				return 0;
-			}
-		}
-
-		void TCPConnection::resetTrafficStats()
-		{
-			try {
-				safe_streamconnection sc = getProtocolStream();
-				return (*sc).resetMonitorStats();
-			} catch (const ibrcommon::Exception&) {
-			}
 		}
 	}
 }

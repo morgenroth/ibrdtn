@@ -23,9 +23,8 @@
 #include "net/DatagramConnection.h"
 
 #include "core/BundleCore.h"
-#include "core/EventDispatcher.h"
-#include "core/TimeEvent.h"
 #include "core/NodeEvent.h"
+#include "core/EventDispatcher.h"
 
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/thread/MutexLock.h>
@@ -41,11 +40,9 @@ namespace dtn
 		const std::string DatagramConvergenceLayer::TAG = "DatagramConvergenceLayer";
 
 		DatagramConvergenceLayer::DatagramConvergenceLayer(DatagramService *ds)
-		 : _service(ds), _active_conns(0), _running(false), _discovery_sn(0)
+		 : _service(ds), _receiver(*this), _running(false),
+		   _stats_in(0), _stats_out(0), _stats_rtt(0.0), _stats_retries(0), _stats_failure(0)
 		{
-			// initialize stats
-			addStats("out", 0);
-			addStats("in", 0);
 		}
 
 		DatagramConvergenceLayer::~DatagramConvergenceLayer()
@@ -56,11 +53,65 @@ namespace dtn
 			// wait until all connections are down
 			{
 				ibrcommon::MutexLock l(_cond_connections);
-				while (_active_conns != 0) _cond_connections.wait();
+				while (_connections.size() > 0) _cond_connections.wait();
 			}
 
 			// delete the associated service
 			delete _service;
+		}
+
+		void DatagramConvergenceLayer::raiseEvent(const dtn::core::Event *evt) throw ()
+		{
+			try {
+				const dtn::core::NodeEvent &event = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
+
+				if (event.getAction() == NODE_UNAVAILABLE)
+				{
+					NodeGone *gone = new NodeGone();
+					gone->eid = event.getNode().getEID();
+					_action_queue.push(gone);
+				}
+			} catch (const std::bad_cast&) { };
+		}
+
+		void DatagramConvergenceLayer::resetStats()
+		{
+			_stats_in = 0;
+			_stats_out = 0;
+			_stats_rtt = 0.0;
+			_stats_retries = 0;
+			_stats_failure = 0;
+		}
+
+		void DatagramConvergenceLayer::getStats(ConvergenceLayer::stats_data &data) const
+		{
+			std::stringstream ss_format;
+
+			static const std::string IN_TAG = dtn::core::Node::toString(getDiscoveryProtocol()) + "|in";
+			static const std::string OUT_TAG = dtn::core::Node::toString(getDiscoveryProtocol()) + "|out";
+
+			static const std::string RTT_TAG = dtn::core::Node::toString(getDiscoveryProtocol()) + "|rtt";
+			static const std::string RETRIES_TAG = dtn::core::Node::toString(getDiscoveryProtocol()) + "|retries";
+			static const std::string FAIL_TAG = dtn::core::Node::toString(getDiscoveryProtocol()) + "|fail";
+
+			ss_format << _stats_in;
+			data[IN_TAG] = ss_format.str();
+			ss_format.str("");
+
+			ss_format << _stats_out;
+			data[OUT_TAG] = ss_format.str();
+			ss_format.str("");
+
+			ss_format << _stats_rtt;
+			data[RTT_TAG] = ss_format.str();
+			ss_format.str("");
+
+			ss_format << _stats_retries;
+			data[RETRIES_TAG] = ss_format.str();
+			ss_format.str("");
+
+			ss_format << _stats_failure;
+			data[FAIL_TAG] = ss_format.str();
 		}
 
 		dtn::core::Node::Protocol DatagramConvergenceLayer::getDiscoveryProtocol() const
@@ -77,7 +128,7 @@ namespace dtn
 			_service->send(HEADER_SEGMENT, flags, seqno, destination, buf, len);
 
 			// traffic monitoring
-			addStats("out", len);
+			_stats_out += len;
 		}
 
 		void DatagramConvergenceLayer::callback_ack(DatagramConnection&, const unsigned int &seqno, const std::string &destination) throw (DatagramException)
@@ -87,6 +138,15 @@ namespace dtn
 
 			// forward the send request to DatagramService
 			_service->send(HEADER_ACK, 0, seqno, destination, NULL, 0);
+		}
+
+		void DatagramConvergenceLayer::callback_nack(DatagramConnection&, const unsigned int &seqno, const std::string &destination) throw (DatagramException)
+		{
+			// only on sender at once
+			ibrcommon::MutexLock l(_send_lock);
+
+			// forward the send request to DatagramService
+			_service->send(HEADER_NACK, 0, seqno, destination, NULL, 0);
 		}
 
 		void DatagramConvergenceLayer::queue(const dtn::core::Node &node, const dtn::net::BundleTransfer &job)
@@ -103,14 +163,10 @@ namespace dtn
 			// some debugging
 			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "job queued for " << node.getEID().getString() << IBRCOMMON_LOGGER_ENDL;
 
-			// lock the connection list while working with it
-			ibrcommon::RWLock lc(_mutex_connection, ibrcommon::RWMutex::LOCK_READWRITE);
+			QueueBundle *queue = new QueueBundle(job);
+			queue->uri = uri.value;
 
-			// get a new or the existing connection for this address
-			DatagramConnection &conn = getConnection( uri.value, true );
-
-			// queue the job to the connection
-			conn.queue(job);
+			_action_queue.push( queue );
 		}
 
 		DatagramConnection& DatagramConvergenceLayer::getConnection(const std::string &identifier, bool create) throw (ConnectionNotAvailableException)
@@ -130,19 +186,31 @@ namespace dtn
 			// Connection does not exist, create one and put it into the list
 			connection = new DatagramConnection(identifier, _service->getParameter(), (*this));
 
-			// add a new connection to the list of connections
-			_connections.push_back(connection);
-
 			// increment the number of active connections
 			{
 				ibrcommon::MutexLock l(_cond_connections);
-				++_active_conns;
+
+				// add a new connection to the list of connections
+				_connections.push_back(connection);
+
+				// signal the modified connection list
 				_cond_connections.signal(true);
 			}
 
 			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "Selected identifier: " << connection->getIdentifier() << IBRCOMMON_LOGGER_ENDL;
 			connection->start();
 			return *connection;
+		}
+
+		void DatagramConvergenceLayer::reportSuccess(size_t retries, double rtt)
+		{
+			_stats_rtt = rtt;
+			_stats_retries += retries;
+		}
+
+		void DatagramConvergenceLayer::reportFailure()
+		{
+			_stats_failure++;
 		}
 
 		void DatagramConvergenceLayer::connectionUp(const DatagramConnection *conn)
@@ -152,35 +220,25 @@ namespace dtn
 
 		void DatagramConvergenceLayer::connectionDown(const DatagramConnection *conn)
 		{
-			ibrcommon::MutexLock l(_cond_connections);
-			ibrcommon::RWLock rwl(_mutex_connection, ibrcommon::RWMutex::LOCK_READWRITE);
-
-			const connection_list::iterator i = std::find(_connections.begin(), _connections.end(), conn);
-
-			if (i != _connections.end())
-			{
-				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "Down: " << conn->getIdentifier() << IBRCOMMON_LOGGER_ENDL;
-				_connections.erase(i);
-
-				// decrement the number of connections
-				--_active_conns;
-				_cond_connections.signal(true);
-			}
-			else
-			{
-				IBRCOMMON_LOGGER_TAG(DatagramConvergenceLayer::TAG, error) << "Error in " << conn->getIdentifier() << " not found!" << IBRCOMMON_LOGGER_ENDL;
-			}
+			ConnectionDown *cd = new ConnectionDown();
+			cd->id = conn->getIdentifier();
+			_action_queue.push(cd);
 		}
 
 		void DatagramConvergenceLayer::componentUp() throw ()
 		{
 			// routine checked for throw() on 15.02.2013
-			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
 			try {
 				_service->bind();
 			} catch (const std::exception &e) {
 				IBRCOMMON_LOGGER_TAG(DatagramConvergenceLayer::TAG, error) << "bind to " << _service->getInterface().toString() << " failed (" << e.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 			}
+
+			// register for NodeEvent objects
+			dtn::core::EventDispatcher<dtn::core::NodeEvent>::add(this);
+
+			// register for discovery beacon handling
+			dtn::core::BundleCore::getInstance().getDiscoveryAgent().registerService(_service->getInterface(), this);
 
 			// set the running variable
 			_running = true;
@@ -188,30 +246,23 @@ namespace dtn
 
 		void DatagramConvergenceLayer::componentDown() throw ()
 		{
-			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
+			// un-register for discovery beacon handling
+			dtn::core::BundleCore::getInstance().getDiscoveryAgent().unregisterService(_service->getInterface(), this);
 
-			// shutdown all connections
-			ibrcommon::RWLock rwl(_mutex_connection, ibrcommon::RWMutex::LOCK_READONLY);
-			for(connection_list::const_iterator i = _connections.begin(); i != _connections.end(); ++i)
-			{
-				(*i)->shutdown();
-			}
+			// un-register for NodeEvent objects
+			dtn::core::EventDispatcher<dtn::core::NodeEvent>::remove(this);
+
+			_action_queue.push(new Shutdown());
 		}
 
-		void DatagramConvergenceLayer::sendAnnoucement()
+		void DatagramConvergenceLayer::onAdvertiseBeacon(const ibrcommon::vinterface &iface, const DiscoveryBeacon &beacon) throw ()
 		{
-			DiscoveryAnnouncement announcement(DiscoveryAnnouncement::DISCO_VERSION_01, dtn::core::BundleCore::local);
-
-			// set sequencenumber
-			announcement.setSequencenumber(_discovery_sn);
-			_discovery_sn++;
-
-			// clear all services
-			announcement.clearServices();
+			// only handler beacons for this interface
+			if (iface != _service->getInterface()) return;
 
 			// serialize announcement
 			stringstream ss;
-			ss << announcement;
+			ss << beacon;
 
 			std::streamsize len = ss.str().size();
 
@@ -226,7 +277,7 @@ namespace dtn
 			};
 		}
 
-		void DatagramConvergenceLayer::componentRun() throw ()
+		void DatagramConvergenceLayer::receive() throw ()
 		{
 			size_t maxlen = _service->getParameter().max_msg_length;
 			std::string address;
@@ -236,7 +287,8 @@ namespace dtn
 			std::vector<char> data(maxlen);
 			size_t len = 0;
 
-			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "componentRun() entered" << IBRCOMMON_LOGGER_ENDL;
+			// get the reference to the discovery agent
+			dtn::net::DiscoveryAgent &agent = dtn::core::BundleCore::getInstance().getDiscoveryAgent();
 
 			while (_running)
 			{
@@ -245,54 +297,45 @@ namespace dtn
 					len = _service->recvfrom(&data[0], maxlen, type, flags, seqno, address);
 
 					// traffic monitoring
-					addStats("in", len);
-				} catch (const DatagramException&) {
+					_stats_in += len;
+				} catch (const DatagramException &ex) {
+					if (_running) {
+						IBRCOMMON_LOGGER_TAG(DatagramConvergenceLayer::TAG, error) << "recvfrom() failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					}
 					_running = false;
 					break;
 				}
 
-				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "componentRun() Address: " << address << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "receive() Address: " << address << IBRCOMMON_LOGGER_ENDL;
 
 				// Check for extended header and retrieve if available
 				if (type == HEADER_BROADCAST)
 				{
 					try {
-						IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "componentRun() Announcement received" << IBRCOMMON_LOGGER_ENDL;
-						DiscoveryAnnouncement announce;
+						IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "receive() Announcement received" << IBRCOMMON_LOGGER_ENDL;
+
+						DiscoveryBeacon beacon = agent.obtainBeacon();
+
 						stringstream ss;
 						ss.write(&data[0], len);
-						ss >> announce;
+						ss >> beacon;
 
 						// ignore own beacons
-						if (announce.getEID() == dtn::core::BundleCore::local) continue;
+						if (beacon.getEID() == dtn::core::BundleCore::local) continue;
 
-						// convert the announcement into NodeEvents
-						Node n(announce.getEID());
-
-						// timeout value
-						size_t to_value = 30;
-
-						// add
-						n.add(Node::URI(Node::NODE_DISCOVERED, _service->getProtocol(), address, to_value, 20));
-
-						const std::list<DiscoveryService> services = announce.getServices();
-						for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); ++iter)
+						if (beacon.isShort())
 						{
-							const DiscoveryService &s = (*iter);
-							n.add(Node::Attribute(Node::NODE_DISCOVERED, s.getName(), s.getParameters(), to_value, 20));
+							// can not generate node name from short beacons
+							continue;
 						}
 
-						{
-							// lock the connection list while working with it
-							ibrcommon::RWLock rwl(_mutex_connection, ibrcommon::RWMutex::LOCK_READWRITE);
+						// add discovered service entry
+						beacon.addService(dtn::net::DiscoveryService(_service->getProtocol(), address));
 
-							// Connection instance for this address
-							DatagramConnection& connection = getConnection(address, true);
-							connection.setPeerEID(announce.getEID());
-						}
-
-						// announce NodeInfo to ConnectionManager
-						dtn::core::BundleCore::getInstance().getConnectionManager().updateNeighbor(n);
+						BeaconReceived *bc = new BeaconReceived();
+						bc->address = address;
+						bc->data = beacon;
+						_action_queue.push(bc);
 					} catch (const ibrcommon::Exception&) {
 						// catch wrong formats
 					}
@@ -301,58 +344,210 @@ namespace dtn
 				}
 				else if ( type == HEADER_SEGMENT )
 				{
-					ibrcommon::RWLock rwl(_mutex_connection, ibrcommon::RWMutex::LOCK_READWRITE);
-
-					// Connection instance for this address
-					DatagramConnection& connection = getConnection(address, true);
-
-					try {
-						// Decide in which queue to write based on the src address
-						connection.queue(flags, seqno, &data[0], len);
-					} catch (const ibrcommon::Exception &ex) {
-						IBRCOMMON_LOGGER_TAG(DatagramConvergenceLayer::TAG, error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
-						connection.shutdown();
-					};
+					SegmentReceived *seg = new SegmentReceived(maxlen);
+					seg->address = address;
+					seg->seqno = seqno;
+					seg->flags = flags;
+					seg->data = data;
+					seg->len = len;
+					_action_queue.push(seg);
 				}
 				else if ( type == HEADER_ACK )
 				{
-					try {
-						ibrcommon::RWLock rwl(_mutex_connection, ibrcommon::RWMutex::LOCK_READONLY);
-
-						// Connection instance for this address
-						DatagramConnection& connection = getConnection(address, false);
-
-						// Decide in which queue to write based on the src address
-						connection.ack(seqno);
-					} catch (const ConnectionNotAvailableException &ex) {
-						// connection does not exists - ignore the ACK
-					}
+					AckReceived *ack = new AckReceived();
+					ack->address = address;
+					ack->seqno = seqno;
+					_action_queue.push(ack);
 				}
-
-				yield();
+				else if ( type == HEADER_NACK )
+				{
+					NackReceived *nack = new NackReceived();
+					nack->address = address;
+					nack->seqno = seqno;
+					nack->temporary = flags & DatagramService::NACK_TEMPORARY;
+					_action_queue.push(nack);
+				}
 			}
 		}
 
-		void DatagramConvergenceLayer::raiseEvent(const Event *evt) throw ()
+		void DatagramConvergenceLayer::componentRun() throw ()
 		{
+			// start receiver
+			_receiver.init();
+			_receiver.start();
+
+			// get the reference to the discovery agent
+			dtn::net::DiscoveryAgent &agent = dtn::core::BundleCore::getInstance().getDiscoveryAgent();
+
+			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "componentRun() entered" << IBRCOMMON_LOGGER_ENDL;
+
 			try {
-				const TimeEvent &time=dynamic_cast<const TimeEvent&>(*evt);
-				if (time.getAction() == TIME_SECOND_TICK)
-					if (time.getTimestamp().get<size_t>() % 5 == 0)
-						sendAnnoucement();
-			} catch (const std::bad_cast&)
-			{}
+				while (_running || (_connections.size() > 0))
+				{
+					Action *action = _action_queue.getnpop(true);
+
+					IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "processing task" << IBRCOMMON_LOGGER_ENDL;
+
+					try {
+						AckReceived &ack = dynamic_cast<AckReceived&>(*action);
+
+						try {
+							// Connection instance for this address
+							DatagramConnection& connection = getConnection(ack.address, false);
+
+							IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 20) << "ack received for seqno " << ack.seqno << IBRCOMMON_LOGGER_ENDL;
+
+							// Decide in which queue to write based on the src address
+							connection.ack(ack.seqno);
+						} catch (const ConnectionNotAvailableException &ex) {
+							// connection does not exists - ignore the ACK
+						}
+					} catch (const std::bad_cast&) { };
+
+					try {
+						NackReceived &nack = dynamic_cast<NackReceived&>(*action);
+
+						// the peer refused the current bundle
+						try {
+							// Connection instance for this address
+							DatagramConnection& connection = getConnection(nack.address, false);
+
+							IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 20) << "nack received for seqno " << nack.seqno << IBRCOMMON_LOGGER_ENDL;
+
+							// Decide in which queue to write based on the src address
+							connection.nack(nack.seqno, nack.temporary);
+						} catch (const ConnectionNotAvailableException &ex) {
+							// connection does not exists - ignore the NACK
+						}
+					} catch (const std::bad_cast&) { };
+
+					try {
+						SegmentReceived &segment = dynamic_cast<SegmentReceived&>(*action);
+
+						// Connection instance for this address
+						DatagramConnection& connection = getConnection(segment.address, true);
+
+						try {
+							// Decide in which queue to write based on the src address
+							connection.queue(segment.flags, segment.seqno, &segment.data[0], segment.len);
+						} catch (const ibrcommon::Exception &ex) {
+							IBRCOMMON_LOGGER_TAG(DatagramConvergenceLayer::TAG, error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+							connection.shutdown();
+						};
+					} catch (const std::bad_cast&) { };
+
+					try {
+						BeaconReceived &beacon = dynamic_cast<BeaconReceived&>(*action);
+
+						// Connection instance for this address
+						DatagramConnection& connection = getConnection(beacon.address, true);
+						connection.setPeerEID(beacon.data.getEID());
+
+						// announce the received beacon
+						agent.onBeaconReceived(beacon.data);
+					} catch (const std::bad_cast&) { };
+
+					try {
+						ConnectionDown &cd = dynamic_cast<ConnectionDown&>(*action);
+
+						ibrcommon::MutexLock l(_cond_connections);
+						for (connection_list::iterator i = _connections.begin(); i != _connections.end(); ++i)
+						{
+							if ((*i)->getIdentifier() == cd.id)
+							{
+								IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "Down: " << cd.id << IBRCOMMON_LOGGER_ENDL;
+								_connections.erase(i);
+
+								// delete the connection
+								delete (*i);
+
+								// signal the modified connection list
+								_cond_connections.signal(true);
+								break;
+							}
+						}
+					} catch (const std::bad_cast&) { };
+
+					try {
+						NodeGone &gone = dynamic_cast<NodeGone&>(*action);
+
+						for (connection_list::iterator i = _connections.begin(); i != _connections.end(); ++i)
+						{
+							if ((*i)->getPeerEID() == gone.eid)
+							{
+								// shutdown the connection
+								(*i)->shutdown();
+								break;
+							}
+						}
+					} catch (const std::bad_cast&) { };
+
+					try {
+						QueueBundle &queue = dynamic_cast<QueueBundle&>(*action);
+
+						// get a new or the existing connection for this address
+						DatagramConnection &conn = getConnection( queue.uri, true );
+
+						// queue the job to the connection
+						conn.queue(queue.job);
+					} catch (const std::bad_cast&) { };
+
+					try {
+						dynamic_cast<Shutdown&>(*action);
+
+						// shutdown all connections
+						for(connection_list::const_iterator i = _connections.begin(); i != _connections.end(); ++i)
+						{
+							(*i)->shutdown();
+						}
+
+						_running = false;
+					} catch (const std::bad_cast&) { };
+
+					// delete task object
+					delete action;
+
+					yield();
+				}
+			} catch (const ibrcommon::QueueUnblockedException &ex) {
+				// unblocked
+			}
+
+			_receiver.join();
 		}
 
 		void DatagramConvergenceLayer::__cancellation() throw ()
 		{
-			_running = false;
 			_service->shutdown();
 		}
 
 		const std::string DatagramConvergenceLayer::getName() const
 		{
 			return DatagramConvergenceLayer::TAG;
+		}
+
+		DatagramConvergenceLayer::Receiver::Receiver(DatagramConvergenceLayer &cl)
+		 : _cl(cl)
+		{
+		}
+
+		DatagramConvergenceLayer::Receiver::~Receiver()
+		{
+		}
+
+		void DatagramConvergenceLayer::Receiver::init() throw ()
+		{
+			// reset receiver is necessary
+			if (JoinableThread::isFinalized()) JoinableThread::reset();
+		}
+
+		void DatagramConvergenceLayer::Receiver::run() throw ()
+		{
+			_cl.receive();
+		}
+
+		void DatagramConvergenceLayer::Receiver::__cancellation() throw ()
+		{
 		}
 	} /* namespace data */
 } /* namespace dtn */

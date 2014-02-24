@@ -24,6 +24,7 @@
 
 #include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/EID.h"
+#include "ibrdtn/data/BundleID.h"
 #include "ibrdtn/data/Dictionary.h"
 #include "ibrdtn/data/Serializer.h"
 #include <ibrcommon/thread/Mutex.h>
@@ -43,7 +44,7 @@ namespace dtn
 	{
 		static const unsigned char BUNDLE_VERSION = 0x06;
 
-		class PrimaryBlock
+		class PrimaryBlock : public BundleID
 		{
 		public:
 			/**
@@ -92,16 +93,8 @@ namespace dtn
 				IBRDTN_REQUEST_COMPRESSION = 1 << 0x1F
 			};
 
-			PrimaryBlock();
+			PrimaryBlock(bool zero_timestamp = false);
 			virtual ~PrimaryBlock();
-
-			/**
-			 * This method is deprecated because it does not recognize the AgeBlock
-			 * as alternative age verification.
-			 */
-			bool isExpired() const DEPRECATED;
-
-			std::string toString() const;
 
 			void set(FLAGS flag, bool value);
 			bool get(FLAGS flag) const;
@@ -109,10 +102,13 @@ namespace dtn
 			PRIORITY getPriority() const;
 			void setPriority(PRIORITY p);
 
+			bool isFragment() const;
+			void setFragment(bool val);
+
 			/**
 			 * relabel the primary block with a new sequence number and a timestamp
 			 */
-			void relabel();
+			void relabel(bool zero_timestamp = false);
 
 			bool operator==(const PrimaryBlock& other) const;
 			bool operator!=(const PrimaryBlock& other) const;
@@ -120,13 +116,9 @@ namespace dtn
 			bool operator>(const PrimaryBlock& other) const;
 
 			Bitset<FLAGS> procflags;
-			Timestamp timestamp;
-			Number sequencenumber;
 			Number lifetime;
-			Number fragmentoffset;
 			Number appdatalength;
 
-			EID source;
 			EID destination;
 			EID reportto;
 			EID custodian;
@@ -134,6 +126,7 @@ namespace dtn
 		private:
 			static ibrcommon::Mutex __sequence_lock;
 			static Number __sequencenumber;
+			static Number __sequencenumber_abs;
 			static Timestamp __last_timestamp;
 		};
 	}

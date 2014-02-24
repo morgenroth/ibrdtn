@@ -6,6 +6,7 @@
  */
 
 #include "net/DatagramService.h"
+#include "net/DiscoveryService.h"
 
 namespace dtn
 {
@@ -13,6 +14,11 @@ namespace dtn
 	{
 		DatagramService::~DatagramService()
 		{
+		}
+
+		const std::string DatagramService::getServiceTag() const
+		{
+			return dtn::net::DiscoveryService::asTag(getProtocol());
 		}
 	}
 }

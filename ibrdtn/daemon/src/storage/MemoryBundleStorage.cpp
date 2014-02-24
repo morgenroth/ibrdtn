@@ -106,7 +106,7 @@ namespace dtn
 				const dtn::data::MetaBundle &bundle = (*iter);
 
 				// skip expired bundles
-				if ( dtn::utils::Clock::isExpired( bundle.timestamp, bundle.lifetime ) ) continue;
+				if ( dtn::utils::Clock::isExpired( bundle ) ) continue;
 
 				if ( cb.shouldAdd(bundle) )
 				{
@@ -181,13 +181,14 @@ namespace dtn
 
 			if (ret.second)
 			{
-				_list.add(dtn::data::MetaBundle(bundle));
-				_priority_index.insert( bundle );
+				const dtn::data::MetaBundle m = dtn::data::MetaBundle::create(bundle);
+				_list.add(m);
+				_priority_index.insert(m);
 
-				_bundle_lengths[bundle] = size;
+				_bundle_lengths[m] = size;
 
 				// raise bundle added event
-				eventBundleAdded(bundle);
+				eventBundleAdded(m);
 			}
 			else
 			{
@@ -196,6 +197,28 @@ namespace dtn
 
 				IBRCOMMON_LOGGER_DEBUG_TAG(MemoryBundleStorage::TAG, 5) << "got bundle duplicate " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 			}
+		}
+
+		bool MemoryBundleStorage::contains(const dtn::data::BundleID &id)
+		{
+			ibrcommon::MutexLock l(_bundleslock);
+			return (_bundle_lengths.find(id) != _bundle_lengths.end());
+		}
+
+		dtn::data::MetaBundle MemoryBundleStorage::info(const dtn::data::BundleID &id)
+		{
+			ibrcommon::MutexLock l(_bundleslock);
+
+			for (dtn::data::BundleList::const_iterator iter = _list.begin(); iter != _list.end(); ++iter)
+			{
+				const dtn::data::MetaBundle &meta = (*iter);
+				if (id == meta)
+				{
+					return meta;
+				}
+			}
+
+			throw NoBundleFoundException();
 		}
 
 		void MemoryBundleStorage::remove(const dtn::data::BundleID &id)
@@ -209,11 +232,11 @@ namespace dtn
 			if (iter == _bundles.end()) throw NoBundleFoundException();
 
 			// remove item in the bundlelist
-			const dtn::data::Bundle &bundle = (*iter);
-			_list.remove(bundle);
+			const dtn::data::MetaBundle m = dtn::data::MetaBundle::create(*iter);
+			_list.remove(m);
 
 			// raise bundle removed event
-			eventBundleRemoved(bundle);
+			eventBundleRemoved(m);
 
 			// erase the bundle
 			__erase(iter);
@@ -225,9 +248,9 @@ namespace dtn
 
 			for (bundle_list::iterator iter = _bundles.begin(); iter != _bundles.end(); ++iter)
 			{
-				if ( filter.contains((*iter).toString()) )
+				if ( (*iter).isIn(filter) )
 				{
-					const dtn::data::MetaBundle bundle = (*iter);
+					const dtn::data::MetaBundle bundle = dtn::data::MetaBundle::create(*iter);
 
 					// remove item in the bundlelist
 					_list.remove(bundle);
@@ -290,14 +313,14 @@ namespace dtn
 
 		void MemoryBundleStorage::__erase(const bundle_list::iterator &iter)
 		{
-			const dtn::data::Bundle &bundle = (*iter);
+			const dtn::data::MetaBundle m = dtn::data::MetaBundle::create(*iter);
 
 			// erase the bundle out of the priority index
-			_priority_index.erase(bundle);
+			_priority_index.erase(m);
 
 			// get the storage size of this bundle
-			dtn::data::Length len = _bundle_lengths[bundle];
-			_bundle_lengths.erase(bundle);
+			dtn::data::Length len = _bundle_lengths[m];
+			_bundle_lengths.erase(m);
 
 			// decrement the storage size
 			freeSpace(len);

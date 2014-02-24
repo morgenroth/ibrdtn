@@ -82,9 +82,9 @@ namespace dtn
 		};
 
 		class NativeSession {
-		public:
 			static const std::string TAG;
 
+		public:
 			enum RegisterIndex {
 				REG1 = 0,
 				REG2 = 1
@@ -95,6 +95,12 @@ namespace dtn
 			 * @param cb A callback object for notifications. May be NULL.
 			 */
 			NativeSession(NativeSessionCallback *session_cb, NativeSerializerCallback *serializer_cb);
+
+			/**
+			 * Constructor of the native session
+			 * @param cb A callback object for notifications. May be NULL.
+			 */
+			NativeSession(NativeSessionCallback *session_cb, NativeSerializerCallback *serializer_cb, const std::string &handle);
 
 			/**
 			 * Destructor
@@ -233,6 +239,11 @@ namespace dtn
 			 * block until a bundle is available or destroy() has been called.
 			 */
 			void receive() throw (NativeSessionException);
+
+			/**
+			 * Return the handle of this session
+			 */
+			const std::string& getHandle() const;
 
 		private:
 			// local registration

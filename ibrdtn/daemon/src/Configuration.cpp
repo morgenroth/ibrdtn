@@ -21,8 +21,8 @@
 
 #include "config.h"
 #include "Configuration.h"
-#include "net/DiscoveryAnnouncement.h"
-#include "net/DiscoveryAnnouncement.h"
+#include "net/DiscoveryBeacon.h"
+#include "net/DiscoveryBeacon.h"
 #include "core/Node.h"
 
 #include <ibrdtn/utils/Utils.h>
@@ -34,6 +34,8 @@
 
 #ifdef __WIN32__
 #include <ibrcommon/link/Win32LinkManager.h>
+#include <windows.h>
+
 #endif
 
 #include <getopt.h>
@@ -52,18 +54,8 @@ namespace dtn
 {
 	namespace daemon
 	{
-		Configuration::NetConfig::NetConfig(std::string n, NetType t, const std::string &u)
-		 : name(n), type(t), url(u), mtu(0), port(0)
-		{
-		}
-
-		Configuration::NetConfig::NetConfig(std::string n, NetType t, const ibrcommon::vinterface &i, int p)
-		 : name(n), type(t), iface(i), mtu(1500), port(p)
-		{
-		}
-
-		Configuration::NetConfig::NetConfig(std::string n, NetType t, int p)
-		 : name(n), type(t), iface(), mtu(1500), port(p)
+		Configuration::NetConfig::NetConfig(const std::string &n, NetType t)
+		 : name(n), type(t), iface(ibrcommon::vinterface::ANY), mtu(0), port(0)
 		{
 		}
 
@@ -100,7 +92,7 @@ namespace dtn
 		 : _quiet(false), _options(0), _timestamps(false), _verbose(false) {}
 
 		Configuration::Network::Network()
-		 : _routing("default"), _forwarding(true), _tcp_nodelay(true), _tcp_chunksize(4096), _tcp_idle_timeout(0), _default_net("lo"), _use_default_net(false), _auto_connect(0), _fragmentation(false), _scheduling(false), _link_request_interval(5000)
+		 : _routing("default"), _forwarding(true), _prefer_direct(true), _tcp_nodelay(true), _tcp_chunksize(4096), _tcp_idle_timeout(0), _default_net("lo"), _use_default_net(false), _auto_connect(0), _fragmentation(false), _scheduling(false), _link_request_interval(5000)
 		{}
 
 		Configuration::Security::Security()
@@ -206,7 +198,6 @@ namespace dtn
 			int c;
 			int doapi = _doapi;
 			int disco = _disco._enabled;
-			int badclock = false;
 			int timestamp = _logger._timestamps;
 			int showversion = 0;
 
@@ -220,7 +211,6 @@ namespace dtn
 						/* These options set a flag. */
 						{"noapi", no_argument, &doapi, 0},
 						{"nodiscovery", no_argument, &disco, 0},
-						{"badclock", no_argument, &badclock, 1},
 						{"timestamp", no_argument, &timestamp, 1},
 						{"version", no_argument, &showversion, 1},
 
@@ -287,7 +277,6 @@ namespace dtn
 					std::cout << " --version       show version and exit" << std::endl;
 					std::cout << " --noapi         disable API module" << std::endl;
 					std::cout << " --nodiscovery   disable discovery module" << std::endl;
-					std::cout << " --badclock      assume a bad clock on the system (use AgeBlock)" << std::endl;
 					std::cout << " --timestamp     enables timestamps for logging instead of datetime values" << std::endl;
 #ifdef __WIN32__
 					std::cout << " --interfaces    list all available interfaces" << std::endl;
@@ -376,7 +365,6 @@ namespace dtn
 
 			_doapi = doapi;
 			_disco._enabled = disco;
-			if (badclock) dtn::utils::Clock::setBad(true);
 			_logger._timestamps = timestamp;
 		}
 
@@ -546,11 +534,46 @@ namespace dtn
 			try {
 				return _conf.read<string>("local_uri");
 			} catch (const ibrcommon::ConfigFile::key_not_found&) {
-				std::vector<char> hostname_array(64);
+				std::vector<char> hostname_array(255);
 				if ( gethostname(&hostname_array[0], hostname_array.size()) != 0 )
 				{
-					// error
-					return "dtn://local";
+#ifdef __WIN32__
+					// read hostname from registry
+					bool success = false;
+					HKEY hKey = 0;
+					DWORD dwType = REG_SZ;
+					DWORD dwBufSize = hostname_array.size();
+
+					const char* subkey = "System\\CurrentControlSet\\Control\\ComputerName\\ActiveComputerName";
+					const char* win9x_subkey = "System\\CurrentControlSet\\Control\\ComputerName\\ComputerName";
+
+					if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, subkey, 0, KEY_READ, &hKey) == ERROR_SUCCESS)
+					{
+						if ( RegQueryValueEx(hKey, "ComputerName", NULL, &dwType, (BYTE*)&hostname_array[0], &dwBufSize) == ERROR_SUCCESS )
+						{
+							success = true;
+						}
+
+						RegCloseKey(hKey);
+					}
+
+					if (!success) {
+						if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, win9x_subkey, 0, KEY_READ, &hKey) == ERROR_SUCCESS)
+						{
+							if ( RegQueryValueEx(hKey, "ComputerName", NULL, &dwType, (BYTE*)&hostname_array[0], &dwBufSize) == ERROR_SUCCESS )
+							{
+								success = true;
+							}
+
+							RegCloseKey(hKey);
+						}
+					}
+
+					if (!success) {
+						// not hostname available
+						return "dtn://local";
+					}
+#endif
 				}
 
 				return "dtn://" + std::string(&hostname_array[0]);
@@ -598,20 +621,22 @@ namespace dtn
 
 		Configuration::NetConfig Configuration::getAPIInterface() const
 		{
-			int port = _conf.read<int>("api_port", 4550);
+			Configuration::NetConfig nc("api", Configuration::NetConfig::NETWORK_TCP);
+
+			nc.port = _conf.read<int>("api_port", 4550);
 
 			try {
-				std::string interface_name = _conf.read<std::string>("api_interface");
+				const std::string interface_name = _conf.read<std::string>("api_interface");
 
-				if (interface_name == "any")
+				if (interface_name != "any")
 				{
-					return Configuration::NetConfig("api", Configuration::NetConfig::NETWORK_TCP, ibrcommon::vinterface(ibrcommon::vinterface::ANY), port);
+					nc.iface = ibrcommon::vinterface(interface_name);
 				}
+			} catch (const ConfigFile::key_not_found&) {
+				nc.iface = ibrcommon::vinterface(ibrcommon::vinterface::LOOPBACK);
+			}
 
-				return Configuration::NetConfig("api", Configuration::NetConfig::NETWORK_TCP, ibrcommon::vinterface(interface_name), port);
-			} catch (const ConfigFile::key_not_found&) { }
-
-			return Configuration::NetConfig("api", Configuration::NetConfig::NETWORK_TCP, ibrcommon::vinterface(ibrcommon::vinterface::LOOPBACK), port);
+			return nc;
 		}
 
 		ibrcommon::File Configuration::getAPISocket() const
@@ -630,13 +655,9 @@ namespace dtn
 			return _conf.read<std::string>("storage", "default");
 		}
 
-		std::string Configuration::getUsePersistentBundleSets() const
+		bool Configuration::getUsePersistentBundleSets() const
 		{
-			return _conf.read<std::string>("use_persistent_bundlesets", "no");
-		}
-
-		bool Configuration::enableTrafficStats() const {
-			return (_conf.read<std::string>("stats_traffic", "no") == "yes");
+			return _conf.read<std::string>("use_persistent_bundlesets", "no") == "yes";
 		}
 
 		void Configuration::Network::load(const ibrcommon::ConfigFile &conf)
@@ -770,29 +791,44 @@ namespace dtn
 			_forwarding = (conf.read<std::string>("routing_forwarding", "yes") == "yes");
 
 			/**
+			 * prefer direct routes
+			 */
+			_prefer_direct = (conf.read<std::string>("routing_prefer_direct", "yes") == "yes");
+
+			/**
 			 * get network interfaces
 			 */
 			_interfaces.clear();
 
 			if (_use_default_net)
 			{
-				_interfaces.push_back( Configuration::NetConfig("default", Configuration::NetConfig::NETWORK_TCP, _default_net, 4556) );
+				// create a new netconfig object
+				Configuration::NetConfig nc("default", Configuration::NetConfig::NETWORK_TCP);
+
+				// set default interface
+				nc.iface = ibrcommon::vinterface(_default_net);
+
+				// set default port
+				nc.port = 4556;
+
+				// add to interfaces list
+				_interfaces.push_back( nc );
 			}
 			else try
 			{
 				vector<string> nets = dtn::utils::Utils::tokenize(" ", conf.read<string>("net_interfaces") );
 				for (vector<string>::const_iterator iter = nets.begin(); iter != nets.end(); ++iter)
 				{
-					std::string netname = (*iter);
+					const std::string &netname = (*iter);
 
-					std::string key_type = "net_" + netname + "_type";
-					std::string key_port = "net_" + netname + "_port";
-					std::string key_interface = "net_" + netname + "_interface";
-					std::string key_address = "net_" + netname + "_address";
-					std::string key_path = "net_" + netname + "_path";
-					std::string key_mtu = "net_" + netname + "_mtu";
+					const std::string key_type = "net_" + netname + "_type";
+					const std::string key_port = "net_" + netname + "_port";
+					const std::string key_interface = "net_" + netname + "_interface";
+					const std::string key_address = "net_" + netname + "_address";
+					const std::string key_path = "net_" + netname + "_path";
+					const std::string key_mtu = "net_" + netname + "_mtu";
 
-					std::string type_name = conf.read<string>(key_type, "tcp");
+					const std::string type_name = conf.read<string>(key_type, "tcp");
 					Configuration::NetConfig::NetType type = Configuration::NetConfig::NETWORK_UNKNOWN;
 
 					if (type_name == "tcp") type = Configuration::NetConfig::NETWORK_TCP;
@@ -805,45 +841,40 @@ namespace dtn
 					if (type_name == "dgram:ethernet") type = Configuration::NetConfig::NETWORK_DGRAM_ETHERNET;
 					if (type_name == "email") type = Configuration::NetConfig::NETWORK_EMAIL;
 
+					// create a new netconfig object
+					Configuration::NetConfig nc(netname, type);
+
 					switch (type)
 					{
 						case Configuration::NetConfig::NETWORK_HTTP:
 						{
-							Configuration::NetConfig nc(netname, type,
-									conf.read<std::string>(key_address, "http://localhost/"));
-
-							_interfaces.push_back(nc);
+							nc.url = conf.read<std::string>(key_address, "http://localhost/");
 							break;
 						}
 
 						case Configuration::NetConfig::NETWORK_FILE:
 						{
-							Configuration::NetConfig nc(netname, type,
-									conf.read<std::string>(key_path, ""));
-
-							_interfaces.push_back(nc);
+							nc.url = conf.read<std::string>(key_path, "");
 							break;
 						}
 
 						default:
 						{
-							int port = conf.read<int>(key_port, 4556);
-							int mtu = conf.read<int>(key_mtu, 1280);
+							nc.port = conf.read<int>(key_port, 4556);
+							nc.mtu = conf.read<int>(key_mtu, 1280);
 
 							try {
-								ibrcommon::vinterface iface(conf.read<std::string>(key_interface));
-								Configuration::NetConfig nc(netname, type, iface, port);
-								nc.mtu = mtu;
-								_interfaces.push_back(nc);
+								nc.iface = ibrcommon::vinterface(conf.read<std::string>(key_interface));
 							} catch (const ConfigFile::key_not_found&) {
-								Configuration::NetConfig nc(netname, type, port);
-								nc.mtu = mtu;
-								_interfaces.push_back(nc);
+								// no interface assigned
 							}
 
 							break;
 						}
 					}
+
+					// add to interfaces list
+					_interfaces.push_back(nc);
 				}
 			} catch (const ConfigFile::key_not_found&) {
 				// stop the one network is not found.
@@ -864,7 +895,7 @@ namespace dtn
 			/**
 			 * fragmentation support
 			 */
-			_fragmentation = (conf.read<std::string>("fragmentation", "no") == "yes");
+			_fragmentation = (conf.read<std::string>("fragmentation", "yes") == "yes");
 
 			/**
 			 * read internet devices
@@ -897,11 +928,6 @@ namespace dtn
 		const std::list<Node>& Configuration::Network::getStaticNodes() const
 		{
 			return _nodes;
-		}
-
-		int Configuration::getTimezone() const
-		{
-			return _conf.read<int>( "timezone", 0 );
 		}
 
 		ibrcommon::File Configuration::getPath(string name) const
@@ -955,6 +981,11 @@ namespace dtn
 		bool Configuration::Network::doForwarding() const
 		{
 			return _forwarding;
+		}
+
+		bool Configuration::Network::doPreferDirect() const
+		{
+			return _prefer_direct;
 		}
 
 		bool Configuration::Network::doFragmentation() const
@@ -1264,7 +1295,7 @@ namespace dtn
 			return _sync;
 		}
 
-		bool Configuration::TimeSync::sendDiscoveryAnnouncements() const
+		bool Configuration::TimeSync::sendDiscoveryBeacons() const
 		{
 			return _discovery;
 		}

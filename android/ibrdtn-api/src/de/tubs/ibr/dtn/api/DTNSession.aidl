@@ -66,4 +66,19 @@ interface DTNSession {
 	 * set a bundle as delivered
 	 */
 	boolean delivered(in BundleID id);
+	
+	/**
+	 * join a DTN endpoint group
+	 */
+	boolean join(in GroupEndpoint group);
+	
+	/**
+	 * leave a DTN endpoint group
+	 */
+	boolean leave(in GroupEndpoint group);
+	
+	/**
+	 * get all registered groups
+	 */
+	List<GroupEndpoint> getGroups();
 }

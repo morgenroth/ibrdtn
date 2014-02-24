@@ -24,9 +24,6 @@
 
 #include "core/AbstractWorker.h"
 
-using namespace dtn::data;
-using namespace dtn::core;
-
 namespace dtn
 {
 	namespace daemon
@@ -39,7 +36,7 @@ namespace dtn
 		 *
 		 * The application suffix to the node eid is /debugger.
 		 */
-		class Debugger : public AbstractWorker
+		class Debugger : public dtn::core::AbstractWorker
 		{
 			public:
 				Debugger()

@@ -32,6 +32,7 @@ class PayloadIntegrityBlockTest : public CPPUNIT_NS :: TestFixture
 	CPPUNIT_TEST_SUITE (PayloadIntegrityBlockTest);
 	CPPUNIT_TEST (signTest);
 	CPPUNIT_TEST (verifyTest);
+	CPPUNIT_TEST (verifyCompromisedTest);
 	CPPUNIT_TEST_SUITE_END ();
 
 public:
@@ -41,6 +42,7 @@ public:
 protected:
 	void signTest(void);
 	void verifyTest(void);
+	void verifyCompromisedTest(void);
 
 private:
 	dtn::security::SecurityKey pubkey;

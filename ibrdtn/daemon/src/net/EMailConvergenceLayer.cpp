@@ -22,6 +22,7 @@
 #include "net/EMailConvergenceLayer.h"
 #include "net/EMailSmtpService.h"
 #include "net/TransferAbortedEvent.h"
+#include "core/BundleCore.h"
 #include "core/EventDispatcher.h"
 #include "core/TimeEvent.h"
 
@@ -71,10 +72,10 @@ namespace dtn
 			} catch (const std::bad_cast&) { };
 		}
 
-		void EMailConvergenceLayer::update(const ibrcommon::vinterface&, DiscoveryAnnouncement &announcement)
-			throw (DiscoveryServiceProvider::NoServiceHereException)
+		void EMailConvergenceLayer::onAdvertiseBeacon(const ibrcommon::vinterface&, DiscoveryBeacon &beacon)
+			throw (DiscoveryBeaconHandler::NoServiceHereException)
 		{
-			announcement.addService(DiscoveryService("emailcl", "email=" + _config.getOwnAddress()));
+			beacon.addService(DiscoveryService(getDiscoveryProtocol(), "email=" + _config.getOwnAddress()));
 		}
 
 		dtn::core::Node::Protocol EMailConvergenceLayer::getDiscoveryProtocol() const
@@ -118,8 +119,17 @@ namespace dtn
 		}
 
 		void EMailConvergenceLayer::__cancellation() throw () {}
-		void EMailConvergenceLayer::componentUp() throw () {}
-		void EMailConvergenceLayer::componentRun() throw () {}
-		void EMailConvergenceLayer::componentDown() throw () {}
+
+		void EMailConvergenceLayer::componentUp() throw ()
+		{
+			// register as discovery beacon handler
+			dtn::core::BundleCore::getInstance().getDiscoveryAgent().registerService(this);
+		}
+
+		void EMailConvergenceLayer::componentDown() throw ()
+		{
+			// un-register as discovery beacon handler
+			dtn::core::BundleCore::getInstance().getDiscoveryAgent().unregisterService(this);
+		}
 	}
 }

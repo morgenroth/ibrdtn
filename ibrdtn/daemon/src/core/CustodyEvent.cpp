@@ -75,7 +75,7 @@ namespace dtn
 
 		void CustodyEvent::raise(const dtn::data::MetaBundle &bundle, const EventCustodyAction action)
 		{
-			dtn::core::EventDispatcher<CustodyEvent>::raise( new CustodyEvent(bundle, action) );
+			dtn::core::EventDispatcher<CustodyEvent>::queue( new CustodyEvent(bundle, action) );
 		}
 
 		const std::string CustodyEvent::className = "CustodyEvent";

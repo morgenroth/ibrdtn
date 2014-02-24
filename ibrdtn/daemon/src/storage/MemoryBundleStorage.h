@@ -37,9 +37,9 @@ namespace dtn
 	{
 		class MemoryBundleStorage : public BundleStorage, public dtn::core::EventReceiver, public dtn::daemon::IntegratedComponent, public BundleList::Listener
 		{
-		public:
 			static const std::string TAG;
 
+		public:
 			MemoryBundleStorage(const dtn::data::Length maxsize = 0);
 			virtual ~MemoryBundleStorage();
 
@@ -48,6 +48,17 @@ namespace dtn
 			 * @param bundle The bundle to store.
 			 */
 			virtual void store(const dtn::data::Bundle &bundle);
+
+			/**
+			 * This method returns true if the requested bundle is
+			 * stored in the storage.
+			 */
+			virtual bool contains(const dtn::data::BundleID &id);
+
+			/**
+			 * Get meta data about a specific bundle ID
+			 */
+			virtual dtn::data::MetaBundle info(const dtn::data::BundleID &id);
 
 			/**
 			 * This method returns a specific bundle which is identified by

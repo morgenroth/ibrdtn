@@ -123,19 +123,20 @@ namespace dtn
 										{
 											// read the bundle out of the storage
 											const dtn::data::Bundle bundle = storage.get(sbt.job.getBundle());
+											const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(bundle);
 
 											if (bundle.destination.isApplication("routing"))
 											{
 												// add this bundle to the blacklist
 												{
 													ibrcommon::MutexLock l(_blacklist_mutex);
-													if (_blacklist.find(bundle) != _blacklist.end())
+													if (_blacklist.find(meta) != _blacklist.end())
 													{
 														// send transfer aborted event
 														sbt.job.abort(dtn::net::TransferAbortedEvent::REASON_REFUSED);
 														continue;
 													}
-													_blacklist.add(bundle);
+													_blacklist.add(meta);
 												}
 
 												// create ECM reply

@@ -27,7 +27,7 @@ namespace dtn
 	namespace net
 	{
 		ConnectionEvent::ConnectionEvent(State s, const dtn::core::Node &n)
-		 : state(s), peer(n.getEID()), node(n)
+		 : _state(s), _node(n)
 		{
 
 		}
@@ -40,7 +40,7 @@ namespace dtn
 		void ConnectionEvent::raise(State s, const dtn::core::Node &n)
 		{
 			// raise the new event
-			dtn::core::EventDispatcher<ConnectionEvent>::raise( new ConnectionEvent(s, n) );
+			dtn::core::EventDispatcher<ConnectionEvent>::queue( new ConnectionEvent(s, n) );
 		}
 
 		const string ConnectionEvent::getName() const
@@ -51,18 +51,28 @@ namespace dtn
 
 		std::string ConnectionEvent::getMessage() const
 		{
-			switch (state)
+			switch (_state)
 			{
 			case CONNECTION_UP:
-				return "connection up " + peer.getString();
+				return "connection up " + _node.getEID().getString();
 			case CONNECTION_DOWN:
-				return "connection down " + peer.getString();
+				return "connection down " + _node.getEID().getString();
 			case CONNECTION_TIMEOUT:
-				return "connection timeout " + peer.getString();
+				return "connection timeout " + _node.getEID().getString();
 			case CONNECTION_SETUP:
-				return "connection setup " + peer.getString();
+				return "connection setup " + _node.getEID().getString();
 			}
 			return "unknown event";
+		}
+
+		ConnectionEvent::State ConnectionEvent::getState() const
+		{
+			return _state;
+		}
+
+		const dtn::core::Node& ConnectionEvent::getNode() const
+		{
+			return _node;
 		}
 
 		const string ConnectionEvent::className = "ConnectionEvent";

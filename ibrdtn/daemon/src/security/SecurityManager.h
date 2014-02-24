@@ -44,40 +44,13 @@ namespace dtn
 		class SecurityManager
 		{
 			public:
-				class KeyMissingException : public ibrcommon::Exception
+				class KeyMissingException : public SecurityException
 				{
 				public:
-					KeyMissingException(std::string what = "Key for this operation is not available.") : ibrcommon::Exception(what)
+					KeyMissingException(std::string what = "Key for this operation is not available.") : SecurityException(what)
 					{};
 
 					virtual ~KeyMissingException() throw() {};
-				};
-
-				class EncryptException : public ibrcommon::Exception
-				{
-				public:
-					EncryptException(std::string what = "Encryption failed.") : ibrcommon::Exception(what)
-					{};
-
-					virtual ~EncryptException() throw() {};
-				};
-
-				class DecryptException : public ibrcommon::Exception
-				{
-				public:
-					DecryptException(std::string what = "Decryption failed.") : ibrcommon::Exception(what)
-					{};
-
-					virtual ~DecryptException() throw() {};
-				};
-
-				class VerificationFailedException : public ibrcommon::Exception
-				{
-				public:
-					VerificationFailedException(std::string what = "Verification failed.") : ibrcommon::Exception(what)
-					{};
-
-					virtual ~VerificationFailedException() throw() {};
 				};
 
 				/**

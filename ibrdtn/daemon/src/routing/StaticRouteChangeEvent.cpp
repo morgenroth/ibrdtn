@@ -87,7 +87,18 @@ namespace dtn
 				ss << " => " << nexthop.getString();
 				break;
 			case ROUTE_EXPIRED:
-				ss << "route expired";
+				ss << "route expired ";
+
+				if (pattern.length() > 0)
+				{
+					ss << pattern;
+				}
+				else
+				{
+					ss << destination.getString();
+				}
+
+				ss << " => " << nexthop.getString();
 				break;
 			case ROUTE_CLEAR:
 				ss << "routes cleared";
@@ -102,17 +113,17 @@ namespace dtn
 
 		void StaticRouteChangeEvent::raiseEvent(CHANGE_TYPE t)
 		{
-			dtn::core::EventDispatcher<StaticRouteChangeEvent>::raise( new StaticRouteChangeEvent(t) );
+			dtn::core::EventDispatcher<StaticRouteChangeEvent>::queue( new StaticRouteChangeEvent(t) );
 		}
 
 		void StaticRouteChangeEvent::raiseEvent(CHANGE_TYPE t, const dtn::data::EID &n, const std::string &p, const dtn::data::Number &to)
 		{
-			dtn::core::EventDispatcher<StaticRouteChangeEvent>::raise( new StaticRouteChangeEvent(t, n, p, to) );
+			dtn::core::EventDispatcher<StaticRouteChangeEvent>::queue( new StaticRouteChangeEvent(t, n, p, to) );
 		}
 
 		void StaticRouteChangeEvent::raiseEvent(CHANGE_TYPE t, const dtn::data::EID &n, const dtn::data::EID &d, const dtn::data::Number &to)
 		{
-			dtn::core::EventDispatcher<StaticRouteChangeEvent>::raise( new StaticRouteChangeEvent(t, n, d, to) );
+			dtn::core::EventDispatcher<StaticRouteChangeEvent>::queue( new StaticRouteChangeEvent(t, n, d, to) );
 		}
 
 		const string StaticRouteChangeEvent::className = "StaticRouteChangeEvent";

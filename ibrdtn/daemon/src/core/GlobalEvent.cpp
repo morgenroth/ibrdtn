@@ -79,7 +79,7 @@ namespace dtn
 		void GlobalEvent::raise(const Action a)
 		{
 			// raise the new event
-			dtn::core::EventDispatcher<GlobalEvent>::raise( new GlobalEvent(a) );
+			dtn::core::EventDispatcher<GlobalEvent>::queue( new GlobalEvent(a) );
 		}
 
 		const std::string GlobalEvent::className = "GlobalEvent";

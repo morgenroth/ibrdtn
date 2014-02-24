@@ -23,6 +23,16 @@ namespace dtn
 			virtual const dtn::data::EID& getDestination() const = 0;
 			virtual const std::string toString() const = 0;
 			virtual const dtn::data::Timestamp& getExpiration() const = 0;
+
+			/**
+			 * Raise the StaticRouteChangeEvent for expiration
+			 */
+			virtual void raiseExpired() const = 0;
+
+			/**
+			 * Compare this static route with another one
+			 */
+			virtual bool equals(const StaticRoute &route) const = 0;
 		};
 	}
 }

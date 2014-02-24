@@ -41,7 +41,7 @@ namespace dtn
 		void RequeueBundleEvent::raise(const dtn::data::EID peer, const dtn::data::BundleID &id)
 		{
 			// raise the new event
-			dtn::core::EventDispatcher<RequeueBundleEvent>::raise( new RequeueBundleEvent(peer, id) );
+			dtn::core::EventDispatcher<RequeueBundleEvent>::queue( new RequeueBundleEvent(peer, id) );
 		}
 
 		const string RequeueBundleEvent::getName() const
@@ -52,6 +52,16 @@ namespace dtn
 		string RequeueBundleEvent::getMessage() const
 		{
 			return "Bundle requeued " + _bundle.toString();
+		}
+
+		const dtn::data::EID& RequeueBundleEvent::getPeer() const
+		{
+			return _peer;
+		}
+
+		const dtn::data::BundleID& RequeueBundleEvent::getBundle() const
+		{
+			return _bundle;
 		}
 
 		const string RequeueBundleEvent::className = "RequeueBundleEvent";

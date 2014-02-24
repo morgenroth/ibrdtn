@@ -22,14 +22,16 @@
 #ifndef DISCOVERYAGENT_H_
 #define DISCOVERYAGENT_H_
 
-#include "core/Node.h"
-#include "net/Neighbor.h"
-#include "net/DiscoveryAnnouncement.h"
-#include "net/DiscoveryServiceProvider.h"
-#include "net/DiscoveryService.h"
 #include "Configuration.h"
+#include "Component.h"
+#include "core/EventReceiver.h"
+#include "core/Node.h"
+#include "net/DiscoveryBeacon.h"
+#include "net/DiscoveryBeaconHandler.h"
+#include "net/DiscoveryService.h"
 
 #include <ibrdtn/data/Number.h>
+#include <ibrcommon/net/vinterface.h>
 
 #include <list>
 
@@ -37,28 +39,52 @@ namespace dtn
 {
 	namespace net
 	{
-		class DiscoveryAgent
+		class DiscoveryAgent : public dtn::core::EventReceiver, public dtn::daemon::IntegratedComponent
 		{
 		public:
-			DiscoveryAgent(const dtn::daemon::Configuration::Discovery &config);
-			virtual ~DiscoveryAgent() = 0;
+			DiscoveryAgent();
+			virtual ~DiscoveryAgent();
 
-			void received(const dtn::data::EID &source, const std::list<DiscoveryService> &services, const dtn::data::Number &timeout = 0);
+			/**
+			 * method to receive global events
+			 */
+			void raiseEvent(const dtn::core::Event *evt) throw ();
 
-			void addService(dtn::net::DiscoveryServiceProvider *provider);
+			void onBeaconReceived(const DiscoveryBeacon &beacon);
+
+			void registerService(const ibrcommon::vinterface &iface, dtn::net::DiscoveryBeaconHandler *handler);
+			void registerService(dtn::net::DiscoveryBeaconHandler *handler);
+
+			void unregisterService(const ibrcommon::vinterface &iface, const dtn::net::DiscoveryBeaconHandler *handler);
+			void unregisterService(const dtn::net::DiscoveryBeaconHandler *handler);
+
+			DiscoveryBeacon obtainBeacon() const;
 
 		protected:
-			virtual void sendAnnoucement(const uint16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &provider) = 0;
+			virtual void componentUp() throw ();
+			virtual void componentDown() throw ();
 
-			void timeout();
+			virtual const std::string getName() const;
+
+		private:
+			void onAdvertise();
 
 			const dtn::daemon::Configuration::Discovery &_config;
 
-		private:
-			std::list<Neighbor> _neighbors;
+			bool _enabled;
 			uint16_t _sn;
-			std::list<dtn::net::DiscoveryServiceProvider*> _provider;
+			dtn::data::Timestamp _adv_next;
 			dtn::data::Timestamp _last_announce_sent;
+
+			ibrcommon::Mutex _provider_lock;
+
+			typedef std::list<dtn::net::DiscoveryBeaconHandler*> handler_list;
+			typedef std::map<ibrcommon::vinterface, handler_list> handler_map;
+			typedef std::pair<ibrcommon::vinterface, handler_list> handler_map_entry;
+
+			handler_map _providers;
+
+			const ibrcommon::vinterface _any_iface;
 		};
 	}
 }

@@ -34,6 +34,7 @@ class BundleStorageTest : public CppUnit::TestFixture {
 		void testEmpty(dtn::storage::BundleStorage &storage);
 		void testCount(dtn::storage::BundleStorage &storage);
 		void testSize(dtn::storage::BundleStorage &storage);
+		void testSizeExpiration(dtn::storage::BundleStorage &storage);
 		void testReleaseCustody(dtn::storage::BundleStorage &storage);
 		void testRaiseEvent(dtn::storage::BundleStorage &storage);
 		void testConcurrentStoreGet(dtn::storage::BundleStorage &storage);
@@ -47,6 +48,8 @@ class BundleStorageTest : public CppUnit::TestFixture {
 		void testFaultyStore(dtn::storage::BundleStorage &storage);
 		void testQueryBloomFilter(dtn::storage::BundleStorage &storage);
 		void testFragment(dtn::storage::BundleStorage &storage);
+		void testContains(dtn::storage::BundleStorage &storage);
+		void testInfo(dtn::storage::BundleStorage &storage);
 
 	public:
 #define CPPUNIT_TEST_ALL_STORAGES(testMethod) \
@@ -66,6 +69,7 @@ class BundleStorageTest : public CppUnit::TestFixture {
 		void testEmpty();
 		void testCount();
 		void testSize();
+		void testSizeExpiration();
 		void testReleaseCustody();
 		void testRaiseEvent();
 		void testConcurrentStoreGet();
@@ -79,6 +83,8 @@ class BundleStorageTest : public CppUnit::TestFixture {
 		void testFaultyStore();
 		void testQueryBloomFilter();
 		void testFragment();
+		void testContains();
+		void testInfo();
 
 		void setUp();
 		void tearDown();
@@ -99,6 +105,7 @@ class BundleStorageTest : public CppUnit::TestFixture {
 		CPPUNIT_TEST_ALL_STORAGES(testEmpty);
 		CPPUNIT_TEST_ALL_STORAGES(testCount);
 		CPPUNIT_TEST_ALL_STORAGES(testSize);
+		CPPUNIT_TEST_ALL_STORAGES(testSizeExpiration);
 		CPPUNIT_TEST_ALL_STORAGES(testReleaseCustody);
 		CPPUNIT_TEST_ALL_STORAGES(testRaiseEvent);
 		CPPUNIT_TEST_ALL_STORAGES(testConcurrentStoreGet);
@@ -112,6 +119,8 @@ class BundleStorageTest : public CppUnit::TestFixture {
 		CPPUNIT_TEST_ALL_STORAGES(testFaultyStore);
 		CPPUNIT_TEST_ALL_STORAGES(testQueryBloomFilter);
 		CPPUNIT_TEST_ALL_STORAGES(testFragment);
+		CPPUNIT_TEST_ALL_STORAGES(testContains);
+		CPPUNIT_TEST_ALL_STORAGES(testInfo);
 		CPPUNIT_TEST_SUITE_END();
 
 		static size_t testCounter;

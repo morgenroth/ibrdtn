@@ -75,7 +75,7 @@ namespace dtn
 
 			if (ts >= _next)
 			{
-				TimeEvent::raise(dtn::utils::Clock::getTime(), dtn::utils::Clock::getUnixTimestamp(), TIME_SECOND_TICK);
+				TimeEvent::raise(dtn::utils::Clock::getTime(), TIME_SECOND_TICK);
 				_next = ts.get<size_t>() + _frequency;
 
 				ibrcommon::MutexLock l(*this);

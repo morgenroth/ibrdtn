@@ -28,7 +28,7 @@ public class ConvergenceLayerStatsEntry {
     private Date mTimestamp = null;
     private String mConvergenceLayer = null;
     private String mDataTag = null;
-    private Long mDataValue = null;
+    private Double mDataValue = null;
     
     public static final String[] PROJECTION = new String[] {
         BaseColumns._ID,
@@ -55,7 +55,7 @@ public class ConvergenceLayerStatsEntry {
         
         setConvergenceLayer(cursor.getString(cmap.mConvergenceLayer));
         setDataTag(cursor.getString(cmap.mDataTag));
-        setDataValue(cursor.getLong(cmap.mDataValue));
+        setDataValue(cursor.getDouble(cmap.mDataValue));
         
         try {
             mTimestamp = formatter.parse(cursor.getString(cmap.mColumnTimestamp));
@@ -72,7 +72,7 @@ public class ConvergenceLayerStatsEntry {
         
         mConvergenceLayer = tag_split[0];
         mDataTag = tag_split[1];
-        mDataValue = stats.getData(index);
+        mDataValue = Double.valueOf( stats.getData(index) );
     }
     
     public Long getId() {
@@ -103,11 +103,11 @@ public class ConvergenceLayerStatsEntry {
         mDataTag = dataTag;
     }
 
-    public Long getDataValue() {
+    public Double getDataValue() {
         return mDataValue;
     }
 
-    public void setDataValue(Long dataValue) {
+    public void setDataValue(Double dataValue) {
         mDataValue = dataValue;
     }
 
