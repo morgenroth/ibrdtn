@@ -85,6 +85,7 @@ int _conf_bundle_group = false;
 int _conf_invert = false;
 int _conf_quiet = false;
 int _conf_fat = false;
+int _conf_enabled = true;
 
 struct option long_options[] =
 {
@@ -136,6 +137,13 @@ void read_configuration(int argc, char** argv)
 		ConfigFile config(argv[1]);
 		string tmp;
 
+		_conf_enabled= config.read<int>("enabled",false);
+		if (!_conf_enabled)
+		{
+			cout << "dtnoutbox not enabled in config-file. exiting" << endl;
+			exit(EXIT_SUCCESS);
+		}
+
 		config.readInto(_conf_name, "name");
 
 		config.readInto(_conf_outbox, "outbox");
@@ -155,6 +163,8 @@ void read_configuration(int argc, char** argv)
 		_conf_invert = config.read<int>("invert",_conf_interval);
 
 		_conf_quiet = config.read<int>("quiet",_conf_quiet);
+
+		_conf_bundle_group = config.read<int>("group",_conf_bundle_group);
 
 
 
