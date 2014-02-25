@@ -20,4 +20,4 @@ IBRDTND_CONF_OPT =	\
 		--with-tls
 		
 
-$(eval $(autotools-package))
+$(eval $(call AUTOTARGETS,package,ibrdtnd))
