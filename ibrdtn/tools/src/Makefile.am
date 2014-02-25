@@ -1,7 +1,7 @@
-AUTOMAKE_OPTIONS = foreign subdir-objects
+AUTOMAKE_OPTIONS = foreign
 
 # what flags you want to pass to the C compiler & linker
-AM_CPPFLAGS = @ibrdtn_CFLAGS@ @DAEMON_CFLAGS@ @ARCHIVE_CFLAGS@  @tffs_CFLAGS@
+AM_CPPFLAGS = -I@top_srcdir@/src @ibrdtn_CFLAGS@ @DAEMON_CFLAGS@ @ARCHIVE_CFLAGS@  @tffs_CFLAGS@
 AM_LDFLAGS = @ibrdtn_LIBS@ @DAEMON_LIBS@ @ARCHIVE_LIBS@ @tffs_LIBS@
 
 # this lists the binaries to produce, the (non-PHONY, binary) targets in
