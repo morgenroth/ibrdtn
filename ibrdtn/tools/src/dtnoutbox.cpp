@@ -246,6 +246,7 @@ void sighandler(int signal)
 	}
 }
 
+//this function is needed, to delete the pointers in the list observed_files
 bool deleteAll( ObservedFile* ptr){
 	delete ptr;
 	return true;
@@ -481,8 +482,10 @@ int main( int argc, char** argv )
 				}
 			}
 
+			//clean up pointer list
 			observed_files.remove_if(deleteAll);
 
+			//clean up regex
 			regfree(&_conf_regex);
 
 			// close the client connection
