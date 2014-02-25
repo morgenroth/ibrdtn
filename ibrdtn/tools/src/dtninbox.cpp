@@ -68,7 +68,7 @@ void print_help()
         cout << "* optional parameters *" << endl;
         cout << " -h|--help        display this text" << endl;
         cout << " -w|--workdir     temporary work directory" << endl;
-        cout << " --quiet		   only print error messages" << endl;
+        cout << " --quiet          only print error messages" << endl;
 }
 
 void read_configuration(int argc, char** argv)

@@ -122,7 +122,7 @@ void print_help()
 	cout << " -p|--path <path>           path of outbox within vfat-image. default: /" << endl;
 #endif
 	cout << " -R|--regex <regex>         all files in <outbox> matching this regular expression will be ignored. default: ^\\." << endl;
-	cout << " -I|--invert       		 invert above  regexp"<< endl;
+	cout << " -I|--invert                invert above  regexp"<< endl;
 	cout << " -q|--quiet                 only print error messages" << endl;
 
 	_running = false; //stop this app, after printing help
