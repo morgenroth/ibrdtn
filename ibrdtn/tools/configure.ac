@@ -82,6 +82,7 @@ PKG_CHECK_MODULES(ARCHIVE, libarchive, [
 	AC_SUBST(ARCHIVE_CFLAGS)
 	AC_SUBST(ARCHIVE_LIBS)
 	AC_DEFINE(HAVE_LIBARCHIVE, [1], ["libarchive is available"])
+        has_libarchive="yes"
 ], [
 	AC_MSG_WARN([libarchive not found, dtninbox and dtnoutbox will not be compiled])
 ])
@@ -90,6 +91,7 @@ PKG_CHECK_MODULES(OPENSSL, openssl, [
 	AC_SUBST(OPENSSL_CFLAGS)
 	AC_SUBST(OPENSSL_LIBS)
 	AC_DEFINE(HAVE_OPENSSL, [1], ["openssl available"])
+        has_openssl="yes"
 ], [
 	AC_MSG_WARN([openssl not found, dtninbox and dtnoutbox will not be compiled])
 ])
@@ -120,6 +122,8 @@ AS_IF([test -z "${tffs_path}"], [
 
 
 AM_CONDITIONAL([TUNNEL], [test x$has_tun = xyes])
+AM_CONDITIONAL([LIBARCHIVE], [test x$has_libarchive = xyes])
+AM_CONDITIONAL([OPENSSL], [test x$has_openssl = xyes])
 
 dnl -----------------------------------------------
 dnl Generates Makefiles, configuration files and scripts

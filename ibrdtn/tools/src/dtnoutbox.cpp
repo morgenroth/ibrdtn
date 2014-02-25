@@ -21,7 +21,6 @@
  */
 
 #include "config.h"
-#ifdef HAVE_LIBARCHIVE //compilation without libarchive not possible
 #include <ibrdtn/api/Client.h>
 #include <ibrcommon/net/socket.h>
 #include <ibrcommon/thread/Mutex.h>
@@ -539,5 +538,3 @@ int main( int argc, char** argv )
 
 	return (EXIT_SUCCESS);
 }
-
-#endif /* HAVE_LIBARCHIVE*/
