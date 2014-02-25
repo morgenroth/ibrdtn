@@ -30,7 +30,6 @@
 #include <ibrcommon/data/BLOB.h>
 #include <ibrcommon/data/File.h>
 #include <ibrcommon/appstreambuf.h>
-#include <ibrcommon/data/ConfigFile.h>
 
 #include "io/TarUtils.h"
 #include "io/ObservedNormalFile.h"
@@ -102,8 +101,6 @@ struct option long_options[] =
 void print_help()
 {
 	cout << "-- dtnoutbox (IBR-DTN) --" << endl;
-	cout << "Syntax: dtnoutbox <configfile>" << endl;
-	cout << " <configfile>               path to file which configures at the required options; per line: option = value" << endl << endl;
 	cout << "Syntax: dtnoutbox [options] <name> <outbox> <destination>" << endl;
 	cout << " <name>                     the application name" << endl;
 #ifdef HAVE_LIBTFFS
@@ -131,121 +128,80 @@ void print_help()
 
 void read_configuration(int argc, char** argv)
 {
-	//one argument means: config file
-	if (argc == 2)
-	{
-		ConfigFile config(argv[1]);
-		string tmp;
-
-		_conf_enabled= config.read<int>("enabled",false);
-		if (!_conf_enabled)
-		{
-			cout << "dtnoutbox not enabled in config-file. exiting" << endl;
-			exit(EXIT_SUCCESS);
-		}
-
-		config.readInto(_conf_name, "name");
-
-		config.readInto(_conf_outbox, "outbox");
-
-		config.readInto(_conf_destination, "destination");
-
-		config.readInto(_conf_workdir, "workdir");
-
-		_conf_interval = config.read<size_t>("interval",_conf_interval);
-
-		_conf_rounds = config.read<size_t>("rounds",_conf_rounds);
-
-		config.readInto(_conf_path, "path");
-
-		config.readInto(_conf_regex_str, "regex");
-
-		_conf_invert = config.read<int>("invert",_conf_interval);
-
-		_conf_quiet = config.read<int>("quiet",_conf_quiet);
-
-		_conf_bundle_group = config.read<int>("group",_conf_bundle_group);
-
-
-
-	}
 	// print help if not enough parameters are set
-	else
+	if (argc < 3)
 	{
-		if (argc < 3)
+		print_help();
+		exit(EXIT_FAILURE);
+	}
+
+	while(1)
+	{
+		/* getopt_long stores the option index here. */
+		int option_index = 0;
+		int c = getopt_long (argc, argv, "hw:i:r:p:R:qI",
+				long_options, &option_index);
+		/* Detect the end of the options. */
+		if (c == -1)
+			break;
+
+		switch (c)
 		{
+		case 0:
+			/* If this option set a flag, do nothing else now. */
+			if (long_options[option_index].flag != 0)
+				break;
+			printf ("option %s", long_options[option_index].name);
+			if (optarg)
+				printf (" with arg %s", optarg);
+			printf ("\n");
+			break;
+
+		case 'h':
 			print_help();
-			exit(EXIT_FAILURE);
+			exit(EXIT_SUCCESS);
+			break;
+		case 'g':
+			_conf_bundle_group = true;
+			break;
+		case 'w':
+			_conf_workdir = std::string(optarg);
+			break;
+		case 'i':
+			_conf_interval = atoi(optarg);
+			break;
+		case 'r':
+			_conf_rounds = atoi(optarg);
+			break;
+		case 'p':
+			_conf_path = std::string(optarg);
+			break;
+		case 'R':
+			_conf_regex_str = std::string(optarg);
+			break;
+		case 'q':
+			_conf_quiet = true;
+			break;
+		case 'I':
+			_conf_invert = true;
+			break;
+		case '?':
+			break;
+		default:
+			abort();
+			break;
 		}
+	}
 
-		while(1)
-		{
-			/* getopt_long stores the option index here. */
-			int option_index = 0;
-			int c = getopt_long (argc, argv, "hw:i:r:p:R:qI",
-					long_options, &option_index);
-			/* Detect the end of the options. */
-			if (c == -1)
-				break;
+	_conf_name = std::string(argv[optind]);
+	_conf_destination = std::string(argv[optind+2]);
+	_conf_outbox = std::string(argv[optind+1]);
 
-			switch (c)
-			{
-			case 0:
-				/* If this option set a flag, do nothing else now. */
-				if (long_options[option_index].flag != 0)
-					break;
-				printf ("option %s", long_options[option_index].name);
-				if (optarg)
-					printf (" with arg %s", optarg);
-				printf ("\n");
-				break;
-
-			case 'h':
-				print_help();
-				exit(EXIT_SUCCESS);
-				break;
-			case 'g':
-				_conf_bundle_group = true;
-				break;
-			case 'w':
-				_conf_workdir = std::string(optarg);
-				break;
-			case 'i':
-				_conf_interval = atoi(optarg);
-				break;
-			case 'r':
-				_conf_rounds = atoi(optarg);
-				break;
-			case 'p':
-				_conf_path = std::string(optarg);
-				break;
-			case 'R':
-				_conf_regex_str = std::string(optarg);
-				break;
-			case 'q':
-				_conf_quiet = true;
-				break;
-			case 'I':
-				_conf_invert = true;
-				break;
-			case '?':
-				break;
-			default:
-				abort();
-				break;
-			}
-		}
-
-		_conf_name = std::string(argv[optind]);
-		_conf_destination = std::string(argv[optind+2]);
-		_conf_outbox = std::string(argv[optind+1]);
-
-		// print help if there are not enough or too many remaining parameters
-		if (argc - optind != 3)
-		{
-			print_help();
-		exit(0);
-		}
+	// print help if there are not enough or too many remaining parameters
+	if (argc - optind != 3)
+	{
+		print_help();
+	exit(0);
 	}
 
 	//compile regex, if set
