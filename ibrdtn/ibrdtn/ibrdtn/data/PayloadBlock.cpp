@@ -51,9 +51,7 @@ namespace dtn
 
 		Length PayloadBlock::getLength() const
 		{
-			ibrcommon::BLOB::Reference blobref = _blobref;
-			ibrcommon::BLOB::iostream io = blobref.iostream();
-			return io.size();
+			return _blobref.size();
 		}
 
 		std::ostream& PayloadBlock::serialize(std::ostream &stream, Length &length) const
