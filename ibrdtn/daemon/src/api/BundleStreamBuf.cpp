@@ -78,7 +78,7 @@ namespace dtn
 			BundleStreamBuf::append(_chunk_payload, &_in_buf[0], iend - ibegin);
 
 			// if size exceeds chunk limit, send it
-			if (_chunk_payload.iostream().size() > static_cast<std::streamsize>(_chunk_size))
+			if (_chunk_payload.size() > static_cast<std::streamsize>(_chunk_size))
 			{
 				flushPayload();
 			}
@@ -90,7 +90,7 @@ namespace dtn
 		{
 			// do not send a bundle if there are no bytes buffered
 			// and no bundle has been sent before
-			if ((_first_chunk) && (_chunk_payload.iostream().size() == 0))
+			if ((_first_chunk) && (_chunk_payload.size() == 0))
 			{
 				return;
 			}

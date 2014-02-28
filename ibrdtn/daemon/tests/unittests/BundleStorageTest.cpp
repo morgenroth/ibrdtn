@@ -165,11 +165,32 @@ void BundleStorageTest::testStore(dtn::storage::BundleStorage &storage)
 	dtn::data::Bundle b;
 	b.source = dtn::data::EID("dtn://node-one/test");
 
+	// set standard variable.sourceurce = dtn::data::EID("dtn://node-one/test");
+	b.lifetime = 120;
+	b.destination = dtn::data::EID("dtn://node-two/test");
+
+	// add some payload
+	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
+	b.push_back(ref);
+
+	(*ref.iostream()) << "Hallo Welt" << std::endl;
+
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, storage.count());
 
 	storage.store(b);
 
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)1, storage.count());
+
+	// create a bundle id
+	const dtn::data::BundleID id(b);
+
+	CPPUNIT_ASSERT_EQUAL(id, (const dtn::data::BundleID&)b);
+
+	const dtn::data::Bundle retrieved = storage.get(id);
+
+	CPPUNIT_ASSERT_EQUAL(id.getPayloadLength(), retrieved.getPayloadLength());
+
+	CPPUNIT_ASSERT_EQUAL(id, (const dtn::data::BundleID&)retrieved);
 }
 
 void BundleStorageTest::testRemove()
@@ -883,6 +904,8 @@ void BundleStorageTest::testFragment(dtn::storage::BundleStorage &storage)
 	const dtn::data::BundleID id(b);
 
 	const dtn::data::Bundle retrieved = storage.get(id);
+
+	CPPUNIT_ASSERT_EQUAL(id.getPayloadLength(), retrieved.getPayloadLength());
 
 	CPPUNIT_ASSERT_EQUAL(id, (const dtn::data::BundleID&)retrieved);
 }
