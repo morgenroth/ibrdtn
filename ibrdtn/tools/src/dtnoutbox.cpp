@@ -60,9 +60,6 @@ using namespace ibrcommon;
 // set this variable to false to stop the app
 bool _running = true;
 
-// global connection
-ibrcommon::socketstream *_conn = NULL;
-
 //global wait conditional
 ibrcommon::Conditional _wait_cond;
 bool _wait_abort = false;
@@ -228,7 +225,6 @@ void sighandler(int signal)
 		ibrcommon::MutexLock l(_wait_cond);
         _running = false;
 		_wait_cond.signal(true);
-        if (_conn != NULL) _conn->close();
         break;
 	}
 #ifndef __WIN32__
@@ -325,9 +321,6 @@ int main( int argc, char** argv )
 			// Create a stream to the server using TCP.
 			ibrcommon::vaddress addr("localhost", 4550);
 			ibrcommon::socketstream conn(new ibrcommon::tcpsocket(addr));
-
-			// set the connection globally
-			_conn = &conn;
 
 			// Initiate a client for synchronous receiving
 			dtn::api::Client client(_conf_name, conn, dtn::api::Client::MODE_SENDONLY);
@@ -494,13 +487,8 @@ int main( int argc, char** argv )
 			// close the connection
 			conn.close();
 
-			// set the global connection to NULL
-			_conn = NULL;
 		} catch (const ibrcommon::socket_exception&)
 		{
-			// set the global connection to NULL
-			_conn = NULL;
-
 			if (_running)
 			{
 				cout << "Connection to bundle daemon failed. Retry in " << backoff << " seconds." << endl;
@@ -515,9 +503,6 @@ int main( int argc, char** argv )
 			}
 		} catch (const ibrcommon::IOException&)
 		{
-			// set the global connection to NULL
-			_conn = NULL;
-
 			if (_running)
 			{
 				cout << "Connection to bundle daemon failed. Retry in " << backoff << " seconds." << endl;
@@ -532,8 +517,6 @@ int main( int argc, char** argv )
 			}
 		} catch (const std::exception&)
 		{
-			// set the global connection to NULL
-			_conn = NULL;
 		}
 	}
 
