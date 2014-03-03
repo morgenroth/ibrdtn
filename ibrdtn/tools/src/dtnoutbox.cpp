@@ -89,6 +89,7 @@ struct option long_options[] =
 {
     {"destination",  required_argument, 0, 'd'},
     {"help", no_argument, 0, 'h'},
+    {"group", no_argument, 0, 'g'},
     {"workdir", required_argument, 0, 'w'},
     {"interval", required_argument, 0, 'i'},
     {"rounds", required_argument, 0, 'r'},
