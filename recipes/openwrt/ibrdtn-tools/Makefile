@@ -17,7 +17,7 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/releases
 
 PKG_INSTALL:=1
-PKG_BUILD_DEPENDS:=ibrdtn
+PKG_BUILD_DEPENDS:=openssl libarchive ibrdtn
 
 include $(INCLUDE_DIR)/package.mk
 
