@@ -138,7 +138,7 @@ void read_configuration(int argc, char** argv)
 	{
 		/* getopt_long stores the option index here. */
 		int option_index = 0;
-		int c = getopt_long (argc, argv, "hw:i:r:p:R:qI",
+		int c = getopt_long (argc, argv, "hw:i:r:p:R:qIg",
 				long_options, &option_index);
 		/* Detect the end of the options. */
 		if (c == -1)
