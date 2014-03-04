@@ -154,7 +154,11 @@ namespace dtn
 					ibrcommon::Thread::sleep(2000);
 				} catch (const ibrcommon::vsocket_interrupt&) {
 					return;
-				} catch (const ibrcommon::vsocket_timeout&) { };
+				} catch (const ibrcommon::vsocket_timeout&) {
+					// scan again after timeout
+				} catch (const ibrcommon::socket_exception&) {
+					return;
+				}
 			}
 #endif
 		}

@@ -292,7 +292,7 @@ namespace dtn
 						// Decide in which queue to write based on the src address
 						connection->getStream().queue(&data[0], len);
 					}
-				} catch (const ibrcommon::vsocket_interrupt&) {
+				} catch (const ibrcommon::socket_exception&) {
 					return;
 				}
 
