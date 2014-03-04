@@ -23,13 +23,13 @@
 #include "Configuration.h"
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/data/File.h>
+#include <ibrcommon/thread/SignalHandler.h>
 
 #ifdef HAVE_LIBDAEMON
 #include <libdaemon/daemon.h>
 #endif
 
 #include <string.h>
-#include <csignal>
 #include <set>
 
 #include <sys/types.h>
@@ -71,7 +71,7 @@ ibrcommon::Conditional _shutdown_cond;
 bool _shutdown = false;
 
 // on interruption do this!
-void sighandler(int signal)
+void func_sighandler(int signal)
 {
 	// do not handle further signals if the shutdown is in progress
 	if (_shutdown) return;
@@ -112,19 +112,23 @@ void sighandler(int signal)
 int __daemon_run()
 {
 	// catch process signals
-	signal(SIGINT, sighandler);
-	signal(SIGTERM, sighandler);
+	ibrcommon::SignalHandler sighandler(func_sighandler);
+	sighandler.handle(SIGINT);
+	sighandler.handle(SIGTERM);
 #ifndef __WIN32__
-	signal(SIGHUP, sighandler);
-	signal(SIGQUIT, sighandler);
-	signal(SIGUSR1, sighandler);
-	signal(SIGUSR2, sighandler);
+	sighandler.handle(SIGHUP);
+	sighandler.handle(SIGQUIT);
+	sighandler.handle(SIGUSR1);
+	sighandler.handle(SIGUSR2);
 
 	sigset_t blockset;
 	sigemptyset(&blockset);
 	sigaddset(&blockset, SIGPIPE);
 	::sigprocmask(SIG_BLOCK, &blockset, NULL);
 #endif
+
+	// initialize signal handler
+	sighandler.initialize();
 
 	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
 
