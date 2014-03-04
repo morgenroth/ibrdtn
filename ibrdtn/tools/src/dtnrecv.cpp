@@ -25,9 +25,9 @@
 #include <ibrcommon/net/socketstream.h>
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/MutexLock.h>
+#include <ibrcommon/thread/SignalHandler.h>
 #include <ibrcommon/Logger.h>
 
-#include <csignal>
 #include <sys/types.h>
 #include <iostream>
 
@@ -76,9 +76,11 @@ int main(int argc, char *argv[])
 	// error filter
 	unsigned char loglevel = 0;
 
-	// catch process signals
-	signal(SIGINT, term);
-	signal(SIGTERM, term);
+	// create signal handler
+	ibrcommon::SignalHandler sighandler(term);
+	sighandler.handle(SIGINT);
+	sighandler.handle(SIGTERM);
+	sighandler.initialize();
 
 	int ret = EXIT_SUCCESS;
 	string filename = "";

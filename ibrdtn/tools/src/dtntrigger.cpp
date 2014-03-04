@@ -24,8 +24,8 @@
 #include <ibrdtn/api/Client.h>
 #include <ibrcommon/net/socket.h>
 #include <ibrcommon/data/File.h>
+#include <ibrcommon/thread/SignalHandler.h>
 
-#include <csignal>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -147,8 +147,10 @@ void term(int signal)
 int main(int argc, char** argv)
 {
 	// catch process signals
-	signal(SIGINT, term);
-	signal(SIGTERM, term);
+	ibrcommon::SignalHandler sighandler(term);
+	sighandler.handle(SIGINT);
+	sighandler.handle(SIGTERM);
+	sighandler.initialize();
 
 	// read the configuration
 	if (init(argc, argv) > 0)

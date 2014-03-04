@@ -24,6 +24,7 @@
 #include "ibrcommon/net/socket.h"
 #include "ibrcommon/thread/Mutex.h"
 #include "ibrcommon/thread/MutexLock.h"
+#include <ibrcommon/thread/SignalHandler.h>
 #include "ibrdtn/data/PayloadBlock.h"
 #include "ibrdtn/data/Bundle.h"
 #include "ibrcommon/data/BLOB.h"
@@ -34,7 +35,6 @@
 #include <iostream>
 #include <map>
 #include <vector>
-#include <csignal>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -101,9 +101,11 @@ void term(int signal)
  */
 int main(int argc, char** argv)
 {
-    // catch process signals
-    signal(SIGINT, term);
-    signal(SIGTERM, term);
+	// catch process signals
+	ibrcommon::SignalHandler sighandler(term);
+	sighandler.handle(SIGINT);
+	sighandler.handle(SIGTERM);
+	sighandler.initialize();
 
     // read the configuration
     map<string,string> conf = readconfiguration(argc, argv);
