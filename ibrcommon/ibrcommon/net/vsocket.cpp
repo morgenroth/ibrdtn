@@ -349,7 +349,7 @@ namespace ibrcommon
 
 			case DOWN:
 				// throw exception if not (PENDING_DOWN or SAFE_DOWN)
-				while ((_state != PENDING_DOWN) && (_state != SAFE_DOWN)) {
+				while ((_state != PENDING_DOWN) && (_state != SAFE_DOWN) && (_state != DOWN)) {
 					if (_state == abortstate)
 						throw state_exception("abort state " + __getname(abortstate) + " reached");
 					ibrcommon::Conditional::wait();
@@ -670,11 +670,17 @@ namespace ibrcommon
 	{
 		try {
 			ibrcommon::MutexLock l(_state);
-			if (_state.get() == SocketState::SELECT) {
+			if (_state.get() == SocketState::DOWN) {
+				return;
+			}
+			else if (_state.get() == SocketState::PENDING_DOWN || _state.get() == SocketState::DOWN_REQUEST) {
+				// prevent double down
+				_state.wait(SocketState::DOWN);
+				return;
+			}
+			else if (_state.get() == SocketState::SELECT) {
 				_state.setwait(SocketState::DOWN_REQUEST, SocketState::DOWN);
 				interrupt();
-				// wait for PENDING_DOWN state
-				_state.wait(SocketState::PENDING_DOWN);
 			} else {
 				// enter PENDING_DOWN state
 				_state.setwait(SocketState::PENDING_DOWN, SocketState::DOWN);
@@ -683,16 +689,18 @@ namespace ibrcommon
 			return;
 		}
 
-		// shut-down all the sockets
-		ibrcommon::MutexLock l(_socket_lock);
-		for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); ++iter) {
-			try {
-				if ((*iter)->ready()) (*iter)->down();
-			} catch (const socket_exception&) { }
+		{
+			// shut-down all the sockets
+			ibrcommon::MutexLock l(_socket_lock);
+			for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); ++iter) {
+				try {
+					if ((*iter)->ready()) (*iter)->down();
+				} catch (const socket_exception&) { }
+			}
 		}
 
 		ibrcommon::MutexLock sl(_state);
-		_state.set(SocketState::DOWN);
+		_state.setwait(SocketState::DOWN);
 	}
 
 	void vsocket::interrupt()
