@@ -770,6 +770,9 @@ namespace ibrcommon
 				else if (errcode == 0) {
 					throw vsocket_interrupt("select call has been interrupted");
 				}
+				else if (errcode == EBADF) {
+					throw socket_error(ERROR_CLOSED, "socket was closed");
+				}
 				throw socket_raw_error(errcode, "unknown select error");
 			}
 
