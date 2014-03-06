@@ -34,10 +34,6 @@
 #include "core/BundleCore.h"
 #include <ibrdtn/utils/Random.h>
 
-#ifdef WITH_COMPRESSION
-#include <ibrdtn/data/CompressedPayloadBlock.h>
-#endif
-
 #ifdef WITH_BUNDLE_SECURITY
 #include "security/SecurityManager.h"
 #endif

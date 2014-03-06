@@ -27,12 +27,6 @@
 #include "core/BundleGeneratedEvent.h"
 #include "core/BundleEvent.h"
 #include "core/BundlePurgeEvent.h"
-#ifdef WITH_BUNDLE_SECURITY
-#include "security/SecurityManager.h"
-#endif
-#ifdef WITH_COMPRESSION
-#include <ibrdtn/data/CompressedPayloadBlock.h>
-#endif
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrcommon/Logger.h>
 #include <typeinfo>
