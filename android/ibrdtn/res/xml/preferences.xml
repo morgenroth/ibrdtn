@@ -10,13 +10,15 @@
     <PreferenceCategory
         android:key="prefcat_general"
         android:title="@string/general" >
-        <EditTextPreference
+        <de.tubs.ibr.dtn.daemon.EndpointListPreference
+            android:defaultValue="dtn"
             android:key="endpoint_id"
+            android:entries="@array/endpoint_scheme_names"
+            android:entryValues="@array/endpoint_scheme_values"
             android:summary="@string/eid_description"
-            android:title="@string/endpoint_id"
-            android:singleLine="true" >
-        </EditTextPreference>
-
+            android:title="@string/endpoint_id">
+        </de.tubs.ibr.dtn.daemon.EndpointListPreference>
+        
         <ListPreference
             android:defaultValue="prophet"
             android:entries="@array/routing_scheme_names"

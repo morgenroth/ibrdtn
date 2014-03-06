@@ -22,6 +22,7 @@
 
 package de.tubs.ibr.dtn.daemon;
 
+import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
@@ -50,7 +51,6 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.preference.CheckBoxPreference;
-import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
@@ -68,8 +68,8 @@ import android.widget.Switch;
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.service.DaemonService;
-import de.tubs.ibr.dtn.service.P2pManager;
 import de.tubs.ibr.dtn.service.DaemonService.LocalDTNService;
+import de.tubs.ibr.dtn.service.P2pManager;
 import de.tubs.ibr.dtn.stats.CollectorService;
 
 public class Preferences extends PreferenceActivity {
@@ -449,32 +449,20 @@ public class Preferences extends PreferenceActivity {
 			boolean ret = true;
 			String stringValue = value.toString();
 
-			if (Preferences.KEY_ENDPOINT_ID.equals(preference.getKey())) {
-				// do not allow empty values
-				if (stringValue.length() == 0) {
-					// reset to default
-					stringValue = Preferences.getEndpoint(preference.getContext())
-							.toString();
-					preference.getEditor().putString(Preferences.KEY_ENDPOINT_ID, stringValue).commit();
-					if (preference instanceof EditTextPreference) {
-						((EditTextPreference) preference).setText(stringValue);
-					}
-					ret = false;
-				}
-
-				// check if the EID has a ":" not as first and not as last
-				// character
-				if (!stringValue.contains(":"))
-					return false;
-				if (stringValue.indexOf(":") == 0)
-					return false;
-				if (stringValue.lastIndexOf(":") == (stringValue.length() - 1))
-					return false;
-			}
-
 			for (String prefKey : mSummaryPrefs) {
 				if (prefKey.equals(preference.getKey())) {
-					if (preference instanceof ListPreference) {
+					if (Preferences.KEY_ENDPOINT_ID.equals(prefKey)) {
+						// exception for "endpoint_id", it shows the endpoint
+						if ("dtn".equals( stringValue )) {
+							preference.setSummary( getDefaultEndpoint(preference.getContext(), "dtn") );
+						}
+						else if ("ipn".equals( stringValue )) {
+							preference.setSummary( getDefaultEndpoint(preference.getContext(), "ipn") );
+						}
+						else {
+							preference.setSummary( stringValue );
+						}
+					} else if (preference instanceof ListPreference) {
 						// For list preferences, look up the correct display
 						// value in
 						// the preference's 'entries' list.
@@ -522,23 +510,55 @@ public class Preferences extends PreferenceActivity {
 						.getString(preference.getKey(), ""));
 	}
 	
+	public static String getDefaultEndpoint(Context context, String scheme) {
+		final String androidId = Secure.getString(context.getContentResolver(), Secure.ANDROID_ID);
+		MessageDigest md;
+		
+		String dtnId;
+		try {
+			md = MessageDigest.getInstance("MD5");
+			byte[] digest = md.digest(androidId.getBytes());
+			dtnId = "android-" + toHex(digest).substring(4, 12);
+		} catch (NoSuchAlgorithmException e) {
+			Log.e(TAG, "md5 not available");
+			dtnId = "android-" + androidId.substring(4, 12);
+		}
+		
+		if ("ipn".equals(scheme)) {
+			Long number = 0L;
+			try {
+				md = MessageDigest.getInstance("MD5");
+				byte[] digest = md.digest(dtnId.getBytes());
+				number += ByteBuffer.wrap(digest).getInt() & 0x7fffffff;
+			} catch (NoSuchAlgorithmException e) {
+				Log.e(TAG, "md5 not available");
+				number += ByteBuffer.wrap(androidId.getBytes()).getInt() & 0x7fffffff;
+			}
+			number |= 0x80000000L;
+			return "ipn:" + number;
+		}
+		else {
+			return "dtn://" + dtnId + ".dtn";
+		}
+	}
+	
 	public static String getEndpoint(Context context) {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 		
 		if (prefs.contains(KEY_ENDPOINT_ID)) {
-			return prefs.getString(KEY_ENDPOINT_ID, "dtn:none");
+			String endpointValue = prefs.getString(KEY_ENDPOINT_ID, "dtn");
+			if ("dtn".equals( endpointValue )) {
+				return getDefaultEndpoint(context, "dtn");
+			}
+			else if ("ipn".equals( endpointValue )) {
+				return getDefaultEndpoint(context, "ipn");
+			}
+			else {
+				return endpointValue;
+			}
 		}
 		
-		final String androidId = Secure.getString(context.getContentResolver(), Secure.ANDROID_ID);
-		MessageDigest md;
-		try {
-			md = MessageDigest.getInstance("MD5");
-			byte[] digest = md.digest(androidId.getBytes());
-			return "dtn://android-" + toHex(digest).substring(4, 12) + ".dtn";
-		} catch (NoSuchAlgorithmException e) {
-			Log.e(TAG, "md5 not available");
-		}
-		return "dtn://android-" + androidId.substring(4, 12) + ".dtn";
+		return getDefaultEndpoint(context, "dtn");
 	}
 	
 	/**
