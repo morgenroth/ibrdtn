@@ -34,8 +34,6 @@
 #include <netinet/in.h>
 #endif
 
-using namespace dtn::data;
-
 namespace dtn
 {
 	namespace net
@@ -167,7 +165,7 @@ namespace dtn
 
 					stream << (unsigned char)DiscoveryBeacon::DISCO_VERSION_01;
 
-					if (announcement._canonical_eid != EID())
+					if (announcement._canonical_eid != dtn::data::EID())
 					{
 						flags |= DiscoveryBeacon::BEACON_CONTAINS_EID;
 					}
@@ -390,7 +388,7 @@ namespace dtn
 				stream.read(&eid[0], eid.size());
 
 				announcement._version = DiscoveryBeacon::DTND_IPDISCOVERY;
-				announcement._canonical_eid = EID(std::string(eid.begin(), eid.end()));
+				announcement._canonical_eid = dtn::data::EID(std::string(eid.begin(), eid.end()));
 
 				break;
 			}
