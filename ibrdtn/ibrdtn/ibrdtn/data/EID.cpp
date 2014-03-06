@@ -22,13 +22,15 @@
 #include "ibrdtn/config.h"
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/utils/Utils.h"
-#include <netinet/in.h>
 #include <sstream>
 #include <iostream>
 
 #ifdef HAVE_OPENSSL
 #include <openssl/md5.h>
 #endif
+
+// include code for platform-independent endianess conversion
+#include "ibrdtn/data/Endianess.h"
 
 namespace dtn
 {
@@ -168,7 +170,7 @@ namespace dtn
 			MD5((unsigned char*)app.c_str(), app.length(), &hash[0]);
 
 			// use 4 byte as integer
-			uint32_t number = ntohl((uint32_t&)hash[0]);
+			uint32_t number = GUINT32_TO_BE((uint32_t&)hash[0]);
 
 			// set the highest bit
 			number |= 0x80000000;
