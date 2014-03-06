@@ -32,8 +32,6 @@
 #include <netinet/in.h>
 #endif
 
-using namespace dtn::data;
-
 namespace dtn
 {
 	namespace streams
