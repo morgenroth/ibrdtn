@@ -22,6 +22,7 @@
 #include "ibrdtn/config.h"
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/utils/Utils.h"
+#include <netinet/in.h>
 #include <sstream>
 #include <iostream>
 
@@ -167,7 +168,7 @@ namespace dtn
 			MD5((unsigned char*)app.c_str(), app.length(), &hash[0]);
 
 			// use 4 byte as integer
-			uint32_t &number = (uint32_t&)hash[0];
+			uint32_t number = ntohl((uint32_t&)hash[0]);
 
 			// set the highest bit
 			number |= 0x80000000;
