@@ -275,8 +275,8 @@ public class DaemonProcess {
         
 	    try {
 	        // bring the daemon down
-	        mDaemon.init(rl);
 	        if (listener != null) listener.OnStop();
+	        mDaemon.init(rl);
 	        
 	        // reload configuration
 	        onConfigurationChanged();
