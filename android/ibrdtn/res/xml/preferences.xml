@@ -63,15 +63,6 @@
     <PreferenceCategory
         android:key="prefcat_security"
         android:title="@string/security" >
-        <CheckBoxPreference
-            android:key="constrains_lifetime"
-            android:summary="@string/pref_constrains_lifetime_summary"
-            android:title="@string/pref_constrains_lifetime" />
-        <CheckBoxPreference
-            android:key="constrains_timestamp"
-            android:summary="@string/pref_constrains_timestamp_summary"
-            android:title="@string/pref_constrains_timestamp" />
-
         <ListPreference
             android:defaultValue="disabled"
             android:entries="@array/security_modes_names"

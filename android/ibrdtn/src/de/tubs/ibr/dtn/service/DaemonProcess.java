@@ -325,8 +325,6 @@ public class DaemonProcess {
     private final static HashSet<String> initializeConfigurationSet() {
         HashSet<String> ret = new HashSet<String>();
               
-        ret.add("constrains_lifetime");
-        ret.add("constrains_timestamp");
         ret.add("security_mode");
         ret.add("security_bab_key");
         ret.add("log_options");
@@ -580,13 +578,11 @@ public class DaemonProcess {
 			// enable traffic stats
 			p.println("stats_traffic = yes");
 
-			if (preferences.getBoolean("constrains_lifetime", false)) {
-				p.println("limit_lifetime = 1209600");
-			}
+			// limit max. bundle lifetime to 30 days
+			p.println("limit_lifetime = 2592000");
 
-			if (preferences.getBoolean("constrains_timestamp", false)) {
-				p.println("limit_predated_timestamp = 1209600");
-			}
+			// limit pre-dated timestamp to 2 weeks
+			p.println("limit_predated_timestamp = 1209600");
 
 			// limit block size to 50 MB
 			p.println("limit_blocksize = 250M");
