@@ -1,5 +1,7 @@
 package de.tubs.ibr.dtn.daemon;
 
+import java.util.regex.Pattern;
+
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.content.Context;
@@ -109,11 +111,24 @@ public class EndpointListPreference extends ListPreference {
 				String customEndpoint = s.toString();
 				boolean valid = true;
 				
-				// check if EID is valid
+				/**
+				 * check if EID is valid
+				 */
+				
+				// contains at least one ":"
 				if (!customEndpoint.contains(":")) valid = false;
-				if (customEndpoint.indexOf(":") == 0) valid = false;
-				if (customEndpoint.lastIndexOf(":") == (customEndpoint.length() - 1)) valid = false;
-				if (customEndpoint.startsWith("dtn:") && !customEndpoint.startsWith("dtn://")) valid = false;
+				
+				// should not start with a ":"
+				if (customEndpoint.startsWith(":")) valid = false;
+				
+				// should not end after the first ":"
+				if (customEndpoint.indexOf(":") == (customEndpoint.length() - 1)) valid = false;
+				
+				// scheme "dtn" is always followed by a "//"
+				if (customEndpoint.startsWith("dtn:") && !Pattern.matches("dtn://.+", customEndpoint)) valid = false;
+				
+				// scheme "ipn" is always followed by numbers only
+				if (customEndpoint.startsWith("ipn:") && !Pattern.matches("ipn:[0-9]+", customEndpoint)) valid = false;
 				
 				// enable / disable ok button
 				okButton.setEnabled(valid);
