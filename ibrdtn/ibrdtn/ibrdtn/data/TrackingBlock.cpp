@@ -22,6 +22,8 @@ namespace dtn
 		TrackingBlock::TrackingBlock()
 		 : dtn::data::Block(TrackingBlock::BLOCK_TYPE)
 		{
+			// set the replicate in every fragment bit
+			set(REPLICATE_IN_EVERY_FRAGMENT, true);
 		}
 
 		TrackingBlock::~TrackingBlock()
