@@ -232,21 +232,21 @@ public class DaemonService extends Service {
 			// stop main loop
 			mDaemonProcess.stop();
 		} else if (ACTION_RESTART.equals(action)) {
-			final Integer level = intent.getIntExtra("runlevel", 0);
+			Integer level = intent.getIntExtra("runlevel", 0);
 
 			// restart the daemon into the given runlevel
 			mDaemonProcess.restart(level, new DaemonProcess.OnRestartListener() {
 				@Override
-				public void OnStop() {
-					if (level <= DaemonRunLevel.RUNLEVEL_CORE.swigValue()) {
+				public void OnStop(DaemonRunLevel previous, DaemonRunLevel next) {
+					if (next.swigValue() < DaemonRunLevel.RUNLEVEL_API.swigValue() && previous.swigValue() >= DaemonRunLevel.RUNLEVEL_API.swigValue()) {
 						// shutdown the session manager
 						mSessionManager.destroy();
 					}
 				}
 
 				@Override
-				public void OnStart() {
-					if (level <= DaemonRunLevel.RUNLEVEL_CORE.swigValue()) {
+				public void OnStart(DaemonRunLevel previous, DaemonRunLevel next) {
+					if (previous.swigValue() < DaemonRunLevel.RUNLEVEL_API.swigValue() && next.swigValue() >= DaemonRunLevel.RUNLEVEL_API.swigValue()) {
 						// re-initialize the session manager
 						mSessionManager.initialize();
 					}

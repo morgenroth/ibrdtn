@@ -80,9 +80,9 @@ public class DaemonProcess {
     private static final String __CLOUD_PORT__ = "4559";
     
     public interface OnRestartListener {
-        public void OnStop();
+        public void OnStop(DaemonRunLevel previous, DaemonRunLevel next);
         public void OnReloadConfiguration();
-        public void OnStart();
+        public void OnStart(DaemonRunLevel previous, DaemonRunLevel next);
     };
 
 	/**
@@ -267,15 +267,16 @@ public class DaemonProcess {
         DaemonRunLevel rl = DaemonRunLevel.swigToEnum(runlevel);
         
         // do not restart if the current runlevel is below or equal
-        if (restore.swigValue() <= rl.swigValue()) {
+        if (restore.swigValue() <= runlevel) {
             // reload configuration
             onConfigurationChanged();
             if (listener != null) listener.OnReloadConfiguration();
+            return;
         }
         
 	    try {
 	        // bring the daemon down
-	        if (listener != null) listener.OnStop();
+	        if (listener != null) listener.OnStop(restore, rl);
 	        mDaemon.init(rl);
 	        
 	        // reload configuration
@@ -284,7 +285,7 @@ public class DaemonProcess {
 	        
 	        // restore the old runlevel
 	        mDaemon.init(restore);
-	        if (listener != null) listener.OnStart();
+	        if (listener != null) listener.OnStart(rl, restore);
 	    } catch (NativeDaemonException e) {
             Log.e(TAG, "error while restarting the daemon process", e);
         }
