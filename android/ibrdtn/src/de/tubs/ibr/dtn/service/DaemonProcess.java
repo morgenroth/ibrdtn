@@ -374,20 +374,6 @@ public class DaemonProcess {
                 intent.putExtra("runlevel", mRestartMap.get("interface_").swigValue() - 1);
                 DaemonProcess.this.mContext.startService(intent);
             }
-            else if (key.equals("uplink_mode"))
-            {
-                Log.d(TAG, "Preference " + key + " has changed to " + String.valueOf( prefs.getString(key, "off") ));
-                
-                synchronized(DaemonProcess.this) {
-                    if (!"off".equals(prefs.getString(key, "off"))) {
-                        mDaemon.addConnection(__CLOUD_EID__.toString(),
-                                __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
-                    } else {
-                        mDaemon.removeConnection(__CLOUD_EID__.toString(),
-                                __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
-                    }
-                }
-            }
             else if (key.startsWith("log_options"))
             {
                 Log.d(TAG, "Preference " + key + " has changed to " + prefs.getString(key, "<not set>"));
@@ -526,13 +512,6 @@ public class DaemonProcess {
 		@Override
 		public void levelChanged(DaemonRunLevel level) {
 			if (DaemonRunLevel.RUNLEVEL_ROUTING_EXTENSIONS.equals(level)) {
-			    // enable cloud-uplink
-			    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DaemonProcess.this.mContext);
-                if (!"off".equals(prefs.getString("uplink_mode", "off"))) {
-                    mDaemon.addConnection(__CLOUD_EID__.toString(),
-                            __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
-                }
-			    
 			    setState(DaemonState.ONLINE);
 			}
 			else if (DaemonRunLevel.RUNLEVEL_API.equals(level)) {
@@ -666,9 +645,21 @@ public class DaemonProcess {
 			}
 
 			p.println("net_interfaces = " + ifaces);
-			
-			if ("on".equals(preferences.getString("uplink_mode", "off"))) {
-			    p.println("net_internet = " + internet_ifaces);
+
+			if (!"off".equals(preferences.getString("uplink_mode", "off"))) {
+				// add option to detect interface connections
+				if ("wifi".equals(preferences.getString("uplink_mode", "off"))) {
+					p.println("net_internet = " + internet_ifaces);
+
+				}
+				
+				// add static host
+				p.println("static1_address = " + __CLOUD_ADDRESS__);
+				p.println("static1_port = " + __CLOUD_PORT__);
+				p.println("static1_uri = " + __CLOUD_EID__);
+				p.println("static1_proto = tcp");
+				p.println("static1_immediately = yes");
+				p.println("static1_global = yes");
 			}
 
 			String storage_mode = preferences.getString( "storage_mode", "disk-persistent" );
