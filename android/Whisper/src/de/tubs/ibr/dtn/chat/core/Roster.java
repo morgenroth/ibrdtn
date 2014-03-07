@@ -38,6 +38,7 @@ import de.tubs.ibr.dtn.api.BundleID;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.chat.MessageAdapter;
 import de.tubs.ibr.dtn.chat.RosterAdapter;
+import de.tubs.ibr.dtn.chat.service.ChatService;
 
 @SuppressLint("SimpleDateFormat")
 public class Roster {
@@ -432,7 +433,7 @@ public class Roster {
 	public void notifyBuddyChanged(Long buddyId) {
 		if (context != null) {
 			Intent i = new Intent(Roster.NOTIFY_ROSTER_CHANGED);
-			i.putExtra("buddyId", buddyId);
+			i.putExtra(ChatService.EXTRA_BUDDY_ID, buddyId);
 			context.sendBroadcast(i);
 		}
 	}

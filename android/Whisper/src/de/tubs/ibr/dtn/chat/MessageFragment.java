@@ -1,10 +1,12 @@
 package de.tubs.ibr.dtn.chat;
 
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -76,14 +78,14 @@ public class MessageFragment extends Fragment {
 
         // Supply buddyId input as an argument.
         Bundle args = new Bundle();
-        if (buddyId != null) args.putLong("buddyId", buddyId);
+        if (buddyId != null) args.putLong(ChatService.EXTRA_BUDDY_ID, buddyId);
         f.setArguments(args);
 
         return f;
     }
 
     public Long getShownBuddy() {
-        Long id = getArguments().getLong("buddyId", -1);
+        Long id = getArguments().getLong(ChatService.EXTRA_BUDDY_ID, -1);
         if (id == -1) return null;
         return id;
     }
@@ -212,9 +214,6 @@ public class MessageFragment extends Fragment {
 	public void onPause() {
 		Long buddyId = getShownBuddy();
 		
-		// set the current buddy to invisible
-		ChatService.setVisible(null);
-		
 		if (buddyId != null) {
 			if (mService != null) {
 				if (mComposer.getMessage().length() > 0)
@@ -224,6 +223,9 @@ public class MessageFragment extends Fragment {
 			}
 		}
 		
+		// unregister to message updates
+		getActivity().unregisterReceiver(mNotificationReceiver);
+		
 		super.onPause();
 	}
 
@@ -232,9 +234,6 @@ public class MessageFragment extends Fragment {
 		super.onResume();
 		
 		Long buddyId = getShownBuddy();
-
-		// set the current visible buddy
-		ChatService.setVisible(buddyId);
 		
 		if ((buddyId != null) && !mBound) {
 			// Establish a connection with the service.  We use an explicit
@@ -244,7 +243,22 @@ public class MessageFragment extends Fragment {
 			getActivity().bindService(new Intent(getActivity(), ChatService.class), mConnection, Context.BIND_AUTO_CREATE);
 			mBound = true;
 		}
+		
+		// register to notifications
+		IntentFilter filter = new IntentFilter(ChatService.ACTION_NEW_MESSAGE);
+		filter.setPriority(10);
+		getActivity().registerReceiver(mNotificationReceiver, filter);
 	}
+	
+	private BroadcastReceiver mNotificationReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (ChatService.ACTION_NEW_MESSAGE.equals(intent.getAction())) {
+				Long buddyId = intent.getLongExtra(ChatService.EXTRA_BUDDY_ID, -1);
+				if (getShownBuddy() == buddyId) abortBroadcast();
+			}
+		}
+	};
 	
 	private void startVoiceRecording() {
         if (mService != null) {

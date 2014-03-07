@@ -134,7 +134,7 @@ public class RosterFragment extends ListFragment implements LoaderManager.Loader
 
         if (savedInstanceState != null) {
             // Restore last state for checked position.
-        	mBuddyId = savedInstanceState.getLong("buddyId", -1);
+        	mBuddyId = savedInstanceState.getLong(ChatService.EXTRA_BUDDY_ID, -1);
         	if (mBuddyId.equals(-1L)) mBuddyId = null;
         } else {
         	Intent i = getActivity().getIntent();
@@ -142,7 +142,7 @@ public class RosterFragment extends ListFragment implements LoaderManager.Loader
         	{
         		Bundle extras = i.getExtras();
             	if (extras != null) {
-            		mBuddyId = extras.getLong("buddyId", -1);
+            		mBuddyId = extras.getLong(ChatService.EXTRA_BUDDY_ID, -1);
             		if (mBuddyId.equals(-1L)) mBuddyId = null;
             	}
         	}
@@ -189,7 +189,7 @@ public class RosterFragment extends ListFragment implements LoaderManager.Loader
             // the dialog fragment with selected text.
             Intent intent = new Intent();
             intent.setClass(getActivity(), MessageActivity.class);
-            intent.putExtra("buddyId", buddyId);
+            intent.putExtra(ChatService.EXTRA_BUDDY_ID, buddyId);
             startActivity(intent);
         }
     }
@@ -198,9 +198,9 @@ public class RosterFragment extends ListFragment implements LoaderManager.Loader
 	public void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
 		if (mBuddyId != null)
-			outState.putLong("buddyId", mBuddyId);
+			outState.putLong(ChatService.EXTRA_BUDDY_ID, mBuddyId);
 		else
-			outState.remove("buddyId");
+			outState.remove(ChatService.EXTRA_BUDDY_ID);
 	}
 
 	@Override

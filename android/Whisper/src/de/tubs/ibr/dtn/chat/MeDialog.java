@@ -1,5 +1,6 @@
 package de.tubs.ibr.dtn.chat;
 
+import de.tubs.ibr.dtn.chat.service.ChatService;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
@@ -38,15 +39,15 @@ public class MeDialog extends DialogFragment {
     @Override
 	public void onCreate(Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
-    	this.presence = getArguments().getString("presence");
-    	this.status = getArguments().getString("status");
+    	this.presence = getArguments().getString(ChatService.EXTRA_PRESENCE);
+    	this.status = getArguments().getString(ChatService.EXTRA_STATUS);
 	}
 
 	static MeDialog newInstance(String presence, String status) {
     	MeDialog m = new MeDialog();
         Bundle args = new Bundle();
-        args.putString("presence", presence);
-        args.putString("status", status);
+        args.putString(ChatService.EXTRA_PRESENCE, presence);
+        args.putString(ChatService.EXTRA_STATUS, status);
         m.setArguments(args);
         return m;
     }
