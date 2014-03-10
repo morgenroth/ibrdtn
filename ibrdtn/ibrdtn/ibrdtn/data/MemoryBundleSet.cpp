@@ -38,7 +38,13 @@ namespace dtn
 		MemoryBundleSet::MemoryBundleSet(const std::string &name, BundleSet::Listener *listener, Length bf_size)
 		 : _name(name), _bf_size(bf_size), _bf(bf_size * 8), _listener(listener), _consistent(true)
 		{
-			restore();
+			try {
+				restore();
+			} catch (const dtn::InvalidDataException &ex) {
+				// restore failed to invalid data
+			} catch (const std::exception &ex) {
+				// restore failed
+			}
 		}
 
 		MemoryBundleSet::~MemoryBundleSet()
