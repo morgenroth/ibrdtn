@@ -37,7 +37,7 @@ import de.tubs.ibr.dtn.chat.core.Buddy;
 public class RosterAdapter extends CursorAdapter {
 
 	@SuppressWarnings("unused")
-	private final static String TAG = "RosterView";
+	private final static String TAG = "RosterAdapter";
 	
 	private LayoutInflater mInflater = null;
 	private Context mContext = null;

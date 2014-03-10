@@ -118,9 +118,7 @@ namespace dtn
 
 		Length ExtensionBlock::getLength() const
 		{
-			ibrcommon::BLOB::Reference blobref = _blobref;
-			ibrcommon::BLOB::iostream io = blobref.iostream();
-			return io.size();
+			return _blobref.size();
 		}
 
 		std::ostream& ExtensionBlock::serialize(std::ostream &stream, Length &) const

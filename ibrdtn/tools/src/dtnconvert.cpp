@@ -117,10 +117,7 @@ int main(int argc, char** argv)
 			ibrcommon::BLOB::Reference ref = pblock.getBLOB();
 
 			// this part is protected agains other threads
-			{
-				ibrcommon::BLOB::iostream stream = ref.iostream();
-				std::cout << "payload size: " << stream.size() << std::endl;
-			}
+			std::cout << "payload size: " << ref.size() << std::endl;
 			break;
 		}
 

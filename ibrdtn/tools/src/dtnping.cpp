@@ -391,7 +391,7 @@ int main(int argc, char *argv[])
 							{
 								ibrcommon::BLOB::Reference blob = response.find<dtn::data::PayloadBlock>().getBLOB();
 								blob.iostream()->read((char *)(&reply_seq),4 );
-								payload_size = blob.iostream().size();
+								payload_size = blob.size();
 							}
 
 							std::cout << payload_size << " bytes from " << response.source.getString() << ": seq=" << reply_seq << " ttl=" << response.lifetime.toString() << " time=" << tm << std::endl;

@@ -27,6 +27,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import de.tubs.ibr.dtn.daemon.Preferences;
 
 public class OnBootReceiver extends BroadcastReceiver {
 	
@@ -40,7 +41,7 @@ public class OnBootReceiver extends BroadcastReceiver {
 		
 		if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED"))
 		{
-			if (preferences.getBoolean("enabledSwitch", false))
+			if (preferences.getBoolean(Preferences.KEY_ENABLED, true))
 			{
 				// start the dtnd service
 				Intent is = new Intent(context, DaemonService.class);

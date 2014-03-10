@@ -1,11 +1,13 @@
 package de.tubs.ibr.dtn.ping;
 
 import android.app.Activity;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.IntentSender.SendIntentException;
 import android.content.ServiceConnection;
 import android.content.res.Resources;
 import android.os.Bundle;
@@ -57,8 +59,13 @@ public class PingActivity extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.itemSelectNeighbor:
-                Intent intent = mService.getSelectNeighborIntent();
-                startActivityForResult(intent, SELECT_NEIGHBOR);
+                PendingIntent pi = mService.getSelectNeighborIntent();
+                try {
+					startIntentSenderForResult(pi.getIntentSender(), SELECT_NEIGHBOR, null, 0, 0, 0);
+				} catch (SendIntentException e1) {
+					// error
+					e1.printStackTrace();
+				}
                 return true;
                 
             case R.id.itemEnableStreaming:
@@ -109,8 +116,8 @@ public class PingActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (SELECT_NEIGHBOR == requestCode) {
-            if ((data != null) && data.hasExtra(de.tubs.ibr.dtn.Intent.NODE_KEY)) {
-                Node n = data.getParcelableExtra(de.tubs.ibr.dtn.Intent.NODE_KEY);
+            if ((data != null) && data.hasExtra(de.tubs.ibr.dtn.Intent.EXTRA_NODE)) {
+                Node n = data.getParcelableExtra(de.tubs.ibr.dtn.Intent.EXTRA_NODE);
                 onNeighborSelected(n);
             }
             return;
@@ -136,6 +143,24 @@ public class PingActivity extends Activity {
                 ping();
             }
         });
+        
+    	if ( de.tubs.ibr.dtn.Intent.ENDPOINT_INTERACT.equals( getIntent().getAction() ) ) {
+    		// check if an endpoint exists
+    		if (getIntent().getExtras().containsKey(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT)) {
+    			// extract endpoint
+    			String endpoint = getIntent().getExtras().getString(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT);
+    			
+    			// add application endpoint to different EID schemes
+    			if (endpoint.startsWith("dtn:")) {
+    				// add dtn application path for 'echo'
+    				mTextEid.setText(endpoint + "/echo");
+    			}
+    			else if (endpoint.startsWith("ipn:")) {
+    				// add ipn application number for 'echo'
+    				mTextEid.setText(endpoint + ".11");
+    			}
+    		}
+    	}
     }
     
 	@Override
@@ -223,7 +248,7 @@ public class PingActivity extends Activity {
     private BroadcastReceiver mDataReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.hasExtra("localeid")) {
+            if (intent.hasExtra("localeid") && mTextEid.getText().length() == 0) {
                 String local_eid = intent.getStringExtra("localeid");
                 if (local_eid.startsWith("ipn:")) {
                     mTextEid.setText( local_eid + ".11" );

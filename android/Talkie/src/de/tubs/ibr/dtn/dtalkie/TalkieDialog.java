@@ -16,6 +16,7 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import de.tubs.ibr.dtn.api.EID;
+import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.dtalkie.service.RecorderService;
 import de.tubs.ibr.dtn.dtalkie.service.Sound;
 import de.tubs.ibr.dtn.dtalkie.service.SoundFXManager;
@@ -126,11 +127,38 @@ public class TalkieDialog extends Activity {
     }
     
     private void startRecording() {
-        Bundle extras = getIntent().getExtras();
-        EID destination = Utils.getEndpoint(extras, "destination", "singleton", RecorderService.TALKIE_GROUP_EID);
-        
-        // start recording
-        RecorderService.startRecording(this, destination, true, true);
+    	EID destination = null;
+    	Bundle extras = getIntent().getExtras();
+    	
+    	if ( de.tubs.ibr.dtn.Intent.ENDPOINT_INTERACT.equals( getIntent().getAction() ) ) {
+    		// check if an endpoint exists
+    		if (extras.containsKey(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT)) {
+    			// extract endpoint
+    			String endpoint = extras.getString(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT);
+    			
+    			// add application endpoint to different EID schemes
+    			if (endpoint.startsWith("dtn:")) {
+    				// add dtn application path for 'dtalkie'
+    				destination = new SingletonEndpoint(endpoint + "/dtalkie");
+    			}
+    			else if (endpoint.startsWith("ipn:")) {
+    				// add ipn application number for 'dtalkie'
+    				destination = new SingletonEndpoint(endpoint + ".3066158454");
+    			}
+    		}
+    	}
+    	else {
+    		destination = Utils.getEndpoint(extras, "destination", "singleton", RecorderService.TALKIE_GROUP_EID);
+    	}
+    	
+    	// abort if not destination is set
+    	if (destination == null) {
+    		// stop recording
+    		stopRecording();
+    	} else {
+			// start recording
+			RecorderService.startRecording(this, destination, true, true);
+    	}
     }
     
     private void stopRecording() {

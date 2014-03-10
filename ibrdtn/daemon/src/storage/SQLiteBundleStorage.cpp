@@ -288,6 +288,11 @@ namespace dtn
 								const std::streamsize length = stream.size();
 								ibrcommon::BLOB::copy(fout, (*stream), length);
 							}
+							else
+							{
+								// update BLOB size
+								blob->update();
+							}
 
 							// add payload block to the bundle
 							bundle.push_back(ref);

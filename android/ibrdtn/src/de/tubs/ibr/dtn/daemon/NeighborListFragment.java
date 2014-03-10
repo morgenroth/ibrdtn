@@ -34,10 +34,13 @@ import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.util.Log;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 import de.tubs.ibr.dtn.DTNService;
@@ -80,20 +83,26 @@ public class NeighborListFragment extends ListFragment implements
             if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "service disconnected");
         }
     };
-
-    @Override
+    
+	@Override
 	public void onListItemClick(ListView l, View v, int position, long id) {
-		NeighborListAdapter nla = (NeighborListAdapter)this.getListAdapter();
-		Node n = (Node)nla.getItem(position);
+		NeighborListAdapter nla = (NeighborListAdapter) getListAdapter();
+		Node n = (Node) nla.getItem(position);
+
+		// call external apps to handle the endpoint
+		final Intent intent = new Intent(de.tubs.ibr.dtn.Intent.ENDPOINT_INTERACT);
+		intent.addCategory(Intent.CATEGORY_DEFAULT);
+		intent.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, n.endpoint.toString());
 		
-        // initiate connection via intent
-        final Intent intent = new Intent(getActivity(), DaemonService.class);
-        intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_INITIATE_CONNECTION);
-        intent.putExtra("endpoint", n.endpoint.toString());
-        getActivity().startService(intent);
-    	
-    	// call super-method
-    	super.onListItemClick(l, v, position, id);
+		try {
+			getActivity().startActivity(intent);
+		} catch (android.content.ActivityNotFoundException ex) {
+			// no activity found to handle the request
+			Toast.makeText(getActivity(), getString(R.string.toast_no_application), Toast.LENGTH_SHORT).show();
+		}
+
+		// call super-method
+		super.onListItemClick(l, v, position, id);
 	}
 
     @Override
@@ -121,7 +130,11 @@ public class NeighborListFragment extends ListFragment implements
         
         // We have a menu item to show in action bar.
         setHasOptionsMenu(true);
+        
+        // register context menu
+        registerForContextMenu(this.getListView());
 
+        // set text for empty listview
         setEmptyText(getActivity().getResources().getString(R.string.list_no_neighbors));
 
         // create a new list adapter
@@ -141,6 +154,33 @@ public class NeighborListFragment extends ListFragment implements
     }
     
     @Override
+	public boolean onContextItemSelected(MenuItem item) {
+    	AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+		NeighborListAdapter nla = (NeighborListAdapter)getListAdapter();
+		Node n = (Node)nla.getItem(info.position);
+		
+		switch (item.getItemId()) {
+			case R.id.itemConnect:
+		        // initiate connection via intent
+		        final Intent intent = new Intent(getActivity(), DaemonService.class);
+		        intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_INITIATE_CONNECTION);
+		        intent.putExtra("endpoint", n.endpoint.toString());
+		        getActivity().startService(intent);
+				return true;
+
+			default:
+				return super.onContextItemSelected(item);
+		}
+    }
+
+	@Override
+	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
+		super.onCreateContextMenu(menu, v, menuInfo);
+		MenuInflater inflater = this.getActivity().getMenuInflater();
+	    inflater.inflate(R.menu.neighbor_menu_item, menu);
+	}
+
+	@Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.itemDiscovery: {
@@ -149,8 +189,6 @@ public class NeighborListFragment extends ListFragment implements
                 discoIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_START_DISCOVERY);
                 discoIntent.putExtra(DaemonService.EXTRA_DISCOVERY_DURATION, 120L);
                 getActivity().startService(discoIntent);
-                
-                Toast.makeText(getActivity(), R.string.toast_discovery_started, Toast.LENGTH_SHORT).show();
             }
 
             default:

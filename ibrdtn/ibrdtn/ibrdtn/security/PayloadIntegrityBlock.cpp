@@ -74,8 +74,7 @@ namespace dtn
 			{
 				dtn::data::PayloadBlock& plb = bundle.find<dtn::data::PayloadBlock>();
 				ibrcommon::BLOB::Reference blobref = plb.getBLOB();
-				ibrcommon::BLOB::iostream stream = blobref.iostream();
-				addFragmentRange(pib._ciphersuite_params, bundle.fragmentoffset, stream.size());
+				addFragmentRange(pib._ciphersuite_params, bundle.fragmentoffset, blobref.size());
 			}
 
 			// set the source and destination address of the new block

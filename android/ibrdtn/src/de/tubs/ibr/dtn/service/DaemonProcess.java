@@ -26,8 +26,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,11 +38,11 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.wifi.WifiManager;
 import android.preference.PreferenceManager;
-import android.provider.Settings.Secure;
 import android.util.Log;
 import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.api.Node;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
+import de.tubs.ibr.dtn.daemon.Preferences;
 import de.tubs.ibr.dtn.swig.DaemonRunLevel;
 import de.tubs.ibr.dtn.swig.NativeDaemon;
 import de.tubs.ibr.dtn.swig.NativeDaemonCallback;
@@ -312,10 +310,9 @@ public class DaemonProcess {
     private final static HashMap<String, DaemonRunLevel> initializeRestartMap() {
         HashMap<String, DaemonRunLevel> ret = new HashMap<String, DaemonRunLevel>();
         
-        ret.put("endpoint_id", DaemonRunLevel.RUNLEVEL_CORE);
+        ret.put(Preferences.KEY_ENDPOINT_ID, DaemonRunLevel.RUNLEVEL_CORE);
         ret.put("routing", DaemonRunLevel.RUNLEVEL_ROUTING_EXTENSIONS);
         ret.put("interface_", DaemonRunLevel.RUNLEVEL_NETWORK);
-        ret.put("checkIdleTimeout", DaemonRunLevel.RUNLEVEL_NETWORK);
         ret.put("timesync_mode", DaemonRunLevel.RUNLEVEL_API);
         ret.put("storage_mode", DaemonRunLevel.RUNLEVEL_CORE);
         ret.put("uplink_mode", DaemonRunLevel.RUNLEVEL_NETWORK);
@@ -351,7 +348,7 @@ public class DaemonProcess {
                 intent.putExtra("runlevel", mRestartMap.get(key).swigValue() - 1);
                 DaemonProcess.this.mContext.startService(intent);
             }
-            else if (key.equals("enabledSwitch"))
+            else if (key.equals(Preferences.KEY_ENABLED))
             {
                 Log.d(TAG, "Preference " + key + " has changed to " + String.valueOf( prefs.getBoolean(key, false) ));
                 
@@ -552,40 +549,6 @@ public class DaemonProcess {
 			}
 		}
 	};
-	
-	/**
-	 * Create Hex String from byte array
-	 * 
-	 * @param data
-	 * @return
-	 */
-	private static String toHex(byte[] data)
-	{
-		StringBuffer hexString = new StringBuffer();
-		for (int i = 0; i < data.length; i++)
-			hexString.append(Integer.toHexString(0xFF & data[i]));
-		return hexString.toString();
-	}
-
-	/**
-	 * Build unique endpoint id from Secure.ANDROID_ID
-	 * 
-	 * @param context
-	 * @return
-	 */
-	public static SingletonEndpoint getUniqueEndpointID(Context context)
-	{
-		final String androidId = Secure.getString(context.getContentResolver(), Secure.ANDROID_ID);
-		MessageDigest md;
-		try {
-			md = MessageDigest.getInstance("MD5");
-			byte[] digest = md.digest(androidId.getBytes());
-			return new SingletonEndpoint("dtn://android-" + toHex(digest).substring(4, 12) + ".dtn");
-		} catch (NoSuchAlgorithmException e) {
-			Log.e(TAG, "md5 not available");
-		}
-		return new SingletonEndpoint("dtn://android-" + androidId.substring(4, 12) + ".dtn");
-	}
 
 	/**
 	 * Creates config for dtnd in specified path
@@ -611,7 +574,7 @@ public class DaemonProcess {
 
 			// set EID
 			PrintStream p = new PrintStream(writer);
-			p.println("local_uri = " + preferences.getString("endpoint_id", getUniqueEndpointID(context).toString()));
+			p.println("local_uri = " + Preferences.getEndpoint(context));
 			p.println("routing = " + preferences.getString("routing", "default"));
 			
 			// enable traffic stats
@@ -676,10 +639,6 @@ public class DaemonProcess {
 			    p.println("#time_sigma = 1.001");
 			    p.println("#time_psi = 0.9");
 			    p.println("#time_sync_level = 0.15");
-			}
-
-			if (preferences.getBoolean("checkIdleTimeout", false)) {
-				p.println("tcp_idle_timeout = 30");
 			}
 			
 			// enable fragmentation support

@@ -7,6 +7,7 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import de.tubs.ibr.dtn.DtnManager;
+import de.tubs.ibr.dtn.daemon.Preferences;
 
 public class DaemonManager extends Service {
     
@@ -14,7 +15,7 @@ public class DaemonManager extends Service {
         @Override
         public void setDtnEnabled(boolean state) throws RemoteException {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DaemonManager.this);
-            prefs.edit().putBoolean("enabledSwitch", state).commit();
+            prefs.edit().putBoolean(Preferences.KEY_ENABLED, state).commit();
             
             if (state) {
                 // start the DTN service
@@ -27,7 +28,7 @@ public class DaemonManager extends Service {
         @Override
         public boolean isDtnEnabled() throws RemoteException {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DaemonManager.this);
-            return prefs.getBoolean("enabledSwitch", false);
+            return prefs.getBoolean(Preferences.KEY_ENABLED, true);
         }
     };
 

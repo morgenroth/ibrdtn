@@ -22,7 +22,11 @@
 
 package de.tubs.ibr.dtn.daemon;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
+
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.ActionBar;
 import android.app.Activity;
@@ -51,6 +55,8 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
+import android.preference.SwitchPreference;
+import android.provider.Settings.Secure;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
@@ -61,30 +67,43 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.Switch;
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.R;
-import de.tubs.ibr.dtn.service.DaemonProcess;
 import de.tubs.ibr.dtn.service.DaemonService;
+import de.tubs.ibr.dtn.service.P2pManager;
+import de.tubs.ibr.dtn.service.DaemonService.LocalDTNService;
 import de.tubs.ibr.dtn.stats.CollectorService;
 
 public class Preferences extends PreferenceActivity {
-
-	private final String TAG = "Preferences";
+	
+	private static final String TAG = "Preferences";
+	
+	public static final String KEY_ENABLED = "enabledSwitch";
+	public static final String KEY_ENDPOINT_ID = "endpoint_id";
+	public static final String KEY_DISCOVERY_MODE = "discovery_mode";
+	public static final String KEY_P2P_ENABLED = "p2p_enabled";
 
 	// These preferences show their value as summary
 	private final static String[] mSummaryPrefs = {
-			"endpoint_id", "routing", "security_mode", "log_options", "log_debug_verbosity",
-			"timesync_mode", "storage_mode", "uplink_mode", "discovery_mode"
+		KEY_ENDPOINT_ID, "routing", "security_mode", "log_options", "log_debug_verbosity",
+			"timesync_mode", "storage_mode", "uplink_mode", KEY_DISCOVERY_MODE
 	};
 
 	private Boolean mBound = false;
 	private DTNService mService = null;
+	private DaemonService mDaemon = null;
 
 	private Switch actionBarSwitch = null;
 	private CheckBoxPreference checkBoxPreference = null;
 	private InterfacePreferenceCategory mInterfacePreference = null;
+	private SwitchPreference mP2pSwitch = null;
 
 	private ServiceConnection mConnection = new ServiceConnection() {
+		@SuppressLint("NewApi")
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			Preferences.this.mService = DTNService.Stub.asInterface(service);
+			
+			// get direct access to the daemon
+			mDaemon = ((LocalDTNService)service).getLocal();
+			
 			if (Log.isLoggable(TAG, Log.DEBUG))
 				Log.d(TAG, "service connected");
 
@@ -94,6 +113,11 @@ public class Preferences extends PreferenceActivity {
 				setVersion("dtnd: " + version[0] + ", build: " + version[1]);
 			} catch (RemoteException e) {
 				Log.e(TAG, "Can not query the daemon version", e);
+			}
+			
+			// enable / disable P2P switch
+			if (mP2pSwitch != null) {
+				mP2pSwitch.setEnabled(mDaemon.isP2pActive());
 			}
 		}
 
@@ -216,7 +240,7 @@ public class Preferences extends PreferenceActivity {
 			return;
 
 		Editor e = prefs.edit();
-		e.putString("endpoint_id", DaemonProcess.getUniqueEndpointID(context).toString());
+		e.putString(KEY_ENDPOINT_ID, Preferences.getEndpoint(context).toString());
 
 		// set preferences to initialized
 		e.putBoolean("initialized", true);
@@ -241,7 +265,7 @@ public class Preferences extends PreferenceActivity {
 		mInterfacePreference = (InterfacePreferenceCategory) findPreference("prefcat_interfaces");
 
 		// connect daemon controls
-		checkBoxPreference = (CheckBoxPreference) findPreference("enabledSwitch");
+		checkBoxPreference = (CheckBoxPreference) findPreference(KEY_ENABLED);
 		if (checkBoxPreference == null) {
 			// use custom actionbar switch
 			actionBarSwitch = new Switch(this);
@@ -260,23 +284,23 @@ public class Preferences extends PreferenceActivity {
 					.getDefaultSharedPreferences(Preferences.this);
 
 			// read initial state of the switch
-			actionBarSwitch.setChecked(prefs.getBoolean("enabledSwitch", false));
+			actionBarSwitch.setChecked(prefs.getBoolean(KEY_ENABLED, true));
 
 			actionBarSwitch.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 				public void onCheckedChanged(CompoundButton arg0, boolean val) {
 
 					if (val) {
-						// set "enabledSwitch" preference to true
+						// set KEY_ENABLED preference to true
 						SharedPreferences prefs = PreferenceManager
 								.getDefaultSharedPreferences(Preferences.this);
-						prefs.edit().putBoolean("enabledSwitch", true).commit();
+						prefs.edit().putBoolean(KEY_ENABLED, true).commit();
 					}
 					else
 					{
-						// set "enabledSwitch" preference to false
+						// set KEY_ENABLED preference to false
 						SharedPreferences prefs = PreferenceManager
 								.getDefaultSharedPreferences(Preferences.this);
-						prefs.edit().putBoolean("enabledSwitch", false).commit();
+						prefs.edit().putBoolean(KEY_ENABLED, false).commit();
 					}
 				}
 			});
@@ -284,6 +308,12 @@ public class Preferences extends PreferenceActivity {
 
 		// set initial version
 		setVersion(null);
+		
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+			// hide P2p control
+			mP2pSwitch = (SwitchPreference)findPreference(KEY_P2P_ENABLED);
+			mP2pSwitch.setEnabled(false);
+		}
 
 		// Bind the summaries of EditText/List/Dialog/Ringtone preferences to
 		// their values. When their values change, their summaries are updated
@@ -331,8 +361,10 @@ public class Preferences extends PreferenceActivity {
 		super.onPause();
 
 		unregisterReceiver(mNetworkConditionListener);
+		unregisterReceiver(mP2pConditionListener);
 	}
 
+	@SuppressLint("NewApi")
 	@Override
 	protected void onResume() {
 		if (!mBound) {
@@ -356,6 +388,14 @@ public class Preferences extends PreferenceActivity {
 		IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
 		filter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
 		registerReceiver(mNetworkConditionListener, filter);
+		
+		IntentFilter p2p_filter = new IntentFilter(P2pManager.INTENT_P2P_STATE_CHANGED);
+		registerReceiver(mP2pConditionListener, p2p_filter);
+		
+		// enable / disable P2P switch
+		if ((mP2pSwitch != null) && (mDaemon != null)) {
+			mP2pSwitch.setEnabled(mDaemon.isP2pActive());
+		}
 
 		mInterfacePreference.updateInterfaceList();
 	}
@@ -372,16 +412,28 @@ public class Preferences extends PreferenceActivity {
 		}
 	};
 	
+	private BroadcastReceiver mP2pConditionListener = new BroadcastReceiver() {
+		@SuppressLint("NewApi")
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			Log.d(TAG, "p2p changed");
+			if (mP2pSwitch == null) return;
+			
+			// enable / disable P2P switch
+			mP2pSwitch.setEnabled(intent.getBooleanExtra(P2pManager.EXTRA_P2P_STATE, false));
+		}
+	};
+	
 	private SharedPreferences.OnSharedPreferenceChangeListener mOnOffSwitchListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
 		@TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
 		@Override
 		public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-			if ("enabledSwitch".equals(key)) {
+			if (KEY_ENABLED.equals(key)) {
 				// update switch state
 				if (checkBoxPreference == null) {
-					actionBarSwitch.setChecked(sharedPreferences.getBoolean("enabledSwitch", false));
+					actionBarSwitch.setChecked(sharedPreferences.getBoolean(KEY_ENABLED, true));
 				} else {
-					checkBoxPreference.setChecked(sharedPreferences.getBoolean("enabledSwitch", false));
+					checkBoxPreference.setChecked(sharedPreferences.getBoolean(KEY_ENABLED, true));
 				}
 			}
 		}
@@ -397,13 +449,13 @@ public class Preferences extends PreferenceActivity {
 			boolean ret = true;
 			String stringValue = value.toString();
 
-			if ("endpoint_id".equals(preference.getKey())) {
+			if (Preferences.KEY_ENDPOINT_ID.equals(preference.getKey())) {
 				// do not allow empty values
 				if (stringValue.length() == 0) {
 					// reset to default
-					stringValue = DaemonProcess.getUniqueEndpointID(preference.getContext())
+					stringValue = Preferences.getEndpoint(preference.getContext())
 							.toString();
-					preference.getEditor().putString("endpoint_id", stringValue).commit();
+					preference.getEditor().putString(Preferences.KEY_ENDPOINT_ID, stringValue).commit();
 					if (preference instanceof EditTextPreference) {
 						((EditTextPreference) preference).setText(stringValue);
 					}
@@ -468,5 +520,38 @@ public class Preferences extends PreferenceActivity {
 				PreferenceManager
 						.getDefaultSharedPreferences(preference.getContext())
 						.getString(preference.getKey(), ""));
+	}
+	
+	public static String getEndpoint(Context context) {
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+		
+		if (prefs.contains(KEY_ENDPOINT_ID)) {
+			return prefs.getString(KEY_ENDPOINT_ID, "dtn:none");
+		}
+		
+		final String androidId = Secure.getString(context.getContentResolver(), Secure.ANDROID_ID);
+		MessageDigest md;
+		try {
+			md = MessageDigest.getInstance("MD5");
+			byte[] digest = md.digest(androidId.getBytes());
+			return "dtn://android-" + toHex(digest).substring(4, 12) + ".dtn";
+		} catch (NoSuchAlgorithmException e) {
+			Log.e(TAG, "md5 not available");
+		}
+		return "dtn://android-" + androidId.substring(4, 12) + ".dtn";
+	}
+	
+	/**
+	 * Create Hex String from byte array
+	 * 
+	 * @param data
+	 * @return
+	 */
+	private static String toHex(byte[] data)
+	{
+		StringBuffer hexString = new StringBuffer();
+		for (int i = 0; i < data.length; i++)
+			hexString.append(Integer.toHexString(0xFF & data[i]));
+		return hexString.toString();
 	}
 }

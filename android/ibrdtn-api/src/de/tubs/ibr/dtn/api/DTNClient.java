@@ -33,6 +33,7 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.ResolveInfo;
+import android.content.pm.ServiceInfo;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
@@ -431,9 +432,16 @@ public final class DTNClient {
   		// store registration
   		mRegistration = reg;
   		
-		Intent bindIntent = new Intent(DTNService.class.getName());
-		List<ResolveInfo> list = context.getPackageManager().queryIntentServices(bindIntent, 0);
-		if (list.size() == 0) throw new ServiceNotAvailableException();	
+		Intent queryIntent = new Intent(DTNService.class.getName());
+		List<ResolveInfo> list = context.getPackageManager().queryIntentServices(queryIntent, 0);
+		if (list.size() == 0) throw new ServiceNotAvailableException();
+		
+		// get the first found service
+		ServiceInfo serviceInfo = list.get(0).serviceInfo;
+		
+		// create bind intent to the first service
+		Intent bindIntent = new Intent();
+		bindIntent.setClassName(serviceInfo.packageName, serviceInfo.name);
   		
 		// create new executor
 		mShutdown = false;

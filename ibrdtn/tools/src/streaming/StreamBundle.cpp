@@ -61,6 +61,5 @@ void StreamBundle::clear()
 
 size_t StreamBundle::size()
 {
-	ibrcommon::BLOB::iostream stream = _ref.iostream();
-	return stream.size();
+	return _ref.size();
 }

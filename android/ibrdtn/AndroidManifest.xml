@@ -137,22 +137,6 @@
 				<action android:name="android.net.wifi.WIFI_STATE_CHANGED" />
 			</intent-filter>
 		</receiver>
-
-        <activity
-            android:name=".p2p.P2pSettingsActivity"
-            android:label="@string/pref_p2p" >
-        </activity>
-
-        <!-- This intent service schedules on/off for the Wi-Fi P2P connectivity -->
-        <service android:name=".p2p.scheduler.SchedulerService" >
-        </service>
-
-        <activity android:name=".p2p.PeerListActivity" >
-            <intent-filter>
-                <action android:name="de.tubs.ibr.dtn.p2p.action.PEER_LIST_ACTIVITY" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
     </application>
 
 </manifest>

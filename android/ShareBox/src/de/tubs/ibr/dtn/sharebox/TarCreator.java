@@ -18,6 +18,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
+import android.provider.OpenableColumns;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
 
@@ -76,10 +77,13 @@ public class TarCreator implements Runnable {
 				        	try {
 					        	String filename = uri.getLastPathSegment();
 					        	
-					        	int columnIndexDisplayName = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
+					        	// standard columns
+					        	int columnIndexDisplayName = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+					            int columnIndexSize = cursor.getColumnIndex(OpenableColumns.SIZE);
+					            
+					            // media columns
 					        	int columnIndexTitle = cursor.getColumnIndex(MediaStore.MediaColumns.TITLE);
 					            int columnIndexData = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
-					            int columnIndexSize = cursor.getColumnIndex(MediaStore.MediaColumns.SIZE);
 					            
 					            if (cursor.moveToFirst()) {
 				                    MimeTypeMap mime = MimeTypeMap.getSingleton();

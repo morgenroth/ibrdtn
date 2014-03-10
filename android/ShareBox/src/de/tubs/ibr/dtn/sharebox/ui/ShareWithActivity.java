@@ -1,13 +1,13 @@
 package de.tubs.ibr.dtn.sharebox.ui;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 
+import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.net.Uri;
+import android.content.IntentSender.SendIntentException;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.FragmentActivity;
@@ -28,8 +28,13 @@ public class ShareWithActivity extends FragmentActivity {
         public void onServiceConnected(ComponentName name, IBinder service) {
             mService = ((DtnService.LocalBinder)service).getService();
             
-            Intent intent = mService.getSelectNeighborIntent();
-            startActivityForResult(intent, SELECT_NEIGHBOR);
+            PendingIntent pi = mService.getSelectNeighborIntent();
+            try {
+				startIntentSenderForResult(pi.getIntentSender(), SELECT_NEIGHBOR, null, 0, 0, 0);
+			} catch (SendIntentException e1) {
+				// error
+				e1.printStackTrace();
+			}
         }
 
         public void onServiceDisconnected(ComponentName name) {
@@ -53,45 +58,23 @@ public class ShareWithActivity extends FragmentActivity {
         Intent intent = getIntent();
         
         // close the activity is there is no intent
-        if (intent == null) finish();
+        if (intent == null) return;
         
-        // extract the action
-        String action = intent.getAction();
-        
-        if (Intent.ACTION_SEND.equals(action)) {
-            Uri imageUri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
-            
-            Intent dtnSendIntent = new Intent(this, DtnService.class);
-            dtnSendIntent.setAction(de.tubs.ibr.dtn.Intent.SENDFILE);
-            dtnSendIntent.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_KEY_STREAM, imageUri);
-            dtnSendIntent.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_KEY_DESTINATION, (Serializable)destination);
-            startService(dtnSendIntent);
-            
-        } else if (Intent.ACTION_SEND_MULTIPLE.equals(action)) {
-            ArrayList<Uri> imageUris = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
-
-            Intent dtnSendIntent = new Intent(this, DtnService.class);
-            dtnSendIntent.setAction(de.tubs.ibr.dtn.Intent.SENDFILE_MULTIPLE);
-            dtnSendIntent.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_KEY_STREAM, imageUris);
-            dtnSendIntent.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_KEY_DESTINATION, (Serializable)destination);
-            startService(dtnSendIntent);
-        }
-        
-        // finish this activity
-        finish();
+        // add selected endpoint and forward the intent to the DtnService
+        intent.setClass(this, DtnService.class);
+        intent.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Serializable)destination);
+        startService(intent);
     }
     
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (SELECT_NEIGHBOR == requestCode) {
-            if ((data != null) && data.hasExtra(de.tubs.ibr.dtn.Intent.NODE_KEY)) {
-                Node n = data.getParcelableExtra(de.tubs.ibr.dtn.Intent.NODE_KEY);
+            if ((data != null) && data.hasExtra(de.tubs.ibr.dtn.Intent.EXTRA_NODE)) {
+                Node n = data.getParcelableExtra(de.tubs.ibr.dtn.Intent.EXTRA_NODE);
                 onNeighborSelected(n);
             }
-            return;
         }
-        
-        super.onActivityResult(requestCode, resultCode, data);
+        finish();
     }
 
     @Override
@@ -118,9 +101,23 @@ public class ShareWithActivity extends FragmentActivity {
     public void onResume() {
         super.onResume();
         
-        if (!mBound) {
-            bindService(new Intent(this, DtnService.class), mConnection, Context.BIND_AUTO_CREATE);
-            mBound = true;
+        Intent intent = getIntent();
+        
+        if (intent == null) {
+        	// if there is no intent, quit directly
+        	finish();
+        }
+        else if (intent.hasExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT)) {
+        	// forward intent directly if the destination is already specified
+            intent.setClass(this, DtnService.class);
+            startService(intent);
+            finish();
+        }
+        else {
+	        if (!mBound) {
+	            bindService(new Intent(this, DtnService.class), mConnection, Context.BIND_AUTO_CREATE);
+	            mBound = true;
+	        }
         }
     }
     

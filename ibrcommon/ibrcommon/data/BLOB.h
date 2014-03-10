@@ -65,6 +65,11 @@ namespace ibrcommon
 		virtual void open() = 0;
 		virtual void close() = 0;
 
+		std::streamsize size() const;
+
+		// updates the const size of the BLOB
+		void update();
+
 		class iostream
 		{
 		private:
@@ -82,6 +87,7 @@ namespace ibrcommon
 			virtual ~iostream()
 			{
 				_blob.close();
+				_blob.update();
 			};
 
 			std::iostream* operator->() { return &(_blob.__get_stream()); };
@@ -116,6 +122,11 @@ namespace ibrcommon
 			 * @return The pointer to the origin BLOB object
 			 */
 			const BLOB& operator*() const;
+
+			/**
+			 * Return the size of the BLOB data
+			 */
+			std::streamsize size() const;
 
 		private:
 			refcnt_ptr<BLOB> _blob;
@@ -180,13 +191,14 @@ namespace ibrcommon
 		 */
 		static ProviderRef provider;
 
-		BLOB();
+		BLOB(const std::streamsize intitial_size = 0);
 
 		virtual std::streamsize __get_size() = 0;
 		virtual std::iostream &__get_stream() = 0;
 
 	private:
 		BLOB(const BLOB &ref); // forbidden copy constructor
+		std::streamsize _const_size;
 	};
 
 	/**

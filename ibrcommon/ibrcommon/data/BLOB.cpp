@@ -42,11 +42,22 @@ namespace ibrcommon
 	// default BLOB provider - memory based; auto deletion enabled
 	ibrcommon::BLOB::ProviderRef BLOB::provider(new ibrcommon::MemoryBLOBProvider(), true);
 
-	BLOB::BLOB()
+	BLOB::BLOB(const std::streamsize intitial_size)
+	 : _const_size(intitial_size)
 	{ }
 
 	BLOB::~BLOB()
 	{
+	}
+
+	std::streamsize BLOB::size() const
+	{
+		return _const_size;
+	}
+
+	void BLOB::update()
+	{
+		_const_size = __get_size();
 	}
 
 	std::ostream& BLOB::copy(std::ostream &output, std::istream &input, const std::streamsize size, const size_t buffer_size)
@@ -201,6 +212,11 @@ namespace ibrcommon
 	{
 	}
 
+	std::streamsize BLOB::Reference::size() const
+	{
+		return _blob->size();
+	}
+
 	BLOB::iostream BLOB::Reference::iostream()
 	{
 		return BLOB::iostream(*_blob);
@@ -254,6 +270,9 @@ namespace ibrcommon
 		// store current position
 		std::streamoff pos = _stringstream.tellg();
 
+		// clear all marker (EOF, fail, etc.)
+		_stringstream.clear();
+
 		_stringstream.seekg(0, std::ios_base::end);
 		std::streamoff size = _stringstream.tellg();
 		_stringstream.seekg(pos);
@@ -267,7 +286,7 @@ namespace ibrcommon
 	}
 
 	FileBLOB::FileBLOB(const File &f)
-	 : ibrcommon::BLOB(), _filestream(), _file(f)
+	 : ibrcommon::BLOB(f.size()), _filestream(), _file(f)
 	{
 		if (!f.exists())
 		{
