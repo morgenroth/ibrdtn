@@ -207,8 +207,6 @@ Section "Tools" SecTools
   
   ; install tools
   File "dtnconvert.exe"
-  File "dtninbox.exe"
-  File "dtnoutbox.exe"
   File "dtnping.exe"
   File "dtnrecv.exe"
   File "dtnsend.exe"
