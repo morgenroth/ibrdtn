@@ -33,6 +33,9 @@ CONF_PARAMS="${CONF_PARAMS} --with-tls"
 # include dtndht library
 CONF_PARAMS="${CONF_PARAMS} --with-dht"
 
+# include libtffs
+CONF_PARAMS="${CONF_PARAMS} --with-tffs=/usr"
+
 # configures the project to be verbose and pedantic to coding errors and mistakes.
 DEVFLAGS="-Wall -Wextra -pedantic -Wconversion -D__DEVELOPMENT_ASSERTIONS__"
 

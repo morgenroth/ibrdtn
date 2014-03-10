@@ -167,6 +167,7 @@ namespace ibrcommon
 		void resolveAbsolutePath();
 		void removeSlash();
 		std::string _path;
+	protected:
 		unsigned char _type;
 	};
 

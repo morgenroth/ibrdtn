@@ -20,16 +20,16 @@
  */
 
 #include "config.h"
-#include "ibrdtn/api/Client.h"
-#include "ibrcommon/net/socket.h"
-#include "ibrcommon/thread/Mutex.h"
-#include "ibrcommon/thread/MutexLock.h"
+#include <ibrdtn/api/Client.h>
+#include <ibrcommon/net/socket.h>
+#include <ibrcommon/thread/Mutex.h>
+#include <ibrcommon/thread/MutexLock.h>
 #include <ibrcommon/thread/SignalHandler.h>
-#include "ibrdtn/data/PayloadBlock.h"
-#include "ibrdtn/data/Bundle.h"
-#include "ibrcommon/data/BLOB.h"
-#include "ibrcommon/data/File.h"
-#include "ibrcommon/appstreambuf.h"
+#include <ibrdtn/data/PayloadBlock.h>
+#include <ibrdtn/data/Bundle.h>
+#include <ibrcommon/data/BLOB.h>
+#include <ibrcommon/data/File.h>
+#include <ibrcommon/appstreambuf.h>
 
 #include <stdlib.h>
 #include <iostream>
@@ -37,8 +37,26 @@
 #include <vector>
 #include <sys/types.h>
 #include <unistd.h>
+#include <getopt.h>
+
+#include "io/TarUtils.h"
 
 using namespace ibrcommon;
+
+//global conf values
+string _conf_name;
+string _conf_inbox;
+
+//optional parameters
+string _conf_workdir;
+int _conf_quiet = false;
+
+struct option long_options[] =
+{
+    {"workdir", required_argument, 0, 'w'},
+    {"quiet", no_argument, 0, 'q'},
+    {0, 0, 0, 0}
+};
 
 void print_help()
 {
@@ -49,37 +67,57 @@ void print_help()
         cout << "* optional parameters *" << endl;
         cout << " -h|--help        display this text" << endl;
         cout << " -w|--workdir     temporary work directory" << endl;
+        cout << " --quiet          only print error messages" << endl;
 }
 
-map<string,string> readconfiguration(int argc, char** argv)
+void read_configuration(int argc, char** argv)
 {
-    // print help if not enough parameters are set
-    if (argc < 3) { print_help(); exit(0); }
+	// print help if not enough parameters are set
+	if (argc < 3)
+	{
+		print_help();
+		exit(EXIT_SUCCESS);
+	}
+	while(1)
+	{
+		/* getopt_long stores the option index here. */
+		int option_index = 0;
+		int c = getopt_long (argc, argv, "hw:q",
+				long_options, &option_index);
+		/* Detect the end of the options. */
+		if (c == -1)
+			break;
 
-    map<string,string> ret;
+		switch (c)
+		{
+		case 0:
+			/* If this option set a flag, do nothing else now. */
+			if (long_options[option_index].flag != 0)
+				break;
+			printf ("option %s", long_options[option_index].name);
+			if (optarg)
+				printf (" with arg %s", optarg);
+			printf ("\n");
+			break;
 
-    ret["name"] = argv[argc - 2];
-    ret["inbox"] = argv[argc - 1];
+		case 'h':
+			print_help();
+			exit(EXIT_SUCCESS);
+			break;
+		case 'w':
+			_conf_workdir = std::string(optarg);
+			break;
+		default:
+			abort();
+			break;
+		}
+	}
 
-    for (int i = 0; i < (argc - 2); ++i)
-    {
-        string arg = argv[i];
-
-        // print help if requested
-        if (arg == "-h" || arg == "--help")
-        {
-            print_help();
-            exit(0);
-        }
-
-        if ((arg == "-w" || arg == "--workdir") && (argc > i))
-        {
-            ret["workdir"] = argv[i + 1];
-        }
-    }
-
-    return ret;
+	_conf_name = std::string(argv[optind]);
+	_conf_inbox = std::string(argv[optind+1]);
 }
+
+
 
 // set this variable to false to stop the app
 bool _running = true;
@@ -105,15 +143,16 @@ int main(int argc, char** argv)
 	ibrcommon::SignalHandler sighandler(term);
 	sighandler.handle(SIGINT);
 	sighandler.handle(SIGTERM);
-	sighandler.initialize();
 
     // read the configuration
-    map<string,string> conf = readconfiguration(argc, argv);
+    read_configuration(argc, argv);
 
-    // init working directory
-    if (conf.find("workdir") != conf.end())
+	//initialize sighandler after possible exit call
+	sighandler.initialize();
+
+    if (_conf_workdir.length() > 0)
     {
-    	ibrcommon::File blob_path(conf["workdir"]);
+	ibrcommon::File blob_path(_conf_workdir);
 
     	if (blob_path.exists())
     	{
@@ -123,9 +162,6 @@ int main(int argc, char** argv)
 
     // backoff for reconnect
     unsigned int backoff = 2;
-
-    // check outbox for files
-	File outbox(conf["outbox"]);
 
     // loop, if no stop if requested
     while (_running)
@@ -139,7 +175,7 @@ int main(int argc, char** argv)
         	_conn = &conn;
 
             // Initiate a client for synchronous receiving
-            dtn::api::Client client(conf["name"], conn);
+            dtn::api::Client client(_conf_name, conn);
 
             // Connect to the server. Actually, this function initiate the
             // stream protocol by starting the thread and sending the contact header.
@@ -153,22 +189,13 @@ int main(int argc, char** argv)
             {
             	// receive the bundle
             	dtn::data::Bundle b = client.getBundle();
+		if(!_conf_quiet)
+			cout << "received bundle: " << b.toString() << endl;
 
             	// get the reference to the blob
             	ibrcommon::BLOB::Reference ref = b.find<dtn::data::PayloadBlock>().getBLOB();
 
-                // create the extract command
-                stringstream cmdstream; cmdstream << "tar -x -C " << conf["inbox"];
-
-                // create a tar handler
-                appstreambuf extractor(cmdstream.str(), appstreambuf::MODE_WRITE);
-                ostream stream(&extractor);
-
-                // write the payload to the extractor
-               	stream << ref.iostream()->rdbuf();
-
-                // flush the stream
-                stream.flush();
+		TarUtils::read_tar_archive(_conf_inbox,&ref);
             }
 
             // close the client connection

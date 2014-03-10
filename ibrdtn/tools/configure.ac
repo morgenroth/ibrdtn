@@ -78,7 +78,52 @@ PKG_CHECK_MODULES(DAEMON, libdaemon >= 0.12, [
 	AC_MSG_WARN([daemon library not found, daemonize features disabled])
 ])
 
+PKG_CHECK_MODULES(ARCHIVE, libarchive, [
+	AC_SUBST(ARCHIVE_CFLAGS)
+	AC_SUBST(ARCHIVE_LIBS)
+	AC_DEFINE(HAVE_LIBARCHIVE, [1], ["libarchive is available"])
+        has_libarchive="yes"
+], [
+	AC_MSG_WARN([libarchive not found, dtninbox and dtnoutbox will not be compiled])
+])
+
+PKG_CHECK_MODULES(OPENSSL, openssl, [
+	AC_SUBST(OPENSSL_CFLAGS)
+	AC_SUBST(OPENSSL_LIBS)
+	AC_DEFINE(HAVE_OPENSSL, [1], ["openssl available"])
+        has_openssl="yes"
+], [
+	AC_MSG_WARN([openssl not found, dtninbox and dtnoutbox will not be compiled])
+])
+
+AC_ARG_WITH([tffs],
+AS_HELP_STRING([--with-tffs=PATH], [set the tffs path for fat-image support in dtnoutbox]), [
+	tffs_path=${withval}
+	]
+)
+
+AS_IF([test -z "${tffs_path}"], [
+	AC_MSG_WARN([tffs library path not defined. tffs support is disabled. use --with-tffs= to set path])
+],[
+        AC_MSG_CHECKING([for LIBTFFS])
+        AS_IF([test -f "${tffs_path}/include/tffs.h"], [
+                AC_DEFINE(HAVE_LIBTFFS, [1], ["tffs  found"])
+                tffs_LIBS="-L${tffs_path} -ltffs"
+                tffs_CFLAGS="-I${tffs_path}/include"
+                AC_SUBST(tffs_LIBS)
+                AC_SUBST(tffs_CFLAGS)
+                AC_MSG_RESULT([yes])
+        ],[
+                AC_MSG_RESULT([no])
+        ])
+])
+
+
+
+
 AM_CONDITIONAL([TUNNEL], [test x$has_tun = xyes])
+AM_CONDITIONAL([LIBARCHIVE], [test x$has_libarchive = xyes])
+AM_CONDITIONAL([OPENSSL], [test x$has_openssl = xyes])
 
 dnl -----------------------------------------------
 dnl Generates Makefiles, configuration files and scripts
