@@ -206,7 +206,7 @@ namespace dtn
 			join();
 		}
 
-		void LOWPANConvergenceLayer::onAdvertiseBeacon(const ibrcommon::vinterface &iface, DiscoveryBeacon &beacon) throw ()
+		void LOWPANConvergenceLayer::onAdvertiseBeacon(const ibrcommon::vinterface &iface, const DiscoveryBeacon &beacon) throw ()
 		{
 			if (_net != iface) return;
 

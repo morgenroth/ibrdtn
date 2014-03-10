@@ -56,7 +56,7 @@ namespace dtn
 			void onUpdateBeacon(const ibrcommon::vinterface &iface, DiscoveryBeacon &announcement)
 				throw (dtn::net::DiscoveryBeaconHandler::NoServiceHereException);
 
-			void onAdvertiseBeacon(const ibrcommon::vinterface &iface, DiscoveryBeacon &beacon) throw ();
+			void onAdvertiseBeacon(const ibrcommon::vinterface &iface, const DiscoveryBeacon &beacon) throw ();
 
 			dtn::core::Node::Protocol getDiscoveryProtocol() const;
 

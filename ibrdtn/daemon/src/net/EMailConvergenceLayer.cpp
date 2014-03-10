@@ -72,7 +72,7 @@ namespace dtn
 			} catch (const std::bad_cast&) { };
 		}
 
-		void EMailConvergenceLayer::onAdvertiseBeacon(const ibrcommon::vinterface&, DiscoveryBeacon &beacon)
+		void EMailConvergenceLayer::onUpdateBeacon(const ibrcommon::vinterface&, DiscoveryBeacon &beacon)
 			throw (DiscoveryBeaconHandler::NoServiceHereException)
 		{
 			beacon.addService(DiscoveryService(getDiscoveryProtocol(), "email=" + _config.getOwnAddress()));

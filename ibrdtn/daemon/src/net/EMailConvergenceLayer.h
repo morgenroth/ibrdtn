@@ -63,8 +63,7 @@ namespace dtn
 			 * This method updates the given values for discovery service.
 			 * It publishes the email address of the EMail Convergence Layer
 			 */
-			void onAdvertiseBeacon(const ibrcommon::vinterface&,
-					DiscoveryBeacon &beacon)
+			void onUpdateBeacon(const ibrcommon::vinterface &iface, DiscoveryBeacon &beacon)
 					throw (DiscoveryBeaconHandler::NoServiceHereException);
 
 			/**
