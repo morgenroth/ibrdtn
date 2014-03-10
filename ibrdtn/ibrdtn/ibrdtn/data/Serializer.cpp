@@ -554,11 +554,6 @@ namespace dtn
 		{
 		}
 
-		DefaultDeserializer::DefaultDeserializer(std::istream &stream, const Dictionary &d)
-		 : _stream(stream), _validator(_default_validator), _dictionary(d), _compressed(false), _fragmentation(false)
-		{
-		}
-
 		void DefaultDeserializer::setFragmentationSupport(bool val)
 		{
 			_fragmentation = val;

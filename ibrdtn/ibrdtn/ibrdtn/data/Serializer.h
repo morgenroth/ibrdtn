@@ -44,8 +44,6 @@ namespace dtn
 			virtual ~Serializer() {};
 
 			virtual Serializer &operator<<(const dtn::data::Bundle &obj) = 0;
-			virtual Serializer &operator<<(const dtn::data::PrimaryBlock &obj) = 0;
-			virtual Serializer &operator<<(const dtn::data::Block &obj) = 0;
 			virtual Serializer &operator<<(const dtn::data::BundleFragment &obj)
 			{
 				(*this) << obj._bundle;
@@ -53,8 +51,6 @@ namespace dtn
 			};
 
 			virtual Length getLength(const dtn::data::Bundle &obj) = 0;
-			virtual Length getLength(const dtn::data::PrimaryBlock &obj) const = 0;
-			virtual Length getLength(const dtn::data::Block &obj) const = 0;
 		};
 
 		class Deserializer
@@ -63,8 +59,6 @@ namespace dtn
 			virtual ~Deserializer() {};
 
 			virtual Deserializer &operator>>(dtn::data::Bundle &obj) = 0;
-			virtual Deserializer &operator>>(dtn::data::PrimaryBlock &obj) = 0;
-			virtual Deserializer &operator>>(dtn::data::Block &obj) = 0;
 		};
 
 		class Validator
@@ -156,15 +150,6 @@ namespace dtn
 			 * @return
 			 */
 			DefaultDeserializer(std::istream &stream, Validator &v);
-
-			/**
-			 * Initialize the Deserializer with a default dictionary to reconstruct
-			 * the right EID values of block if the primary header is not read by this
-			 * Deserializer.
-			 * @param stream Stream to read from
-			 * @param d The default dictionary
-			 */
-			DefaultDeserializer(std::istream &stream, const Dictionary &d);
 
 			/**
 			 * Default destructor.
