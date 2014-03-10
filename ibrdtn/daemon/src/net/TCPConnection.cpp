@@ -477,7 +477,9 @@ namespace dtn
 			} catch (const ibrcommon::socket_exception&) {
 				// error on open, requeue all bundles in the queue
 				IBRCOMMON_LOGGER_TAG(TCPConnection::TAG, warning) << "connection to " << _node.toString() << " failed" << IBRCOMMON_LOGGER_ENDL;
-				(*getProtocolStream()).shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+				try {
+					(*getProtocolStream()).shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+				} catch (const ibrcommon::Exception&) {};
 				throw;
 			} catch (const bad_cast&) { };
 		}
