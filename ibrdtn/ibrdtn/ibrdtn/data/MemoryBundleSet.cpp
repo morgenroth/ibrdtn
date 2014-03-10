@@ -293,7 +293,7 @@ namespace dtn
 			size_t num_bundles;
 			input_file >> num_bundles;
 			size_t i = 0;
-			while( i < num_bundles)
+			while (( i < num_bundles) && input_file.good())
 			{
 				MetaBundle b;
 				input_file >> b;
