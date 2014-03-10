@@ -1,5 +1,9 @@
 config BR2_PACKAGE_IBRDTN_TOOLS
 	bool "ibrdtn-tools"
+	select BR2_PACKAGE_LIBTFFS
+	select BR2_PACKAGE_LIBARCHIVE
+	select BR2_PACKAGE_IBRCOMMON
+	select BR2_PACKAGE_IBRDTN
 	help
 	  IBR-DTN Tools
 

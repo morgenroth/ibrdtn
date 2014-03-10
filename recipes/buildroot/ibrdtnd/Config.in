@@ -1,5 +1,11 @@
 config BR2_PACKAGE_IBRDTND
 	bool "ibrdtnd"
+	select BR2_PACKAGE_DTNDHT
+	select BR2_PACKAGE_ZLIB
+	select BR2_PACKAGE_OPENSSL
+	select BR2_PACKAGE_SQLITE
+	select BR2_PACKAGE_IBRCOMMON
+	select BR2_PACKAGE_IBRDTN
 	help
 	  IBR-DTN Daemon
 

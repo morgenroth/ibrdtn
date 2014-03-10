@@ -1,5 +1,8 @@
 config BR2_PACKAGE_IBRCOMMON
 	bool "ibrcommon"
+	depends on BR2_INSTALL_LIBSTDCPP && BR2_INET_IPV6 && BR2_LARGEFILE
+	select BR2_PACKAGE_LIBNL
+	select BR2_PACKAGE_OPENSSL
 	help
 	  IBR common library
 

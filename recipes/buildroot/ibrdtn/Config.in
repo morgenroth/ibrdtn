@@ -1,5 +1,8 @@
 config BR2_PACKAGE_IBRDTN
 	bool "ibrdtn"
+	select BR2_PACKAGE_OPENSSL
+	select BR2_PACKAGE_ZLIB
+	select BR2_PACKAGE_IBRCOMMON
 	help
 	  IBR-DTN Base Library
 
