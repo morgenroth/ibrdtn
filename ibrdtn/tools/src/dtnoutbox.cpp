@@ -253,7 +253,7 @@ bool deleteAll( ObservedFile* ptr){
 int main( int argc, char** argv )
 {
 	// catch process signals
-	ibrcommon::SignalHandler sighandler(term);
+	ibrcommon::SignalHandler sighandler(sighandler);
 	sighandler.handle(SIGINT);
 	sighandler.handle(SIGTERM);
 	sighandler.initialize();
@@ -396,9 +396,6 @@ int main( int argc, char** argv )
 #endif
 					observed_files.push_back(of);
 				}
-
-    			// add payload block using the blob
-    			b.push_back(blob);
 
 				//tick and update all files
 				for (iter = observed_files.begin(); iter != observed_files.end(); ++iter)
