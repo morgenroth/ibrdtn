@@ -1,4 +1,0 @@
-config BR2_PACKAGE_LIBTFFS
-  bool "libtffs"
-  help
-    tffs-lib is a Tiny FAT File System library.
