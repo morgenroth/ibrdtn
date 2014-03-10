@@ -34,10 +34,6 @@
     <string name="toast_storage_cleared">Storage cleared</string>
     <string name="security">Security</string>
     <string name="timesync">Time-synchronization</string>
-    <string name="pref_constrains_lifetime">Lifetime</string>
-    <string name="pref_constrains_timestamp">Timestamp</string>
-    <string name="pref_constrains_lifetime_summary">Limit the lifetime to the maximum of two weeks.</string>
-    <string name="pref_constrains_timestamp_summary">Reject bundles with timestamp over two weeks in the future.</string>
     <string name="pref_bab_key">Authentication Key</string>
     <string name="pref_bab_key_desc">Specify the authorization key.</string>
     <string name="pref_security_mode">Security Policy</string>

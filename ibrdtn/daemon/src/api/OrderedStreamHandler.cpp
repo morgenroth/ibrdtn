@@ -27,10 +27,6 @@
 #include <ibrdtn/utils/Utils.h>
 #include <ibrcommon/Logger.h>
 
-#ifdef WITH_COMPRESSION
-#include <ibrdtn/data/CompressedPayloadBlock.h>
-#endif
-
 #ifdef WITH_BUNDLE_SECURITY
 #include "security/SecurityManager.h"
 #endif

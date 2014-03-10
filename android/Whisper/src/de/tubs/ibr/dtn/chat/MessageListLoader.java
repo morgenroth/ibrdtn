@@ -131,7 +131,7 @@ public class MessageListLoader extends AsyncTaskLoader<Cursor> {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (Roster.NOTIFY_ROSTER_CHANGED.equals(intent.getAction())) {
-            	Long changedBuddy = intent.getLongExtra("buddyId", -1);
+            	Long changedBuddy = intent.getLongExtra(ChatService.EXTRA_BUDDY_ID, -1);
             	if (changedBuddy.equals(mBuddyId) && (changedBuddy >= 0)) {
             		onContentChanged();
             	}

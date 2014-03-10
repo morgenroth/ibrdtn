@@ -119,6 +119,9 @@ void TestStreamConnection::connectionUpDown()
 					}
 				} catch (const ibrcommon::vsocket_interrupt &e) {
 					// excepted interruption
+				} catch (const ibrcommon::socket_exception &e) {
+					// unexpected socket error
+					break;
 				}
 			}
 		}

@@ -34,10 +34,6 @@
     <string name="toast_storage_cleared">Speicher geleert</string>
     <string name="security">Sicherheit</string>
     <string name="timesync">Zeitsynchronisierung</string>
-    <string name="pref_constrains_lifetime">Lebenszeit</string>
-    <string name="pref_constrains_timestamp">Zeitstempel</string>
-    <string name="pref_constrains_lifetime_summary">Begrenze die Lebenszeit auf maximal zwei Wochen.</string>
-    <string name="pref_constrains_timestamp_summary">Lehne Bündel mit einem Zeitstempel von mehr als zwei Wochen in der Zukunft ab.</string>
     <string name="pref_bab_key">Netzschlüssel</string>
     <string name="pref_bab_key_desc">Legt den Schlüssel zur Authentisierung fest.</string>
     <string name="pref_security_mode">Sicherheitseinstellungen</string>

@@ -441,8 +441,8 @@ namespace dtn
 
 				} catch (const dtn::InvalidDataException &ex) {
 					IBRCOMMON_LOGGER_TAG("UDPConvergenceLayer", warning) << "Received a invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-				} catch (const std::exception &ex) {
-
+				} catch (const std::exception&) {
+					return;
 				}
 				yield();
 			}

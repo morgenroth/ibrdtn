@@ -699,7 +699,7 @@ namespace dtn
 					_runlevel_cond.signal(true);
 				}
 			} else if (_runlevel > rl) {
-				for (; _runlevel >= rl; _runlevel = DaemonRunLevel(_runlevel - 1)) {
+				for (; _runlevel > rl; _runlevel = DaemonRunLevel(_runlevel - 1)) {
 					init_down(_runlevel);
 					_runlevel_cond.signal(true);
 				}
@@ -813,10 +813,10 @@ namespace dtn
 			components.clear();
 
 			if (_statecb != NULL) {
-				_statecb->levelChanged(rl);
+				_statecb->levelChanged(DaemonRunLevel(rl-1));
 			}
 
-			IBRCOMMON_LOGGER_DEBUG_TAG(NativeDaemon::TAG, 5) << "runlevel " << rl << " reached" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG(NativeDaemon::TAG, 5) << "runlevel " << (rl-1) << " reached" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void NativeDaemon::wait(DaemonRunLevel rl) throw ()

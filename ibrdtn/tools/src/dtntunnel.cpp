@@ -38,6 +38,7 @@
 // Some classes to be thread-safe.
 #include "ibrcommon/thread/Mutex.h"
 #include "ibrcommon/thread/MutexLock.h"
+#include <ibrcommon/thread/SignalHandler.h>
 #include <ibrcommon/Logger.h>
 
 // Basic functionalities for streaming.
@@ -45,8 +46,6 @@
 
 // A queue for bundles.
 #include <queue>
-
-#include <csignal>
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -295,9 +294,11 @@ int main(int argc, char *argv[])
 	bool throughput = false;
 
 	// catch process signals
-	signal(SIGINT, term);
-	signal(SIGTERM, term);
-	signal(SIGQUIT, term);
+	ibrcommon::SignalHandler sighandler(term);
+	sighandler.handle(SIGINT);
+	sighandler.handle(SIGTERM);
+	sighandler.handle(SIGQUIT);
+	sighandler.initialize();
 
 #ifdef HAVE_LIBDAEMON
 	while ((c = getopt (argc, argv, "td:s:l:hDkp:")) != -1)

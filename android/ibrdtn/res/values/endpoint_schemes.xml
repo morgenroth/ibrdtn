@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="endpoint_scheme_names">
+        <item>Standard</item>
+        <item>Compressed</item>
+        <item>Custom</item>
+    </string-array>
+    <string-array name="endpoint_scheme_values">
+        <item>dtn</item>
+        <item>ipn</item>
+        <item>custom</item>
+    </string-array>
+</resources>

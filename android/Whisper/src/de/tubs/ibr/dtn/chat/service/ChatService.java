@@ -31,10 +31,8 @@ import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.media.AudioManager;
@@ -79,11 +77,18 @@ public class ChatService extends IntentService {
 	
 	private static final String TAG = "ChatService";
 	
+	public static final String EXTRA_BUDDY_ID = "de.tubs.ibr.dtn.chat.BUDDY_ID";
+	public static final String EXTRA_TEXT_BODY = "de.tubs.ibr.dtn.chat.TEXT_BODY";
+	public static final String EXTRA_DISPLAY_NAME = "de.tubs.ibr.dtn.chat.DISPLAY_NAME";
+	public static final String EXTRA_PRESENCE = "de.tubs.ibr.dtn.chat.EXTRA_PRESENCE";
+	public static final String EXTRA_STATUS = "de.tubs.ibr.dtn.chat.EXTRA_STATUS";
+	
 	// mark a specific bundle as delivered
 	public static final String MARK_DELIVERED_INTENT = "de.tubs.ibr.dtn.chat.MARK_DELIVERED";
 	public static final String REPORT_DELIVERED_INTENT = "de.tubs.ibr.dtn.chat.REPORT_DELIVERED";
 	
-	public final static String ACTION_PRESENCE_ALARM = "de.tubs.ibr.dtn.chat.PRESENCE_ALARM";
+	public static final String ACTION_NEW_MESSAGE = "de.tubs.ibr.dtn.chat.ACTION_NEW_MESSAGE";
+	public static final String ACTION_PRESENCE_ALARM = "de.tubs.ibr.dtn.chat.PRESENCE_ALARM";
 	public static final String ACTION_SEND_MESSAGE = "de.tubs.ibr.dtn.chat.SEND_MESSAGE";
 	public static final String ACTION_REFRESH_PRESENCE = "de.tubs.ibr.dtn.chat.REFRESH_PRESENCE";
 	
@@ -92,10 +97,7 @@ public class ChatService extends IntentService {
 	public static final GroupEndpoint PRESENCE_GROUP_EID = new GroupEndpoint("dtn://chat.dtn/presence");
 	private Registration _registration = null;
 	private ServiceError _service_error = ServiceError.NO_ERROR;
-	private Boolean _screen_off = false;
-	
-	private static Long visibleBuddy = null;
-	
+
     // This is the object that receives interactions from clients.  See
     // RemoteService for a more complete example.
     private final IBinder mBinder = new LocalBinder();
@@ -276,16 +278,8 @@ public class ChatService extends IntentService {
 	@Override
 	public void onCreate()
 	{
-		// lower the thread priority
-		android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
-
 		// call onCreate of the super-class
 		super.onCreate();
-		
-		IntentFilter screen_filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
-		screen_filter.addAction(Intent.ACTION_SCREEN_OFF);
-		registerReceiver(_screen_receiver, screen_filter);
-		_screen_off = false;
 		
 		// create a new client object
 		_client = new DTNClient(new SessionConnection() {
@@ -327,24 +321,6 @@ public class ChatService extends IntentService {
 		Log.i(TAG, "service created.");
 	}
 	
-	private BroadcastReceiver _screen_receiver = new BroadcastReceiver() {
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
-				_screen_off = true;
-			} else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
-				_screen_off = false;
-				
-				// clear notification
-				Long visible = ChatService.getVisible();
-				if (visible != null) {
-					NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-					mNotificationManager.cancel(visible.toString(), MESSAGE_NOTIFICATION);
-				}
-			}
-		}
-	};
-	
 	public ServiceError getServiceError() {
 		return _service_error;
 	}
@@ -352,8 +328,6 @@ public class ChatService extends IntentService {
 	@Override
 	public void onDestroy()
 	{
-		unregisterReceiver(_screen_receiver);
-		
 		// close the roster (plus db connection)
 		this.roster.close();
 		
@@ -374,73 +348,50 @@ public class ChatService extends IntentService {
 		return this.roster;
 	}
 	
-	public synchronized static void setVisible(Long buddyId) {
-		visibleBuddy = buddyId;
-	}
-	
-	private synchronized static Long getVisible() {
-		return visibleBuddy;
-	}
-	
-	public static Boolean isVisible(Long buddyId)
-	{
-		if (visibleBuddy == null) return false;
-		return (visibleBuddy.equals(buddyId));
-	}
-	
 	@SuppressWarnings("deprecation")
-	private void createNotification(Buddy b, Message msg)
+	private void showNotification(Intent intent)
 	{
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-		
-		if (ChatService.isVisible(b.getId()))
-		{
-			if (!_screen_off) return;
-		}
-		
-		int icon = R.drawable.ic_message;
-		CharSequence tickerText = getString(R.string.new_message_from) + " " + b.getNickname();
-
-		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-		
-		builder.setAutoCancel(true);
-		
-		CharSequence contentTitle = getString(R.string.new_message);
-		CharSequence contentText = b.getNickname() + ":\n" + msg.getPayload();
-		
-		//int defaults = Notification.DEFAULT_LIGHTS;
 		int defaults = 0;
-		
+
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		if (prefs.getBoolean("vibrateOnMessage", true)) {
 			defaults |= Notification.DEFAULT_VIBRATE;
 		}
 		
-		/** CREATE AN INTENT TO OPEN THE MESSAGES ACTIVITY **/
-		Intent messagesIntent = new Intent(this, MainActivity.class);
+		Long buddyId = intent.getLongExtra(EXTRA_BUDDY_ID, -1L);
+		String displayName = intent.getStringExtra(EXTRA_DISPLAY_NAME);
+		String textBody = intent.getStringExtra(EXTRA_TEXT_BODY);
 		
-		// add buddy data
-		messagesIntent.putExtra("buddyId", b.getId());
+		CharSequence tickerText = getString(R.string.new_message_from) + " " + displayName;
+		CharSequence contentTitle = getString(R.string.new_message);
+		CharSequence contentText = displayName + ":\n" + textBody;
 		
 		TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-		// Adds the Inten to the main view
-		stackBuilder.addNextIntent(messagesIntent);
-		// Gets a PendingIntent containing the entire back stack
-		PendingIntent contentIntent = stackBuilder.getPendingIntent(b.getId().intValue(), PendingIntent.FLAG_UPDATE_CURRENT);
 		
+		// forward intent to the activity
+		intent.setClass(this, MainActivity.class);
+		
+		// Adds the intent to the main view
+		stackBuilder.addNextIntent(intent);
+		// Gets a PendingIntent containing the entire back stack
+		PendingIntent contentIntent = stackBuilder.getPendingIntent(buddyId.intValue(), PendingIntent.FLAG_UPDATE_CURRENT);
+		
+		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 		builder.setContentTitle(contentTitle);
 		builder.setContentText(contentText);
-		builder.setSmallIcon(icon);
+		builder.setSmallIcon(R.drawable.ic_message);
 		builder.setTicker(tickerText);
 		builder.setDefaults(defaults);
 		builder.setWhen( System.currentTimeMillis() );
 		builder.setContentIntent(contentIntent);
 		builder.setLights(0xffff0000, 300, 1000);
 		builder.setSound( Uri.parse( prefs.getString("ringtoneOnMessage", "content://settings/system/notification_sound") ) );
+		builder.setAutoCancel(true);
 		
 		Notification notification = builder.getNotification();
 		
 		NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		mNotificationManager.notify(b.getId().toString(), MESSAGE_NOTIFICATION, notification);
+		mNotificationManager.notify(buddyId.toString(), MESSAGE_NOTIFICATION, notification);
 		
 		if (prefs.getBoolean("ttsWhenOnHeadset", false)) {
 			AudioManager am = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
@@ -449,10 +400,29 @@ public class ChatService extends IntentService {
 				// speak the notification
 				Intent tts_intent = new Intent(this, TTSService.class);
 				tts_intent.setAction(TTSService.INTENT_SPEAK);
-				tts_intent.putExtra("speechText", tickerText + ": " + msg.getPayload());
+				tts_intent.putExtra("speechText", tickerText + ": " + textBody);
 				startService(tts_intent);
 			}
 		}
+	}
+	
+	private void createNotification(Buddy b, Message msg)
+	{
+		Intent intent = new Intent(ACTION_NEW_MESSAGE);
+		intent.putExtra(EXTRA_BUDDY_ID, b.getId());
+		intent.putExtra(EXTRA_DISPLAY_NAME, b.getNickname());
+		intent.putExtra(EXTRA_TEXT_BODY, msg.getPayload());
+		
+		// send intent to activity or broadcast receiver for notification
+		sendOrderedBroadcast(intent, null);
+	}
+	
+	public void clearNotification(Long buddyId) {
+		if (buddyId == null) return;
+		
+		// clear notification
+		NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		mNotificationManager.cancel(buddyId.toString(), MESSAGE_NOTIFICATION);
 	}
 
 	@Override
@@ -512,8 +482,8 @@ public class ChatService extends IntentService {
         }
         else if (ACTION_SEND_MESSAGE.equals(action))
         {
-        	Long buddyId = intent.getLongExtra("buddyId", -1);
-        	String text = intent.getStringExtra("text");
+        	Long buddyId = intent.getLongExtra(ChatService.EXTRA_BUDDY_ID, -1);
+        	String text = intent.getStringExtra(ChatService.EXTRA_TEXT_BODY);
         	
         	// abort if there is no buddyId
         	if (buddyId < 0) return;
@@ -522,12 +492,15 @@ public class ChatService extends IntentService {
         }
         else if (ACTION_REFRESH_PRESENCE.equals(action))
         {
-    		String presence = intent.getStringExtra("presence");
-    		String nickname = intent.getStringExtra("nickname");
-    		String status = intent.getStringExtra("status");
+    		String presence = intent.getStringExtra(ChatService.EXTRA_PRESENCE);
+    		String nickname = intent.getStringExtra(ChatService.EXTRA_DISPLAY_NAME);
+    		String status = intent.getStringExtra(ChatService.EXTRA_STATUS);
     		
         	actionRefreshPresence(presence, nickname, status);
         }
+        else if (ACTION_NEW_MESSAGE.equals(action)) {
+			showNotification(intent);
+		}
 	}
 	
 	private void actionMarkDelivered(Intent intent) {

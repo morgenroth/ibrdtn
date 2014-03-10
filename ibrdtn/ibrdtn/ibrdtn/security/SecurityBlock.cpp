@@ -19,6 +19,7 @@
  *
  */
 
+#include "ibrdtn/config.h"
 #include "ibrdtn/security/SecurityBlock.h"
 #include "ibrdtn/security/MutableSerializer.h"
 #include "ibrdtn/data/Bundle.h"
@@ -30,12 +31,14 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 #include <openssl/rsa.h>
-#include <netinet/in.h>
 #include <vector>
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
 #include <cassert>
 #endif
+
+// include code for platform-independent endianess conversion
+#include "ibrdtn/data/Endianess.h"
 
 namespace dtn
 {
@@ -569,7 +572,7 @@ namespace dtn
 
 		void SecurityBlock::addSalt(TLVList& security_parameters, const uint32_t &salt)
 		{
-			uint32_t nsalt = htonl(salt);
+			uint32_t nsalt = GUINT32_TO_BE(salt);
 			security_parameters.set(SecurityBlock::salt, (const unsigned char*)&nsalt, sizeof(nsalt));
 		}
 
@@ -577,7 +580,7 @@ namespace dtn
 		{
 			uint32_t nsalt = 0;
 			security_parameters.get(SecurityBlock::salt, (unsigned char*)&nsalt, sizeof(nsalt));
-			return ntohl(nsalt);
+			return GUINT32_TO_BE(nsalt);
 		}
 
 		void SecurityBlock::decryptBlock(dtn::data::Bundle& bundle, dtn::data::Bundle::iterator &it, uint32_t salt, const unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes])

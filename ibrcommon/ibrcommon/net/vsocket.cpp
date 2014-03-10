@@ -271,42 +271,42 @@ namespace ibrcommon
 			case SAFE_DOWN:
 				// throw exception if not (DOWN or PENDING DOWN)
 				if ((_state != DOWN) && (_state != PENDING_UP))
-					throw state_exception("state is not DOWN");
+					throw state_exception("can not change to " + __getname(s) + ", state is " + __getname(_state) + " instead of DOWN");
 				__change(s);
 				break;
 
 			case DOWN:
 				// throw exception if not (PENDING_DOWN or SAFE_DOWN)
 				if ((_state != PENDING_DOWN) && (_state != SAFE_DOWN) && (_state != PENDING_UP))
-					throw state_exception("state is not PENDING_DOWN, PENDING_UP or SAFE_DOWN");
+					throw state_exception("can not change to " + __getname(s) + ", state is " + __getname(_state) + " instead of PENDING_DOWN, PENDING_UP or SAFE_DOWN");
 				__change(s);
 				break;
 
 			case PENDING_UP:
 				// throw exception if not (DOWN)
 				if (_state != DOWN)
-					throw state_exception("state is not DOWN");
+					throw state_exception("can not change to " + __getname(s) + ", state is " + __getname(_state) + " instead of DOWN");
 				__change(s);
 				break;
 
 			case PENDING_DOWN:
 				// throw exception if not (IDLE, DOWN_REQUEST)
 				if ((_state != IDLE) && (_state != DOWN_REQUEST))
-					throw state_exception("state is not IDLE or DOWN_REQUEST");
+					throw state_exception("can not change to " + __getname(s) + ", state is " + __getname(_state) + " instead of IDLE or DOWN_REQUEST");
 				__change(s);
 				break;
 
 			case IDLE:
 				// throw exception if not (PENDING_UP, SAFE, SELECT)
 				if ((_state != PENDING_UP) && (_state != SAFE) && (_state != SELECT))
-					throw state_exception("state is not PENDING_UP, SAFE or SELECT");
+					throw state_exception("can not change to " + __getname(s) + ", state is " + __getname(_state) + " instead of PENDING_UP, SAFE or SELECT");
 				__change(s);
 				break;
 
 			case SELECT:
 				// throw exception if not (IDLE, SELECT)
 				if ((_state != IDLE) && (_state != SELECT))
-					throw state_exception("state is not IDLE or SELECT");
+					throw state_exception("can not change to " + __getname(s) + ", state is " + __getname(_state) + " instead of IDLE or SELECT");
 				__change(s);
 				break;
 
@@ -314,14 +314,14 @@ namespace ibrcommon
 			case SAFE_REQUEST:
 				// throw exception if not (SELECT, DOWN_REQUEST)
 				if (_state != SELECT)
-					throw state_exception("state is not SELECT or DOWN_REQUEST");
+					throw state_exception("can not change to " + __getname(s) + ", state is " + __getname(_state) + " instead of SELECT or DOWN_REQUEST");
 				__change(s);
 				break;
 
 			case SAFE:
 				// throw exception if not (SAFE_REQUEST, IDLE)
 				if ((_state != SAFE_REQUEST) && (_state != IDLE))
-					throw state_exception("state is not SAFE_REQUEST or IDLE");
+					throw state_exception("can not change to " + __getname(s) + ", state is " + __getname(_state) + " instead of SAFE_REQUEST or IDLE");
 				__change(s);
 				break;
 			}
@@ -349,7 +349,7 @@ namespace ibrcommon
 
 			case DOWN:
 				// throw exception if not (PENDING_DOWN or SAFE_DOWN)
-				while ((_state != PENDING_DOWN) && (_state != SAFE_DOWN)) {
+				while ((_state != PENDING_DOWN) && (_state != SAFE_DOWN) && (_state != DOWN)) {
 					if (_state == abortstate)
 						throw state_exception("abort state " + __getname(abortstate) + " reached");
 					ibrcommon::Conditional::wait();
@@ -670,11 +670,17 @@ namespace ibrcommon
 	{
 		try {
 			ibrcommon::MutexLock l(_state);
-			if (_state.get() == SocketState::SELECT) {
+			if (_state.get() == SocketState::DOWN) {
+				return;
+			}
+			else if (_state.get() == SocketState::PENDING_DOWN || _state.get() == SocketState::DOWN_REQUEST) {
+				// prevent double down
+				_state.wait(SocketState::DOWN);
+				return;
+			}
+			else if (_state.get() == SocketState::SELECT) {
 				_state.setwait(SocketState::DOWN_REQUEST, SocketState::DOWN);
 				interrupt();
-				// wait for PENDING_DOWN state
-				_state.wait(SocketState::PENDING_DOWN);
 			} else {
 				// enter PENDING_DOWN state
 				_state.setwait(SocketState::PENDING_DOWN, SocketState::DOWN);
@@ -683,16 +689,18 @@ namespace ibrcommon
 			return;
 		}
 
-		// shut-down all the sockets
-		ibrcommon::MutexLock l(_socket_lock);
-		for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); ++iter) {
-			try {
-				if ((*iter)->ready()) (*iter)->down();
-			} catch (const socket_exception&) { }
+		{
+			// shut-down all the sockets
+			ibrcommon::MutexLock l(_socket_lock);
+			for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); ++iter) {
+				try {
+					if ((*iter)->ready()) (*iter)->down();
+				} catch (const socket_exception&) { }
+			}
 		}
 
 		ibrcommon::MutexLock sl(_state);
-		_state.set(SocketState::DOWN);
+		_state.setwait(SocketState::DOWN);
 	}
 
 	void vsocket::interrupt()
@@ -761,6 +769,9 @@ namespace ibrcommon
 				}
 				else if (errcode == 0) {
 					throw vsocket_interrupt("select call has been interrupted");
+				}
+				else if (errcode == EBADF) {
+					throw socket_error(ERROR_CLOSED, "socket was closed");
 				}
 				throw socket_raw_error(errcode, "unknown select error");
 			}

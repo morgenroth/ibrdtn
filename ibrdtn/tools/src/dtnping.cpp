@@ -24,10 +24,10 @@
 #include "ibrcommon/net/socket.h"
 #include "ibrcommon/thread/Mutex.h"
 #include "ibrcommon/thread/MutexLock.h"
+#include <ibrcommon/thread/SignalHandler.h>
 #include "ibrcommon/TimeMeasurement.h"
 
 #include <iostream>
-#include <csignal>
 #include <stdint.h>
 
 #define CREATE_CHUNK_SIZE 2048
@@ -212,8 +212,10 @@ void term(int signal)
 int main(int argc, char *argv[])
 {
 	// catch process signals
-	signal(SIGINT, term);
-	signal(SIGTERM, term);
+	ibrcommon::SignalHandler sighandler(term);
+	sighandler.handle(SIGINT);
+	sighandler.handle(SIGTERM);
+	sighandler.initialize();
 
 	string ping_destination = "dtn://local/echo";
 	string ping_source = "";

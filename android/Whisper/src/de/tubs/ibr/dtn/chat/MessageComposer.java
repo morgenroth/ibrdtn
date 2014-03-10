@@ -90,8 +90,8 @@ public class MessageComposer extends LinearLayout {
 		if (text.length() > 0) {
 	        final Intent intent = new Intent(getContext(), ChatService.class);
 	        intent.setAction(ChatService.ACTION_SEND_MESSAGE);
-	        intent.putExtra("buddyId", mBuddyId);
-	        intent.putExtra("text", text);
+	        intent.putExtra(ChatService.EXTRA_BUDDY_ID, mBuddyId);
+	        intent.putExtra(ChatService.EXTRA_TEXT_BODY, text);
 
 			getContext().startService(intent);
 					

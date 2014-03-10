@@ -27,8 +27,6 @@
 #include "ibrdtn/security/SecurityBlock.h"
 #include <ibrcommon/Logger.h>
 
-#include <arpa/inet.h>
-
 #ifdef __DEVELOPMENT_ASSERTIONS__
 #include <cassert>
 #endif
@@ -210,7 +208,7 @@ namespace dtn
 
 		dtn::data::Serializer& MutableSerializer::operator<<(const uint32_t value)
 		{
-			uint32_t be = htonl(value);
+			uint32_t be = GUINT32_TO_BE(value);
 			_stream.write(reinterpret_cast<char*>(&be), sizeof(uint32_t));
 			return *this;
 		}

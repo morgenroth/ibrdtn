@@ -25,6 +25,7 @@
 #include <ibrcommon/net/socket.h>
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/MutexLock.h>
+#include <ibrcommon/thread/SignalHandler.h>
 #include <ibrdtn/data/PayloadBlock.h>
 #include <ibrcommon/data/BLOB.h>
 #include <ibrcommon/data/File.h>
@@ -50,7 +51,6 @@ extern "C"
 #include <iostream>
 #include <map>
 #include <vector>
-#include <csignal>
 #include <sys/types.h>
 #include <unistd.h>
 #include <regex.h>
@@ -253,12 +253,11 @@ bool deleteAll( ObservedFile* ptr){
 int main( int argc, char** argv )
 {
 	// catch process signals
-    signal(SIGINT, sighandler);
-    signal(SIGTERM, sighandler);
-#ifndef __WIN32__
-	signal(SIGUSR1, sighandler);
-	signal(SIGUSR2, sighandler);
-#endif
+	ibrcommon::SignalHandler sighandler(term);
+	sighandler.handle(SIGINT);
+	sighandler.handle(SIGTERM);
+	sighandler.initialize();
+
 
 
 	// read the configuration
@@ -398,6 +397,8 @@ int main( int argc, char** argv )
 					observed_files.push_back(of);
 				}
 
+    			// add payload block using the blob
+    			b.push_back(blob);
 
 				//tick and update all files
 				for (iter = observed_files.begin(); iter != observed_files.end(); ++iter)

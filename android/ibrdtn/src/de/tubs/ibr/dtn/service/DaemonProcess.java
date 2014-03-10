@@ -80,9 +80,9 @@ public class DaemonProcess {
     private static final String __CLOUD_PORT__ = "4559";
     
     public interface OnRestartListener {
-        public void OnStop();
+        public void OnStop(DaemonRunLevel previous, DaemonRunLevel next);
         public void OnReloadConfiguration();
-        public void OnStart();
+        public void OnStart(DaemonRunLevel previous, DaemonRunLevel next);
     };
 
 	/**
@@ -267,16 +267,17 @@ public class DaemonProcess {
         DaemonRunLevel rl = DaemonRunLevel.swigToEnum(runlevel);
         
         // do not restart if the current runlevel is below or equal
-        if (restore.swigValue() <= rl.swigValue()) {
+        if (restore.swigValue() <= runlevel) {
             // reload configuration
             onConfigurationChanged();
             if (listener != null) listener.OnReloadConfiguration();
+            return;
         }
         
 	    try {
 	        // bring the daemon down
+	        if (listener != null) listener.OnStop(restore, rl);
 	        mDaemon.init(rl);
-	        if (listener != null) listener.OnStop();
 	        
 	        // reload configuration
 	        onConfigurationChanged();
@@ -284,7 +285,7 @@ public class DaemonProcess {
 	        
 	        // restore the old runlevel
 	        mDaemon.init(restore);
-	        if (listener != null) listener.OnStart();
+	        if (listener != null) listener.OnStart(rl, restore);
 	    } catch (NativeDaemonException e) {
             Log.e(TAG, "error while restarting the daemon process", e);
         }
@@ -325,8 +326,6 @@ public class DaemonProcess {
     private final static HashSet<String> initializeConfigurationSet() {
         HashSet<String> ret = new HashSet<String>();
               
-        ret.add("constrains_lifetime");
-        ret.add("constrains_timestamp");
         ret.add("security_mode");
         ret.add("security_bab_key");
         ret.add("log_options");
@@ -374,20 +373,6 @@ public class DaemonProcess {
                 intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
                 intent.putExtra("runlevel", mRestartMap.get("interface_").swigValue() - 1);
                 DaemonProcess.this.mContext.startService(intent);
-            }
-            else if (key.equals("uplink_mode"))
-            {
-                Log.d(TAG, "Preference " + key + " has changed to " + String.valueOf( prefs.getString(key, "off") ));
-                
-                synchronized(DaemonProcess.this) {
-                    if (!"off".equals(prefs.getString(key, "off"))) {
-                        mDaemon.addConnection(__CLOUD_EID__.toString(),
-                                __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
-                    } else {
-                        mDaemon.removeConnection(__CLOUD_EID__.toString(),
-                                __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
-                    }
-                }
             }
             else if (key.startsWith("log_options"))
             {
@@ -527,13 +512,6 @@ public class DaemonProcess {
 		@Override
 		public void levelChanged(DaemonRunLevel level) {
 			if (DaemonRunLevel.RUNLEVEL_ROUTING_EXTENSIONS.equals(level)) {
-			    // enable cloud-uplink
-			    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DaemonProcess.this.mContext);
-                if (!"off".equals(prefs.getString("uplink_mode", "off"))) {
-                    mDaemon.addConnection(__CLOUD_EID__.toString(),
-                            __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
-                }
-			    
 			    setState(DaemonState.ONLINE);
 			}
 			else if (DaemonRunLevel.RUNLEVEL_API.equals(level)) {
@@ -580,13 +558,11 @@ public class DaemonProcess {
 			// enable traffic stats
 			p.println("stats_traffic = yes");
 
-			if (preferences.getBoolean("constrains_lifetime", false)) {
-				p.println("limit_lifetime = 1209600");
-			}
+			// limit max. bundle lifetime to 30 days
+			p.println("limit_lifetime = 2592000");
 
-			if (preferences.getBoolean("constrains_timestamp", false)) {
-				p.println("limit_predated_timestamp = 1209600");
-			}
+			// limit pre-dated timestamp to 2 weeks
+			p.println("limit_predated_timestamp = 1209600");
 
 			// limit block size to 50 MB
 			p.println("limit_blocksize = 250M");
@@ -669,9 +645,21 @@ public class DaemonProcess {
 			}
 
 			p.println("net_interfaces = " + ifaces);
-			
-			if ("on".equals(preferences.getString("uplink_mode", "off"))) {
-			    p.println("net_internet = " + internet_ifaces);
+
+			if (!"off".equals(preferences.getString("uplink_mode", "off"))) {
+				// add option to detect interface connections
+				if ("wifi".equals(preferences.getString("uplink_mode", "off"))) {
+					p.println("net_internet = " + internet_ifaces);
+
+				}
+				
+				// add static host
+				p.println("static1_address = " + __CLOUD_ADDRESS__);
+				p.println("static1_port = " + __CLOUD_PORT__);
+				p.println("static1_uri = " + __CLOUD_EID__);
+				p.println("static1_proto = tcp");
+				p.println("static1_immediately = yes");
+				p.println("static1_global = yes");
 			}
 
 			String storage_mode = preferences.getString( "storage_mode", "disk-persistent" );
