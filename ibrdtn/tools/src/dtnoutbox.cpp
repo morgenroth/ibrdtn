@@ -125,6 +125,12 @@ void print_help()
 
 void read_configuration(int argc, char** argv)
 {
+	//print help, if requested
+	if ( argv[1] == "-h" || argv[1] == "--help")
+	{
+		print_help();
+		exit(EXIT_SUCCESS);
+	}
 	// print help if not enough parameters are set
 	if (argc < 3)
 	{
@@ -194,13 +200,6 @@ void read_configuration(int argc, char** argv)
 	_conf_destination = std::string(argv[optind+2]);
 	_conf_outbox = std::string(argv[optind+1]);
 
-	// print help if there are not enough or too many remaining parameters
-	if (argc - optind != 3)
-	{
-		print_help();
-	exit(0);
-	}
-
 	//compile regex, if set
 	if(_conf_regex_str.length() > 0 && regcomp(&_conf_regex,_conf_regex_str.c_str(),0))
 	{
@@ -214,7 +213,7 @@ void read_configuration(int argc, char** argv)
 		_conf_outbox = _conf_outbox.substr(0,_conf_outbox.length() -1);
 }
 
-void sighandler(int signal)
+void sighandler_func(int signal)
 {
 	switch (signal)
 	{
@@ -253,15 +252,19 @@ bool deleteAll( ObservedFile* ptr){
 int main( int argc, char** argv )
 {
 	// catch process signals
-	ibrcommon::SignalHandler sighandler(sighandler);
+	ibrcommon::SignalHandler sighandler(sighandler_func);
 	sighandler.handle(SIGINT);
 	sighandler.handle(SIGTERM);
-	sighandler.initialize();
-
-
+#ifndef __WIN32__
+    sighandler.handle(SIGUSR1);
+#endif
 
 	// read the configuration
 	read_configuration(argc,argv);
+
+	//initialize sighandler after possible exit call
+	sighandler.initialize();
+
 	// init working directory
 	if (_conf_workdir.length() > 0)
 	{

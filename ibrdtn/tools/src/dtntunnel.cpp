@@ -298,7 +298,6 @@ int main(int argc, char *argv[])
 	sighandler.handle(SIGINT);
 	sighandler.handle(SIGTERM);
 	sighandler.handle(SIGQUIT);
-	sighandler.initialize();
 
 #ifdef HAVE_LIBDAEMON
 	while ((c = getopt (argc, argv, "td:s:l:hDkp:")) != -1)
@@ -357,6 +356,9 @@ int main(int argc, char *argv[])
 
 	// print help if not enough parameters are set
 	if (!stop_daemon && (optindex < 1)) { print_help(argv[0]); exit(0); }
+
+	//initialize sighandler after possible exit call
+	sighandler.initialize();
 
 	// logging options
 	//const unsigned char logopts = ibrcommon::Logger::LOG_DATETIME | ibrcommon::Logger::LOG_LEVEL;

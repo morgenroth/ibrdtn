@@ -150,13 +150,15 @@ int main(int argc, char** argv)
 	ibrcommon::SignalHandler sighandler(term);
 	sighandler.handle(SIGINT);
 	sighandler.handle(SIGTERM);
-	sighandler.initialize();
 
 	// read the configuration
 	if (init(argc, argv) > 0)
 	{
 		return (EXIT_FAILURE);
 	}
+
+	//initialize sighandler after possible exit call
+	sighandler.initialize();
 
 	// backoff for reconnect
 	unsigned int backoff = 2;

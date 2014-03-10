@@ -76,7 +76,7 @@ void read_configuration(int argc, char** argv)
 	if (argc < 3)
 	{
 		print_help();
-		exit(EXIT_FAILURE);
+		exit(EXIT_SUCCESS);
 	}
 	while(1)
 	{
@@ -112,12 +112,6 @@ void read_configuration(int argc, char** argv)
 			break;
 		}
 	}
-	// print help if there are not enough or too many remaining parameters
-	if (argc - optind != 2)
-	{
-		print_help();
-		exit(EXIT_FAILURE);
-	}
 
 	_conf_name = std::string(argv[optind]);
 	_conf_inbox = std::string(argv[optind+1]);
@@ -149,10 +143,12 @@ int main(int argc, char** argv)
 	ibrcommon::SignalHandler sighandler(term);
 	sighandler.handle(SIGINT);
 	sighandler.handle(SIGTERM);
-	sighandler.initialize();
 
     // read the configuration
     read_configuration(argc, argv);
+
+	//initialize sighandler after possible exit call
+	sighandler.initialize();
 
     if (_conf_workdir.length() > 0)
     {
