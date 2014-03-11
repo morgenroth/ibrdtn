@@ -41,10 +41,6 @@ extern "C"
 {
 #include <tffs.h>
 }
-
-#include <archive.h>
-#include <archive_entry.h>
-#include <fcntl.h>
 #endif
 
 #include <stdlib.h>
