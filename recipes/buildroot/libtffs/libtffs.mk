@@ -3,9 +3,9 @@
 # libtffs (tffs-lib is a Tiny FAT File System library.)
 #
 #############################################################
-LIBTFFS_VERSION = 0.1
-#LIBTFFS_SITE = http://tffs-lib.googlecode.com/svn/trunk/
-LIBTFFS_SOURCE = libtffs-$(LIBTFFS_VERSION).tar
+LIBTFFS_VERSION = 3
+LIBTFFS_SITE = http://tffs-lib.googlecode.com/svn/trunk/
+LIBTFFS_SITE_METHOD=svn
 LIBTFFS_INSTALL_STAGING = YES
 LIBTFFS_INSTALL_TARGET = YES
 
@@ -23,5 +23,4 @@ define LIBTFFS_INSTALL_TARGET_CMDS
   $(INSTALL) -D -m 0755 $(@D)/libtffs.a $(TARGET_DIR)/usr/lib/libtffs.a
 endef
 
-$(eval $(call GENTARGETS))
-
+$(eval $(generic-package))

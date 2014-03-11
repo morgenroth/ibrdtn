@@ -2,14 +2,14 @@ Source: ibrdtn-tools
 Section: net
 Priority: extra
 Maintainer: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
-Build-Depends: cdbs, debhelper (>= 7.0), autotools-dev, ibrcommon-dev (>= 0.10), ibrdtn-dev (>= 0.10), cdbs (>= 0.4), pkg-config
+Build-Depends: cdbs, debhelper (>= 7.0), autotools-dev, ibrcommon-dev (>= 0.10), ibrdtn-dev (>= 0.10), cdbs (>= 0.4), pkg-config, libarchive-dev (>= 2.8)
 Standards-Version: 3.9.4
 Homepage: http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/
 
 Package: ibrdtn-tools
 Architecture: any
 Pre-Depends: debconf
-Depends: ${shlibs:Depends}, ${misc:Depends}, ibrcommon1, ibrdtn1
+Depends: ${shlibs:Depends}, ${misc:Depends}, ibrcommon1, ibrdtn1, libarchive1 | libarchive12 | libarchive13
 Description: IBR-DTN Tools
 	Tools (ping, send, recv, ...) to use in conjunction with IBR-DTN daemon.
 	.
