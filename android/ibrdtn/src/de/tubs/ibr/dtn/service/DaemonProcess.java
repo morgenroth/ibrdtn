@@ -657,7 +657,7 @@ public class DaemonProcess {
 				p.println("static1_address = " + __CLOUD_ADDRESS__);
 				p.println("static1_port = " + __CLOUD_PORT__);
 				p.println("static1_uri = " + __CLOUD_EID__);
-				p.println("static1_proto = tcp");
+				p.println("static1_proto = " + __CLOUD_PROTOCOL__);
 				p.println("static1_immediately = yes");
 				p.println("static1_global = yes");
 			}
