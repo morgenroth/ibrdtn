@@ -51,14 +51,14 @@ void print_help()
 {
 	cout << "-- dtntrigger (IBR-DTN) --" << endl;
 	cout << "Syntax: dtntrigger [options] <name> <shell> [trigger-script]"  << endl;
-	cout << "<name>        the application name" << endl;
-	cout << "<shell>       shell to execute the trigger script" << endl;
-	cout << "[trigger-script]  optional: the trigger script to execute on incoming bundle" << endl;
+	cout << "<name>            The application name" << endl;
+	cout << "<shell>           Shell to execute the trigger script" << endl;
+	cout << "[trigger-script]  The trigger script to execute on incoming bundle (optional)" << endl << endl;
 	cout << "* optional parameters *" << endl;
-	cout << " -h           display this text" << endl;
-	cout << " -g <group>   join a group" << endl;
-	cout << " -w           temporary work directory" << endl;
-	cout << " -s           process signed bundles only" << endl;
+	cout << " -h               Display this text" << endl;
+	cout << " -g <group>       Join a group" << endl;
+	cout << " -w               Temporary work directory" << endl;
+	cout << " -s               Process signed bundles only" << endl;
 }
 
 int init(int argc, char** argv)

@@ -95,25 +95,31 @@ void print_help()
 {
 	cout << "-- dtnoutbox (IBR-DTN) --" << endl;
 	cout << "Syntax: dtnoutbox [options] <name> <outbox> <destination>" << endl;
-	cout << " <name>                     the application name" << endl;
+	cout << " <name>           The application name" << endl;
 #ifdef HAVE_LIBTFFS
-	cout << " <outbox>                   location of outgoing files, directory or vfat-image" << endl;
+	cout << " <outbox>         Location of outgoing files, directory or vfat-image" << endl;
 #else
-	cout << " <outbox>                   directory of outgoing files" << endl;
+	cout << " <outbox>         Directory of outgoing files" << endl;
 #endif
-	cout << " <destination>              the destination EID for all outgoing files" << endl << endl;
+	cout << " <destination>    The destination EID for all outgoing files" << endl << endl;
 	cout << "* optional parameters *" << endl;
-	cout << " -h|--help                  display this text" << endl;
-	cout << " -g|--group                 receiver is a destination group" << endl;
-	cout << " -w|--workdir <dir>         temporary work directory" << endl;
-	cout << " -i|--interval <interval>   interval in milliseconds, in which <outbox> is scanned for new/changed files. default: 5000" << endl;
-	cout << " -r|--rounds <number>       number of rounds of intervals, after which a unchanged file is considered as written. default: 3" << endl;
+	cout << " -h|--help        Display this text" << endl;
+	cout << " -g|--group       Receiver is a destination group" << endl;
+	cout << " -w|--workdir <dir>" << endl;
+	cout << "                  Temporary work directory" << endl;
+	cout << " -i|--interval <milliseconds>" << endl;
+	cout << "                  Interval in milliseconds, in which <outbox> is scanned" << endl;
+	cout << "                  for new/changed files. default: 5000" << endl;
+	cout << " -r|--rounds <n>  Number of rounds of intervals, after which a unchanged" << endl;
+	cout << "                  file is considered as written. default: 3" << endl;
 #ifdef HAVE_LIBTFFS
-	cout << " -p|--path <path>           path of outbox within vfat-image. default: /" << endl;
+	cout << " -p|--path <path> Path of outbox within vfat-image. default: /" << endl;
 #endif
-	cout << " -R|--regex <regex>         all files in <outbox> matching this regular expression will be ignored. default: ^\\." << endl;
-	cout << " -I|--invert                invert above  regexp"<< endl;
-	cout << " -q|--quiet                 only print error messages" << endl;
+	cout << " -R|--regex <regex>" << endl;
+	cout << "                  All files in <outbox> matching this regular expression" << endl;
+	cout << "                  will be ignored. default: ^\\." << endl;
+	cout << " -I|--invert      Invert the regular expression defined with -R"<< endl;
+	cout << " -q|--quiet       Only print error messages" << endl;
 
 	_running = false; //stop this app, after printing help
 

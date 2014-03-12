@@ -259,15 +259,17 @@ void print_help(const char *argv0)
 {
 	std::cout << "-- dtntunnel (IBR-DTN) --" << std::endl;
 	std::cout << "Syntax: " << argv0 << " [options] <endpoint>" << std::endl;
-	std::cout << " -h            Display help message" << std::endl;
-	std::cout << " -d <dev>      Virtual network device to create (default: tun0)" << std::endl;
-	std::cout << " -s <name>     Application suffix of the local endpoint (default: tunnel)" << std::endl;
-	std::cout << " -l <seconds>  Lifetime of each packet (default: 60)" << std::endl;
-	std::cout << " -t            Show throughput" << std::endl;
+	std::cout << " <endpoint>       Destination of outgoing bundles" << std::endl << std::endl;
+	std::cout << "* optional parameters *" << std::endl;
+	std::cout << " -h               Display help message" << std::endl;
+	std::cout << " -d <dev>         Virtual network device to create (default: tun0)" << std::endl;
+	std::cout << " -s <name>        Application suffix of the local endpoint (default: tunnel)" << std::endl;
+	std::cout << " -l <seconds>     Lifetime of each packet (default: 60)" << std::endl;
+	std::cout << " -t               Show throughput" << std::endl;
 #ifdef HAVE_LIBDAEMON
-	std::cout << " -D            Daemonize the process" << std::endl;
-	std::cout << " -k            Stop the running daemon" << std::endl;
-	std::cout << " -p <file>     Store the pid in this pidfile" << std::endl;
+	std::cout << " -D               Daemonize the process" << std::endl;
+	std::cout << " -k               Stop the running daemon" << std::endl;
+	std::cout << " -p <file>        Store the pid in this pidfile" << std::endl;
 #endif
 }
 

@@ -33,21 +33,21 @@ void print_help()
 {
 	cout << "-- dtnsend (IBR-DTN) --" << endl;
 	cout << "Syntax: dtnsend [options] <dst> <filename>"  << endl;
-	cout << " <dst>         set the destination eid (e.g. dtn://node/filetransfer)" << endl;
-	cout << " <filename>    the file to transfer" << endl;
+	cout << " <dst>            Set the destination eid (e.g. dtn://node/filetransfer)" << endl;
+	cout << " <filename>       The file to transfer" << endl << endl;
 	cout << "* optional parameters *" << endl;
-	cout << " -h|--help     display this text" << endl;
-	cout << " --src <name>  set the source application name (e.g. filetransfer)" << endl;
-	cout << " -p <0..2>     set the bundle priority (0 = low, 1 = normal, 2 = high)" << endl;
-	cout << " -g            receiver is a destination group" << endl;
+	cout << " -h|--help        Display this text" << endl;
+	cout << " --src <name>     Set the source application name (e.g. filetransfer)" << endl;
+	cout << " -p <0..2>        Set the bundle priority (0 = low, 1 = normal, 2 = high)" << endl;
+	cout << " -g               Receiver is a destination group" << endl;
 	cout << " --lifetime <seconds>" << endl;
-	cout << "               set the lifetime of outgoing bundles; default: 3600" << endl;
-	cout << " -U <socket>   use UNIX domain sockets" << endl;
-	cout << " -n <copies>   create <copies> bundle copies" << endl;
-	cout << " --encrypt     request encryption on the bundle layer" << endl;
-	cout << " --sign        request signature on the bundle layer" << endl;
-	cout << " --custody     request custody transfer of the bundle" << endl;
-	cout << " --compression request compression of the payload" << endl;
+	cout << "                  Set the lifetime of outgoing bundles; default: 3600" << endl;
+	cout << " -U <socket>      Connect to UNIX domain socket API" << endl;
+	cout << " -n <copies>      Create <copies> bundle copies" << endl;
+	cout << " --encrypt        Request encryption on the bundle layer" << endl;
+	cout << " --sign           Request signature on the bundle layer" << endl;
+	cout << " --custody        Request custody transfer of the bundle" << endl;
+	cout << " --compression    Request compression of the payload" << endl;
 
 }
 

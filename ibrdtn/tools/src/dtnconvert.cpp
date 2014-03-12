@@ -37,17 +37,16 @@
 void print_help()
 {
 	std::cout << "-- dtnconvert (IBR-DTN) --" << std::endl;
-	std::cout << "Syntax: dtnconvert [options]"  << std::endl;
-	std::cout << std::endl;
-	std::cout << "* parameters *" << std::endl;
-	std::cout << " -h        display this text" << std::endl;
-	std::cout << " -r        read bundle data and print out some information" << std::endl;
-	std::cout << " -c        create a bundle with stdin as payload" << std::endl;
+	std::cout << "Syntax: dtnconvert [options]"  << std::endl << endl;
+	std::cout << "* optional parameters *" << std::endl;
+	std::cout << " -h               Display this text" << std::endl;
+	std::cout << " -r               Read bundle data and print out some information" << std::endl;
+	std::cout << " -c               Create a bundle with stdin as payload" << std::endl;
 	std::cout << std::endl;
 	std::cout << "* options when creating a bundle *" << std::endl;
-	std::cout << " -s        source EID of the bundle" << std::endl;
-	std::cout << " -d        destination EID of the bundle" << std::endl;
-	std::cout << " -l        lifetime of the bundle in seconds (default: 3600)" << std::endl;
+	std::cout << " -s               Source EID of the bundle" << std::endl;
+	std::cout << " -d               Destination EID of the bundle" << std::endl;
+	std::cout << " -l               Lifetime of the bundle in seconds (default: 3600)" << std::endl;
 }
 
 int main(int argc, char** argv)

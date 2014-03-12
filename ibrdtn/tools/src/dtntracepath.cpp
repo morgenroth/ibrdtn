@@ -252,15 +252,15 @@ void print_help()
 {
 	cout << "-- dtntracepath (IBR-DTN) --" << endl;
 	cout << "Syntax: dtntracepath [options] <dst>"  << endl;
-	cout << " <dst>    set the destination eid (e.g. dtn://node/null)" << endl;
+	cout << " <dst>    set the destination eid (e.g. dtn://node/null)" << endl << endl;
 	cout << "* optional parameters *" << endl;
-	cout << " -h              display this text" << endl;
-	cout << " -t <timeout>    time in seconds to wait for reports" << endl;
-	cout << " -d              request deletion report" << endl;
-	cout << " -f              request forward report" << endl;
-	cout << " -r              request reception report" << endl;
-	cout << " -p              add tracking block to record the bundle path" << endl;
-	cout << " -g              destination is a group endpoint" << endl;
+	cout << " -h               Display this text" << endl;
+	cout << " -t <seconds>     Time to wait for reports (default: 10)" << endl;
+	cout << " -d               Request deletion report" << endl;
+	cout << " -f               Request forward report" << endl;
+	cout << " -r               Request reception report" << endl;
+	cout << " -p               Add tracking block to record the bundle path" << endl;
+	cout << " -g               Destination is a group endpoint" << endl;
 }
 
 int main(int argc, char *argv[])

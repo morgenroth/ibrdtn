@@ -153,19 +153,21 @@ void print_help()
 {
 	cout << "-- dtnping (IBR-DTN) --" << endl;
 	cout << "Syntax: dtnping [options] <dst>"  << endl;
-	cout << " <dst>    set the destination eid (e.g. dtn://node/echo)" << endl;
+	cout << " <dst>            Set the destination eid (e.g. dtn://node/echo)" << endl << endl;
 	cout << "* optional parameters *" << endl;
-	cout << " -h|--help       display this text" << endl;
-	cout << " --src <name>    set the source application name (e.g. echo-client)" << endl;
-	cout << " --nowait        do not wait for a reply" << endl;
-	cout << " --abortfail     Abort after first packetloss" << endl;
-	cout << " --size          the size of the payload" << endl;
-	cout << " --count X       send X echo in a row" << endl;
-	cout << " --delay X       delay (seconds) after a successful response" << endl;
-	cout << " --lifetime <seconds> set the lifetime of outgoing bundles; default: 30" << endl;
-	cout << " --encrypt       request encryption on the bundle layer" << endl;
-	cout << " --sign          request signature on the bundle layer" << endl;
-	cout << " -U <socket>     use UNIX domain sockets" << endl;
+	cout << " -h|--help        Display this text" << endl;
+	cout << " --src <name>     Set the source application name (e.g. echo-client)" << endl;
+	cout << " --nowait         Do not wait for a reply" << endl;
+	cout << " --abortfail      Abort after first packetloss" << endl;
+	cout << " --size           The size of the payload" << endl;
+	cout << " --count <n>      Send X echo in a row" << endl;
+	cout << " --delay <seconds>" << endl;
+	cout << "                  Delay between a received response and the next request" << endl;
+	cout << " --lifetime <seconds>" << endl;
+	cout << "                  Set the lifetime of outgoing bundles; default: 30" << endl;
+	cout << " --encrypt        Request encryption on the bundle layer" << endl;
+	cout << " --sign           Request signature on the bundle layer" << endl;
+	cout << " -U <socket>      Connect to UNIX domain socket API" << endl;
 }
 
 size_t _received = 0, _transmitted = 0;

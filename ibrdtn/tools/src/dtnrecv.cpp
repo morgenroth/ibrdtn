@@ -34,15 +34,17 @@
 void print_help()
 {
 	cout << "-- dtnrecv (IBR-DTN) --" << endl;
-	cout << "Syntax: dtnrecv [options]"  << endl;
+	cout << "Syntax: dtnrecv [options]"  << endl << endl;
 	cout << "* optional parameters *" << endl;
-	cout << " -h|--help            display this text" << endl;
-	cout << " --file <filename>    write the incoming data to the a file instead of the standard output" << endl;
-	cout << " --name <name>        set the application name (e.g. filetransfer)" << endl;
-	cout << " --timeout <seconds>  receive timeout in seconds" << endl;
-	cout << " --count <number>     receive that many bundles" << endl;
-	cout << " --group <group>      join a group" << endl;
-	cout << " -U <socket>     use UNIX domain sockets" << endl;
+	cout << " -h|--help        Display this text" << endl;
+	cout << " --file <path>    Write the incoming data to the a file instead of the" << endl;
+	cout << "                  standard output" << endl;
+	cout << " --name <name>    Set the application name (e.g. filetransfer)" << endl;
+	cout << " --timeout <seconds>" << endl;
+	cout << "                  Receive timeout in seconds" << endl;
+	cout << " --count <n>      Receive that many bundles" << endl;
+	cout << " --group <group>  Join a group" << endl;
+	cout << " -U <socket>      Connect to UNIX domain socket API" << endl;
 }
 
 dtn::api::Client *_client = NULL;

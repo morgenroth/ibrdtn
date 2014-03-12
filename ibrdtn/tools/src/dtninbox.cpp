@@ -62,12 +62,12 @@ void print_help()
 {
         cout << "-- dtninbox (IBR-DTN) --" << endl;
         cout << "Syntax: dtninbox [options] <name> <inbox>"  << endl;
-        cout << " <name>           the application name" << endl;
-        cout << " <inbox>          directory where incoming files should be placed" << endl;
+        cout << " <name>           The application name" << endl;
+        cout << " <inbox>          Directory where incoming files should be placed" << endl << endl;
         cout << "* optional parameters *" << endl;
-        cout << " -h|--help        display this text" << endl;
-        cout << " -w|--workdir     temporary work directory" << endl;
-        cout << " --quiet          only print error messages" << endl;
+        cout << " -h|--help        Display this text" << endl;
+        cout << " -w|--workdir     Temporary work directory" << endl;
+        cout << " --quiet          Only print error messages" << endl;
 }
 
 void read_configuration(int argc, char** argv)
