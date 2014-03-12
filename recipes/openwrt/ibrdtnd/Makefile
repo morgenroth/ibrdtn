@@ -24,7 +24,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/ibrdtnd
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=dtndht ibrdtn +libopenssl +libsqlite3
+  DEPENDS:=+dtndht +ibrdtn +libopenssl +libsqlite3
   TITLE:=DTN Deamon
 endef
 

@@ -25,7 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/ibrdtn
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=ibrcommon +libopenssl +zlib
+  DEPENDS:=+ibrcommon +libopenssl +zlib
   TITLE:=IBR-DTN Library
 endef
 
