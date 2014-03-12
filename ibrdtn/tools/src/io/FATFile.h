@@ -4,6 +4,7 @@
  * Copyright (C) 2013 IBR, TU Braunschweig
  *
  * Written-by: David Goltzsche <goltzsch@ibr.cs.tu-bs.de>
+ *             Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +42,7 @@ extern "C" //libtffs does not support c++
 class FATFile: public ibrcommon::File
 {
 public:
-	FATFile(const std::string img_path);
-	FATFile(const std::string img_path,const string file_path);
+	FATFile(const ibrcommon::File &image_file, const std::string &file_path);
 	virtual ~FATFile();
 
 	int getFiles(list<FATFile> &files);
@@ -56,9 +56,10 @@ public:
 	time_t lastmodify();
 	time_t laststatchange();
 
+	const ibrcommon::File& getImageFile() const;
 
 private:
-	std::string _img_path;
+	const ibrcommon::File _image_file;
 
 	//handles
 	tffs_handle_t htffs;

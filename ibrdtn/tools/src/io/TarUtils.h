@@ -4,6 +4,7 @@
  * Copyright (C) 2013 IBR, TU Braunschweig
  *
  * Written-by: David Goltzsche <goltzsch@ibr.cs.tu-bs.de>
+ *             Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,27 +24,11 @@
 #ifndef TARUTILS_H_
 #define TARUTILS_H_
 #include "config.h"
-#ifdef HAVE_LIBARCHIVE
 #include "FATFile.h"
 #include "ObservedFile.h"
+#include <ibrcommon/data/File.h>
+#include <list>
 
-#include <ibrcommon/data/BLOB.h>
-#include <archive.h>
-#include <archive_entry.h>
-#include <fcntl.h>
-
-#ifdef HAVE_LIBTFFS
-extern "C"
-{
-#include <tffs.h>
-}
-#endif
-#endif
-struct tarfile
-{
-	const char *filename;
-	archive_entry *entry;
-};
 class TarUtils
 {
 public:
@@ -53,44 +38,15 @@ public:
 	/**
 	 * write tar archive to payload block, FATFile version
 	 */
-	static void write_tar_archive( ibrcommon::BLOB::Reference* blob, list<ObservedFile*> files_to_send );
-
-	/*
-	 * set path of vfat-image, "" if not on image
-	 */
-	static void set_img_path(std::string img_path);
-
-	/*
-	 * set path of outbox
-	 */
-	static void set_outbox_path(std::string outbox_path);
-
+	static void write( std::ostream &output, const ibrcommon::File &parent, const std::list<ObservedFile*> &files_to_send );
 
 	/*
 	 * read tar archive from payload block, write to file
 	 */
-	static void read_tar_archive( string extract_folder, ibrcommon::BLOB::Reference *blob );
+	static void read( const ibrcommon::File &extract_folder, std::istream &input );
 
 private:
-	static string rel_filename(string);
-	static string dir_path(string);
-
-	static std::string _img_path;
-	static std::string _outbox_path;
-
-	//tffs handles
-#ifdef HAVE_LIBTFFS
-	static tffs_handle_t htffs;
-	static tdir_handle_t hdir;
-	static tfile_handle_t hfile;
-#endif
-	static int ret;
-
-	//CALLBACKS FOR LIBARCHIVE
-	static int close_callback( struct archive *, void *blob_iostream );
-	static ssize_t write_callback( struct archive *, void *blob_ptr, const void *buffer, size_t length );
-	static int open_callback( struct archive *, void *blob_iostream );
-	static ssize_t read_callback( struct archive *a, void *client_data, const void **buff );
+	static std::string rel_filename(const ibrcommon::File &parent, ObservedFile&);
 };
 
 #endif /* TARUTILS_H_ */

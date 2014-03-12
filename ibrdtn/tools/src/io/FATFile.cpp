@@ -4,6 +4,7 @@
  * Copyright (C) 2013 IBR, TU Braunschweig
  *
  * Written-by: David Goltzsche <goltzsch@ibr.cs.tu-bs.de>
+ *             Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +25,19 @@
 #ifdef HAVE_LIBTFFS
 
 
-FATFile::FATFile( const std::string file_path, const string img_path) : File(file_path), _img_path(img_path) , htffs(0),hdir(0),hfile(0), ret(-1)
+FATFile::FATFile(const ibrcommon::File &image_file, const std::string &file_path)
+ : ibrcommon::File(file_path), _image_file(image_file), htffs(0), hdir(0), hfile(0), ret(-1)
 {
 	update();
 }
 
 FATFile::~FATFile()
 {
+}
+
+const ibrcommon::File& FATFile::getImageFile() const
+{
+	return _image_file;
 }
 
 int FATFile::getFiles( list<FATFile> &files)
@@ -45,7 +52,7 @@ int FATFile::getFiles( list<FATFile> &files)
 		{
 			std::string newpath = path + "/" + dirent.d_name;
 
-			FATFile f(newpath,_img_path);
+			FATFile f(_image_file, newpath);
 			files.push_back(f);
 		}
 		else if (ret == ERR_TFFS_LAST_DIRENTRY) { // end of directory
@@ -126,12 +133,12 @@ int FATFile::remove( bool recursive )
 
 FATFile FATFile::get( std::string filename )
 {
-	//TODO not implemented yet, because not needed
+	throw ibrcommon::IOException("not implemented yet");
 }
 
 FATFile FATFile::getParent()
 {
-	//TODO not implemented yet, because not needed
+	throw ibrcommon::IOException("not implemented yet");
 }
 
 bool FATFile::exists()
@@ -211,9 +218,9 @@ time_t FATFile::laststatchange()
 
 int FATFile::mount_tffs()
 {
-	byte* path = const_cast<char *>(_img_path.c_str());
+	byte* path = const_cast<char *>(_image_file.getPath().c_str());
 	if ((ret = TFFS_mount(path, &htffs)) != TFFS_OK) {
-		cout << "ERROR: TFFS_mount" << ret << _img_path << endl;
+		std::cerr << "ERROR: TFFS_mount" << ret << " in " << _image_file.getPath() << std::endl;
 		return -1;
 	}
 	return 0;

@@ -107,7 +107,7 @@ AS_IF([test -z "${tffs_path}"], [
 ],[
         AC_MSG_CHECKING([for LIBTFFS])
         AS_IF([test -f "${tffs_path}/include/tffs.h"], [
-                AC_DEFINE(HAVE_LIBTFFS, [1], ["tffs  found"])
+                AC_DEFINE(HAVE_LIBTFFS, [1], ["tffs found"])
                 tffs_LIBS="-L${tffs_path} -ltffs"
                 tffs_CFLAGS="-I${tffs_path}/include"
                 AC_SUBST(tffs_LIBS)

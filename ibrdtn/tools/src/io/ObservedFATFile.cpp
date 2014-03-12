@@ -4,6 +4,7 @@
  * Copyright (C) 2013 IBR, TU Braunschweig
  *
  * Written-by: David Goltzsche <goltzsch@ibr.cs.tu-bs.de>
+ *             Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,12 +33,18 @@
 #include <openssl/md5.h>
 #endif
 
-ObservedFATFile::ObservedFATFile(const std::string& file_path) : ObservedFile(),_file(file_path,_conf_imgpath)
+ObservedFATFile::ObservedFATFile(const ibrcommon::File &image_file, const std::string& file_path)
+ : ObservedFile(), _file(image_file, file_path), _image_file(image_file)
 {
 }
 
 ObservedFATFile::~ObservedFATFile()
 {
+}
+
+const ibrcommon::File& ObservedFATFile::getImageFile() const
+{
+	return _image_file;
 }
 
 int ObservedFATFile::getFiles( std::list<ObservedFile*>& files )
@@ -55,7 +62,7 @@ int ObservedFATFile::getFiles( std::list<ObservedFile*>& files )
 			(*ff_iter).getFiles(fatfiles);
 		else
 		{
-			ObservedFile* of = new ObservedFATFile((*ff_iter).getPath());
+			ObservedFile* of = new ObservedFATFile(_file.getImageFile(), (*ff_iter).getPath());
 			files.push_back(of);
 		}
 	}

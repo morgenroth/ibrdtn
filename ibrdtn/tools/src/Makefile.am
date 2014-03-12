@@ -21,11 +21,7 @@ endif
 
 if LIBARCHIVE
 if OPENSSL
-dtninbox_SOURCES = dtninbox.cpp \
-		  io/TarUtils.h \
-		  io/TarUtils.cpp
-dtnoutbox_SOURCES = dtnoutbox.cpp \
-		  io/FileHash.h \
+tarutils_src = io/FileHash.h \
 		  io/FileHash.cpp \
 		  io/FileHashList.h \
 		  io/FileHashList.cpp \
@@ -39,6 +35,9 @@ dtnoutbox_SOURCES = dtnoutbox.cpp \
 		  io/ObservedNormalFile.cpp \
 		  io/TarUtils.h \
 		  io/TarUtils.cpp
+
+dtninbox_SOURCES = dtninbox.cpp $(tarutils_src)
+dtnoutbox_SOURCES = dtnoutbox.cpp $(tarutils_src)
 endif
 endif
 

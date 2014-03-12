@@ -53,21 +53,21 @@ int _conf_quiet = false;
 
 struct option long_options[] =
 {
-    {"workdir", required_argument, 0, 'w'},
-    {"quiet", no_argument, 0, 'q'},
-    {0, 0, 0, 0}
+		{"workdir", required_argument, 0, 'w'},
+		{"quiet", no_argument, 0, 'q'},
+		{0, 0, 0, 0}
 };
 
 void print_help()
 {
-        cout << "-- dtninbox (IBR-DTN) --" << endl;
-        cout << "Syntax: dtninbox [options] <name> <inbox>"  << endl;
-        cout << " <name>           The application name" << endl;
-        cout << " <inbox>          Directory where incoming files should be placed" << endl << endl;
-        cout << "* optional parameters *" << endl;
-        cout << " -h|--help        Display this text" << endl;
-        cout << " -w|--workdir     Temporary work directory" << endl;
-        cout << " --quiet          Only print error messages" << endl;
+	cout << "-- dtninbox (IBR-DTN) --" << endl;
+	cout << "Syntax: dtninbox [options] <name> <inbox>"  << endl;
+	cout << " <name>           The application name" << endl;
+	cout << " <inbox>          Directory where incoming files should be placed" << endl << endl;
+	cout << "* optional parameters *" << endl;
+	cout << " -h|--help        Display this text" << endl;
+	cout << " -w|--workdir     Temporary work directory" << endl;
+	cout << " --quiet          Only print error messages" << endl;
 }
 
 void read_configuration(int argc, char** argv)
@@ -127,11 +127,11 @@ ibrcommon::socketstream *_conn = NULL;
 
 void term(int signal)
 {
-    if (signal >= 1)
-    {
-        _running = false;
-        if (_conn != NULL) _conn->close();
-    }
+	if (signal >= 1)
+	{
+		_running = false;
+		if (_conn != NULL) _conn->close();
+	}
 }
 
 /*
@@ -144,74 +144,78 @@ int main(int argc, char** argv)
 	sighandler.handle(SIGINT);
 	sighandler.handle(SIGTERM);
 
-    // read the configuration
-    read_configuration(argc, argv);
+	// read the configuration
+	read_configuration(argc, argv);
 
 	//initialize sighandler after possible exit call
 	sighandler.initialize();
 
-    if (_conf_workdir.length() > 0)
-    {
-	ibrcommon::File blob_path(_conf_workdir);
+	if (_conf_workdir.length() > 0)
+	{
+		ibrcommon::File blob_path(_conf_workdir);
 
-    	if (blob_path.exists())
-    	{
-    		ibrcommon::BLOB::changeProvider(new ibrcommon::FileBLOBProvider(blob_path), true);
-    	}
-    }
+		if (blob_path.exists())
+		{
+			ibrcommon::BLOB::changeProvider(new ibrcommon::FileBLOBProvider(blob_path), true);
+		}
+	}
 
-    // backoff for reconnect
-    unsigned int backoff = 2;
+	// backoff for reconnect
+	unsigned int backoff = 2;
 
-    // loop, if no stop if requested
-    while (_running)
-    {
-        try {
-        	// Create a stream to the server using TCP.
-        	ibrcommon::vaddress addr("localhost", 4550);
-        	ibrcommon::socketstream conn(new ibrcommon::tcpsocket(addr));
+	// loop, if no stop if requested
+	while (_running)
+	{
+		try {
+			// Create a stream to the server using TCP.
+			ibrcommon::vaddress addr("localhost", 4550);
+			ibrcommon::socketstream conn(new ibrcommon::tcpsocket(addr));
 
-        	// set the connection globally
-        	_conn = &conn;
+			// set the connection globally
+			_conn = &conn;
 
-            // Initiate a client for synchronous receiving
-            dtn::api::Client client(_conf_name, conn);
+			// Initiate a client for synchronous receiving
+			dtn::api::Client client(_conf_name, conn);
 
-            // Connect to the server. Actually, this function initiate the
-            // stream protocol by starting the thread and sending the contact header.
-            client.connect();
+			// Connect to the server. Actually, this function initiate the
+			// stream protocol by starting the thread and sending the contact header.
+			client.connect();
 
-            // reset backoff if connected
-            backoff = 2;
+			// reset backoff if connected
+			backoff = 2;
 
-            // check the connection
-            while (_running)
-            {
-            	// receive the bundle
-            	dtn::data::Bundle b = client.getBundle();
-		if(!_conf_quiet)
-			cout << "received bundle: " << b.toString() << endl;
+			// check the connection
+			while (_running)
+			{
+				// receive the bundle
+				dtn::data::Bundle b = client.getBundle();
+				if(!_conf_quiet)
+					cout << "received bundle: " << b.toString() << endl;
 
-            	// get the reference to the blob
-            	ibrcommon::BLOB::Reference ref = b.find<dtn::data::PayloadBlock>().getBLOB();
+				// get the reference to the blob
+				ibrcommon::BLOB::Reference ref = b.find<dtn::data::PayloadBlock>().getBLOB();
 
-		TarUtils::read_tar_archive(_conf_inbox,&ref);
-            }
+				// write files into BLOB while it is locked
+				{
+					ibrcommon::BLOB::iostream stream = ref.iostream();
+					TarUtils::read(_conf_inbox, *stream);
+				}
+			}
 
-            // close the client connection
-            client.close();
+			// close the client connection
+			client.close();
 
-            // close the connection
-            conn.close();
+			// close the connection
+			conn.close();
 
-            // set the global connection to NULL
-            _conn = NULL;
-        } catch (const ibrcommon::socket_exception&) {
-        	// set the global connection to NULL
-        	_conn = NULL;
+			// set the global connection to NULL
+			_conn = NULL;
+		} catch (const ibrcommon::socket_exception&) {
+			// set the global connection to NULL
+			_conn = NULL;
 
-        	if (_running)
-        	{
+			if (_running)
+			{
 				cout << "Connection to bundle daemon failed. Retry in " << backoff << " seconds." << endl;
 				ibrcommon::Thread::sleep(backoff * 1000);
 
@@ -221,13 +225,13 @@ int main(int argc, char** argv)
 					// set a new backoff
 					backoff = backoff * 2;
 				}
-        	}
-        } catch (const ibrcommon::IOException&) {
-        	// set the global connection to NULL
-        	_conn = NULL;
+			}
+		} catch (const ibrcommon::IOException&) {
+			// set the global connection to NULL
+			_conn = NULL;
 
-        	if (_running)
-        	{
+			if (_running)
+			{
 				cout << "Connection to bundle daemon failed. Retry in " << backoff << " seconds." << endl;
 				ibrcommon::Thread::sleep(backoff * 1000);
 
@@ -237,12 +241,12 @@ int main(int argc, char** argv)
 					// set a new backoff
 					backoff = backoff * 2;
 				}
-        	}
-    	} catch (const std::exception&) {
-        	// set the global connection to NULL
-        	_conn = NULL;
-    	}
-    }
+			}
+		} catch (const std::exception&) {
+			// set the global connection to NULL
+			_conn = NULL;
+		}
+	}
 
-    return (EXIT_SUCCESS);
+	return (EXIT_SUCCESS);
 }

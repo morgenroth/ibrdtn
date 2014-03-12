@@ -4,6 +4,7 @@
  * Copyright (C) 2013 IBR, TU Braunschweig
  *
  * Written-by: David Goltzsche <goltzsch@ibr.cs.tu-bs.de>
+ *             Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +24,7 @@
 #ifdef HAVE_LIBTFFS
 #include "ObservedFile.h"
 #include "FATFile.h"
+#include <ibrcommon/data/File.h>
 
 #ifndef OBSERVEDFATFILE_H_
 #define OBSERVEDFATFILE_H_
@@ -30,8 +32,10 @@
 class ObservedFATFile : public ObservedFile
 {
 public:
-	ObservedFATFile(const std::string& file_path);
+	ObservedFATFile(const ibrcommon::File &image_file, const std::string& file_path);
 	virtual ~ObservedFATFile();
+
+	virtual const ibrcommon::File& getImageFile() const;
 
 	virtual int getFiles(std::list<ObservedFile*>& files);
 	virtual std::string getPath();
@@ -41,6 +45,7 @@ public:
 
 private:
 	FATFile _file;
+	ibrcommon::File _image_file;
 };
 
 #endif /* OBSERVEDFATFILE_H_ */

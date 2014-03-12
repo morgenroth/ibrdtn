@@ -22,10 +22,9 @@
 
 #include "ObservedFile.h"
 #include <string.h>
-std::string ObservedFile::_conf_imgpath = "";
-size_t ObservedFile::_conf_rounds = 0;
 
-ObservedFile::ObservedFile() : _last_sent(0)
+ObservedFile::ObservedFile()
+ : _last_sent(0), _size(0), _is_system(false), _is_directory(false)
 {
 }
 ObservedFile::~ObservedFile()
@@ -47,15 +46,6 @@ bool ObservedFile::lastHashesEqual( size_t n )
 	return true;
 }
 
-void ObservedFile::setConfigImgPath( std::string path )
-{
-	_conf_imgpath = path;
-}
-
-void ObservedFile::setConfigRounds( size_t rounds )
-{
-	_conf_rounds = rounds;
-}
 size_t ObservedFile::size() const
 {
 	return _size;

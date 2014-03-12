@@ -4,6 +4,7 @@
  * Copyright (C) 2013 IBR, TU Braunschweig
  *
  * Written-by: David Goltzsche <goltzsch@ibr.cs.tu-bs.de>
+ *             Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,9 +56,6 @@ public:
 protected:
 	std::vector<std::string> _hashes;
 	size_t _last_sent;
-
-	static std::string _conf_imgpath;
-	static size_t _conf_rounds;
 
 	//updated vars
 	size_t _size;

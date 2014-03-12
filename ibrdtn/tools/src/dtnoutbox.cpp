@@ -80,16 +80,16 @@ int _conf_enabled = true;
 
 struct option long_options[] =
 {
-    {"destination",  required_argument, 0, 'd'},
-    {"help", no_argument, 0, 'h'},
-    {"group", no_argument, 0, 'g'},
-    {"workdir", required_argument, 0, 'w'},
-    {"interval", required_argument, 0, 'i'},
-    {"rounds", required_argument, 0, 'r'},
-    {"path", required_argument, 0, 'p'},
-    {"regex", required_argument, 0, 'R'},
-    {"quiet", no_argument, 0, 'q'},
-    {0, 0, 0, 0}
+	{"destination",  required_argument, 0, 'd'},
+	{"help", no_argument, 0, 'h'},
+	{"group", no_argument, 0, 'g'},
+	{"workdir", required_argument, 0, 'w'},
+	{"interval", required_argument, 0, 'i'},
+	{"rounds", required_argument, 0, 'r'},
+	{"path", required_argument, 0, 'p'},
+	{"regex", required_argument, 0, 'R'},
+	{"quiet", no_argument, 0, 'q'},
+	{0, 0, 0, 0}
 };
 void print_help()
 {
@@ -203,7 +203,7 @@ void read_configuration(int argc, char** argv)
 	_conf_outbox = std::string(argv[optind+1]);
 
 	//compile regex, if set
-	if(_conf_regex_str.length() > 0 && regcomp(&_conf_regex,_conf_regex_str.c_str(),0))
+	if (_conf_regex_str.length() > 0 && regcomp(&_conf_regex,_conf_regex_str.c_str(),0))
 	{
 		cout << "ERROR: invalid regex: " << optarg << endl;
 		exit(-1);
@@ -211,7 +211,7 @@ void read_configuration(int argc, char** argv)
 
 
 	//check outbox path for trailing slash
-	if(_conf_outbox.at(_conf_outbox.length()-1) == '/')
+	if (_conf_outbox.at(_conf_outbox.length()-1) == '/')
 		_conf_outbox = _conf_outbox.substr(0,_conf_outbox.length() -1);
 }
 
@@ -290,14 +290,11 @@ int main( int argc, char** argv )
 
 	ObservedFile* outbox;
 
-	ObservedFile::setConfigRounds(_conf_rounds);
-
-	if(outbox_file.exists() && !outbox_file.isDirectory())
+	if (outbox_file.exists() && !outbox_file.isDirectory())
 	{
 #ifdef HAVE_LIBTFFS
 		_conf_fat = true;
-		ObservedFile::setConfigImgPath(_conf_outbox);
-		outbox = new ObservedFATFile(_conf_path);
+		outbox = new ObservedFATFile(_conf_outbox, _conf_path);
 #else
 		cout << "ERROR: image-file provided, but dtnoutbox has been compiled without libtffs support!" << endl;
 		return -1;
@@ -305,7 +302,7 @@ int main( int argc, char** argv )
 	}
 	else
 	{
-		if(!outbox_file.exists())
+		if (!outbox_file.exists())
 			File::createDirectory(outbox_file);
 
 		outbox = new ObservedNormalFile(_conf_outbox);
@@ -354,7 +351,7 @@ int main( int argc, char** argv )
 					sent_hashes.removeAll((*iter)->getHash());
 					for(iter2 = observed_files.begin();iter2 != observed_files.end();++iter2)
 					{
-							if((*iter2)->getHash() == (*iter)->getHash())
+							if ((*iter2)->getHash() == (*iter)->getHash())
 							{
 								delete (*iter);
 								observed_files.erase(iter2);
@@ -363,7 +360,7 @@ int main( int argc, char** argv )
 					}
 				}
 				//rerun loop, if files have been deleted
-				if(deleted_files.size() > 0)
+				if (deleted_files.size() > 0)
 					break;
 
 				//determine new files
@@ -374,24 +371,24 @@ int main( int argc, char** argv )
 				{
 
 					int reg_ret = regexec(&_conf_regex,(*iter)->getBasename().c_str(), 0, NULL, 0);
-					if(!reg_ret && !_conf_invert)
+					if (!reg_ret && !_conf_invert)
 						continue;
-					if(reg_ret && _conf_invert)
+					if (reg_ret && _conf_invert)
 						continue;
 
 					//print error message, if regex error occurs
-					if(reg_ret && reg_ret != REG_NOMATCH)
+					if (reg_ret && reg_ret != REG_NOMATCH)
 					{
 							char msgbuf[100];
 							regerror(reg_ret,&_conf_regex,msgbuf,sizeof(msgbuf));
 							cout << "ERROR: regex match failed : " << std::string(msgbuf) << endl;
 					}
 					ObservedFile* of;
-					if(!_conf_fat)
+					if (!_conf_fat)
 						of = new ObservedNormalFile((*iter)->getPath());
 #ifdef HAVE_LIBTFFS
 					else
-						of = new ObservedFATFile((*iter)->getPath());
+						of = new ObservedFATFile(_conf_outbox, (*iter)->getPath());
 #endif
 					observed_files.push_back(of);
 				}
@@ -408,7 +405,7 @@ int main( int argc, char** argv )
 				files_to_send.clear();
 				for (iter = observed_files.begin(); iter != observed_files.end(); ++iter)
 				{
-					if(!sent_hashes.contains((*iter)))
+					if (!sent_hashes.contains((*iter)))
 					{
 						if ((*iter)->lastHashesEqual(_conf_rounds))
 						{
@@ -421,7 +418,7 @@ int main( int argc, char** argv )
 					}
 				}
 
-				if(!_conf_quiet)
+				if (!_conf_quiet)
 					cout << files_to_send.size() << "/" << observed_files.size() << " files to send: " << files_to_send_ss.str() << endl;
 
 				if (files_to_send.size())
@@ -430,15 +427,18 @@ int main( int argc, char** argv )
 					ibrcommon::BLOB::Reference blob = ibrcommon::BLOB::create();
 
 					//set paths, depends on file location (normal file system or fat image)
-					if(_conf_fat)
+					if (_conf_fat)
 					{
-						TarUtils::set_img_path(_conf_outbox);
-						TarUtils::set_outbox_path(_conf_path);
+						// write files into BLOB while it is locked
+						ibrcommon::BLOB::iostream stream = blob.iostream();
+						TarUtils::write(*stream, _conf_path, files_to_send);
 					}
 					else
-						TarUtils::set_outbox_path(_conf_outbox);
-
-					TarUtils::write_tar_archive(&blob, files_to_send);
+					{
+						// write files into BLOB while it is locked
+						ibrcommon::BLOB::iostream stream = blob.iostream();
+						TarUtils::write(*stream, _conf_outbox, files_to_send);
+					}
 
 					// create a new bundle
 					dtn::data::EID destination = EID(_conf_destination);
@@ -467,7 +467,7 @@ int main( int argc, char** argv )
 					// wait defined seconds
 					ibrcommon::MutexLock l(_wait_cond);
 					_wait_cond.wait(_conf_interval);
-					if(_wait_abort)
+					if (_wait_abort)
 						_wait_abort = false;
 				}
 			}
