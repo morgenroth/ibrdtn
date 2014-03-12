@@ -292,16 +292,10 @@ int main( int argc, char** argv )
 
 	ObservedFile::setConfigRounds(_conf_rounds);
 
-	if(outbox_file.getType() != DT_DIR)
+	if(outbox_file.exists() && !outbox_file.isDirectory())
 	{
 #ifdef HAVE_LIBTFFS
 		_conf_fat = true;
-		if(!outbox_file.exists())
-		{
-			cout << "ERROR: image not found! please create image before starting dtnoutbox" << endl;
-			return -1;
-		}
-
 		ObservedFile::setConfigImgPath(_conf_outbox);
 		outbox = new ObservedFATFile(_conf_path);
 #else
