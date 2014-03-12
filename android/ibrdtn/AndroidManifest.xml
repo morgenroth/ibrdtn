@@ -83,26 +83,50 @@
         <activity
             android:name="de.tubs.ibr.dtn.daemon.NeighborActivity"
             android:icon="@drawable/ic_neighbors"
-            android:label="@string/list_neighbors" />
+            android:label="@string/list_neighbors"
+            android:parentActivityName=".daemon.Preferences">
+			<meta-data
+		        android:name="android.support.PARENT_ACTIVITY"
+		        android:value=".daemon.Preferences" />
+        </activity>
+        
         <activity
             android:name="de.tubs.ibr.dtn.daemon.api.SelectNeighborActivity"
             android:icon="@drawable/ic_neighbors"
             android:label="@string/select_neighbor"
             android:permission="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"
             android:exported="true" />
+        
         <activity
             android:name=".daemon.LogActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:icon="@drawable/ic_log"
-            android:label="@string/list_logs" />
+            android:label="@string/list_logs"
+            android:parentActivityName=".daemon.Preferences">
+			<meta-data
+		        android:name="android.support.PARENT_ACTIVITY"
+		        android:value=".daemon.Preferences" />
+        </activity>
+        
         <activity
             android:name="de.tubs.ibr.dtn.daemon.AppListActivity"
             android:label="@string/applist"
-            android:theme="@android:style/Theme.NoTitleBar" />
+            android:theme="@android:style/Theme.NoTitleBar"
+            android:parentActivityName=".daemon.Preferences">
+			<meta-data
+		        android:name="android.support.PARENT_ACTIVITY"
+		        android:value=".daemon.Preferences" />
+        </activity>
+        
         <activity
             android:name="de.tubs.ibr.dtn.daemon.StatsActivity"
             android:icon="@drawable/ic_action_stats"
-            android:label="@string/stats_activity" />
+            android:label="@string/stats_activity"
+            android:parentActivityName=".daemon.Preferences">
+			<meta-data
+		        android:name="android.support.PARENT_ACTIVITY"
+		        android:value=".daemon.Preferences" />
+        </activity>
 
         <receiver
             android:name=".service.OnBootReceiver"

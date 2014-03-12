@@ -48,6 +48,7 @@ import android.os.Message;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 import android.widget.Toast;
 import de.tubs.ibr.dtn.DTNService;
@@ -754,7 +755,10 @@ public class DaemonService extends Service {
 			builder.addAction(R.drawable.ic_action_discovery, getString(R.string.start_discovery), piDisco);
 		}
 		
-		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, showNeighborsIntent, 0);
+		TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+		stackBuilder.addParentStack(NeighborActivity.class);
+		stackBuilder.addNextIntent(showNeighborsIntent);
+		PendingIntent contentIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT); // PendingIntent.getActivity(this, 0, showNeighborsIntent, 0);
 		builder.setContentIntent(contentIntent);
 		
 
