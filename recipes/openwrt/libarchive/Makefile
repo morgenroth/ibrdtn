@@ -30,7 +30,6 @@ define Package/libarchive
   $(call Package/libarchive/Default)
   DEPENDS:=+libxml2 +libopenssl
   TITLE:=Multi-format archive and compression library
-  MENU:=1
 endef
 
 define Package/libarchive/description
