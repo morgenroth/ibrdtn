@@ -17,6 +17,7 @@ PKG_MD5SUM:=efad5a503f66329bb9d2f4308b5de98a
 
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
+PKG_BUILD_DEPENDS:=libxml2 libopenssl zlib
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -28,21 +29,17 @@ endef
 
 define Package/libarchive
   $(call Package/libarchive/Default)
-  DEPENDS:=+libxml2 +libopenssl
+  DEPENDS:=+libxml2 +libopenssl +zlib
   TITLE:=Multi-format archive and compression library
 endef
 
 define Package/libarchive/description
-Multi-format archive and compression library.
+ Multi-format archive and compression library.
 endef
 
 define Build/InstallDev
-	$(INSTALL_DIR) $(1)/usr/include
-	$(CP) $(PKG_INSTALL_DIR)/usr/include $(1)/usr/include/
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libarchive.{a,so*,la} $(1)/usr/lib/
-	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/libarchive.pc $(1)/usr/lib/pkgconfig/
+	$(INSTALL_DIR) $(1)
+	$(CP) $(PKG_INSTALL_DIR)/* $(1)/
 endef
 
 define Package/libarchive/install
