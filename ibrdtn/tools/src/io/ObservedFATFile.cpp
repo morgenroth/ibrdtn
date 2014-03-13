@@ -21,86 +21,87 @@
  *  Created on: Sep 30, 2013
  */
 
-#include "../config.h"
-#ifdef HAVE_LIBTFFS
+#include "config.h"
+#include "ObservedFATFile.h"
+
 #include <string.h>
 #include <sstream>
 #include <stdlib.h>
-#include "ObservedFATFile.h"
 
-#include "../config.h"
 #ifdef HAVE_OPENSSL
 #include <openssl/md5.h>
 #endif
 
-ObservedFATFile::ObservedFATFile(const ibrcommon::File &image_file, const std::string& file_path)
- : ObservedFile(), _file(image_file, file_path), _image_file(image_file)
+namespace io
 {
-}
-
-ObservedFATFile::~ObservedFATFile()
-{
-}
-
-const ibrcommon::File& ObservedFATFile::getImageFile() const
-{
-	return _image_file;
-}
-
-int ObservedFATFile::getFiles( std::list<ObservedFile*>& files )
-{
-
-	std::list<FATFile> fatfiles;
-	std::list<FATFile>::iterator ff_iter;
-	int ret = _file.getFiles(fatfiles);
-	for(ff_iter = fatfiles.begin(); ff_iter != fatfiles.end(); ff_iter++)
+	ObservedFATFile::ObservedFATFile(const ibrcommon::File &image_file, const std::string& file_path)
+	 : ObservedFile(), _file(image_file, file_path), _image_file(image_file)
 	{
-		if((*ff_iter).isSystem())
-			continue;
-
-		if((*ff_iter).isDirectory())
-			(*ff_iter).getFiles(fatfiles);
-		else
-		{
-			ObservedFile* of = new ObservedFATFile(_file.getImageFile(), (*ff_iter).getPath());
-			files.push_back(of);
-		}
 	}
-	return ret;
+
+	ObservedFATFile::~ObservedFATFile()
+	{
+	}
+
+	const ibrcommon::File& ObservedFATFile::getImageFile() const
+	{
+		return _image_file;
+	}
+
+	int ObservedFATFile::getFiles( std::list<ObservedFile*>& files )
+	{
+
+		std::list<FATFile> fatfiles;
+		std::list<FATFile>::iterator ff_iter;
+		int ret = _file.getFiles(fatfiles);
+		for(ff_iter = fatfiles.begin(); ff_iter != fatfiles.end(); ff_iter++)
+		{
+			if((*ff_iter).isSystem())
+				continue;
+
+			if((*ff_iter).isDirectory())
+				(*ff_iter).getFiles(fatfiles);
+			else
+			{
+				ObservedFile* of = new ObservedFATFile(_file.getImageFile(), (*ff_iter).getPath());
+				files.push_back(of);
+			}
+		}
+		return ret;
+	}
+
+	std::string ObservedFATFile::getPath() const
+	{
+		return _file.getPath();
+	}
+
+	bool ObservedFATFile::exists()
+	{
+		return _file.exists();
+	}
+
+	std::string ObservedFATFile::getBasename() const
+	{
+		return _file.getBasename();
+	}
+
+	void ObservedFATFile::update()
+	{
+		//update size
+		_size = _file.size();
+
+		//update isSystem
+		_is_system = _file.isSystem();
+
+		//update isDirectory
+		_is_directory = _file.isDirectory();
+
+		//update hash
+		std::stringstream ss;
+		ss << getPath() << _file.lastmodify() << _file.size();
+		std::string toHash = ss.str();
+		char hash[MD5_DIGEST_LENGTH];
+		MD5((unsigned char*)toHash.c_str(), toHash.length(), (unsigned char*) hash);
+		_hash = FileHash(_file.getPath(), hash);
+	}
 }
-
-std::string ObservedFATFile::getPath()
-{
-	return _file.getPath();
-}
-
-bool ObservedFATFile::exists()
-{
-	return _file.exists();
-}
-
-std::string ObservedFATFile::getBasename()
-{
-	return _file.getBasename();
-}
-
-void ObservedFATFile::update()
-{
-	//update size
-	_size = _file.size();
-
-	//update isSystem
-	_is_system = _file.isSystem();
-
-	//update isDirectory
-	_is_directory = _file.isDirectory();
-
-	//update hash
-	std::stringstream ss;
-	ss << getPath() << _file.lastmodify() << _file.size();
-	std::string toHash = ss.str();
-	char hash[MD5_DIGEST_LENGTH];
-	MD5((unsigned char*)toHash.c_str(), toHash.length(), (unsigned char*) hash);
-	_hash = std::string(hash);
-}
-#endif /* HAVE_LIBTFFS*/

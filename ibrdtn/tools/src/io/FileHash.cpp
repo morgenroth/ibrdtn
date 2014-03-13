@@ -4,6 +4,7 @@
  * Copyright (C) 2013 IBR, TU Braunschweig
  *
  * Written-by: David Goltzsche <goltzsch@ibr.cs.tu-bs.de>
+ *             Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,27 +22,42 @@
  */
 #include "FileHash.h"
 
-FileHash::FileHash(ObservedFile* observed_file)
+namespace io
 {
-	_path = observed_file->getPath();
-	_hash = observed_file->getHash();
-}
+	FileHash::FileHash()
+	{
+	}
 
-FileHash::~FileHash() {
-}
+	FileHash::FileHash(const std::string &path, const std::string &hash)
+	 : _path(path), _hash(hash)
+	{
+	}
 
-std::string FileHash::getHash()
-{
-	return _hash;
-}
+	FileHash::~FileHash()
+	{
+	}
 
-std::string FileHash::getPath()
-{
-	return _path;
-}
+	const std::string& FileHash::getHash() const
+	{
+		return _hash;
+	}
 
-bool FileHash::operator ==(FileHash& other)
-{
-	return (_path == other.getPath()) && (_hash == other.getHash());
-}
+	const std::string& FileHash::getPath() const
+	{
+		return _path;
+	}
 
+	bool FileHash::operator==(const FileHash& other) const
+	{
+		return (_path == other.getPath()) && (_hash == other.getHash());
+	}
+
+	bool FileHash::operator<(const FileHash& other) const
+	{
+		if (_path < other.getPath()) return true;
+		if (_path > other.getPath()) return false;
+
+		if (_hash < other.getHash()) return true;
+		return false;
+	}
+}

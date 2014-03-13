@@ -41,8 +41,6 @@
 
 #include "io/TarUtils.h"
 
-using namespace ibrcommon;
-
 //global conf values
 string _conf_name;
 string _conf_inbox;
@@ -60,14 +58,14 @@ struct option long_options[] =
 
 void print_help()
 {
-	cout << "-- dtninbox (IBR-DTN) --" << endl;
-	cout << "Syntax: dtninbox [options] <name> <inbox>"  << endl;
-	cout << " <name>           The application name" << endl;
-	cout << " <inbox>          Directory where incoming files should be placed" << endl << endl;
-	cout << "* optional parameters *" << endl;
-	cout << " -h|--help        Display this text" << endl;
-	cout << " -w|--workdir     Temporary work directory" << endl;
-	cout << " --quiet          Only print error messages" << endl;
+	std::cout << "-- dtninbox (IBR-DTN) --" << std::endl;
+	std::cout << "Syntax: dtninbox [options] <name> <inbox>"  << std::endl;
+	std::cout << " <name>           The application name" << std::endl;
+	std::cout << " <inbox>          Directory where incoming files should be placed" << std::endl << std::endl;
+	std::cout << "* optional parameters *" << std::endl;
+	std::cout << " -h|--help        Display this text" << std::endl;
+	std::cout << " -w|--workdir     Temporary work directory" << std::endl;
+	std::cout << " --quiet          Only print error messages" << std::endl;
 }
 
 void read_configuration(int argc, char** argv)
@@ -190,7 +188,7 @@ int main(int argc, char** argv)
 				// receive the bundle
 				dtn::data::Bundle b = client.getBundle();
 				if(!_conf_quiet)
-					cout << "received bundle: " << b.toString() << endl;
+					std::cout << "received bundle: " << b.toString() << std::endl;
 
 				// get the reference to the blob
 				ibrcommon::BLOB::Reference ref = b.find<dtn::data::PayloadBlock>().getBLOB();
@@ -198,7 +196,7 @@ int main(int argc, char** argv)
 				// write files into BLOB while it is locked
 				{
 					ibrcommon::BLOB::iostream stream = ref.iostream();
-					TarUtils::read(_conf_inbox, *stream);
+					io::TarUtils::read(_conf_inbox, *stream);
 				}
 			}
 
@@ -216,7 +214,7 @@ int main(int argc, char** argv)
 
 			if (_running)
 			{
-				cout << "Connection to bundle daemon failed. Retry in " << backoff << " seconds." << endl;
+				std::cout << "Connection to bundle daemon failed. Retry in " << backoff << " seconds." << std::endl;
 				ibrcommon::Thread::sleep(backoff * 1000);
 
 				// if backoff < 10 minutes
@@ -232,7 +230,7 @@ int main(int argc, char** argv)
 
 			if (_running)
 			{
-				cout << "Connection to bundle daemon failed. Retry in " << backoff << " seconds." << endl;
+				std::cout << "Connection to bundle daemon failed. Retry in " << backoff << " seconds." << std::endl;
 				ibrcommon::Thread::sleep(backoff * 1000);
 
 				// if backoff < 10 minutes

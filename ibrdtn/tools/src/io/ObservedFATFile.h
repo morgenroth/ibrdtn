@@ -29,24 +29,27 @@
 #ifndef OBSERVEDFATFILE_H_
 #define OBSERVEDFATFILE_H_
 
-class ObservedFATFile : public ObservedFile
+namespace io
 {
-public:
-	ObservedFATFile(const ibrcommon::File &image_file, const std::string& file_path);
-	virtual ~ObservedFATFile();
+	class ObservedFATFile : public ObservedFile
+	{
+	public:
+		ObservedFATFile(const ibrcommon::File &image_file, const std::string& file_path);
+		virtual ~ObservedFATFile();
 
-	virtual const ibrcommon::File& getImageFile() const;
+		virtual const ibrcommon::File& getImageFile() const;
 
-	virtual int getFiles(std::list<ObservedFile*>& files);
-	virtual std::string getPath();
-	virtual bool exists();
-	virtual std::string getBasename();
-	virtual void update();
+		virtual int getFiles(std::list<ObservedFile*>& files);
+		virtual std::string getPath() const;
+		virtual bool exists();
+		virtual std::string getBasename() const;
+		virtual void update();
 
-private:
-	FATFile _file;
-	ibrcommon::File _image_file;
-};
+	private:
+		io::FATFile _file;
+		ibrcommon::File _image_file;
+	};
+}
 
 #endif /* OBSERVEDFATFILE_H_ */
 #endif /* HAVE_LIBTFFS*/

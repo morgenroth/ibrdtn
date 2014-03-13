@@ -20,6 +20,8 @@
  *
  *  Created on: Sep 23, 2013
  */
+
+#include "io/FileHash.h"
 #include <vector>
 #include <list>
 #include <string>
@@ -27,43 +29,45 @@
 #ifndef OBSERVEDFILE_H_
 #define OBSERVEDFILE_H_
 
-class ObservedFile
+namespace io
 {
-public:
-	ObservedFile();
-	virtual ~ObservedFile();
+	class ObservedFile
+	{
+	public:
+		ObservedFile();
+		virtual ~ObservedFile();
 
-	virtual int getFiles(std::list<ObservedFile*>& files) = 0;
-	virtual std::string getPath() = 0;
-	virtual bool exists() = 0;
-	virtual std::string getBasename() = 0;
-	virtual void update() = 0;
+		virtual int getFiles(std::list<ObservedFile*>& files) = 0;
+		virtual std::string getPath() const = 0;
+		virtual bool exists() = 0;
+		virtual std::string getBasename() const = 0;
+		virtual void update() = 0;
 
-	virtual size_t size() const;
-	virtual bool isSystem() const;
-	virtual bool isDirectory() const;
-	virtual std::string getHash() const;
+		virtual size_t size() const;
+		virtual bool isSystem() const;
+		virtual bool isDirectory() const;
+		virtual const io::FileHash& getHash() const;
 
-	void tick();
-	void send();
-	static bool hashcompare(ObservedFile* a, ObservedFile* b);
-	static bool namecompare(ObservedFile* a, ObservedFile* b);
-	static void setConfigImgPath(std::string path);
-	static void setConfigRounds(size_t rounds);
-	static void setConfigBadclock(bool badclock);
+		bool operator==(const ObservedFile &other) const;
 
-	bool lastHashesEqual( size_t n );
-protected:
-	std::vector<std::string> _hashes;
-	size_t _last_sent;
+		void tick();
+		void send();
+		static void setConfigImgPath(std::string path);
+		static void setConfigRounds(size_t rounds);
+		static void setConfigBadclock(bool badclock);
 
-	//updated vars
-	size_t _size;
-	bool _is_system;
-	bool _is_directory;
-	std::string _hash;
-};
+		bool lastHashesEqual( size_t n );
 
+	protected:
+		std::vector<io::FileHash> _hashes;
+		size_t _last_sent;
 
+		//updated vars
+		size_t _size;
+		bool _is_system;
+		bool _is_directory;
+		io::FileHash _hash;
+	};
+}
 
 #endif /* OBSERVEDFILE_H_ */

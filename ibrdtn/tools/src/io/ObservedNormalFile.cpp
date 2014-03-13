@@ -4,6 +4,7 @@
  * Copyright (C) 2013 IBR, TU Braunschweig
  *
  * Written-by: David Goltzsche <goltzsch@ibr.cs.tu-bs.de>
+ *             Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,75 +20,79 @@
  *
  *  Created on: Sep 30, 2013
  */
-#include "ObservedNormalFile.h"
-#include "../config.h"
+#include "config.h"
+#include "io/ObservedNormalFile.h"
+#include "io/FileHash.h"
 #include <sstream>
 
 #ifdef HAVE_OPENSSL
 #include <openssl/md5.h>
 #endif
 
-ObservedNormalFile::ObservedNormalFile(const std::string& path) : _file(path)
+namespace io
 {
-}
-
-ObservedNormalFile::~ObservedNormalFile()
-{
-}
-
-int ObservedNormalFile::getFiles(list<ObservedFile*>& files)
-{
-	list<ibrcommon::File> normalfiles;
-	list<ibrcommon::File>::iterator nf_iter;
-	int ret = _file.getFiles(normalfiles);
-	for(nf_iter = normalfiles.begin(); nf_iter != normalfiles.end(); nf_iter++)
+	ObservedNormalFile::ObservedNormalFile(const std::string& path) : _file(path)
 	{
-		if((*nf_iter).isSystem())
-			continue;
-
-		if((*nf_iter).isDirectory())
-			(*nf_iter).getFiles(normalfiles);
-		else
-		{
-			ObservedFile* of = new ObservedNormalFile((*nf_iter).getPath());
-			files.push_back(of);
-		}
 	}
-	return ret;
 
-}
+	ObservedNormalFile::~ObservedNormalFile()
+	{
+	}
 
-std::string ObservedNormalFile::getPath()
-{
-	return _file.getPath();
-}
+	int ObservedNormalFile::getFiles(std::list<ObservedFile*>& files)
+	{
+		list<ibrcommon::File> normalfiles;
+		list<ibrcommon::File>::iterator nf_iter;
+		int ret = _file.getFiles(normalfiles);
+		for(nf_iter = normalfiles.begin(); nf_iter != normalfiles.end(); nf_iter++)
+		{
+			if((*nf_iter).isSystem())
+				continue;
 
-bool ObservedNormalFile::exists()
-{
-	return _file.exists();
-}
+			if((*nf_iter).isDirectory())
+				(*nf_iter).getFiles(normalfiles);
+			else
+			{
+				ObservedFile* of = new ObservedNormalFile((*nf_iter).getPath());
+				files.push_back(of);
+			}
+		}
+		return ret;
 
-std::string ObservedNormalFile::getBasename()
-{
-	return _file.getBasename();
-}
+	}
 
-void ObservedNormalFile::update()
-{
-	//update size
-	_size = _file.size();
+	std::string ObservedNormalFile::getPath() const
+	{
+		return _file.getPath();
+	}
 
-	//update isSystem
-	_is_system = _file.isSystem();
+	bool ObservedNormalFile::exists()
+	{
+		return _file.exists();
+	}
 
-	//update isDirectory
-	_is_directory = _file.isDirectory();
+	std::string ObservedNormalFile::getBasename() const
+	{
+		return _file.getBasename();
+	}
 
-	//update hash
-	std::stringstream ss;
-	ss << getPath() << _file.lastmodify() << _file.size();
-	std::string toHash = ss.str();
-	char hash[MD5_DIGEST_LENGTH];
-	MD5((unsigned char*)toHash.c_str(), toHash.length(), (unsigned char*) hash);
-	_hash = std::string(hash);
+	void ObservedNormalFile::update()
+	{
+		//update size
+		_size = _file.size();
+
+		//update isSystem
+		_is_system = _file.isSystem();
+
+		//update isDirectory
+		_is_directory = _file.isDirectory();
+
+		//update hash
+		std::stringstream ss;
+		ss << getPath() << _file.lastmodify() << _file.size();
+		std::string toHash = ss.str();
+		char hash[MD5_DIGEST_LENGTH];
+		MD5((unsigned char*)toHash.c_str(), toHash.length(), (unsigned char*) hash);
+		_hash = FileHash(_file.getPath(), hash);
+	}
 }

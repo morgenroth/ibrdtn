@@ -8,7 +8,7 @@ AM_LDFLAGS = @ibrdtn_LIBS@ @DAEMON_LIBS@ @ARCHIVE_LIBS@ @tffs_LIBS@
 # the previous manual Makefile
 bin_PROGRAMS = dtnping dtnrecv dtnsend dtntracepath dtntrigger dtnconvert dtnstream
 
-#compile dtninbox and dtnoutbox if libarchive is present
+# compile dtninbox and dtnoutbox if libarchive is present
 if LIBARCHIVE
 if OPENSSL
 bin_PROGRAMS += dtninbox dtnoutbox
@@ -21,20 +21,23 @@ endif
 
 if LIBARCHIVE
 if OPENSSL
-tarutils_src = io/FileHash.h \
-		  io/FileHash.cpp \
-		  io/FileHashList.h \
-		  io/FileHashList.cpp \
-		  io/FATFile.h \
-		  io/FATFile.cpp \
-		  io/ObservedFile.h \
-		  io/ObservedFile.cpp \
-		  io/ObservedFATFile.h \
-		  io/ObservedFATFile.cpp \
-		  io/ObservedNormalFile.h \
-		  io/ObservedNormalFile.cpp \
-		  io/TarUtils.h \
-		  io/TarUtils.cpp
+tarutils_src = \
+		io/FileHash.h \
+		io/FileHash.cpp \
+		io/ObservedFile.h \
+		io/ObservedFile.cpp \
+		io/ObservedNormalFile.h \
+		io/ObservedNormalFile.cpp \
+		io/TarUtils.h \
+		io/TarUtils.cpp
+
+if TFFS
+tarutils_src += \
+		io/FATFile.h \
+		io/FATFile.cpp \
+		io/ObservedFATFile.h \
+		io/ObservedFATFile.cpp
+endif
 
 dtninbox_SOURCES = dtninbox.cpp $(tarutils_src)
 dtnoutbox_SOURCES = dtnoutbox.cpp $(tarutils_src)

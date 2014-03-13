@@ -4,6 +4,7 @@
  * Copyright (C) 2013 IBR, TU Braunschweig
  *
  * Written-by: David Goltzsche <goltzsch@ibr.cs.tu-bs.de>
+ *             Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,26 +21,30 @@
  *  Created on: Sep 30, 2013
  */
 
-#include "ObservedFile.h"
+#include "io/ObservedFile.h"
 #include <ibrcommon/data/File.h>
+#include <list>
 
 #ifndef OBSERVEDNORMALFILE_H_
 #define OBSERVEDNORMALFILE_H_
 
-class ObservedNormalFile: public ObservedFile
+namespace io
 {
-public:
-	ObservedNormalFile(const std::string& path);
-	virtual ~ObservedNormalFile();
+	class ObservedNormalFile : public ObservedFile
+	{
+	public:
+		ObservedNormalFile(const std::string& path);
+		virtual ~ObservedNormalFile();
 
-	virtual int getFiles(list<ObservedFile*>& files);
-	virtual std::string getPath();
-	virtual bool exists();
-	virtual std::string getBasename();
-	virtual void update();
+		virtual int getFiles(std::list<ObservedFile*>& files);
+		virtual std::string getPath() const;
+		virtual bool exists();
+		virtual std::string getBasename() const;
+		virtual void update();
 
-private:
-	ibrcommon::File _file;
-};
+	private:
+		ibrcommon::File _file;
+	};
+}
 
 #endif /* OBSERVEDNORMALFILE_H_ */

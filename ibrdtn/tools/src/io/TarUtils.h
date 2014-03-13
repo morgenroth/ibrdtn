@@ -24,29 +24,31 @@
 #ifndef TARUTILS_H_
 #define TARUTILS_H_
 #include "config.h"
-#include "FATFile.h"
-#include "ObservedFile.h"
+#include "io/ObservedFile.h"
 #include <ibrcommon/data/File.h>
 #include <list>
 
-class TarUtils
+namespace io
 {
-public:
-	TarUtils();
-	virtual ~TarUtils();
+	class TarUtils
+	{
+	public:
+		TarUtils();
+		virtual ~TarUtils();
 
-	/**
-	 * write tar archive to payload block, FATFile version
-	 */
-	static void write( std::ostream &output, const ibrcommon::File &parent, const std::list<ObservedFile*> &files_to_send );
+		/**
+		 * write tar archive to payload block, FATFile version
+		 */
+		static void write( std::ostream &output, const ibrcommon::File &parent, const std::list<ObservedFile*> &files_to_send );
 
-	/*
-	 * read tar archive from payload block, write to file
-	 */
-	static void read( const ibrcommon::File &extract_folder, std::istream &input );
+		/*
+		 * read tar archive from payload block, write to file
+		 */
+		static void read( const ibrcommon::File &extract_folder, std::istream &input );
 
-private:
-	static std::string rel_filename(const ibrcommon::File &parent, ObservedFile&);
-};
+	private:
+		static std::string rel_filename(const ibrcommon::File &parent, ObservedFile&);
+	};
+}
 
 #endif /* TARUTILS_H_ */

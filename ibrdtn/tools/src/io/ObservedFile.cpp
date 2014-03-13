@@ -4,6 +4,7 @@
  * Copyright (C) 2013 IBR, TU Braunschweig
  *
  * Written-by: David Goltzsche <goltzsch@ibr.cs.tu-bs.de>
+ *             Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,71 +21,63 @@
  *  Created on: Sep 30, 2013
  */
 
-#include "ObservedFile.h"
+#include "io/ObservedFile.h"
 #include <string.h>
 
-ObservedFile::ObservedFile()
- : _last_sent(0), _size(0), _is_system(false), _is_directory(false)
+namespace io
 {
-}
-ObservedFile::~ObservedFile()
-{
-}
-
-bool ObservedFile::lastHashesEqual( size_t n )
-{
-	if (n > _hashes.size()) return false;
-
-	for (size_t i = 1; i < n; i++)
+	ObservedFile::ObservedFile()
+	 : _last_sent(0), _size(0), _is_system(false), _is_directory(false)
 	{
-		const char* hash1 = _hashes.at(_hashes.size() - i).c_str();
-		const char* hash2 = _hashes.at(_hashes.size() - i - 1).c_str();
-		int ret = memcmp(hash1,hash2,sizeof(hash1));
-		if(ret != 0)
-			return false;
 	}
-	return true;
-}
+	ObservedFile::~ObservedFile()
+	{
+	}
 
-size_t ObservedFile::size() const
-{
-	return _size;
-}
+	bool ObservedFile::lastHashesEqual( size_t n )
+	{
+		if (n > _hashes.size()) return false;
 
-bool ObservedFile::isSystem() const
-{
-	return _is_system;
-}
+		for (size_t i = 1; i < n; i++)
+		{
+			bool ret = _hashes.at(_hashes.size() - i) == _hashes.at(_hashes.size() - i - 1);
+			if (!ret)
+				return false;
+		}
+		return true;
+	}
 
-bool ObservedFile::isDirectory() const
-{
-	return _is_directory;
-}
+	size_t ObservedFile::size() const
+	{
+		return _size;
+	}
 
-std::string ObservedFile::getHash() const
-{
-	return _hash;
-}
-void ObservedFile::tick()
-{
-	_hashes.push_back(getHash());
-}
+	bool ObservedFile::isSystem() const
+	{
+		return _is_system;
+	}
 
-void ObservedFile::send()
-{
-	_hashes.clear();
-}
+	bool ObservedFile::isDirectory() const
+	{
+		return _is_directory;
+	}
 
-bool ObservedFile::hashcompare( ObservedFile* a, ObservedFile* b )
-{
-	const char* hash1 = a->getHash().c_str();
-	const char* hash2 = b->getHash().c_str();
-	return (memcmp(hash1,hash2,sizeof(*hash1)) != 0);
-}
+	const io::FileHash& ObservedFile::getHash() const
+	{
+		return _hash;
+	}
+	void ObservedFile::tick()
+	{
+		_hashes.push_back(getHash());
+	}
 
-bool ObservedFile::namecompare( ObservedFile* a, ObservedFile* b )
-{
-	std::string p1= a->getPath();
-	std::string p2 = b->getPath();
-	return (p1 != p2);
+	void ObservedFile::send()
+	{
+		_hashes.clear();
+	}
+
+	bool ObservedFile::operator==(const ObservedFile &other) const
+	{
+		return getHash() == other.getHash();
+	}
 }

@@ -33,7 +33,6 @@
 
 #include "io/TarUtils.h"
 #include "io/ObservedNormalFile.h"
-#include "io/FileHashList.h"
 
 #ifdef HAVE_LIBTFFS
 #include "io/ObservedFATFile.h"
@@ -51,7 +50,6 @@ extern "C"
 #include <unistd.h>
 #include <regex.h>
 #include <getopt.h>
-using namespace ibrcommon;
 
 // set this variable to false to stop the app
 bool _running = true;
@@ -93,33 +91,33 @@ struct option long_options[] =
 };
 void print_help()
 {
-	cout << "-- dtnoutbox (IBR-DTN) --" << endl;
-	cout << "Syntax: dtnoutbox [options] <name> <outbox> <destination>" << endl;
-	cout << " <name>           The application name" << endl;
+	std::cout << "-- dtnoutbox (IBR-DTN) --" << std::endl;
+	std::cout << "Syntax: dtnoutbox [options] <name> <outbox> <destination>" << std::endl;
+	std::cout << " <name>           The application name" << std::endl;
 #ifdef HAVE_LIBTFFS
-	cout << " <outbox>         Location of outgoing files, directory or vfat-image" << endl;
+	std::cout << " <outbox>         Location of outgoing files, directory or vfat-image" << std::endl;
 #else
-	cout << " <outbox>         Directory of outgoing files" << endl;
+	std::cout << " <outbox>         Directory of outgoing files" << std::endl;
 #endif
-	cout << " <destination>    The destination EID for all outgoing files" << endl << endl;
-	cout << "* optional parameters *" << endl;
-	cout << " -h|--help        Display this text" << endl;
-	cout << " -g|--group       Receiver is a destination group" << endl;
-	cout << " -w|--workdir <dir>" << endl;
-	cout << "                  Temporary work directory" << endl;
-	cout << " -i|--interval <milliseconds>" << endl;
-	cout << "                  Interval in milliseconds, in which <outbox> is scanned" << endl;
-	cout << "                  for new/changed files. default: 5000" << endl;
-	cout << " -r|--rounds <n>  Number of rounds of intervals, after which a unchanged" << endl;
-	cout << "                  file is considered as written. default: 3" << endl;
+	std::cout << " <destination>    The destination EID for all outgoing files" << std::endl << std::endl;
+	std::cout << "* optional parameters *" << std::endl;
+	std::cout << " -h|--help        Display this text" << std::endl;
+	std::cout << " -g|--group       Receiver is a destination group" << std::endl;
+	std::cout << " -w|--workdir <dir>" << std::endl;
+	std::cout << "                  Temporary work directory" << std::endl;
+	std::cout << " -i|--interval <milliseconds>" << std::endl;
+	std::cout << "                  Interval in milliseconds, in which <outbox> is scanned" << std::endl;
+	std::cout << "                  for new/changed files. default: 5000" << std::endl;
+	std::cout << " -r|--rounds <n>  Number of rounds of intervals, after which a unchanged" << std::endl;
+	std::cout << "                  file is considered as written. default: 3" << std::endl;
 #ifdef HAVE_LIBTFFS
-	cout << " -p|--path <path> Path of outbox within vfat-image. default: /" << endl;
+	std::cout << " -p|--path <path> Path of outbox within vfat-image. default: /" << std::endl;
 #endif
-	cout << " -R|--regex <regex>" << endl;
-	cout << "                  All files in <outbox> matching this regular expression" << endl;
-	cout << "                  will be ignored. default: ^\\." << endl;
-	cout << " -I|--invert      Invert the regular expression defined with -R"<< endl;
-	cout << " -q|--quiet       Only print error messages" << endl;
+	std::cout << " -R|--regex <regex>" << std::endl;
+	std::cout << "                  All files in <outbox> matching this regular expression" << std::endl;
+	std::cout << "                  will be ignored. default: ^\\." << std::endl;
+	std::cout << " -I|--invert      Invert the regular expression defined with -R"<< std::endl;
+	std::cout << " -q|--quiet       Only print error messages" << std::endl;
 
 	_running = false; //stop this app, after printing help
 
@@ -127,12 +125,6 @@ void print_help()
 
 void read_configuration(int argc, char** argv)
 {
-	//print help, if requested
-	if ( argv[1] == "-h" || argv[1] == "--help")
-	{
-		print_help();
-		exit(EXIT_SUCCESS);
-	}
 	// print help if not enough parameters are set
 	if (argc < 3)
 	{
@@ -205,7 +197,7 @@ void read_configuration(int argc, char** argv)
 	//compile regex, if set
 	if (_conf_regex_str.length() > 0 && regcomp(&_conf_regex,_conf_regex_str.c_str(),0))
 	{
-		cout << "ERROR: invalid regex: " << optarg << endl;
+		std::cout << "ERROR: invalid regex: " << optarg << std::endl;
 		exit(-1);
 	}
 
@@ -224,9 +216,9 @@ void sighandler_func(int signal)
 	{
 		//stop waiting and stop running, on SIGINT or SIGTERM
 		ibrcommon::MutexLock l(_wait_cond);
-        _running = false;
+		_running = false;
 		_wait_cond.signal(true);
-        break;
+		break;
 	}
 #ifndef __WIN32__
 	case SIGUSR1:
@@ -244,10 +236,16 @@ void sighandler_func(int signal)
 }
 
 //this function is needed, to delete the pointers in the list observed_files
-bool deleteAll( ObservedFile* ptr){
+bool deleteAll(io::ObservedFile* ptr){
 	delete ptr;
 	return true;
 }
+
+bool path_equals( io::ObservedFile *a, io::ObservedFile *b )
+{
+	return (a->getPath() != b->getPath());
+}
+
 /*
  * main application method
  */
@@ -264,7 +262,7 @@ int main( int argc, char** argv )
 	// read the configuration
 	read_configuration(argc,argv);
 
-	//initialize sighandler after possible exit call
+	// initialize sighandler after possible exit call
 	sighandler.initialize();
 
 	// init working directory
@@ -281,32 +279,35 @@ int main( int argc, char** argv )
 	// backoff for reconnect
 	unsigned int backoff = 2;
 
-	File outbox_file(_conf_outbox);
+	ibrcommon::File outbox_file(_conf_outbox);
 
-	std::list<ObservedFile*> avail_files, new_files, old_files, deleted_files, observed_files, files_to_send;
-	std::list<ObservedFile*>::iterator iter;
-	std::list<ObservedFile*>::iterator iter2;
-	FileHashList sent_hashes;
+	typedef std::list<io::ObservedFile*> filelist;
+	filelist avail_files, new_files, old_files, deleted_files, observed_files, files_to_send;
 
-	ObservedFile* outbox;
+	typedef std::set<io::FileHash> hashlist;
+	hashlist sent_hashes;
+
+	io::ObservedFile* outbox;
 
 	if (outbox_file.exists() && !outbox_file.isDirectory())
 	{
 #ifdef HAVE_LIBTFFS
 		_conf_fat = true;
-		outbox = new ObservedFATFile(_conf_outbox, _conf_path);
+		outbox = new io::ObservedFATFile(_conf_outbox, _conf_path);
 #else
-		cout << "ERROR: image-file provided, but dtnoutbox has been compiled without libtffs support!" << endl;
+		std::cout << "ERROR: image-file provided, but this tool has been compiled without libtffs support!" << std::endl;
 		return -1;
 #endif
 	}
 	else
 	{
 		if (!outbox_file.exists())
-			File::createDirectory(outbox_file);
+			ibrcommon::File::createDirectory(outbox_file);
 
-		outbox = new ObservedNormalFile(_conf_outbox);
+		outbox = new io::ObservedNormalFile(_conf_outbox);
 	}
+
+	if (!_conf_quiet) std::cout << "-- dtnoutbox --" << std::endl;
 
 	// loop, if no stop if requested
 	while (_running)
@@ -330,26 +331,25 @@ int main( int argc, char** argv )
 			// check the connection
 			while (_running)
 			{
-
 				deleted_files.clear();
 				new_files.clear();
 				old_files.clear();
 
-				//store old files
+				// store old files
 				old_files = avail_files;
 				avail_files.clear();
 
-				//get all files
+				// get all files
 				outbox->getFiles(avail_files);
 
-				//determine deleted files
-				std::set_difference(old_files.begin(),old_files.end(),avail_files.begin(),avail_files.end(),std::back_inserter(deleted_files),ObservedFile::namecompare);
+				// determine deleted files
+				std::set_difference(old_files.begin(), old_files.end(), avail_files.begin(), avail_files.end(), std::back_inserter(deleted_files), path_equals);
 
-				//remove deleted files from observation
-				for (iter = deleted_files.begin(); iter != deleted_files.end(); ++iter)
+				// remove deleted files from observation
+				for (filelist::iterator iter = deleted_files.begin(); iter != deleted_files.end(); ++iter)
 				{
-					sent_hashes.removeAll((*iter)->getHash());
-					for(iter2 = observed_files.begin();iter2 != observed_files.end();++iter2)
+					sent_hashes.erase((*iter)->getHash());
+					for(filelist::iterator iter2 = observed_files.begin();iter2 != observed_files.end();++iter2)
 					{
 							if ((*iter2)->getHash() == (*iter)->getHash())
 							{
@@ -359,16 +359,17 @@ int main( int argc, char** argv )
 							}
 					}
 				}
-				//rerun loop, if files have been deleted
-				if (deleted_files.size() > 0)
-					break;
 
-				//determine new files
-				std::set_difference(avail_files.begin(),avail_files.end(),old_files.begin(),old_files.end(),std::back_inserter(new_files),ObservedFile::namecompare);
+				// re-run loop, if files have been deleted
+				if (deleted_files.size() > 0) break;
 
-				//add new files to observation
-				for (iter = new_files.begin(); iter != new_files.end(); ++iter)
+				// determine new files
+				std::set_difference(avail_files.begin(), avail_files.end(), old_files.begin(), old_files.end(), std::back_inserter(new_files), path_equals);
+
+				// add new files to observation
+				for (filelist::iterator iter = new_files.begin(); iter != new_files.end(); ++iter)
 				{
+					const io::ObservedFile &of = (**iter);
 
 					int reg_ret = regexec(&_conf_regex,(*iter)->getBasename().c_str(), 0, NULL, 0);
 					if (!reg_ret && !_conf_invert)
@@ -376,68 +377,76 @@ int main( int argc, char** argv )
 					if (reg_ret && _conf_invert)
 						continue;
 
-					//print error message, if regex error occurs
+					// print error message, if regex error occurs
 					if (reg_ret && reg_ret != REG_NOMATCH)
 					{
 							char msgbuf[100];
 							regerror(reg_ret,&_conf_regex,msgbuf,sizeof(msgbuf));
-							cout << "ERROR: regex match failed : " << std::string(msgbuf) << endl;
+							std::cerr << "ERROR: regex match failed : " << std::string(msgbuf) << std::endl;
 					}
-					ObservedFile* of;
-					if (!_conf_fat)
-						of = new ObservedNormalFile((*iter)->getPath());
+
+					// log output
+					if (!_conf_quiet) std::cout << "file found: " << of.getBasename() << std::endl;
+
+					if (!_conf_fat) {
+						observed_files.push_back( new io::ObservedNormalFile(of.getPath()) );
 #ifdef HAVE_LIBTFFS
-					else
-						of = new ObservedFATFile(_conf_outbox, (*iter)->getPath());
+					} else {
+						observed_files.push_back( new io::ObservedFATFile(_conf_outbox, of.getPath()) );
 #endif
-					observed_files.push_back(of);
+					}
 				}
 
-				//tick and update all files
-				for (iter = observed_files.begin(); iter != observed_files.end(); ++iter)
+				// tick and update all files
+				for (filelist::iterator iter = observed_files.begin(); iter != observed_files.end(); ++iter)
 				{
 					(*iter)->update();
 					(*iter)->tick();
 				}
 
-				//find files to send, create std::list
-				stringstream files_to_send_ss;
+				// find files to send, create std::list
 				files_to_send.clear();
-				for (iter = observed_files.begin(); iter != observed_files.end(); ++iter)
+				for (filelist::iterator iter = observed_files.begin(); iter != observed_files.end(); ++iter)
 				{
-					if (!sent_hashes.contains((*iter)))
+					io::ObservedFile &of = (**iter);
+
+					if (sent_hashes.find(of.getHash()) == sent_hashes.end())
 					{
-						if ((*iter)->lastHashesEqual(_conf_rounds))
+						if (of.lastHashesEqual(_conf_rounds))
 						{
-							(*iter)->send();
-							string hash = (*iter)->getHash();
-							sent_hashes.add(FileHash(*iter));
-							files_to_send_ss << (*iter)->getBasename() << " ";
+							of.send();
+							sent_hashes.insert(of.getHash());
 							files_to_send.push_back(*iter);
 						}
 					}
 				}
 
-				if (!_conf_quiet)
-					cout << files_to_send.size() << "/" << observed_files.size() << " files to send: " << files_to_send_ss.str() << endl;
-
-				if (files_to_send.size())
+				if (!files_to_send.empty())
 				{
+					if (!_conf_quiet)
+					{
+						std::cout << "send files: ";
+						for (filelist::const_iterator it = files_to_send.begin(); it != files_to_send.end(); ++it) {
+							std::cout << (*it)->getBasename() << " ";
+						}
+						std::cout << std::endl;
+					}
+
 					// create a blob
 					ibrcommon::BLOB::Reference blob = ibrcommon::BLOB::create();
 
-					//set paths, depends on file location (normal file system or fat image)
+					// set paths, depends on file location (normal file system or fat image)
 					if (_conf_fat)
 					{
 						// write files into BLOB while it is locked
 						ibrcommon::BLOB::iostream stream = blob.iostream();
-						TarUtils::write(*stream, _conf_path, files_to_send);
+						io::TarUtils::write(*stream, _conf_path, files_to_send);
 					}
 					else
 					{
 						// write files into BLOB while it is locked
 						ibrcommon::BLOB::iostream stream = blob.iostream();
-						TarUtils::write(*stream, _conf_outbox, files_to_send);
+						io::TarUtils::write(*stream, _conf_outbox, files_to_send);
 					}
 
 					// create a new bundle
@@ -472,10 +481,10 @@ int main( int argc, char** argv )
 				}
 			}
 
-			//clean up pointer list
+			// clean up pointer list
 			observed_files.remove_if(deleteAll);
 
-			//clean up regex
+			// clean up regex
 			regfree(&_conf_regex);
 
 			// close the client connection
@@ -484,37 +493,38 @@ int main( int argc, char** argv )
 			// close the connection
 			conn.close();
 
-		} catch (const ibrcommon::socket_exception&)
-		{
-			if (_running)
-			{
-				cout << "Connection to bundle daemon failed. Retry in " << backoff << " seconds." << endl;
-				ibrcommon::Thread::sleep(backoff * 1000);
-
-				// if backoff < 10 minutes
-				if (backoff < 600)
-				{
-					// set a new backoff
-					backoff = backoff * 2;
-				}
-			}
-		} catch (const ibrcommon::IOException&)
-		{
-			if (_running)
-			{
-				cout << "Connection to bundle daemon failed. Retry in " << backoff << " seconds." << endl;
-				ibrcommon::Thread::sleep(backoff * 1000);
-
-				// if backoff < 10 minutes
-				if (backoff < 600)
-				{
-					// set a new backoff
-					backoff = backoff * 2;
-				}
-			}
-		} catch (const std::exception&)
-		{
 		}
+		catch (const ibrcommon::socket_exception&)
+		{
+			if (_running)
+			{
+				std::cout << "Connection to bundle daemon failed. Retry in " << backoff << " seconds." << std::endl;
+				ibrcommon::Thread::sleep(backoff * 1000);
+
+				// if backoff < 10 minutes
+				if (backoff < 600)
+				{
+					// set a new backoff
+					backoff = backoff * 2;
+				}
+			}
+		}
+		catch (const ibrcommon::IOException&)
+		{
+			if (_running)
+			{
+				std::cout << "Connection to bundle daemon failed. Retry in " << backoff << " seconds." << std::endl;
+				ibrcommon::Thread::sleep(backoff * 1000);
+
+				// if backoff < 10 minutes
+				if (backoff < 600)
+				{
+					// set a new backoff
+					backoff = backoff * 2;
+				}
+			}
+		}
+		catch (const std::exception&) { };
 	}
 
 	return (EXIT_SUCCESS);

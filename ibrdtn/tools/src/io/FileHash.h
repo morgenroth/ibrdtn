@@ -4,6 +4,7 @@
  * Copyright (C) 2013 IBR, TU Braunschweig
  *
  * Written-by: David Goltzsche <goltzsch@ibr.cs.tu-bs.de>
+ *             Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,20 +23,27 @@
 #ifndef FILEHASH_H_
 #define FILEHASH_H_
 
-#include "ObservedFile.h"
+#include <string>
 
-class FileHash {
-public:
-	FileHash(ObservedFile* observed_file);
-	virtual ~FileHash();
+namespace io
+{
+	class FileHash
+	{
+	public:
+		FileHash();
+		FileHash(const std::string &path, const std::string &hash);
+		virtual ~FileHash();
 
-	std::string getHash();
-	std::string getPath();
+		const std::string& getHash() const;
+		const std::string& getPath() const;
 
-	bool operator==(FileHash& other);
-private:
-	std::string _path;
-	std::string _hash;
-};
+		bool operator==(const FileHash& other) const;
+		bool operator<(const FileHash& other) const;
+
+	private:
+		std::string _path;
+		std::string _hash;
+	};
+}
 
 #endif /* FILEHASH_H_ */
