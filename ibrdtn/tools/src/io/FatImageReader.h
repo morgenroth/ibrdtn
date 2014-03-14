@@ -50,6 +50,23 @@ namespace io
 			const int _errorcode;
 		};
 
+		class FileHandle
+		{
+		public:
+			FileHandle(const ibrcommon::File &image, const std::string &path);
+			virtual ~FileHandle();
+
+			size_t read(unsigned char *buffer, size_t buf_size);
+
+			void close();
+
+		private:
+			tdir_handle_t _hdir;
+			tffs_handle_t _htffs;
+			tfile_handle_t _hfile;
+			bool _open;
+		};
+
 		FatImageReader(const ibrcommon::File &filename);
 		virtual ~FatImageReader();
 
@@ -65,6 +82,8 @@ namespace io
 		size_t size(const FATFile &file) const throw ();
 
 		bool isDirectory(const FATFile &file) const throw ();
+
+		FileHandle open(const FATFile &file) const;
 
 	private:
 		void update(const FATFile &path, dirent_t &d) const throw (ibrcommon::IOException);

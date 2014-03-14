@@ -21,63 +21,135 @@
  *  Created on: Sep 30, 2013
  */
 
+#include "config.h"
 #include "io/ObservedFile.h"
 #include <string.h>
+#include <sstream>
+#include <typeinfo>
+#include <limits>
+
+#ifdef HAVE_OPENSSL
+#include <openssl/md5.h>
+#endif
+
+#ifdef HAVE_LIBTFFS
+#include "io/FATFile.h"
+#endif
 
 namespace io
 {
-	ObservedFile::ObservedFile()
-	 : _last_sent(0), _size(0), _is_system(false), _is_directory(false)
+	ObservedFile::ObservedFile(const ibrcommon::File &file)
+	 : _file(__copy(file))
 	{
+		update();
 	}
+
 	ObservedFile::~ObservedFile()
 	{
 	}
 
-	bool ObservedFile::lastHashesEqual( size_t n )
-	{
-		if (n > _hashes.size()) return false;
-
-		for (size_t i = 1; i < n; i++)
-		{
-			bool ret = _hashes.at(_hashes.size() - i) == _hashes.at(_hashes.size() - i - 1);
-			if (!ret)
-				return false;
-		}
-		return true;
-	}
-
-	size_t ObservedFile::size() const
-	{
-		return _size;
-	}
-
-	bool ObservedFile::isSystem() const
-	{
-		return _is_system;
-	}
-
-	bool ObservedFile::isDirectory() const
-	{
-		return _is_directory;
-	}
-
 	const io::FileHash& ObservedFile::getHash() const
 	{
-		return _hash;
-	}
-	void ObservedFile::tick()
-	{
-		_hashes.push_back(getHash());
+		return _last_hash;
 	}
 
-	void ObservedFile::send()
+	size_t ObservedFile::getStableCounter() const
 	{
-		_hashes.clear();
+		return _stable_counter;
+	}
+
+	ibrcommon::File* ObservedFile::__copy(const ibrcommon::File &file)
+	{
+		// make a copy of the file object
+#ifdef HAVE_LIBTFFS
+		try {
+			const io::FATFile &f = dynamic_cast<const io::FATFile&>(file);
+			return new io::FATFile(f);
+		} catch (const std::bad_cast&) { };
+#endif
+
+		return new ibrcommon::File(file);
+	}
+
+	const ibrcommon::File& ObservedFile::getFile() const
+	{
+		return *_file;
+	}
+
+	void ObservedFile::findFiles(std::set<ObservedFile> &files) const
+	{
+		if (!getFile().isDirectory()) return;
+
+#ifdef HAVE_LIBTFFS
+		try {
+			const io::FATFile &f = dynamic_cast<const io::FATFile&>(*_file);
+
+			std::list<io::FATFile> filelist;
+			if (f.getFiles(filelist) == 0)
+			{
+				for (std::list<io::FATFile>::const_iterator it = filelist.begin(); it != filelist.end(); ++it)
+				{
+					const io::ObservedFile of(*it);
+
+					if (of.getFile().isSystem()) continue;
+
+					if (of.getFile().isDirectory()) of.findFiles(files);
+					else files.insert(of);
+				}
+			}
+
+			return;
+		} catch (const std::bad_cast&) { };
+#endif
+
+		const ibrcommon::File &f = dynamic_cast<const ibrcommon::File&>(*_file);
+
+		std::list<ibrcommon::File> filelist;
+		if (f.getFiles(filelist) == 0)
+		{
+			for (std::list<ibrcommon::File>::const_iterator it = filelist.begin(); it != filelist.end(); ++it)
+			{
+				const io::ObservedFile of(*it);
+
+				if (of.getFile().isSystem()) continue;
+
+				if (of.getFile().isDirectory()) of.findFiles(files);
+				else files.insert(of);
+			}
+		}
+	}
+
+	void ObservedFile::update()
+	{
+		const FileHash latest = __hash();
+
+		if (_last_hash != latest) {
+			_last_hash = latest;
+			_stable_counter = 0;
+		} else {
+			// protect against overflow
+			if (_stable_counter < std::numeric_limits<size_t>::max()) _stable_counter++;
+		}
+	}
+
+	bool ObservedFile::operator<(const ObservedFile &other) const
+	{
+		return getFile() < other.getFile();
 	}
 
 	bool ObservedFile::operator==(const ObservedFile &other) const
 	{
-		return getHash() == other.getHash();
+		return getFile() == other.getFile();
+	}
+
+	io::FileHash ObservedFile::__hash() const
+	{
+		//update hash
+		std::stringstream ss;
+		ss << _file->lastmodify() << "|" << _file->size() << "|" << _file->getPath();
+		const std::string toHash = ss.str();
+		char hash[MD5_DIGEST_LENGTH];
+		MD5((unsigned char*)toHash.c_str(), toHash.length(), (unsigned char*) hash);
+		return FileHash(_file->getPath(), std::string(hash, MD5_DIGEST_LENGTH));
 	}
 }

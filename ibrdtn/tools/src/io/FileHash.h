@@ -38,6 +38,7 @@ namespace io
 		const std::string& getPath() const;
 
 		bool operator==(const FileHash& other) const;
+		bool operator!=(const FileHash& other) const;
 		bool operator<(const FileHash& other) const;
 
 	private:

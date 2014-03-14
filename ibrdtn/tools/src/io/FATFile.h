@@ -29,55 +29,38 @@
 #define FATFILE_H_
 
 #include "config.h"
-
 #include <ibrcommon/data/File.h>
 #include <list>
-#include <dirent.h>
-
-#ifdef HAVE_LIBTFFS
-extern "C" //libtffs does not support c++
-{
-#include <tffs.h>
-}
-#endif
 
 namespace io
 {
+	class FatImageReader;
+
 	class FATFile : public ibrcommon::File
 	{
 	public:
-		FATFile(const ibrcommon::File &image_file, const std::string &file_path);
+		FATFile(const FatImageReader &reader);
+		FATFile(const FatImageReader &reader, const std::string &file_path);
 		virtual ~FATFile();
 
-		int getFiles(std::list<FATFile> &files);
-		int remove(bool recursive);
-		FATFile get(std::string filename);
-		FATFile getParent();
-		bool exists();
-		void update();
-		size_t size();
-		time_t lastaccess();
-		time_t lastmodify();
-		time_t laststatchange();
+		int getFiles(std::list<FATFile> &files) const;
 
-		const ibrcommon::File& getImageFile() const;
+		virtual int remove(bool recursive);
+
+		FATFile get(const std::string &filename) const;
+		FATFile getParent() const;
+
+		virtual bool exists() const;
+		virtual void update();
+		virtual size_t size();
+		virtual time_t lastaccess();
+		virtual time_t lastmodify();
+		virtual time_t laststatchange();
+
+		const FatImageReader &getReader() const;
 
 	private:
-		const ibrcommon::File _image_file;
-
-		//handles
-		tffs_handle_t _htffs;
-		tdir_handle_t _hdir;
-		tfile_handle_t _hfile;
-
-		dirent_t _dirent;
-
-		//tffs methods
-		int mount_tffs();
-		int umount_tffs();
-		int opendir_tffs();
-		int closedir_tffs();
-		int set_dirent_to_current();
+		const FatImageReader &_reader;
 	};
 }
 #endif /* FATFILE_H_ */

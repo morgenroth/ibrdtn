@@ -224,4 +224,77 @@ namespace io
 			throw FatImageException(ret, "TFFS_umount", _filename);
 		}
 	}
+
+	FatImageReader::FileHandle FatImageReader::open(const FATFile &file) const
+	{
+		return FatImageReader::FileHandle(_filename, file.getPath());
+	}
+
+	FatImageReader::FileHandle::FileHandle(const ibrcommon::File &image, const std::string &p)
+	 : _open(false)
+	{
+		int ret = 0;
+
+		// mount tffs
+		byte* path = const_cast<char *>(image.getPath().c_str());
+		if ((ret = TFFS_mount(path, &_htffs)) != TFFS_OK)
+		{
+			throw FatImageException(ret, "TFFS_mount", image);
+		}
+
+		try {
+			// open file
+			byte* file = const_cast<char*>(p.c_str());
+			if ((ret = TFFS_fopen(_htffs, file, "r", &_hfile)) != TFFS_OK)
+			{
+				throw FatImageException(ret, "TFFS_fopen", p);
+			}
+
+			_open = true;
+		} catch (const FatImageException&) {
+			// unmount
+			TFFS_umount(_htffs);
+			throw;
+		}
+	}
+
+	FatImageReader::FileHandle::~FileHandle()
+	{
+		close();
+	}
+
+	size_t FatImageReader::FileHandle::read(unsigned char *buff, size_t buf_size)
+	{
+		ssize_t ret = 0;
+
+		// read file
+		if (( ret = TFFS_fread(_hfile, buf_size, (unsigned char*) buff)) < 0)
+		{
+				if( ret == ERR_TFFS_FILE_EOF) return 0;
+				else
+				{
+					std::stringstream ss;
+					ss << "TFFS_fread " << ret;
+					throw ibrcommon::IOException(ss.str());
+				}
+		}
+		else
+		{
+			return (ret >= 0) ? (size_t)ret : 0;
+		}
+	}
+
+	void FatImageReader::FileHandle::close()
+	{
+		if (!_open) return;
+
+		if (TFFS_fclose(_hfile) != TFFS_OK) {
+			IBRCOMMON_LOGGER_TAG("FatFileHandle", error) << "TFFS_fclose failed" << IBRCOMMON_LOGGER_ENDL;
+		}
+
+		// close image file
+		if (TFFS_umount(_htffs) != TFFS_OK) {
+			IBRCOMMON_LOGGER_TAG("FatFileHandle", error) << "TFFS_umount failed" << IBRCOMMON_LOGGER_ENDL;
+		}
+	}
 } /* namespace io */

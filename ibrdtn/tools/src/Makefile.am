@@ -26,8 +26,6 @@ tarutils_src = \
 		io/FileHash.cpp \
 		io/ObservedFile.h \
 		io/ObservedFile.cpp \
-		io/ObservedNormalFile.h \
-		io/ObservedNormalFile.cpp \
 		io/TarUtils.h \
 		io/TarUtils.cpp
 
@@ -36,9 +34,7 @@ tarutils_src += \
 		io/FATFile.h \
 		io/FATFile.cpp \
 		io/FatImageReader.h \
-		io/FatImageReader.cpp \
-		io/ObservedFATFile.h \
-		io/ObservedFATFile.cpp
+		io/FatImageReader.cpp
 endif
 
 dtninbox_SOURCES = dtninbox.cpp $(tarutils_src)

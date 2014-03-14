@@ -47,6 +47,11 @@ namespace io
 		return _path;
 	}
 
+	bool FileHash::operator!=(const FileHash& other) const
+	{
+		return (_path != other.getPath()) || (_hash != other.getHash());
+	}
+
 	bool FileHash::operator==(const FileHash& other) const
 	{
 		return (_path == other.getPath()) && (_hash == other.getHash());

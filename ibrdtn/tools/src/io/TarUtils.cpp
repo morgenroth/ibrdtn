@@ -22,23 +22,21 @@
  */
 
 #include "io/TarUtils.h"
-#include "io/ObservedNormalFile.h"
+#include "io/ObservedFile.h"
+#include <ibrcommon/Logger.h>
 
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
 #include <sstream>
 #include <typeinfo>
+#include <fstream>
 
 #include <archive.h>
 #include <archive_entry.h>
 
 #ifdef HAVE_LIBTFFS
-extern "C"
-{
-#include <tffs.h>
-}
-#include "io/ObservedFATFile.h"
+#include "io/FatImageReader.h"
 #endif
 
 #define BUFF_SIZE 8192
@@ -100,7 +98,6 @@ namespace io
 
 		archive_read_open(a, (void*) &input, &__tar_utils_open_callback, &__tar_utils_read_callback, &__tar_utils_close_callback);
 
-
 		while ((ret = archive_read_next_header(a, &entry)) == ARCHIVE_OK )
 		{
 			ibrcommon::File filename = extract_folder.get(archive_entry_pathname(entry));
@@ -115,22 +112,25 @@ namespace io
 		archive_read_free(a);
 	}
 
-	void TarUtils::write(std::ostream &output, const ibrcommon::File &parent, const std::list<ObservedFile*> &files_to_send)
+	void TarUtils::write(std::ostream &output, const io::ObservedFile &root, const std::set<ObservedFile> &files_to_send)
 	{
+		bool processed = false;
+
 		//create new archive, set format to tar, use callbacks (above this method)
 		struct archive *a;
 		a = archive_write_new();
 		archive_write_set_format_ustar(a);
 		archive_write_open(a, &output, &__tar_utils_open_callback, &__tar_utils_write_callback, &__tar_utils_close_callback);
 
-		for(std::list<ObservedFile*>::const_iterator of_iter = files_to_send.begin(); of_iter != files_to_send.end(); ++of_iter)
+		for(std::set<ObservedFile>::const_iterator of_iter = files_to_send.begin(); of_iter != files_to_send.end(); ++of_iter)
 		{
-			ObservedFile &of = (**of_iter);
+			const ObservedFile &of = (*of_iter);
+			const ibrcommon::File &file = of.getFile();
 
 			struct archive_entry *entry;
 			entry = archive_entry_new();
-			archive_entry_set_size(entry, of.size());
-			if(of.isDirectory())
+			archive_entry_set_size(entry, file.size());
+			if(file.isDirectory())
 			{
 				archive_entry_set_filetype(entry, AE_IFDIR);
 				archive_entry_set_perm(entry, 0755);
@@ -141,7 +141,7 @@ namespace io
 				archive_entry_set_perm(entry, 0644);
 			}
 
-			archive_entry_set_pathname(entry, rel_filename(parent, of).c_str());
+			archive_entry_set_pathname(entry, rel_filename(root, of).c_str());
 
 			//set timestamps
 			struct timespec ts;
@@ -153,114 +153,67 @@ namespace io
 
 			archive_write_header(a, entry);
 
-#ifdef HAVE_LIBTFFS
-			//read file on vfat-image
 			try {
-				ObservedFATFile &ffile = dynamic_cast<ObservedFATFile&>(of);
+#ifdef HAVE_LIBTFFS
+				//read file on vfat-image
+				try {
+					const FATFile &ffile = dynamic_cast<const FATFile&>(file);
+					processed = true;
 
-				char buff[BUFF_SIZE];
-				ssize_t ret = 0;
-				size_t len = 0;
+					// get image reader
+					const FatImageReader &reader = ffile.getReader();
 
-				tffs_handle_t htffs = 0;
-				tfile_handle_t hfile = 0;
+					// open fat file
+					io::FatImageReader::FileHandle fh = reader.open(ffile);
 
-				//mount tffs
-				byte* path = const_cast<char *>(ffile.getImageFile().getPath().c_str());
-				if ((ret = TFFS_mount(path, &htffs)) != TFFS_OK)
-				{
-					std::stringstream ss;
-					ss << "TFFS_mount " << ret;
-					throw ibrcommon::IOException(ss.str());
-				}
+					char buff[BUFF_SIZE];
+					ssize_t ret = 0;
+					size_t len = 0;
 
-				//open file
-				byte* file = const_cast<char*>(ffile.getPath().c_str());
-				if ((ret = TFFS_fopen(htffs, file, "r", &hfile)) != TFFS_OK)
-				{
-					std::stringstream ss;
-					ss << "TFFS_fopen" << ret << ", " << ffile.getPath();
-					throw ibrcommon::IOException(ss.str());
-				}
+					// read file
+					len = fh.read((unsigned char*)&buff, BUFF_SIZE);
 
-				memset(buff, 0, BUFF_SIZE);
-
-				// read file
-				if (( ret = TFFS_fread(hfile,BUFF_SIZE,(unsigned char*) buff)) < 0)
-				{
-						if( ret == ERR_TFFS_FILE_EOF)
-						{
-							len = 0;
-						}
-						else
-						{
-							std::stringstream ss;
-							ss << "TFFS_fread" << ret << ", " << ffile.getPath();
-							throw ibrcommon::IOException(ss.str());
-						}
-				}
-				else
-				{
-					len = (ret >= 0) ? (size_t)ret : 0;
-				}
-
-				//write buffer to archive
-				while (len > 0)
-				{
-					if( (ret = archive_write_data(a, buff, len)) < 0)
+					//write buffer to archive
+					while (len > 0)
 					{
-						cout << "ERROR: archive_write_data " << ret << endl;
-						return;
-					}
-
-					if (( ret  = TFFS_fread(hfile,sizeof(buff),(unsigned char*) buff)) < 0)
-					{
-						if( ret == ERR_TFFS_FILE_EOF)
+						if( (ret = archive_write_data(a, buff, len)) < 0)
 						{
-							len = 0;
-							continue;
+							IBRCOMMON_LOGGER_TAG("TarUtils", error) << "archive_write_data failed" << IBRCOMMON_LOGGER_ENDL;
+							break;
 						}
-						cout << "ERROR: TFFS_fread" << ret << endl;
-						return;
-					}
-					len = (ret >= 0) ? (size_t)ret : 0;
-				}
 
-				if ((ret = TFFS_fclose(hfile)) != TFFS_OK) {
-					cout << "ERROR: TFFS_fclose" << ret;
-					return;
-				}
-			} catch (const std::bad_cast&) { }
+						// read next chunk
+						len = fh.read((unsigned char*)&buff, BUFF_SIZE);
+					}
+				} catch (const std::bad_cast&) { };
 #endif
 
-			try {
-				ObservedNormalFile &ffile = dynamic_cast<ObservedNormalFile&>(of);
-
-				char buff[BUFF_SIZE];
-				ssize_t ret = 0;
-				size_t len = 0;
-
-				int fd = ::open(ffile.getPath().c_str(), O_RDONLY);
-				ret = ::read(fd, buff, BUFF_SIZE);
-				len = (ret >= 0) ? (size_t)ret : 0;
-
-				//write buffer to archive
-				while (len > 0)
+				if (!processed)
 				{
-					if( (ret = archive_write_data(a, buff, len)) < 0)
+					char buff[BUFF_SIZE];
+					ssize_t ret = 0;
+
+					// open file for reading
+					std::ifstream fs(file.getPath().c_str());
+
+					// write buffer to archive
+					while (fs.good())
 					{
-						std::stringstream ss;
-						ss << "archive write error " << ret;
-						throw ibrcommon::IOException(ss.str());
+						// read bytes
+						fs.read(buff, BUFF_SIZE);
+
+						// write bytes to archive
+						if( (ret = archive_write_data(a, buff, fs.gcount())) < 0)
+						{
+							IBRCOMMON_LOGGER_TAG("TarUtils", error) << "archive write failed" << IBRCOMMON_LOGGER_ENDL;
+							break;
+						}
 					}
-
-					ret = ::read(fd, buff, sizeof(buff));
-					len = (ret >= 0) ? (size_t)ret : 0;
 				}
-
-				// close the file
-				close(fd);
-			} catch (const std::bad_cast&) { }
+			} catch (const ibrcommon::IOException &e) {
+				// write failed
+				IBRCOMMON_LOGGER_TAG("TarUtils", error) << "archive write failed: " << e.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 
 			archive_entry_free(entry);
 		}
@@ -268,10 +221,10 @@ namespace io
 		archive_write_free(a);
 	}
 
-	std::string TarUtils::rel_filename(const ibrcommon::File &parent, ObservedFile &f)
+	std::string TarUtils::rel_filename(const ObservedFile &parent, const ObservedFile &f)
 	{
-		const std::string parent_path = parent.getPath();
-		const std::string file_path = f.getPath();
+		const std::string parent_path = parent.getFile().getPath();
+		const std::string file_path = f.getFile().getPath();
 		return file_path.substr(parent_path.length()+1,file_path.length()-parent_path.length()-1);
 	}
 }

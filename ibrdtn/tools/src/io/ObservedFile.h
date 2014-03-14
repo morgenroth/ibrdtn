@@ -22,8 +22,10 @@
  */
 
 #include "io/FileHash.h"
+#include <ibrcommon/data/File.h>
+#include <ibrcommon/refcnt_ptr.h>
 #include <vector>
-#include <list>
+#include <set>
 #include <string>
 
 #ifndef OBSERVEDFILE_H_
@@ -34,39 +36,46 @@ namespace io
 	class ObservedFile
 	{
 	public:
-		ObservedFile();
+		ObservedFile(const ibrcommon::File &file);
 		virtual ~ObservedFile();
 
-		virtual int getFiles(std::list<ObservedFile*>& files) = 0;
-		virtual std::string getPath() const = 0;
-		virtual bool exists() = 0;
-		virtual std::string getBasename() const = 0;
-		virtual void update() = 0;
-
-		virtual size_t size() const;
-		virtual bool isSystem() const;
-		virtual bool isDirectory() const;
-		virtual const io::FileHash& getHash() const;
-
 		bool operator==(const ObservedFile &other) const;
+		bool operator<(const ObservedFile &other) const;
 
-		void tick();
-		void send();
-		static void setConfigImgPath(std::string path);
-		static void setConfigRounds(size_t rounds);
-		static void setConfigBadclock(bool badclock);
+		/**
+		 * check if the file has changed
+		 */
+		void update();
 
-		bool lastHashesEqual( size_t n );
+		/**
+		 * returns the number of update() calls this file is stable
+		 */
+		size_t getStableCounter() const;
 
-	protected:
-		std::vector<io::FileHash> _hashes;
-		size_t _last_sent;
+		/**
+		 * return the corresponding file reference
+		 */
+		const ibrcommon::File& getFile() const;
 
-		//updated vars
-		size_t _size;
-		bool _is_system;
-		bool _is_directory;
-		io::FileHash _hash;
+		/**
+		 * recursive list all files in this directory
+		 */
+		void findFiles(std::set<ObservedFile> &files) const;
+
+		/**
+		 * Returns the hash of the last update() call
+		 */
+		const io::FileHash& getHash() const;
+
+	private:
+		io::FileHash __hash() const;
+
+		static ibrcommon::File* __copy(const ibrcommon::File &file);
+
+		refcnt_ptr<ibrcommon::File> _file;
+
+		size_t _stable_counter;
+		io::FileHash _last_hash;
 	};
 }
 

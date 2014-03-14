@@ -26,7 +26,7 @@
 #include "config.h"
 #include "io/ObservedFile.h"
 #include <ibrcommon/data/File.h>
-#include <list>
+#include <set>
 
 namespace io
 {
@@ -39,7 +39,7 @@ namespace io
 		/**
 		 * write tar archive to payload block, FATFile version
 		 */
-		static void write( std::ostream &output, const ibrcommon::File &parent, const std::list<ObservedFile*> &files_to_send );
+		static void write( std::ostream &output, const io::ObservedFile &root, const std::set<ObservedFile> &files_to_send );
 
 		/*
 		 * read tar archive from payload block, write to file
@@ -47,7 +47,7 @@ namespace io
 		static void read( const ibrcommon::File &extract_folder, std::istream &input );
 
 	private:
-		static std::string rel_filename(const ibrcommon::File &parent, ObservedFile&);
+		static std::string rel_filename(const ObservedFile &parent, const ObservedFile&);
 	};
 }
 

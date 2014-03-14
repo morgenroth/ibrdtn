@@ -22,11 +22,17 @@
  */
 
 #include "io/FATFile.h"
+#include "io/FatImageReader.h"
 
 namespace io
 {
-	FATFile::FATFile(const ibrcommon::File &image_file, const std::string &file_path)
-	 : ibrcommon::File(file_path), _image_file(image_file), _htffs(0), _hdir(0), _hfile(0)
+	FATFile::FATFile(const FatImageReader &reader)
+	 : ibrcommon::File("/", DT_DIR), _reader(reader)
+	{
+	}
+
+	FATFile::FATFile(const FatImageReader &reader, const std::string &file_path)
+	 : ibrcommon::File(file_path), _reader(reader)
 	{
 		update();
 	}
@@ -35,176 +41,56 @@ namespace io
 	{
 	}
 
-	const ibrcommon::File& FATFile::getImageFile() const
+	int FATFile::getFiles(std::list<FATFile> &files) const
 	{
-		return _image_file;
-	}
-
-	int FATFile::getFiles(std::list<FATFile> &files)
-	{
-		int ret = 0;
-
-		mount_tffs();
-		opendir_tffs();
-
-		std::string path = getPath();
-		while( 1 )
-		{
-			if ((ret = TFFS_readdir(_hdir, &_dirent)) == TFFS_OK)
-			{
-				std::string newpath = path + "/" + _dirent.d_name;
-
-				FATFile f(_image_file, newpath);
-				files.push_back(f);
-			}
-			else if (ret == ERR_TFFS_LAST_DIRENTRY) { // end of directory
-				break;
-			}
-			else {
-				cout << "ERROR: TFFS_readdir" << ret << endl;
-				return -1;
-			}
+		try {
+			_reader.list(*this, files);
+		} catch (const FatImageReader::FatImageException &e) {
+			return e.getErrorCode();
 		}
-		closedir_tffs();
-		umount_tffs();
 		return 0;
 	}
 
 	int FATFile::remove(bool recursive)
 	{
-		cout << "deleting" << getPath() << endl;
-		if (isSystem()) return -1;
-		//if (_type == DT_UNKNOWN) return -1;
-
-		int ret = 0;
-
-		if(isDirectory())
-		{
-			if(recursive)
-			{
-				// container for all files
-				list<FATFile> files;
-
-				// get all files in this directory
-				if ((ret = getFiles(files)) < 0)
-					return ret;
-
-				for (list<FATFile>::iterator iter = files.begin(); iter != files.end(); ++iter)
-				{
-				FATFile &file = (*iter);
-				if (!file.isSystem())
-				{
-					if ((ret = file.remove(recursive)) < 0)
-						return ret;
-					}
-				}
-				//remove dir
-				mount_tffs();
-				opendir_tffs();
-				std::string path = getPath();
-				byte* byte_path = const_cast<char *>(path.c_str());
-				if ((ret = TFFS_rmdir(_htffs, byte_path)) != TFFS_OK)
-				{
-					cout << "ERROR: TFFS_rmdir" << ret << endl;
-					return -1;
-				}
-				closedir_tffs();
-				umount_tffs();
-			}
-		}
-		else
-		{
-			//remove file
-			mount_tffs();
-			opendir_tffs();
-			std::string path = getPath();
-			byte* byte_path = const_cast<char *>(path.c_str());
-			if ((ret = TFFS_rmfile(_htffs, byte_path)) != TFFS_OK)
-			{
-				cout << "ERROR: TFFS_rmfile" << ret << endl;
-				return -1;
-			}
-			closedir_tffs();
-			umount_tffs();
-		}
-		return 0;
+		// deletion is not supported
+		return 1;
 	}
 
-	FATFile FATFile::get(std::string filename)
+	FATFile FATFile::get(const std::string &filename) const
 	{
-		throw ibrcommon::IOException("not implemented yet");
+		const ibrcommon::File child = ibrcommon::File::get(filename);
+		return FATFile(_reader, child.getPath());
 	}
 
-	FATFile FATFile::getParent()
+	FATFile FATFile::getParent() const
 	{
-		throw ibrcommon::IOException("not implemented yet");
+		const ibrcommon::File parent = ibrcommon::File::getParent();
+		return FATFile(_reader, parent.getPath());
 	}
 
-	bool FATFile::exists()
+	bool FATFile::exists() const
 	{
-		int ret = 0;
-
-		mount_tffs();
-		opendir_tffs();
-		//remove leading "./"
-		std::string path = getPath();
-		if(path == "/" || path.empty())
-		{
-			closedir_tffs();
-			umount_tffs();
-			return true; //root always exists
-		}
-
-		if( path.length() > 2 && path.substr(0,2) == "./")
-				path = path.substr(2);
-
-		byte* byte_path = const_cast<char *>(path.c_str());
-		if ((ret = TFFS_fopen(_htffs, byte_path, "r", &_hfile)) != TFFS_OK) {
-			return false;
-		}
-		closedir_tffs();
-		umount_tffs();
-		return true;
+		return _reader.exists(*this);
 	}
 
 	void FATFile::update()
 	{
-		mount_tffs();
-		opendir_tffs();
-		set_dirent_to_current();
-		ubyte attr = _dirent.dir_attr;
-		if( attr & DIR_ATTR_DIRECTORY)
+		if (isRoot() || _reader.isDirectory(*this)) {
 			_type = DT_DIR;
-		closedir_tffs();
-		umount_tffs();
+		} else {
+			_type = DT_REG;
+		}
 	}
 
 	size_t FATFile::size()
 	{
-		mount_tffs();
-		opendir_tffs();
-		set_dirent_to_current();
-		closedir_tffs();
-		umount_tffs();
-		return _dirent.dir_file_size;
+		return _reader.size(*this);
 	}
 
 	time_t FATFile::lastaccess()
 	{
-		mount_tffs();
-		opendir_tffs();
-		set_dirent_to_current();
-
-		struct tm tm;
-		tm.tm_year = _dirent.crttime.year - 1900;
-		tm.tm_mon  = _dirent.crttime.month - 1;
-		tm.tm_mday = _dirent.crttime.day;
-		tm.tm_hour = _dirent.crttime.hour;
-		tm.tm_min  = _dirent.crttime.min;
-		tm.tm_sec  = _dirent.crttime.sec / 2; //somehow, libtffs writes seconds from 0-119;
-		closedir_tffs();
-		umount_tffs();
-		return mktime(&tm);
+		return _reader.lastaccess(*this);
 	}
 
 	time_t FATFile::lastmodify()
@@ -217,85 +103,8 @@ namespace io
 		return lastaccess();
 	}
 
-	int FATFile::mount_tffs()
+	const FatImageReader& FATFile::getReader() const
 	{
-		int ret = 0;
-		byte* path = const_cast<char *>(_image_file.getPath().c_str());
-		if ((ret = TFFS_mount(path, &_htffs)) != TFFS_OK) {
-			std::cerr << "ERROR: TFFS_mount" << ret << " in " << _image_file.getPath() << std::endl;
-			return -1;
-		}
-		return 0;
-	}
-
-	int FATFile::umount_tffs()
-	{
-		int ret = 0;
-		if ((ret = TFFS_umount(_htffs)) != TFFS_OK) {
-			cout << "ERROR: TFFS_mount" << ret << endl;
-			return -1;
-		}
-		return 0;
-	}
-
-	int FATFile::opendir_tffs()
-	{
-		int ret = 0;
-
-		std::string path = getPath();
-		std::string cur_dir;
-		if(path.length() == 0)
-			cur_dir = "/";
-		else if(isDirectory())
-			cur_dir = path.substr(1);
-		else
-		{
-			size_t slashpos = path.find_last_of("/");
-			cur_dir = path.substr(1,slashpos);
-		}
-		byte* byte_cur_dir = const_cast<char *>(cur_dir.c_str());
-		if ((ret = TFFS_opendir(_htffs, byte_cur_dir, &_hdir)) != TFFS_OK)
-		{
-			cout << "ERROR: TFFS_opendir" << ret << cur_dir << endl;
-			return -1;
-		}
-		return 0;
-	}
-
-	int FATFile::closedir_tffs()
-	{
-		int ret = 0;
-
-		if ((ret = TFFS_closedir(_hdir)) != TFFS_OK)
-		{
-			cout << "ERROR: TFFS_opendir" << ret << endl;
-			return -1;
-		}
-		return 0;
-	}
-
-	int FATFile::set_dirent_to_current()
-	{
-		int ret = 0;
-
-		//iterate directory
-		while( 1 )
-		{
-			ret = TFFS_readdir(_hdir, &_dirent);
-			switch (ret)
-			{
-				case TFFS_OK:
-					if(_dirent.d_name == getBasename())
-						return 1;
-					break;
-
-				case ERR_TFFS_LAST_DIRENTRY:
-					return 0;
-
-				default:
-					return -1;
-			}
-		}
-		return -1;
+		return _reader;
 	}
 }

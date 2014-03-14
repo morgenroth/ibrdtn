@@ -32,14 +32,10 @@
 #include <ibrcommon/appstreambuf.h>
 
 #include "io/TarUtils.h"
-#include "io/ObservedNormalFile.h"
+#include "io/ObservedFile.h"
 
 #ifdef HAVE_LIBTFFS
-#include "io/ObservedFATFile.h"
-extern "C"
-{
-#include <tffs.h>
-}
+#include "io/FatImageReader.h"
 #endif
 
 #include <stdlib.h>
@@ -50,6 +46,10 @@ extern "C"
 #include <unistd.h>
 #include <regex.h>
 #include <getopt.h>
+
+typedef std::list<io::ObservedFile> filelist;
+typedef std::set<io::ObservedFile> fileset;
+typedef std::set<io::FileHash> hashlist;
 
 // set this variable to false to stop the app
 bool _running = true;
@@ -235,17 +235,6 @@ void sighandler_func(int signal)
 	}
 }
 
-//this function is needed, to delete the pointers in the list observed_files
-bool deleteAll(io::ObservedFile* ptr){
-	delete ptr;
-	return true;
-}
-
-bool path_equals( io::ObservedFile *a, io::ObservedFile *b )
-{
-	return (a->getPath() != b->getPath());
-}
-
 /*
  * main application method
  */
@@ -281,19 +270,25 @@ int main( int argc, char** argv )
 
 	ibrcommon::File outbox_file(_conf_outbox);
 
-	typedef std::list<io::ObservedFile*> filelist;
-	filelist avail_files, new_files, old_files, deleted_files, observed_files, files_to_send;
-
-	typedef std::set<io::FileHash> hashlist;
+	// create new file lists
+	fileset new_files, prev_files, deleted_files, files_to_send;
+	filelist observed_files;
 	hashlist sent_hashes;
 
-	io::ObservedFile* outbox;
+	// observed root file
+	io::ObservedFile root(ibrcommon::File("/"));
+
+#ifdef HAVE_LIBTFFS
+	io::FatImageReader *imagereader = NULL;
+#endif
 
 	if (outbox_file.exists() && !outbox_file.isDirectory())
 	{
 #ifdef HAVE_LIBTFFS
 		_conf_fat = true;
-		outbox = new io::ObservedFATFile(_conf_outbox, _conf_path);
+		imagereader = new io::FatImageReader(_conf_outbox);
+		const io::FATFile fat_root(*imagereader, _conf_path);
+		root = io::ObservedFile(fat_root);
 #else
 		std::cout << "ERROR: image-file provided, but this tool has been compiled without libtffs support!" << std::endl;
 		return -1;
@@ -301,10 +296,10 @@ int main( int argc, char** argv )
 	}
 	else
 	{
-		if (!outbox_file.exists())
+		if (!outbox_file.exists()) {
 			ibrcommon::File::createDirectory(outbox_file);
-
-		outbox = new io::ObservedNormalFile(_conf_outbox);
+		}
+		root = io::ObservedFile(outbox_file);
 	}
 
 	if (!_conf_quiet) std::cout << "-- dtnoutbox --" << std::endl;
@@ -331,47 +326,45 @@ int main( int argc, char** argv )
 			// check the connection
 			while (_running)
 			{
-				deleted_files.clear();
-				new_files.clear();
-				old_files.clear();
-
-				// store old files
-				old_files = avail_files;
-				avail_files.clear();
-
 				// get all files
-				outbox->getFiles(avail_files);
+				fileset current_files;
+				root.findFiles(current_files);
 
 				// determine deleted files
-				std::set_difference(old_files.begin(), old_files.end(), avail_files.begin(), avail_files.end(), std::back_inserter(deleted_files), path_equals);
+				fileset deleted_files;
+				std::set_difference(prev_files.begin(), prev_files.end(), current_files.begin(), current_files.end(), std::inserter(deleted_files, deleted_files.begin()));
 
 				// remove deleted files from observation
-				for (filelist::iterator iter = deleted_files.begin(); iter != deleted_files.end(); ++iter)
+				for (fileset::const_iterator iter = deleted_files.begin(); iter != deleted_files.end(); ++iter)
 				{
-					sent_hashes.erase((*iter)->getHash());
-					for(filelist::iterator iter2 = observed_files.begin();iter2 != observed_files.end();++iter2)
-					{
-							if ((*iter2)->getHash() == (*iter)->getHash())
-							{
-								delete (*iter);
-								observed_files.erase(iter2);
-								break;
-							}
+					const io::ObservedFile &deletedFile = (*iter);
+
+					// remove references in the sent_hashes
+					for (hashlist::iterator hash_it = sent_hashes.begin(); hash_it != sent_hashes.end(); /* blank */) {
+						if ((*hash_it).getPath() == deletedFile.getFile().getPath()) {
+							sent_hashes.erase(hash_it++);
+						} else {
+							++hash_it;
+						}
 					}
+
+					// remove from observed files
+					observed_files.remove(deletedFile);
+
+					// output
+					if (!_conf_quiet) std::cout << "file removed: " << deletedFile.getFile().getBasename() << std::endl;
 				}
 
-				// re-run loop, if files have been deleted
-				if (deleted_files.size() > 0) break;
-
 				// determine new files
-				std::set_difference(avail_files.begin(), avail_files.end(), old_files.begin(), old_files.end(), std::back_inserter(new_files), path_equals);
+				fileset new_files;
+				std::set_difference(current_files.begin(), current_files.end(), prev_files.begin(), prev_files.end(), std::inserter(new_files, new_files.begin()));
 
 				// add new files to observation
-				for (filelist::iterator iter = new_files.begin(); iter != new_files.end(); ++iter)
+				for (fileset::const_iterator iter = new_files.begin(); iter != new_files.end(); ++iter)
 				{
-					const io::ObservedFile &of = (**iter);
+					const io::ObservedFile &of = (*iter);
 
-					int reg_ret = regexec(&_conf_regex,(*iter)->getBasename().c_str(), 0, NULL, 0);
+					int reg_ret = regexec(&_conf_regex, of.getFile().getBasename().c_str(), 0, NULL, 0);
 					if (!reg_ret && !_conf_invert)
 						continue;
 					if (reg_ret && _conf_invert)
@@ -385,38 +378,33 @@ int main( int argc, char** argv )
 							std::cerr << "ERROR: regex match failed : " << std::string(msgbuf) << std::endl;
 					}
 
+					// add new file to the observed set
+					observed_files.push_back(of);
+
 					// log output
-					if (!_conf_quiet) std::cout << "file found: " << of.getBasename() << std::endl;
-
-					if (!_conf_fat) {
-						observed_files.push_back( new io::ObservedNormalFile(of.getPath()) );
-#ifdef HAVE_LIBTFFS
-					} else {
-						observed_files.push_back( new io::ObservedFATFile(_conf_outbox, of.getPath()) );
-#endif
-					}
+					if (!_conf_quiet) std::cout << "file found: " << of.getFile().getBasename() << std::endl;
 				}
 
-				// tick and update all files
-				for (filelist::iterator iter = observed_files.begin(); iter != observed_files.end(); ++iter)
-				{
-					(*iter)->update();
-					(*iter)->tick();
-				}
+				// store current files for the next round
+				prev_files.clear();
+				prev_files.insert(current_files.begin(), current_files.end());
 
 				// find files to send, create std::list
 				files_to_send.clear();
+
 				for (filelist::iterator iter = observed_files.begin(); iter != observed_files.end(); ++iter)
 				{
-					io::ObservedFile &of = (**iter);
+					io::ObservedFile &of = (*iter);
 
-					if (sent_hashes.find(of.getHash()) == sent_hashes.end())
+					// tick and update all files
+					of.update();
+
+					if (of.getStableCounter() > _conf_rounds)
 					{
-						if (of.lastHashesEqual(_conf_rounds))
+						if (sent_hashes.find(of.getHash()) == sent_hashes.end())
 						{
-							of.send();
 							sent_hashes.insert(of.getHash());
-							files_to_send.push_back(*iter);
+							files_to_send.insert(*iter);
 						}
 					}
 				}
@@ -426,8 +414,8 @@ int main( int argc, char** argv )
 					if (!_conf_quiet)
 					{
 						std::cout << "send files: ";
-						for (filelist::const_iterator it = files_to_send.begin(); it != files_to_send.end(); ++it) {
-							std::cout << (*it)->getBasename() << " ";
+						for (fileset::const_iterator it = files_to_send.begin(); it != files_to_send.end(); ++it) {
+							std::cout << (*it).getFile().getBasename() << " ";
 						}
 						std::cout << std::endl;
 					}
@@ -435,18 +423,10 @@ int main( int argc, char** argv )
 					// create a blob
 					ibrcommon::BLOB::Reference blob = ibrcommon::BLOB::create();
 
-					// set paths, depends on file location (normal file system or fat image)
-					if (_conf_fat)
+					// write files into BLOB while it is locked
 					{
-						// write files into BLOB while it is locked
 						ibrcommon::BLOB::iostream stream = blob.iostream();
-						io::TarUtils::write(*stream, _conf_path, files_to_send);
-					}
-					else
-					{
-						// write files into BLOB while it is locked
-						ibrcommon::BLOB::iostream stream = blob.iostream();
-						io::TarUtils::write(*stream, _conf_outbox, files_to_send);
+						io::TarUtils::write(*stream, root, files_to_send);
 					}
 
 					// create a new bundle
@@ -465,24 +445,18 @@ int main( int argc, char** argv )
 					if (_conf_bundle_group)
 						b.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, false);
 
-
 					// send the bundle
 					client << b;
 					client.flush();
 				}
 
-				if (_running)
-				{
-					// wait defined seconds
-					ibrcommon::MutexLock l(_wait_cond);
+				// wait defined seconds
+				ibrcommon::MutexLock l(_wait_cond);
+				while (!_wait_abort && _running) {
 					_wait_cond.wait(_conf_interval);
-					if (_wait_abort)
-						_wait_abort = false;
 				}
+				_wait_abort = false;
 			}
-
-			// clean up pointer list
-			observed_files.remove_if(deleteAll);
 
 			// clean up regex
 			regfree(&_conf_regex);
@@ -526,6 +500,14 @@ int main( int argc, char** argv )
 		}
 		catch (const std::exception&) { };
 	}
+
+	// clear observed files
+	observed_files.clear();
+
+#ifdef HAVE_LIBTFFS
+	// clean-up
+	if (imagereader != NULL) delete imagereader;
+#endif
 
 	return (EXIT_SUCCESS);
 }
