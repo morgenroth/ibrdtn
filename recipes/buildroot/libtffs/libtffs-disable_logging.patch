@@ -1,0 +1,22 @@
+Index: tffs/src/debug.h
+===================================================================
+--- tffs/src/debug.h	(Revision 3)
++++ tffs/src/debug.h	(Arbeitskopie)
+@@ -17,12 +17,12 @@
+ //#define DBG_DIRENT
+ //#define DBG_FAT
+ //#define DBG_FILE
+-#define DBG_INITFS
++//#define DBG_INITFS
+ 
+-#define DBG 	printf
+-#define WARN	printf
+-#define ERR		printf
+-#define INFO 	printf
++#define DBG 	if(0) printf
++#define WARN	if(0) printf
++#define ERR	if(0) printf
++#define INFO 	if(0) printf
+ 
+ #define ASSERT(f)	if(!(f)) { \
+ 						printf("ASSERT failed at %s():%d\n", __FUNCTION__, __LINE__); \
