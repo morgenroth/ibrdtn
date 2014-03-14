@@ -51,19 +51,19 @@
 namespace ibrcommon
 {
 	File::File()
-	 : _path(), _type(DT_UNKNOWN)
+	 : _type(DT_UNKNOWN), _path()
 	{
 	}
 
 	File::File(const std::string &path, const unsigned char t)
-	 : _path(path), _type(t)
+	 : _type(t), _path(path)
 	{
 		resolveAbsolutePath();
 		removeSlash();
 	}
 
 	File::File(const std::string &path)
-	 : _path(path), _type(DT_UNKNOWN)
+	 :_type(DT_UNKNOWN), _path(path)
 	{
 		resolveAbsolutePath();
 		removeSlash();

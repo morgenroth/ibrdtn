@@ -75,7 +75,7 @@ namespace ibrcommon
 		 * @param files A (empty) list to put the new file objects in.
 		 * @return Returns zero on success and an error number on failure.
 		 */
-		int getFiles(list<File> &files) const;
+		int getFiles(std::list<File> &files) const;
 
 		/**
 		 * Checks if a file is the root of the file-system
@@ -112,7 +112,7 @@ namespace ibrcommon
 		 * @param recursive If set to true, the deletion works recursive and deletes directories with files too.
 		 * @return Returns zero on success and an error number on failure.
 		 */
-		int remove(bool recursive = false);
+		virtual int remove(bool recursive = false);
 
 		/**
 		 * Get a specific file in this directory.
@@ -131,33 +131,33 @@ namespace ibrcommon
 		 * Checks whether this file exists or not.
 		 * @return True, if the file exists.
 		 */
-		bool exists() const;
+		virtual bool exists() const;
 
 		/**
 		 * Updates file information like file type @see getType()
 		 */
-		void update();
+		virtual void update();
 
 		/**
 		 * Get the size of the file.
 		 * @return The size in bytes.
 		 */
-		size_t size() const;
+		virtual size_t size() const;
 
 		/**
 		 * Get the timestamp of the last access
 		 */
-		time_t lastaccess() const;
+		virtual time_t lastaccess() const;
 
 		/**
 		 * Get the timestamp of the last modification
 		 */
-		time_t lastmodify() const;
+		virtual time_t lastmodify() const;
 
 		/**
 		 * Get the timestamp of the last status change
 		 */
-		time_t laststatchange() const;
+		virtual time_t laststatchange() const;
 
 		/**
 		 * This method creates a directory. This is done recursively.
@@ -168,13 +168,14 @@ namespace ibrcommon
 		bool operator==(const ibrcommon::File &other) const;
 		bool operator<(const ibrcommon::File &other) const;
 
-	private:
+	protected:
 		File(const std::string &path, const unsigned char t);
+		unsigned char _type;
+
+	private:
 		void resolveAbsolutePath();
 		void removeSlash();
 		std::string _path;
-	protected:
-		unsigned char _type;
 	};
 
 	/**
