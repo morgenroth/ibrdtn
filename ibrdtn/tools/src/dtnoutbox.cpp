@@ -433,34 +433,38 @@ int main( int argc, char** argv )
 						std::cout << std::endl;
 					}
 
-					// create a blob
-					ibrcommon::BLOB::Reference blob = ibrcommon::BLOB::create();
+					try {
+						// create a blob
+						ibrcommon::BLOB::Reference blob = ibrcommon::BLOB::create();
 
-					// write files into BLOB while it is locked
-					{
-						ibrcommon::BLOB::iostream stream = blob.iostream();
-						io::TarUtils::write(*stream, root, files_to_send);
+						// write files into BLOB while it is locked
+						{
+							ibrcommon::BLOB::iostream stream = blob.iostream();
+							io::TarUtils::write(*stream, root, files_to_send);
+						}
+
+						// create a new bundle
+						dtn::data::EID destination = EID(conf.destination);
+
+						// create a new bundle
+						dtn::data::Bundle b;
+
+						// set destination
+						b.destination = destination;
+
+						// add payload block using the blob
+						b.push_back(blob);
+
+						// set destination address to non-singleton, if configured
+						if (conf.bundle_group)
+							b.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, false);
+
+						// send the bundle
+						client << b;
+						client.flush();
+					} catch (const ibrcommon::IOException &e) {
+						std::cerr << "send failed: " << e.what() << std::endl;
 					}
-
-					// create a new bundle
-					dtn::data::EID destination = EID(conf.destination);
-
-					// create a new bundle
-					dtn::data::Bundle b;
-
-					// set destination
-					b.destination = destination;
-
-					// add payload block using the blob
-					b.push_back(blob);
-
-					// set destination address to non-singleton, if configured
-					if (conf.bundle_group)
-						b.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, false);
-
-					// send the bundle
-					client << b;
-					client.flush();
 				}
 
 				// wait defined seconds

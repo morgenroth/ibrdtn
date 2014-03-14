@@ -130,6 +130,7 @@ namespace io
 			struct archive_entry *entry;
 			entry = archive_entry_new();
 			archive_entry_set_size(entry, file.size());
+
 			if(file.isDirectory())
 			{
 				archive_entry_set_filetype(entry, AE_IFDIR);
@@ -137,7 +138,7 @@ namespace io
 			}
 			else
 			{
-				archive_entry_set_filetype(entry, AE_IFREG );
+				archive_entry_set_filetype(entry, AE_IFREG);
 				archive_entry_set_perm(entry, 0644);
 			}
 
@@ -213,6 +214,12 @@ namespace io
 			} catch (const ibrcommon::IOException &e) {
 				// write failed
 				IBRCOMMON_LOGGER_TAG("TarUtils", error) << "archive write failed: " << e.what() << IBRCOMMON_LOGGER_ENDL;
+
+				archive_entry_free(entry);
+				archive_write_close(a);
+				archive_write_free(a);
+
+				throw;
 			}
 
 			archive_entry_free(entry);
