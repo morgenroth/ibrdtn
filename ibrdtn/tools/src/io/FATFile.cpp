@@ -83,22 +83,22 @@ namespace io
 		}
 	}
 
-	size_t FATFile::size()
+	size_t FATFile::size() const
 	{
 		return _reader.size(*this);
 	}
 
-	time_t FATFile::lastaccess()
+	time_t FATFile::lastaccess() const
 	{
 		return _reader.lastaccess(*this);
 	}
 
-	time_t FATFile::lastmodify()
+	time_t FATFile::lastmodify() const
 	{
 		return lastaccess();
 	}
 
-	time_t FATFile::laststatchange()
+	time_t FATFile::laststatchange() const
 	{
 		return lastaccess();
 	}

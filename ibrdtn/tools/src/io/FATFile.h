@@ -52,10 +52,10 @@ namespace io
 
 		virtual bool exists() const;
 		virtual void update();
-		virtual size_t size();
-		virtual time_t lastaccess();
-		virtual time_t lastmodify();
-		virtual time_t laststatchange();
+		virtual size_t size() const;
+		virtual time_t lastaccess() const;
+		virtual time_t lastmodify() const;
+		virtual time_t laststatchange() const;
 
 		const FatImageReader &getReader() const;
 
