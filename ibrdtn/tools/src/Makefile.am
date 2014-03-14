@@ -35,6 +35,8 @@ if TFFS
 tarutils_src += \
 		io/FATFile.h \
 		io/FATFile.cpp \
+		io/FatImageReader.h \
+		io/FatImageReader.cpp \
 		io/ObservedFATFile.h \
 		io/ObservedFATFile.cpp
 endif
