@@ -58,23 +58,33 @@ bool _running = true;
 ibrcommon::Conditional _wait_cond;
 bool _wait_abort = false;
 
-//global conf values
-string _conf_name;
-string _conf_outbox;
-string _conf_destination;
+class config {
+public:
+	config()
+	 : interval(5000), rounds(3), path("/"), regex_str("^\\."),
+		bundle_group(false), invert(false), quiet(false), fat(false), enabled(true)
+	{}
 
-//optional paramters
-string _conf_workdir;
-size_t _conf_interval = 5000;
-size_t _conf_rounds = 3;
-string _conf_path = "/";
-string _conf_regex_str = "^\\.";
-regex_t _conf_regex;
-int _conf_bundle_group = false;
-int _conf_invert = false;
-int _conf_quiet = false;
-int _conf_fat = false;
-int _conf_enabled = true;
+	//global conf values
+	string name;
+	string outbox;
+	string destination;
+
+	//optional paramters
+	std::string workdir;
+	std::size_t interval;
+	std::size_t rounds;
+	std::string path;
+	std::string regex_str;
+	regex_t regex;
+
+	int bundle_group;
+	int invert;
+	int quiet;
+	int fat;
+	int enabled;
+};
+typedef struct config config_t;
 
 struct option long_options[] =
 {
@@ -123,7 +133,7 @@ void print_help()
 
 }
 
-void read_configuration(int argc, char** argv)
+void read_configuration(int argc, char** argv, config_t &conf)
 {
 	// print help if not enough parameters are set
 	if (argc < 3)
@@ -159,28 +169,28 @@ void read_configuration(int argc, char** argv)
 			exit(EXIT_SUCCESS);
 			break;
 		case 'g':
-			_conf_bundle_group = true;
+			conf.bundle_group = true;
 			break;
 		case 'w':
-			_conf_workdir = std::string(optarg);
+			conf.workdir = std::string(optarg);
 			break;
 		case 'i':
-			_conf_interval = atoi(optarg);
+			conf.interval = atoi(optarg);
 			break;
 		case 'r':
-			_conf_rounds = atoi(optarg);
+			conf.rounds = atoi(optarg);
 			break;
 		case 'p':
-			_conf_path = std::string(optarg);
+			conf.path = std::string(optarg);
 			break;
 		case 'R':
-			_conf_regex_str = std::string(optarg);
+			conf.regex_str = std::string(optarg);
 			break;
 		case 'q':
-			_conf_quiet = true;
+			conf.quiet = true;
 			break;
 		case 'I':
-			_conf_invert = true;
+			conf.invert = true;
 			break;
 		case '?':
 			break;
@@ -190,12 +200,12 @@ void read_configuration(int argc, char** argv)
 		}
 	}
 
-	_conf_name = std::string(argv[optind]);
-	_conf_destination = std::string(argv[optind+2]);
-	_conf_outbox = std::string(argv[optind+1]);
+	conf.name = std::string(argv[optind]);
+	conf.destination = std::string(argv[optind+2]);
+	conf.outbox = std::string(argv[optind+1]);
 
 	//compile regex, if set
-	if (_conf_regex_str.length() > 0 && regcomp(&_conf_regex,_conf_regex_str.c_str(),0))
+	if (conf.regex_str.length() > 0 && regcomp(&conf.regex,conf.regex_str.c_str(),0))
 	{
 		std::cout << "ERROR: invalid regex: " << optarg << std::endl;
 		exit(-1);
@@ -203,8 +213,8 @@ void read_configuration(int argc, char** argv)
 
 
 	//check outbox path for trailing slash
-	if (_conf_outbox.at(_conf_outbox.length()-1) == '/')
-		_conf_outbox = _conf_outbox.substr(0,_conf_outbox.length() -1);
+	if (conf.outbox.at(conf.outbox.length()-1) == '/')
+		conf.outbox = conf.outbox.substr(0,conf.outbox.length() -1);
 }
 
 void sighandler_func(int signal)
@@ -245,19 +255,22 @@ int main( int argc, char** argv )
 	sighandler.handle(SIGINT);
 	sighandler.handle(SIGTERM);
 #ifndef __WIN32__
-    sighandler.handle(SIGUSR1);
+	sighandler.handle(SIGUSR1);
 #endif
 
+	// configration object
+	config_t conf;
+
 	// read the configuration
-	read_configuration(argc,argv);
+	read_configuration(argc, argv, conf);
 
 	// initialize sighandler after possible exit call
 	sighandler.initialize();
 
 	// init working directory
-	if (_conf_workdir.length() > 0)
+	if (conf.workdir.length() > 0)
 	{
-		ibrcommon::File blob_path(_conf_workdir);
+		ibrcommon::File blob_path(conf.workdir);
 
 		if (blob_path.exists())
 		{
@@ -268,7 +281,7 @@ int main( int argc, char** argv )
 	// backoff for reconnect
 	unsigned int backoff = 2;
 
-	ibrcommon::File outbox_file(_conf_outbox);
+	ibrcommon::File outbox_file(conf.outbox);
 
 	// create new file lists
 	fileset new_files, prev_files, deleted_files, files_to_send;
@@ -285,9 +298,9 @@ int main( int argc, char** argv )
 	if (outbox_file.exists() && !outbox_file.isDirectory())
 	{
 #ifdef HAVE_LIBTFFS
-		_conf_fat = true;
-		imagereader = new io::FatImageReader(_conf_outbox);
-		const io::FATFile fat_root(*imagereader, _conf_path);
+		conf.fat = true;
+		imagereader = new io::FatImageReader(conf.outbox);
+		const io::FATFile fat_root(*imagereader, conf.path);
 		root = io::ObservedFile(fat_root);
 #else
 		std::cout << "ERROR: image-file provided, but this tool has been compiled without libtffs support!" << std::endl;
@@ -302,7 +315,7 @@ int main( int argc, char** argv )
 		root = io::ObservedFile(outbox_file);
 	}
 
-	if (!_conf_quiet) std::cout << "-- dtnoutbox --" << std::endl;
+	if (!conf.quiet) std::cout << "-- dtnoutbox --" << std::endl;
 
 	// loop, if no stop if requested
 	while (_running)
@@ -314,7 +327,7 @@ int main( int argc, char** argv )
 			ibrcommon::socketstream conn(new ibrcommon::tcpsocket(addr));
 
 			// Initiate a client for synchronous receiving
-			dtn::api::Client client(_conf_name, conn, dtn::api::Client::MODE_SENDONLY);
+			dtn::api::Client client(conf.name, conn, dtn::api::Client::MODE_SENDONLY);
 
 			// Connect to the server. Actually, this function initiate the
 			// stream protocol by starting the thread and sending the contact header.
@@ -352,7 +365,7 @@ int main( int argc, char** argv )
 					observed_files.remove(deletedFile);
 
 					// output
-					if (!_conf_quiet) std::cout << "file removed: " << deletedFile.getFile().getBasename() << std::endl;
+					if (!conf.quiet) std::cout << "file removed: " << deletedFile.getFile().getBasename() << std::endl;
 				}
 
 				// determine new files
@@ -364,17 +377,17 @@ int main( int argc, char** argv )
 				{
 					const io::ObservedFile &of = (*iter);
 
-					int reg_ret = regexec(&_conf_regex, of.getFile().getBasename().c_str(), 0, NULL, 0);
-					if (!reg_ret && !_conf_invert)
+					int reg_ret = regexec(&conf.regex, of.getFile().getBasename().c_str(), 0, NULL, 0);
+					if (!reg_ret && !conf.invert)
 						continue;
-					if (reg_ret && _conf_invert)
+					if (reg_ret && conf.invert)
 						continue;
 
 					// print error message, if regex error occurs
 					if (reg_ret && reg_ret != REG_NOMATCH)
 					{
 							char msgbuf[100];
-							regerror(reg_ret,&_conf_regex,msgbuf,sizeof(msgbuf));
+							regerror(reg_ret,&conf.regex,msgbuf,sizeof(msgbuf));
 							std::cerr << "ERROR: regex match failed : " << std::string(msgbuf) << std::endl;
 					}
 
@@ -382,7 +395,7 @@ int main( int argc, char** argv )
 					observed_files.push_back(of);
 
 					// log output
-					if (!_conf_quiet) std::cout << "file found: " << of.getFile().getBasename() << std::endl;
+					if (!conf.quiet) std::cout << "file found: " << of.getFile().getBasename() << std::endl;
 				}
 
 				// store current files for the next round
@@ -399,7 +412,7 @@ int main( int argc, char** argv )
 					// tick and update all files
 					of.update();
 
-					if (of.getStableCounter() > _conf_rounds)
+					if (of.getStableCounter() > conf.rounds)
 					{
 						if (sent_hashes.find(of.getHash()) == sent_hashes.end())
 						{
@@ -411,7 +424,7 @@ int main( int argc, char** argv )
 
 				if (!files_to_send.empty())
 				{
-					if (!_conf_quiet)
+					if (!conf.quiet)
 					{
 						std::cout << "send files: ";
 						for (fileset::const_iterator it = files_to_send.begin(); it != files_to_send.end(); ++it) {
@@ -430,7 +443,7 @@ int main( int argc, char** argv )
 					}
 
 					// create a new bundle
-					dtn::data::EID destination = EID(_conf_destination);
+					dtn::data::EID destination = EID(conf.destination);
 
 					// create a new bundle
 					dtn::data::Bundle b;
@@ -442,7 +455,7 @@ int main( int argc, char** argv )
 					b.push_back(blob);
 
 					// set destination address to non-singleton, if configured
-					if (_conf_bundle_group)
+					if (conf.bundle_group)
 						b.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, false);
 
 					// send the bundle
@@ -453,13 +466,13 @@ int main( int argc, char** argv )
 				// wait defined seconds
 				ibrcommon::MutexLock l(_wait_cond);
 				while (!_wait_abort && _running) {
-					_wait_cond.wait(_conf_interval);
+					_wait_cond.wait(conf.interval);
 				}
 				_wait_abort = false;
 			}
 
 			// clean up regex
-			regfree(&_conf_regex);
+			regfree(&conf.regex);
 
 			// close the client connection
 			client.close();
