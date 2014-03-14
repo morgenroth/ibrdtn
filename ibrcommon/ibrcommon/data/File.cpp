@@ -72,6 +72,8 @@ namespace ibrcommon
 
 	void File::removeSlash()
 	{
+		if (_path == FILE_DELIMITER) return;
+
 		std::string::iterator iter = _path.end(); --iter;
 
 		if ((*iter) == FILE_DELIMITER_CHAR)
@@ -197,8 +199,7 @@ namespace ibrcommon
 
 	bool File::isRoot() const
 	{
-		const std::string root(FILE_DELIMITER_CHAR, 1);
-		return _path == root;
+		return _path == FILE_DELIMITER;
 	}
 
 	bool File::isSystem() const
@@ -231,7 +232,10 @@ namespace ibrcommon
 
 	File File::get(const std::string &filename) const
 	{
-		stringstream ss; ss << getPath() << FILE_DELIMITER_CHAR << filename;
+		stringstream ss;
+		if (!isRoot()) ss << getPath();
+		ss << FILE_DELIMITER_CHAR << filename;
+
 		File file(ss.str());
 
 		return file;
@@ -278,8 +282,11 @@ namespace ibrcommon
 
 	File File::getParent() const
 	{
+		if (isRoot()) return (*this);
+
 		size_t pos = _path.find_last_of(FILE_DELIMITER_CHAR);
 		if (pos == string::npos) return (*this);
+		if (pos == 0) return File(FILE_DELIMITER);
 		return File(_path.substr(0, pos));
 	}
 
