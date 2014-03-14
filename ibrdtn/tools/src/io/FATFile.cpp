@@ -76,7 +76,7 @@ namespace io
 
 	void FATFile::update()
 	{
-		if (isRoot() || _reader.isDirectory(*this)) {
+		if (_reader.isDirectory(*this)) {
 			_type = DT_DIR;
 		} else {
 			_type = DT_REG;
