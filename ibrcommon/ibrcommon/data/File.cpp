@@ -195,6 +195,12 @@ namespace ibrcommon
 		return 0;
 	}
 
+	bool File::isRoot() const
+	{
+		const std::string root(FILE_DELIMITER_CHAR, 1);
+		return _path == root;
+	}
+
 	bool File::isSystem() const
 	{
 		return ((getBasename() == "..") || (getBasename() == "."));
@@ -223,7 +229,7 @@ namespace ibrcommon
 #endif
 	}
 
-	File File::get(string filename) const
+	File File::get(const std::string &filename) const
 	{
 		stringstream ss; ss << getPath() << FILE_DELIMITER_CHAR << filename;
 		File file(ss.str());
@@ -273,6 +279,7 @@ namespace ibrcommon
 	File File::getParent() const
 	{
 		size_t pos = _path.find_last_of(FILE_DELIMITER_CHAR);
+		if (pos == string::npos) return (*this);
 		return File(_path.substr(0, pos));
 	}
 

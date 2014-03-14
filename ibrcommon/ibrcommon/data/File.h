@@ -78,6 +78,12 @@ namespace ibrcommon
 		int getFiles(list<File> &files) const;
 
 		/**
+		 * Checks if a file is the root of the file-system
+		 * @return True, if the file is root.
+		 */
+		bool isRoot() const;
+
+		/**
 		 * Checks if a file is a system file like ".." and ".".
 		 * @return True, if the file is a system file.
 		 */
@@ -113,7 +119,7 @@ namespace ibrcommon
 		 * @param filename The name of the file (not the full path).
 		 * @return A file object of the contained file.
 		 */
-		File get(string filename) const;
+		File get(const std::string &filename) const;
 
 		/**
 		 * Get the parent of this file. This is always the containing directory.
