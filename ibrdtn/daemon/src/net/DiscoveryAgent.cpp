@@ -227,12 +227,17 @@ namespace dtn
 			if (!_config.announce())
 			{
 				// first check if another announcement was sent during the same seconds
-				if (_last_announce_sent != dtn::utils::Clock::getMonotonicTimestamp())
+				const dtn::data::Timestamp ts = dtn::utils::Clock::getMonotonicTimestamp();
+
+				if (_last_announce_sent != ts)
 				{
 					IBRCOMMON_LOGGER_DEBUG_TAG("DiscoveryAgent", 55) << "reply with discovery beacon" << IBRCOMMON_LOGGER_ENDL;
 
 					// reply with an own announcement
 					onAdvertise();
+
+					// remember timestamp of last sent discovery
+					_last_announce_sent = ts;
 				}
 			}
 		}
