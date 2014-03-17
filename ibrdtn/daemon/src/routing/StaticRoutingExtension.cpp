@@ -108,13 +108,6 @@ namespace dtn
 						return false;
 					}
 
-					// do not forward bundles addressed to this neighbor,
-					// because this is handled by neighbor routing extension
-					if (_entry.eid == meta.destination.getNode())
-					{
-						return false;
-					}
-
 					// do not forward bundles already known by the destination
 					if (_entry.has(meta))
 					{
