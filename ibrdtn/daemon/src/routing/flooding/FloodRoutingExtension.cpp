@@ -136,13 +136,6 @@ namespace dtn
 						return false;
 					}
 
-					// do not forward any routing control message
-					// this is done by the neighbor routing module
-					if (meta.source.isApplication("routing"))
-					{
-						return false;
-					}
-
 					// do not forward local bundles
 					if ((meta.destination.getNode() == dtn::core::BundleCore::local)
 							&& meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON)
