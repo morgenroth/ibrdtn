@@ -230,8 +230,16 @@ namespace io
 
 	std::string TarUtils::rel_filename(const ObservedFile &parent, const ObservedFile &f)
 	{
-		const std::string parent_path = parent.getFile().getPath();
+		// get file path
 		const std::string file_path = f.getFile().getPath();
-		return file_path.substr(parent_path.length()+1,file_path.length()-parent_path.length()-1);
+
+		// get wrapping path
+		const std::string parent_path = parent.getFile().getPath();
+
+		// special case: if parent is root return the full path
+		if (parent.getFile().isRoot()) return file_path.substr(parent_path.length(), file_path.length() - parent_path.length());
+
+		// if path is sub-path
+		return file_path.substr(parent_path.length() + 1, file_path.length() - parent_path.length() - 1);
 	}
 }
