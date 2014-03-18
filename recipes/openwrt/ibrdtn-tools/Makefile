@@ -17,14 +17,14 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/releases
 
 PKG_INSTALL:=1
-PKG_BUILD_DEPENDS:=openssl libarchive ibrdtn
+PKG_BUILD_DEPENDS:=libopenssl libarchive ibrdtn
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/ibrdtn-tools
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+ibrdtn +libarchive +openssl
+  DEPENDS:=+ibrdtn +libarchive +libopenssl
   TITLE:=DTN Tools
 endef
 
