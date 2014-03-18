@@ -136,8 +136,8 @@ namespace io
 		FATFile parent = path.getParent();
 
 		// open directory
-		byte* dir_path = const_cast<char *>(parent.getPath().c_str());
-		if ((ret = TFFS_opendir(htffs, dir_path, &hdir)) != TFFS_OK) {
+		const std::string dir_path = parent.getPath() + (parent.isRoot() ? "" : "/");
+		if ((ret = TFFS_opendir(htffs, const_cast<char *>(dir_path.c_str()), &hdir)) != TFFS_OK) {
 			IBRCOMMON_LOGGER_TAG(TAG, error) << "TFFS_opendir failed" << IBRCOMMON_LOGGER_ENDL;
 		}
 		else
@@ -193,8 +193,8 @@ namespace io
 		}
 
 		// open directory
-		byte* dir_path = const_cast<char *>(directory.getPath().c_str());
-		if ((ret = TFFS_opendir(htffs, dir_path, &hdir)) != TFFS_OK) {
+		const std::string dir_path = directory.getPath() + (directory.isRoot() ? "" : "/");
+		if ((ret = TFFS_opendir(htffs, const_cast<char *>(dir_path.c_str()), &hdir)) != TFFS_OK) {
 			IBRCOMMON_LOGGER_TAG(TAG, error) << "TFFS_opendir failed" << IBRCOMMON_LOGGER_ENDL;
 		}
 		else
