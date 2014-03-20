@@ -112,6 +112,11 @@ int main(int argc, char** argv)
 			std::cout << "sequence number: " << b.sequencenumber.toString() << std::endl;
 			std::cout << "lifetime: " << b.lifetime.toString() << std::endl;
 
+			if (b.get(dtn::data::PrimaryBlock::FRAGMENT)) {
+				std::cout << "fragment offset: " << b.fragmentoffset.toString() << std::endl;
+				std::cout << "app data length: " << b.appdatalength.toString() << std::endl;
+			}
+
 			const dtn::data::PayloadBlock &pblock = b.find<dtn::data::PayloadBlock>();
 			ibrcommon::BLOB::Reference ref = pblock.getBLOB();
 
