@@ -228,12 +228,12 @@ namespace dtn
 			} catch (const dtn::storage::NoBundleFoundException&) { }
 		}
 
-		void FragmentManager::setOffset(const dtn::data::EID &peer, const dtn::data::BundleID &id, const dtn::data::Length &abs_offset) throw ()
+		void FragmentManager::setOffset(const dtn::data::EID &peer, const dtn::data::BundleID &id, const dtn::data::Length &abs_offset, const dtn::data::Length &frag_offset) throw ()
 		{
 			try {
 				Transmission t;
 				dtn::data::Bundle b = dtn::core::BundleCore::getInstance().getStorage().get(id);
-				t.offset = get_payload_offset(b, abs_offset);
+				t.offset = get_payload_offset(b, abs_offset, frag_offset);
 
 				if (t.offset <= 0) return;
 
@@ -264,17 +264,27 @@ namespace dtn
 			return 0;
 		}
 
-		dtn::data::Length FragmentManager::get_payload_offset(const dtn::data::Bundle &bundle, const dtn::data::Length &abs_offset) throw ()
+		dtn::data::Length FragmentManager::get_payload_offset(const dtn::data::Bundle &bundle, const dtn::data::Length &abs_offset, const dtn::data::Length &frag_offset) throw ()
 		{
 			try {
 				// build the dictionary for EID lookup
 				const dtn::data::Dictionary dict(bundle);
 
+				PrimaryBlock prim = bundle;
+
+				if (frag_offset > 0) {
+					prim.fragmentoffset += frag_offset;
+					if (!prim.get(dtn::data::PrimaryBlock::FRAGMENT)) {
+						prim.appdatalength = bundle.find<dtn::data::PayloadBlock>().getLength();
+						prim.set(dtn::data::PrimaryBlock::FRAGMENT, true);
+					}
+				}
+
 				// create a default serializer
 				dtn::data::DefaultSerializer serializer(std::cout, dict);
 
 				// get the encoded length of the primary block
-				dtn::data::Length header = serializer.getLength((dtn::data::PrimaryBlock&)bundle);
+				dtn::data::Length header = serializer.getLength(prim);
 
 				for (dtn::data::Bundle::const_iterator iter = bundle.begin(); iter != bundle.end(); ++iter)
 				{
@@ -285,7 +295,7 @@ namespace dtn
 						const dtn::data::PayloadBlock &payload = dynamic_cast<const dtn::data::PayloadBlock&>(b);
 						header -= payload.getLength();
 						if (abs_offset < header) return 0;
-						return abs_offset - header;
+						return frag_offset + (abs_offset - header);
 					} catch (std::bad_cast&) { };
 				}
 			} catch (const dtn::InvalidDataException&) {

@@ -215,6 +215,7 @@ namespace dtn
 
 			ibrcommon::Queue<dtn::net::BundleTransfer> _sentqueue;
 			dtn::data::Length _lastack;
+			dtn::data::Length _resume_offset;
 			size_t _keepalive_timeout;
 
 			TCPConvergenceLayer &_callback;

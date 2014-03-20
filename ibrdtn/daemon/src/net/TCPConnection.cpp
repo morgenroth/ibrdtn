@@ -63,7 +63,7 @@ namespace dtn
 		 */
 		TCPConnection::TCPConnection(TCPConvergenceLayer &tcpsrv, const dtn::core::Node &node, ibrcommon::clientsocket *sock, const size_t timeout)
 		 : _peer(), _node(node), _socket(sock), _socket_stream(NULL), _sec_stream(NULL), _protocol_stream(NULL), _sender(*this),
-		   _keepalive_sender(*this, _keepalive_timeout), _timeout(timeout), _lastack(0), _keepalive_timeout(0),
+		   _keepalive_sender(*this, _keepalive_timeout), _timeout(timeout), _lastack(0), _resume_offset(0), _keepalive_timeout(0),
 		   _callback(tcpsrv), _flags(0), _aborted(false)
 		{
 		}
@@ -660,11 +660,14 @@ namespace dtn
 
 						// send bundle
 						// get the offset, if this bundle has been reactively fragmented before
-						size_t offset = 0;
 						if (dtn::daemon::Configuration::getInstance().getNetwork().doFragmentation()
 								&& !bundle.get(dtn::data::PrimaryBlock::DONT_FRAGMENT))
 						{
-							offset = dtn::core::FragmentManager::getOffset(_connection.getNode().getEID(), bundle);
+							_connection._resume_offset = dtn::core::FragmentManager::getOffset(_connection.getNode().getEID(), bundle);
+						}
+						else
+						{
+							_connection._resume_offset = 0;
 						}
 
 						// put the bundle into the sentqueue
@@ -674,12 +677,12 @@ namespace dtn
 							// activate exceptions for this method
 							if (!stream.good()) throw ibrcommon::IOException("stream went bad");
 
-							if (offset > 0)
+							if (_connection._resume_offset > 0)
 							{
-								IBRCOMMON_LOGGER_DEBUG_TAG(TCPConnection::TAG, 4) << "Resume transfer of bundle " << bundle.toString() << " to " << _connection.getNode().getEID().getString() << ", offset: " << offset << IBRCOMMON_LOGGER_ENDL;
+								IBRCOMMON_LOGGER_DEBUG_TAG(TCPConnection::TAG, 4) << "Resume transfer of bundle " << bundle.toString() << " to " << _connection.getNode().getEID().getString() << ", offset: " << _connection._resume_offset << IBRCOMMON_LOGGER_ENDL;
 
 								// transmit the fragment
-								serializer << dtn::data::BundleFragment(bundle, offset, -1);
+								serializer << dtn::data::BundleFragment(bundle, _connection._resume_offset, -1);
 							}
 							else
 							{
@@ -728,7 +731,7 @@ namespace dtn
 				{
 					// some data are already acknowledged
 					// store this information in the fragment manager
-					dtn::core::FragmentManager::setOffset(_peer.getEID(), job.getBundle(), _lastack);
+					dtn::core::FragmentManager::setOffset(_peer.getEID(), job.getBundle(), _lastack, _resume_offset);
 				}
 
 				// set last ack to zero
