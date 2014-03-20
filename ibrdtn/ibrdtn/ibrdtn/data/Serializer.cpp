@@ -359,33 +359,21 @@ namespace dtn
 
 			// get the remaining payload size
 			Length payload_size = obj.getLength();
-			Length remain = payload_size - clip_offset;
 
 			// check if the remaining data length is >= clip_length
-			if (payload_size < clip_offset)
-			{
-				// set the real predicted payload length
-				// write size of the payload in the block
-				_stream << Number(0);
-			}
-			else
-			if (remain > clip_length)
-			{
-				// set the real predicted payload length
-				// write size of the payload in the block
-				_stream << Number(clip_length);
+			Length frag_len = (clip_offset < payload_size) ? payload_size - clip_offset : 0;
 
-				// now skip the <offset>-bytes and all bytes after <offset + length>
-				obj.serialize( _stream, clip_offset, clip_length );
-			}
-			else
-			{
-				// set the real predicted payload length
-				// write size of the payload in the block
-				_stream << Number(remain);
+			// limit the fragment length to the clip length
+			if (frag_len > clip_length) frag_len = clip_length;
 
+			// set the real predicted payload length
+			// write size of the payload in the block
+			_stream << Number(frag_len);
+
+			if (frag_len > 0)
+			{
 				// now skip the <offset>-bytes and all bytes after <offset + length>
-				obj.serialize( _stream, clip_offset, remain );
+				obj.serialize( _stream, clip_offset, frag_len );
 			}
 
 			return (*this);
