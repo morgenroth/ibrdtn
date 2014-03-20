@@ -676,7 +676,7 @@ namespace dtn
 
 							if (offset > 0)
 							{
-								IBRCOMMON_LOGGER_DEBUG_TAG(TCPConnection::TAG, 1) << "Resume transfer of bundle " << bundle.toString() << " to " << _connection.getNode().getEID().getString() << ", offset: " << offset << IBRCOMMON_LOGGER_ENDL;
+								IBRCOMMON_LOGGER_DEBUG_TAG(TCPConnection::TAG, 4) << "Resume transfer of bundle " << bundle.toString() << " to " << _connection.getNode().getEID().getString() << ", offset: " << offset << IBRCOMMON_LOGGER_ENDL;
 
 								// transmit the fragment
 								serializer << dtn::data::BundleFragment(bundle, offset, -1);

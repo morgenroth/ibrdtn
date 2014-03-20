@@ -241,8 +241,8 @@ namespace dtn
 				t.peer = peer;
 				t.expires = dtn::utils::Clock::getExpireTime( b );
 
-				IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 20) << "[FragmentManager] store offset of partial transmitted bundle " <<
-						id.toString() << "; offset: " << t.offset << " (" << abs_offset << ")" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 4) << "Store offset of partial transmitted bundle " << id.toString() << " to " << peer.getString() <<
+						", offset: " << t.offset << " (" << abs_offset << ")" << IBRCOMMON_LOGGER_ENDL;
 
 				ibrcommon::MutexLock l(_offsets_mutex);
 				_offsets.erase(t);
@@ -406,7 +406,7 @@ namespace dtn
 
 				block_type = current_block.getType();
 
-				IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 5) << "Fragment Block found: " << fragment.toString() << "  " << (unsigned int)block_type << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 5) << "Fragment block found: " << fragment.toString() << "  " << (unsigned int)block_type << IBRCOMMON_LOGGER_ENDL;
 
 
 				if (block_type == dtn::data::PayloadBlock::BLOCK_TYPE)
@@ -432,7 +432,7 @@ namespace dtn
 							//copy block
 							fragment_block = current_block;
 
-							IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 5) << "Added Block before Payload: " << fragment.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 5) << "Added block before payload: " << fragment.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
 						}
 						catch(const ibrcommon::Exception &ex)
 						{
@@ -442,7 +442,7 @@ namespace dtn
 							//copy block
 							fragment_block = current_block;
 
-							IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 5) << "Added Block before Payload: " << fragment.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 5) << "Added block before payload: " << fragment.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
 						}
 
 					}
@@ -461,7 +461,7 @@ namespace dtn
 							//copy block
 							fragment_block = current_block;
 
-							IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 5) << "Added Block after Payload: " << fragment.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 5) << "Added block after payload: " << fragment.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
 						}
 						catch (const ibrcommon::Exception &ex)
 						{
@@ -471,7 +471,7 @@ namespace dtn
 							//copy block
 							fragment_block = current_block;
 
-							IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 5) << "Added Block after Payload: " << fragment.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 5) << "Added block after payload: " << fragment.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
 						}
 					}
 				}
