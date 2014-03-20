@@ -93,7 +93,9 @@ namespace dtn
 			// set the application length according to the payload block size
 			dtn::data::Bundle::const_iterator it = obj._bundle.find(dtn::data::PayloadBlock::BLOCK_TYPE);
 
-			if (it != obj._bundle.end()) {
+			if (obj._bundle.get(dtn::data::PrimaryBlock::FRAGMENT)) {
+				// keep appdatalength of the fragment
+			} else if (it != obj._bundle.end()) {
 				const dtn::data::PayloadBlock &payload = dynamic_cast<const dtn::data::PayloadBlock&>(**it);
 				prim.appdatalength = payload.getLength();
 			} else {
