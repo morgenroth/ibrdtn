@@ -508,14 +508,14 @@ namespace dtn
 								{
 									StreamDataSegment &qs = q.front();
 
+									IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 60) << q.size() << " elements to ACK" << IBRCOMMON_LOGGER_ENDL;
+
+									_conn.eventBundleAck(seg._value.get<Length>());
+
 									if (qs._flags & StreamDataSegment::MSG_MARK_END)
 									{
 										_conn.eventBundleForwarded();
 									}
-
-									IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 60) << q.size() << " elements to ACK" << IBRCOMMON_LOGGER_ENDL;
-
-									_conn.eventBundleAck(seg._value.get<Length>());
 
 									q.pop();
 								}
