@@ -726,42 +726,6 @@ void BundleStorageTest::testSelector(dtn::storage::BundleStorage &storage)
 	CPPUNIT_ASSERT_EQUAL((size_t)2, list.size());
 }
 
-void BundleStorageTest::testRemoveBloomfilter()
-{
-	STORAGE_TEST(testRemoveBloomfilter);
-}
-
-void BundleStorageTest::testRemoveBloomfilter(dtn::storage::BundleStorage &storage)
-{
-	std::vector<dtn::data::Bundle> bundles;
-
-	for (int i = 0; i < 20; i++) {
-		dtn::data::Bundle b;
-		b.source = dtn::data::EID("dtn://node-one/test");
-
-		std::stringstream ss;
-		ss << "dtn://node-two/" << i;
-		b.destination = dtn::data::EID(ss.str());
-
-		// copy bundle into the list of bundles
-		bundles.push_back(b);
-
-		// store the bundle
-		storage.store(b);
-	}
-
-	ibrcommon::BloomFilter bf;
-	bundles[1].addTo(bf);
-	bundles[4].addTo(bf);
-	bundles[11].addTo(bf);
-
-	// remove the bundles marked in the bloom-filter
-	CPPUNIT_ASSERT_THROW( while (true) storage.remove(bf), dtn::storage::NoBundleFoundException );
-
-	// check the number of bundles in the storage
-	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)17, storage.count());
-}
-
 void BundleStorageTest::testDoubleStore()
 {
 	STORAGE_TEST(testDoubleStore);

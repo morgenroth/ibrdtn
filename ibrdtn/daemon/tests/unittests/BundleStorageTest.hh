@@ -77,7 +77,6 @@ class BundleStorageTest : public CppUnit::TestFixture {
 		void testExpiration();
 		void testDistinctDestinations();
 		void testSelector();
-		void testRemoveBloomfilter();
 		void testDoubleStore();
 		void testFaultyGet();
 		void testFaultyStore();
@@ -113,7 +112,6 @@ class BundleStorageTest : public CppUnit::TestFixture {
 		CPPUNIT_TEST_ALL_STORAGES(testExpiration);
 		CPPUNIT_TEST_ALL_STORAGES(testDistinctDestinations);
 		CPPUNIT_TEST_ALL_STORAGES(testSelector);
-		CPPUNIT_TEST_ALL_STORAGES(testRemoveBloomfilter);
 		CPPUNIT_TEST_ALL_STORAGES(testDoubleStore);
 		CPPUNIT_TEST_ALL_STORAGES(testFaultyGet);
 		CPPUNIT_TEST_ALL_STORAGES(testFaultyStore);

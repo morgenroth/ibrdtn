@@ -242,32 +242,6 @@ namespace dtn
 			__erase(iter);
 		}
 
-		dtn::data::MetaBundle MemoryBundleStorage::remove(const ibrcommon::BloomFilter &filter)
-		{
-			ibrcommon::MutexLock l(_bundleslock);
-
-			for (bundle_list::iterator iter = _bundles.begin(); iter != _bundles.end(); ++iter)
-			{
-				if ( (*iter).isIn(filter) )
-				{
-					const dtn::data::MetaBundle bundle = dtn::data::MetaBundle::create(*iter);
-
-					// remove item in the bundlelist
-					_list.remove(bundle);
-
-					// raise bundle removed event
-					eventBundleRemoved(bundle);
-
-					// erase the bundle
-					__erase(iter);
-
-					return bundle;
-				}
-			}
-
-			throw NoBundleFoundException();
-		}
-
 		void MemoryBundleStorage::clear()
 		{
 			ibrcommon::MutexLock l(_bundleslock);

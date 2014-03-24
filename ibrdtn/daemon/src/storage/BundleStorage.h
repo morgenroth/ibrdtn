@@ -114,13 +114,6 @@ namespace dtn
 			void remove(const dtn::data::Bundle &b);
 
 			/**
-			 * Remove one bundles which match this filter
-			 * @param filter
-			 * @return The bundle meta data of the removed bundle.
-			 */
-			virtual dtn::data::MetaBundle remove(const ibrcommon::BloomFilter &filter);
-
-			/**
 			 * Clears all bundles and fragments in the storage.
 			 */
 			virtual void clear() {};

@@ -457,30 +457,6 @@ namespace dtn
 			eventBundleAdded(meta);
 		}
 
-		dtn::data::MetaBundle SimpleBundleStorage::remove(const ibrcommon::BloomFilter &filter)
-		{
-			ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READONLY);
-			const dtn::data::MetaBundle meta = _metastore.find(filter);
-
-			// first check if the bundles is already marked as removed
-			if (!_metastore.isRemoved(meta))
-			{
-				// remove if from the meta storage
-				_metastore.markRemoved(meta);
-
-				// create the hash for data storage removal
-				DataStorage::Hash hash(BundleContainer::createId(meta));
-
-				// create a background task for removing the bundle
-				_datastore.remove(hash);
-
-				// raise bundle removed event
-				eventBundleRemoved(meta);
-			}
-
-			return meta;
-		}
-
 		void SimpleBundleStorage::clear()
 		{
 			ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READWRITE);
