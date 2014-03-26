@@ -202,6 +202,16 @@ namespace dtn
 			_node = Node(header._localeid);
 			_node += n_old;
 
+			// check if the peer has the same EID
+			if (_node.getEID() == dtn::core::BundleCore::getInstance().local)
+			{
+				// abort the connection
+				shutdown();
+
+				IBRCOMMON_LOGGER_TAG(TCPConnection::TAG, warning) << "connection to local endpoint rejected" << IBRCOMMON_LOGGER_ENDL;
+				return;
+			}
+
 			_keepalive_timeout = header._keepalive * 1000;
 
 			try {
