@@ -640,6 +640,9 @@ namespace dtn
 				{
 					dtn::net::BundleTransfer transfer = ibrcommon::Queue<dtn::net::BundleTransfer>::getnpop(true);
 
+					// check if the transfer is directed to the connected neighbor
+					if (transfer.getNeighbor() != _connection.getNode().getEID()) continue;
+
 					try {
 						// read the bundle out of the storage
 						dtn::data::Bundle bundle = storage.get(transfer.getBundle());
