@@ -103,7 +103,18 @@ namespace ibrcommon
 
 	bool vaddress::isLocal() const
 	{
-		return (_address == VADDR_LOCALHOST);
+		if (_address == VADDR_LOCALHOST) return true;
+
+		try {
+			const std::string n = name();
+			if (n == VADDR_LOCALHOST) return true;
+
+			size_t pos = n.find_last_of(VADDR_LOCALHOST);
+			if (pos == std::string::npos) return false;
+			if ((n.length() - 1) == pos) return true;
+		} catch (const address_exception&) { }
+
+		return false;
 	}
 
 	bool vaddress::isAny() const
@@ -157,6 +168,33 @@ namespace ibrcommon
 		if (_address.length() == 0) throw address_not_set();
 		if (isAny()) throw address_not_set();
 		return _address;
+	}
+
+	const std::string vaddress::name() const throw (address_exception)
+	{
+		struct addrinfo hints;
+		char addr_str[256];
+		struct addrinfo *res;
+		int ret = 0;
+
+		memset(&hints, 0, sizeof(struct addrinfo));
+		hints.ai_family = PF_UNSPEC;
+		hints.ai_socktype = SOCK_STREAM;
+
+		if ((ret = ::getaddrinfo(_address.c_str(), NULL, &hints, &res)) != 0)
+		{
+			throw address_exception("getaddrinfo(): " + std::string(gai_strerror(ret)));
+		}
+
+		if ((ret = ::getnameinfo(res->ai_addr, res->ai_addrlen, (char*)&addr_str, 256, NULL, 256, NI_NAMEREQD | NI_NOFQDN)) != 0)
+		{
+			freeaddrinfo(res);
+			throw address_exception("getnameinfo(): " + std::string(gai_strerror(ret)));
+		}
+
+		freeaddrinfo(res);
+
+		return std::string(addr_str);
 	}
 
 	const std::string vaddress::service() const throw (service_not_set)

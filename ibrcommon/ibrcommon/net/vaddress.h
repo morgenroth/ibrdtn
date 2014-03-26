@@ -84,6 +84,7 @@ namespace ibrcommon
 			sa_family_t family() const throw (address_exception);
 			std::string scope() const throw (scope_not_set);
 			const std::string address() const throw (address_not_set);
+			const std::string name() const throw (address_exception);
 			const std::string service() const throw (service_not_set);
 
 			void setService(const uint32_t port);
