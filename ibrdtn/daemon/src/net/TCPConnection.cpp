@@ -351,7 +351,7 @@ namespace dtn
 			_aborted = true;
 
 			// close the stream
-			_socket_stream->close();
+			if (_socket_stream != NULL) _socket_stream->close();
 		}
 
 		void TCPConnection::finally() throw ()
