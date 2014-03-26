@@ -68,7 +68,7 @@ namespace dtn
 		DTNTPWorker::DTNTPWorker()
 		 : _announce_rating(false), _sync(false)
 		{
-			AbstractWorker::initialize("dtntp", true);
+			AbstractWorker::initialize("dtntp");
 
 			// get global configuration for time synchronization
 			const dtn::daemon::Configuration::TimeSync &conf = dtn::daemon::Configuration::getInstance().getTimeSync();

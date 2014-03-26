@@ -74,6 +74,19 @@ namespace dtn
 			} catch (const std::bad_cast&) { }
 		}
 
+		void AbstractWorker::AbstractWorkerAsync::initialize()
+		{
+			// reset thread if necessary
+			if (JoinableThread::isFinalized())
+			{
+				JoinableThread::reset();
+				_running = true;
+				_receive_bundles.reset();
+			}
+
+			JoinableThread::start();
+		}
+
 		void AbstractWorker::AbstractWorkerAsync::shutdown()
 		{
 			_running = false;
@@ -144,12 +157,12 @@ namespace dtn
 			_groups.erase(endpoint);
 		}
 
-		void AbstractWorker::initialize(const std::string &uri, bool async)
+		void AbstractWorker::initialize(const std::string &uri)
 		{
 			_eid.setApplication(uri);
 
 			try {
-				if (async) _thread.start();
+				_thread.initialize();
 			} catch (const ibrcommon::ThreadException &ex) {
 				IBRCOMMON_LOGGER_TAG("AbstractWorker", error) << "initialize failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}

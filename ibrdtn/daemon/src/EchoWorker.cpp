@@ -34,7 +34,7 @@ namespace dtn
 	{
 		EchoWorker::EchoWorker()
 		{
-			AbstractWorker::initialize("echo", true);
+			AbstractWorker::initialize("echo");
 		}
 
 		void EchoWorker::callbackBundleReceived(const Bundle &b)

@@ -47,6 +47,8 @@ namespace dtn
 			public:
 				AbstractWorkerAsync(AbstractWorker &worker);
 				virtual ~AbstractWorkerAsync();
+
+				void initialize();
 				void shutdown();
 
 				virtual void raiseEvent(const dtn::core::Event *evt) throw ();
@@ -74,10 +76,10 @@ namespace dtn
 				virtual void callbackBundleReceived(const Bundle &b) = 0;
 
 			protected:
-				void initialize(const std::string &uri, bool async);
+				void initialize(const std::string &uri);
 				void transmit(const Bundle &bundle);
 
-				EID _eid;
+				dtn::data::EID _eid;
 
 				void shutdown();
 
