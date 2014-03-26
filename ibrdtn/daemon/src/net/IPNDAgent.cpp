@@ -91,6 +91,9 @@ namespace dtn
 			// only join IPv6 and IPv4 addresses
 			if ((addr.family() != AF_INET) && (addr.family() != AF_INET6)) return;
 
+			// do not join on loopback interfaces
+			if (addr.isLocal()) return;
+
 			// create a multicast socket and bind to given addr
 			ibrcommon::multicastsocket *msock = new ibrcommon::multicastsocket(addr);
 
