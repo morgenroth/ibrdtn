@@ -42,7 +42,7 @@ namespace dtn
 
 		void IndependentComponent::initialize() throw ()
 		{
-			// reset thread is necessary
+			// reset thread if necessary
 			if (JoinableThread::isFinalized()) JoinableThread::reset();
 
 			componentUp();
