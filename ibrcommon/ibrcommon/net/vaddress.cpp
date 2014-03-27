@@ -103,15 +103,14 @@ namespace ibrcommon
 
 	bool vaddress::isLocal() const
 	{
-		if (_address == VADDR_LOCALHOST) return true;
+		const std::string localhost(VADDR_LOCALHOST);
+
+		if (_address == localhost) return true;
 
 		try {
 			const std::string n = name();
-			if (n == VADDR_LOCALHOST) return true;
-
-			size_t pos = n.find_last_of(VADDR_LOCALHOST);
-			if (pos == std::string::npos) return false;
-			if ((n.length() - 1) == pos) return true;
+			if (n.length() < localhost.length()) return false;
+			return (0 == n.compare(n.length() - localhost.length(), localhost.length(), localhost));
 		} catch (const address_exception&) { }
 
 		return false;
