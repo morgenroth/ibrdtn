@@ -14,8 +14,8 @@
 ;General
 
 !define APP_NAME "IBR-DTN"
-!define VERSION "0.11.0"
-!define DLL_VERSION "0-11-1"
+!define VERSION "0.12.0"
+!define DLL_VERSION "0-12-1"
 !define MUI_ICON ibrdtn.ico
 !define MUI_UNICON ibrdtn.ico
 !define SERVICE_NAME "${APP_NAME}"
