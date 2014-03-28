@@ -38,7 +38,6 @@ startupitem.netchange    no
 startupitem.executable   ${prefix}/sbin/dtnd -c ${prefix}/etc/ibrdtnd.conf -q
 
 post-destroot {
-    reinplace -E "s|#api_interface = any|api_interface = lo0|g" ${destroot}${prefix}/etc/ibrdtnd.conf
     reinplace -E "s|eth0|en0|g" ${destroot}${prefix}/etc/ibrdtnd.conf
     file rename ${destroot}${prefix}/etc/ibrdtnd.conf ${destroot}${prefix}/etc/ibrdtnd.conf.dist
 }
