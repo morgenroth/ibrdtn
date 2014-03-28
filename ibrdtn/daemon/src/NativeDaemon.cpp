@@ -1364,8 +1364,11 @@ namespace dtn
 					}
 				} catch (const dtn::daemon::Configuration::ParameterNotFoundException&) {
 					// by default set multicast equivalent of broadcast
-					ipnd->add(ibrcommon::vaddress("ff02::142", disco_port, AF_INET6));
-					ipnd->add(ibrcommon::vaddress("224.0.0.142", disco_port, AF_INET));
+					if (ibrcommon::basesocket::hasSupport(AF_INET6))
+						ipnd->add(ibrcommon::vaddress("ff02::142", disco_port, AF_INET6));
+
+					if (ibrcommon::basesocket::hasSupport(AF_INET))
+						ipnd->add(ibrcommon::vaddress("224.0.0.142", disco_port, AF_INET));
 				}
 
 				// add all CL interfaces to discovery
