@@ -3,7 +3,7 @@
 # ibrdtn-tools
 #
 #############################################################
-IBRDTN_TOOLS_VERSION:=0.12.0
+IBRDTN_TOOLS_VERSION:=0.13.0
 IBRDTN_TOOLS_SOURCE:=ibrdtn-tools-$(IBRDTN_TOOLS_VERSION).tar.gz
 IBRDTN_TOOLS_SITE:=http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/releases
 IBRDTN_TOOLS_LIBTOOL_PATCH:=NO

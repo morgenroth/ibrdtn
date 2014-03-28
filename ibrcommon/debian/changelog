@@ -1,3 +1,9 @@
+ibrcommon (0.13.0) UNRELEASED; urgency=low
+
+  * Development revision
+
+ -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Fri, 28 Mar 2014 17:06:04 +0100
+
 ibrcommon (0.12.0) stable; urgency=low
 
   * Windows supported (win32)
