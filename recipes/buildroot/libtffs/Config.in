@@ -3,3 +3,9 @@ config BR2_PACKAGE_LIBTFFS
 	help
 	  tffs-lib is a Tiny FAT File System library.
 
+config BR2_PACKAGE_LIBTFFS_TSH
+        bool "libtffs tool tsh"
+        depends on BR2_PACKAGE_LIBTFFS
+        select BR2_PACKAGE_NCURSES
+        help
+          tiny shell tool for tffs library
