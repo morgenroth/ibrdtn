@@ -2,7 +2,7 @@ Source: ibrdtnd
 Section: net
 Priority: standard
 Maintainer: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
-Build-Depends: cdbs, debhelper (>= 7.0), autotools-dev, ibrcommon-dev (>= 0.10), ibrdtn-dev (>= 0.10), libsqlite3-dev, libcurl4-openssl-dev (>= 7.18), libdaemon-dev (>= 0.12), cdbs (>= 0.4), pkg-config, dtndht-dev (>=0.2.2)
+Build-Depends: cdbs, debhelper (>= 7.0), autotools-dev, ibrcommon-dev, ibrdtn-dev, libsqlite3-dev, libcurl4-openssl-dev (>= 7.18), libdaemon-dev (>= 0.12), cdbs (>= 0.4), pkg-config, dtndht-dev (>=0.2.2)
 Standards-Version: 3.9.4
 Homepage: http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/
 
@@ -29,6 +29,6 @@ Description: debugging symbols for ibrdtnd
 Package: munin-plugins-ibrdtnd
 Architecture: any
 Priority: optional
-Depends: ibrdtnd (>= 0.10), python, munin-plugins-core, ${misc:Depends}
+Depends: ibrdtnd, python, munin-plugins-core, ${misc:Depends}
 Description: Munin plugins for IBR-DTN
 
