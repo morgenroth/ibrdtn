@@ -1,0 +1,5 @@
+config BR2_PACKAGE_LIBTFFS_TSHELL
+	bool "libtffs-tshell"
+	help
+	  tiny shell tool for tffs library
+
