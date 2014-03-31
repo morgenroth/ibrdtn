@@ -1,19 +1,20 @@
-*** tffs-lib-read-only/Makefile	2014-02-10 11:48:31.625150333 +0100
---- tffs/Makefile	2014-02-10 11:46:00.000000000 +0100
-***************
-*** 29,35 ****
-  #
-  # makefile parameters
-  #
-! CC=gcc
-  CFLAGS=-Wall -g -I ./inc
-  LFLAGS=
-  
---- 29,35 ----
-  #
-  # makefile parameters
-  #
-! #CC=gcc
-  CFLAGS=-Wall -g -I ./inc
-  LFLAGS=
-  
+diff --git a/Makefile b/Makefile
+index c575ba4..0b506c8 100644
+--- a/Makefile
++++ b/Makefile
+@@ -29,11 +29,12 @@ TSHOBJ=$(TSHSRC:.c=.o)
+ #
+ # makefile parameters
+ #
+-CC=gcc
++#CC=gcc
+ CFLAGS=-Wall -g -I ./inc
+ LFLAGS=
+
+-all:$(LIB_TARGET)
++all:$(LIB_TARGET) $(TSH_TARGET)
++lib:$(LIB_TARGET)
+ test:$(TEST_TARGET)
+
+ $(LIB_TARGET):$(LIBOBJ)
+

@@ -9,8 +9,15 @@ LIBTFFS_SITE_METHOD=svn
 LIBTFFS_INSTALL_STAGING = YES
 LIBTFFS_INSTALL_TARGET = YES
 
+ifeq ($(BR2_PACKAGE_LIBTFFS_TSH),y)
+  MAKE_TARGET = all
+  LIBTFFS_DEPENDENCIES += ncurses
+else
+  MAKE_TARGET = lib
+endif
+
 define LIBTFFS_BUILD_CMDS
-  $(TARGET_MAKE_ENV) CC="$(TARGET_CC)" LD="$(TARGET_LD)" $(MAKE) -C $(@D)
+  $(TARGET_MAKE_ENV) CC="$(TARGET_CC)" LD="$(TARGET_LD)" $(MAKE) -C $(@D) $(MAKE_TARGET)
 endef
 
 define LIBTFFS_INSTALL_STAGING_CMDS
@@ -19,8 +26,15 @@ define LIBTFFS_INSTALL_STAGING_CMDS
   $(INSTALL) -D -m 0755 $(@D)/libtffs.a $(STAGING_DIR)/usr/lib/libtffs.a
 endef
 
-define LIBTFFS_INSTALL_TARGET_CMDS
-  $(INSTALL) -D -m 0755 $(@D)/libtffs.a $(TARGET_DIR)/usr/lib/libtffs.a
-endef
 
-$(eval $(generic-package))
+ifeq ($(BR2_PACKAGE_LIBTFFS_TSH),y)
+  define LIBTFFS_INSTALL_TARGET_CMDS
+    $(INSTALL) -D -m 0755 $(@D)/libtffs.a $(TARGET_DIR)/usr/lib/libtffs.a
+    $(INSTALL) -D -m 0755 $(@D)/tsh $(TARGET_DIR)/usr/bin/tsh
+  endef
+else
+  define LIBTFFS_INSTALL_TARGET_CMDS
+    $(INSTALL) -D -m 0755 $(@D)/libtffs.a $(TARGET_DIR)/usr/lib/libtffs.a
+  endef
+endif
+$(eval $(call GENTARGETS))
