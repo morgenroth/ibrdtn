@@ -37,4 +37,4 @@ else
     $(INSTALL) -D -m 0755 $(@D)/libtffs.a $(TARGET_DIR)/usr/lib/libtffs.a
   endef
 endif
-$(eval $(call GENTARGETS))
+$(eval $(generic-package))
