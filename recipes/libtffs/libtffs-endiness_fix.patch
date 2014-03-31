@@ -1,0 +1,20 @@
+Index: src/common.c
+===================================================================
+--- src/common.c	(revision 3)
++++ src/common.c	(working copy)
+@@ -34,6 +34,15 @@
+ 
+ 	for (i = 0; i < len; i++) {
+ 		pdst[i] = psrc[i] & 0xFF;
++                //endiness check
++                if (psrc[i] >> 8 == 0x00)
++                {
++                  pdst[i] = psrc[i] & 0xFF;
++                }
++                else
++                {
++                  pdst[i] = (psrc[i] >> 8) & 0xFF;
++                }
+ 	}
+ 	return i;
+ }
