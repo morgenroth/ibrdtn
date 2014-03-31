@@ -1,0 +1,19 @@
+--- tffs/src/common.c	2014-03-31 11:35:58.505071694 +0200
++++ tffs/src/common.c	2014-03-31 11:36:04.135071730 +0200
+@@ -33,7 +33,15 @@
+ 	uint32 i;
+ 
+ 	for (i = 0; i < len; i++) {
+-		pdst[i] = psrc[i] & 0xFF;
++                //endiness check
++                if (psrc[i] >> 8 == 0x00)
++                {
++                  pdst[i] = psrc[i] & 0xFF;
++                }
++                else
++                {
++                  pdst[i] = (psrc[i] >> 8) & 0xFF;
++                }
+ 	}
+ 	return i;
+ }
