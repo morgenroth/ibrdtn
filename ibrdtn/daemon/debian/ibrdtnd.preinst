@@ -15,6 +15,7 @@ ${DEBIAN_SCRIPT_TRACE:+ echo "#42#DEBUG# RUNNING $0 $*" 1>&2 }
 export PATH=$PATH:/sbin:/usr/sbin:/bin:/usr/bin
 PID_DIR="/var/run/ibrdtn"
 LOG_DIR="/var/log/ibrdtn"
+SPOOL_DIR="/var/spool/ibrdtn"
 DTND_USER="dtnd"
 
 stop_daemon() {
@@ -63,6 +64,13 @@ if [ ! -d "${LOG_DIR}" -a ! -L "${LOG_DIR}" ]; then
 	mkdir -p ${LOG_DIR}
 	chown dtnd:adm ${LOG_DIR}
 	chmod 775 ${LOG_DIR}
+fi
+
+# create a spool directory for the daemon process
+if [ ! -d "${SPOOL_DIR}" -a ! -L "${SPOOL_DIR}" ]; then
+	mkdir -p ${SPOOL_DIR}
+	chown dtnd:adm ${SPOOL_DIR}
+	chmod 770 ${SPOOL_DIR}
 fi
 
 # create a pid directory for the daemon process
