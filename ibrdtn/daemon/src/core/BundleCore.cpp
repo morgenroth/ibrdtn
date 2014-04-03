@@ -475,6 +475,12 @@ namespace dtn
 						throw dtn::data::Validator::RejectedException("timestamp is too far in the future");
 					}
 			}
+
+			// check for duplicates
+			if (getRouter().isKnown(p))
+			{
+				throw dtn::data::Validator::RejectedException("duplicate detected");
+			}
 		}
 
 		void BundleCore::validate(const dtn::data::Block&, const dtn::data::Number& size) const throw (dtn::data::Validator::RejectedException)
