@@ -25,8 +25,9 @@
 #include <sstream>
 #include <iostream>
 
-#ifdef HAVE_OPENSSL
-#include <openssl/md5.h>
+#include <ibrcommon/features.h>
+#ifdef IBRCOMMON_SUPPORT_SSL
+#include <ibrcommon/ssl/MD5Stream.h>
 #endif
 
 // include code for platform-independent endianess conversion
@@ -165,12 +166,15 @@ namespace dtn
 			}
 
 			// there is no standard mapping, hash required
-#ifdef HAVE_OPENSSL
-			std::vector<unsigned char> hash(MD5_DIGEST_LENGTH);
-			MD5((unsigned char*)app.c_str(), app.length(), &hash[0]);
+#ifdef IBRCOMMON_SUPPORT_SSL
+			ibrcommon::MD5Stream md5;
+			std::string hash;
+
+			md5 << app;
+			md5 >> hash;
 
 			// use 4 byte as integer
-			uint32_t number = GUINT32_TO_BE((uint32_t&)hash[0]);
+			uint32_t number = GUINT32_TO_BE((const uint32_t&)(*hash.c_str()));
 
 			// set the highest bit
 			number |= 0x80000000;
