@@ -78,7 +78,7 @@ PKG_CHECK_MODULES(DAEMON, libdaemon >= 0.12, [
 	AC_MSG_WARN([daemon library not found, daemonize features disabled])
 ])
 
-PKG_CHECK_MODULES(ARCHIVE, libarchive, [
+PKG_CHECK_MODULES(ARCHIVE, libarchive >= 3.0, [
 	AC_SUBST(ARCHIVE_CFLAGS)
 	AC_SUBST(ARCHIVE_LIBS)
 	AC_DEFINE(HAVE_LIBARCHIVE, [1], ["libarchive is available"])
