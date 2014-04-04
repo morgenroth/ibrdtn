@@ -6,12 +6,13 @@ if DTNSEC
 SUBDIRS += security
 endif
 
-noinst_HEADERS = config.h
+nodist_noinst_HEADERS = config.h
 
-h_sources = ibrdtn.h
+h_sources =
 cc_sources = dummy.cpp
 
 library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)-$(GENERIC_API_VERSION)/$(GENERIC_LIBRARY_NAME)
+nodist_library_include_HEADERS = ibrdtn.h
 library_include_HEADERS = $(h_sources)
 
 AM_CPPFLAGS = -I$(top_srcdir) $(ibrcommon_CFLAGS)
