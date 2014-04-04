@@ -25,7 +25,7 @@
 #include <sstream>
 #include <iostream>
 
-#include <ibrcommon/features.h>
+#include <ibrcommon/ibrcommon.h>
 #ifdef IBRCOMMON_SUPPORT_SSL
 #include <ibrcommon/ssl/MD5Stream.h>
 #endif

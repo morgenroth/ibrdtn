@@ -11,8 +11,8 @@ dnl --------------------------------
 
 AC_INIT([ibrdtn], PKG_FULL_VERSION, morgenro@ibr.cs.tu-bs.de)
 AC_CONFIG_MACRO_DIR([m4])
-AC_CONFIG_SRCDIR(ibrdtn/ibrdtn.h)
-AC_CONFIG_HEADER(ibrdtn/config.h)
+AC_CONFIG_SRCDIR(ibrdtn/utils/Utils.cpp)
+AC_CONFIG_HEADER([ibrdtn/config.h ibrdtn/ibrdtn.h])
 LT_INIT
 AM_PATH_CPPUNIT(1.9.6)
 AM_INIT_AUTOMAKE
@@ -104,14 +104,14 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	AC_DEFINE(HAVE_ENDIAN_H, [1], [])
 
 	# OpenSSL
-	AC_DEFINE(WITH_BUNDLE_SECURITY, [1], [])
+	AC_DEFINE(IBRDTN_SUPPORT_BSP, [1], [bundle security protocol supported])
 	AC_DEFINE(HAVE_OPENSSL, [1], [])
 	OPENSSL_LIBS="-lssl -lcrypto"
 	AC_SUBST(OPENSSL_LIBS)
 	with_dtnsec="yes"
 
 	# Compression
-	AC_DEFINE(WITH_COMPRESSION, [1], [])
+	AC_DEFINE(IBRDTN_SUPPORT_COMPRESSION, [1], [bundle compression support])
 	AC_DEFINE(HAVE_ZLIB, [1], [])
 	ZLIB_LIBS="-lz"
 	AC_SUBST(ZLIB_LIBS)
@@ -176,30 +176,38 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	])
 
 	dnl -----------------------------------------------
-	dnl optional parameter: DTN security support
+	dnl check for DTN security support
 	dnl -----------------------------------------------
-
-	AC_ARG_WITH(dtnsec,
-		AS_HELP_STRING([--with-dtnsec], [build with DTNSEC support
-			@<:@default=no@:>@]),
-	[
-		AS_IF([test "x$with_dtnsec" = "xyes"], [
-			PKG_CHECK_MODULES(OPENSSL, openssl, [
-				AC_DEFINE(WITH_BUNDLE_SECURITY, [1], ["bundle security support enabled"])
-				AC_DEFINE(HAVE_OPENSSL, [1], ["openssl library is available"])
-				AC_SUBST(OPENSSL_CFLAGS)
-				AC_SUBST(OPENSSL_LIBS)
-				REQUIRES_LIBS="$REQUIRES_LIBS openssl"
-			], [
-				with_dtnsec="no"
-				AC_MSG_WARN([DTNSEC enabled, but no openssl libraries are found. Security extensions are disabled.])
-			])
+	
+	old_CPPFLAGS="$CPPFLAGS"
+	CPPFLAGS="$ibrcommon_CFLAGS"
+	AC_COMPILE_IFELSE([
+		AC_LANG_PROGRAM([[
+			#include <ibrcommon/ibrcommon.h>
+		]], [[
+			#ifdef IBRCOMMON_SUPPORT_SSL
+			// SSL is supported
+			#else
+			# SSL not supported
+			#endif
+		]])
+	], [
+		PKG_CHECK_MODULES(OPENSSL, openssl, [
+			AC_DEFINE(IBRDTN_SUPPORT_BSP, [1], [bundle security protocol supported])
+			AC_DEFINE(HAVE_OPENSSL, [1], ["openssl library is available"])
+			AC_SUBST(OPENSSL_CFLAGS)
+			AC_SUBST(OPENSSL_LIBS)
+			REQUIRES_LIBS="$REQUIRES_LIBS openssl"
+			with_dtnsec="yes"
 		], [
+			AC_MSG_WARN([no openssl libraries are found. Security extensions are disabled.])
 			with_dtnsec="no"
 		])
-	],[
+	], [
+		AC_MSG_WARN([ibrcommon was compiled without SSL support. Security extensions are disabled.])
 		with_dtnsec="no"
 	])
+	CPPFLAGS="$old_CPPFLAGS"
 
 	dnl -----------------------------------------------
 	dnl optional parameter: compression support
@@ -211,14 +219,14 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	[
 		AS_IF([test "x$with_compression" = "xyes"], [
 			PKG_CHECK_MODULES(ZLIB, zlib, [
-				AC_DEFINE(WITH_COMPRESSION, [1], ["bundle compression support enabled"])
+				AC_DEFINE(IBRDTN_SUPPORT_COMPRESSION, [1], [bundle compression support])
 				AC_DEFINE(HAVE_ZLIB, [1], ["zlib library is available"])
 				AC_SUBST(ZLIB_CFLAGS)
 				AC_SUBST(ZLIB_LIBS)
 				REQUIRES_LIBS="$REQUIRES_LIBS zlib"
 			] , [
 				AC_CHECK_LIB([z], [gzread],[
-					AC_DEFINE(WITH_COMPRESSION, [1], ["bundle compression support enabled"])
+					AC_DEFINE(IBRDTN_SUPPORT_COMPRESSION, [1], [bundle compression support])
 					AC_DEFINE(HAVE_ZLIB, [1], ["zlib library is available"])
 					ZLIB_CFLAGS=""
 					ZLIB_LIBS="-lz"

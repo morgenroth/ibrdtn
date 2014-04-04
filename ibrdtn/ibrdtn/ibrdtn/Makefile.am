@@ -9,7 +9,6 @@ endif
 noinst_HEADERS = config.h
 
 h_sources = ibrdtn.h
-cc_sources = dummy.cpp
 
 library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)-$(GENERIC_API_VERSION)/$(GENERIC_LIBRARY_NAME)
 library_include_HEADERS = $(h_sources)

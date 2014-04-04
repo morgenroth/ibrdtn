@@ -18,9 +18,6 @@ CONF_PARAMS="${CONF_PARAMS} --with-lowpan"
 # include sqlite library
 CONF_PARAMS="${CONF_PARAMS} --with-sqlite"
 
-# include support for the bundle security protocol
-CONF_PARAMS="${CONF_PARAMS} --with-dtnsec"
-
 # include compression support (zlib)
 CONF_PARAMS="${CONF_PARAMS} --with-compression"
 

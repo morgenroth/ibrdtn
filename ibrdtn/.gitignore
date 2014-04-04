@@ -4,16 +4,17 @@ install-sh
 libtool
 ltmain.sh
 Makefile
+Makefile.in
+config.h.in
 .deps
 autom4te.cache
 config.log
 config.status
 configure
-*.in
 config.guess
 config.sub
 aclocal.m4
-stamp-h1
+stamp-*
 version.inc
 depcomp
 
@@ -25,6 +26,7 @@ version.inc
 depcomp
 *.pc
 config.h
+features.h
 version.m4
 /ibrcommon
 
