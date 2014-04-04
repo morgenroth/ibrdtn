@@ -10,10 +10,9 @@ if LIBXML
 SUBDIRS += xml
 endif
 
-noinst_HEADERS = config.h
+nodist_noinst_HEADERS = config.h
 
 h_sources = \
-	ibrcommon.h \
 	appstreambuf.h \
 	Exceptions.h \
 	refcnt_ptr.h \
@@ -35,6 +34,7 @@ cc_sources += SyslogStream.cpp
 endif
 
 library_includedir = $(includedir)/$(GENERIC_LIBRARY_NAME)-$(GENERIC_API_VERSION)/$(GENERIC_LIBRARY_NAME)
+nodist_library_include_HEADERS = ibrcommon.h
 library_include_HEADERS = $(h_sources)
 
 AUTOMAKE_OPTIONS = nostdinc
