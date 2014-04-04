@@ -28,8 +28,9 @@
 #include <typeinfo>
 #include <limits>
 
-#ifdef HAVE_OPENSSL
-#include <openssl/md5.h>
+#include <ibrcommon/ibrcommon.h>
+#ifdef IBRCOMMON_SUPPORT_SSL
+#include <ibrcommon/ssl/MD5Stream.h>
 #endif
 
 #ifdef HAVE_LIBTFFS
@@ -144,12 +145,20 @@ namespace io
 
 	io::FileHash ObservedFile::__hash() const
 	{
-		//update hash
+#ifdef IBRCOMMON_SUPPORT_SSL
+		// update hash
+		ibrcommon::MD5Stream md5;
+		md5 << _file->lastmodify() << "|" << _file->size() << "|" << _file->getPath();
+
+		std::string hash;
+		md5 >> hash;
+
+		return FileHash(_file->getPath(), hash);
+#else
 		std::stringstream ss;
 		ss << _file->lastmodify() << "|" << _file->size() << "|" << _file->getPath();
-		const std::string toHash = ss.str();
-		char hash[MD5_DIGEST_LENGTH];
-		MD5((unsigned char*)toHash.c_str(), toHash.length(), (unsigned char*) hash);
-		return FileHash(_file->getPath(), std::string(hash, MD5_DIGEST_LENGTH));
+		return FileHash(_file->getPath(), ss.str());
+#endif
+
 	}
 }

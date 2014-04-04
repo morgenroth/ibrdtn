@@ -10,9 +10,7 @@ bin_PROGRAMS = dtnping dtnrecv dtnsend dtntracepath dtntrigger dtnconvert dtnstr
 
 # compile dtninbox and dtnoutbox if libarchive is present
 if LIBARCHIVE
-if OPENSSL
 bin_PROGRAMS += dtninbox dtnoutbox
-endif
 endif
 
 if TUNNEL
@@ -20,7 +18,6 @@ sbin_PROGRAMS = dtntunnel
 endif
 
 if LIBARCHIVE
-if OPENSSL
 tarutils_src = \
 		io/FileHash.h \
 		io/FileHash.cpp \
@@ -39,7 +36,6 @@ endif
 
 dtninbox_SOURCES = dtninbox.cpp $(tarutils_src)
 dtnoutbox_SOURCES = dtnoutbox.cpp $(tarutils_src)
-endif
 endif
 
 dtnping_SOURCES = dtnping.cpp
