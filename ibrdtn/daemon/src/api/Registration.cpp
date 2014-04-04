@@ -33,11 +33,12 @@
 #include "storage/SQLiteBundleStorage.h"
 #endif
 
-#ifdef WITH_COMPRESSION
+#include <ibrdtn/ibrdtn.h>
+#ifdef IBRDTN_SUPPORT_COMPRESSION
 #include <ibrdtn/data/CompressedPayloadBlock.h>
 #endif
 
-#ifdef WITH_BUNDLE_SECURITY
+#ifdef IBRDTN_SUPPORT_BSP
 #include "security/SecurityManager.h"
 #endif
 
@@ -540,7 +541,7 @@ namespace dtn
 				track.append(dtn::core::BundleCore::local);
 			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
-#ifdef WITH_COMPRESSION
+#ifdef IBRDTN_SUPPORT_COMPRESSION
 			// if the compression bit is set, then compress the bundle
 			if (bundle.get(dtn::data::PrimaryBlock::IBRDTN_REQUEST_COMPRESSION))
 			{
@@ -552,7 +553,7 @@ namespace dtn
 			}
 #endif
 
-#ifdef WITH_BUNDLE_SECURITY
+#ifdef IBRDTN_SUPPORT_BSP
 			// if the encrypt bit is set, then try to encrypt the bundle
 			if (bundle.get(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT))
 			{

@@ -81,7 +81,8 @@
 #include "net/HTTPConvergenceLayer.h"
 #endif
 
-#ifdef HAVE_LOWPAN_SUPPORT
+#include <ibrcommon/ibrcommon.h>
+#ifdef IBRCOMMON_SUPPORT_LOWPAN
 #include "net/LOWPANConvergenceLayer.h"
 #include "net/LOWPANDatagramService.h"
 #endif
@@ -105,7 +106,8 @@
 #include "net/EMailConvergenceLayer.h"
 #endif
 
-#ifdef WITH_BUNDLE_SECURITY
+#include <ibrdtn/ibrdtn.h>
+#ifdef IBRDTN_SUPPORT_BSP
 #include "security/SecurityManager.h"
 #include "security/SecurityKeyManager.h"
 #endif
@@ -643,7 +645,7 @@ namespace dtn
 			// reload bundle core configuration
 			dtn::core::BundleCore::getInstance().onConfigurationChanged(conf);
 
-#ifdef WITH_BUNDLE_SECURITY
+#ifdef IBRDTN_SUPPORT_BSP
 			// initialize the key manager for the security extensions
 			dtn::security::SecurityKeyManager::getInstance().onConfigurationChanged( conf );
 #endif
@@ -890,7 +892,7 @@ namespace dtn
 			}
 #endif
 
-#ifdef WITH_BUNDLE_SECURITY
+#ifdef IBRDTN_SUPPORT_BSP
 			// initialize the key manager for the security extensions
 			dtn::security::SecurityKeyManager::getInstance().onConfigurationChanged( conf );
 #endif
@@ -917,7 +919,7 @@ namespace dtn
 			// shutdown the core component
 			core.terminate();
 
-#ifdef WITH_BUNDLE_SECURITY
+#ifdef IBRDTN_SUPPORT_BSP
 			// reset configuration
 			dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance(true);
 
@@ -1265,7 +1267,7 @@ namespace dtn
 						}
 #endif
 
-#ifdef HAVE_LOWPAN_SUPPORT
+#ifdef IBRCOMMON_SUPPORT_LOWPAN
 						case dtn::daemon::Configuration::NetConfig::NETWORK_LOWPAN:
 						{
 							try {

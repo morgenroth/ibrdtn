@@ -45,12 +45,14 @@
 #include <typeinfo>
 #include <stdint.h>
 
-#ifdef WITH_BUNDLE_SECURITY
+#include <ibrdtn/ibrdtn.h>
+
+#ifdef IBRDTN_SUPPORT_BSP
 #include "security/SecurityManager.h"
 #include <ibrdtn/security/PayloadConfidentialBlock.h>
 #endif
 
-#ifdef WITH_COMPRESSION
+#ifdef IBRDTN_SUPPORT_COMPRESSION
 #include <ibrdtn/data/CompressedPayloadBlock.h>
 #endif
 
@@ -537,7 +539,7 @@ namespace dtn
 				throw dtn::data::Validator::RejectedException("bundle is expired");
 			}
 
-#ifdef WITH_BUNDLE_SECURITY
+#ifdef IBRDTN_SUPPORT_BSP
 			// do a fast security check
 			try {
 				dtn::security::SecurityManager::getInstance().fastverify(b);
@@ -579,7 +581,7 @@ namespace dtn
 			for (dtn::data::Bundle::iterator iter = b.begin(); iter != b.end(); ++iter)
 			{
 				const dtn::data::Block &block = (**iter);
-#ifdef WITH_BUNDLE_SECURITY
+#ifdef IBRDTN_SUPPORT_BSP
 				if (block.getType() == dtn::security::PayloadConfidentialBlock::BLOCK_TYPE)
 				{
 					// try to decrypt the bundle
@@ -596,7 +598,7 @@ namespace dtn
 				}
 #endif
 
-#ifdef WITH_COMPRESSION
+#ifdef IBRDTN_SUPPORT_COMPRESSION
 				if (block.getType() == dtn::data::CompressedPayloadBlock::BLOCK_TYPE)
 				{
 					// try to decompress the bundle

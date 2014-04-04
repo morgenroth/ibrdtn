@@ -33,7 +33,8 @@
 #include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <ibrdtn/utils/Clock.h>
 
-#ifdef WITH_COMPRESSION
+#include <ibrdtn/ibrdtn.h>
+#ifdef IBRDTN_SUPPORT_COMPRESSION
 #include <ibrdtn/data/CompressedPayloadBlock.h>
 #endif
 
@@ -250,7 +251,7 @@ namespace dtn
 			// create a new request for the summary vector of the neighbor
 			NodeHandshake request(NodeHandshake::HANDSHAKE_REQUEST);
 
-#ifdef WITH_COMPRESSION
+#ifdef IBRDTN_SUPPORT_COMPRESSION
 			// request compressed answer
 			request.addRequest(NodeHandshakeItem::REQUEST_COMPRESSED_ANSWER);
 #endif
@@ -353,7 +354,7 @@ namespace dtn
 				dtn::data::ScopeControlHopLimitBlock &schl = answer.push_front<dtn::data::ScopeControlHopLimitBlock>();
 				schl.setLimit(1);
 
-#ifdef WITH_COMPRESSION
+#ifdef IBRDTN_SUPPORT_COMPRESSION
 				// compress bundle if requested
 				if (handshake.hasRequest(NodeHandshakeItem::REQUEST_COMPRESSED_ANSWER))
 				{

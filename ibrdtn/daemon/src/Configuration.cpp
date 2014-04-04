@@ -25,6 +25,7 @@
 #include "net/DiscoveryBeacon.h"
 #include "core/Node.h"
 
+#include <ibrdtn/ibrdtn.h>
 #include <ibrdtn/utils/Utils.h>
 #include <ibrdtn/utils/Clock.h>
 
@@ -1124,7 +1125,7 @@ namespace dtn
 			}
 #endif
 
-#ifdef WITH_BUNDLE_SECURITY
+#ifdef IBRDTN_SUPPORT_BSP
 			// enable security if the security path is set
 			try {
 				_path = conf.read<std::string>("security_path");

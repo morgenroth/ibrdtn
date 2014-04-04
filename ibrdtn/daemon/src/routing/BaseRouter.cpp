@@ -46,7 +46,8 @@
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrcommon/thread/RWLock.h>
 
-#ifdef WITH_BUNDLE_SECURITY
+#include <ibrdtn/ibrdtn.h>
+#ifdef IBRDTN_SUPPORT_BSP
 #include "security/SecurityManager.h"
 #endif
 
@@ -296,7 +297,7 @@ namespace dtn
 						// security methods modifies the bundle, thus we need a copy of it
 						dtn::data::Bundle bundle = event.bundle;
 
-#ifdef WITH_BUNDLE_SECURITY
+#ifdef IBRDTN_SUPPORT_BSP
 						// lets see if signatures and hashes are correct and remove them if possible
 						dtn::security::SecurityManager::getInstance().verify(bundle);
 #endif
@@ -334,7 +335,7 @@ namespace dtn
 
 					// finally create a bundle received event
 					dtn::core::BundleEvent::raise(m, dtn::core::BUNDLE_RECEIVED);
-#ifdef WITH_BUNDLE_SECURITY
+#ifdef IBRDTN_SUPPORT_BSP
 				} catch (const dtn::security::VerificationFailedException &ex) {
 					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "Security checks failed (" << ex.what() << "), bundle will be dropped: " << event.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 #endif

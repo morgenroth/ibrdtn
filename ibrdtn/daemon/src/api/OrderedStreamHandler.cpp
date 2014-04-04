@@ -27,7 +27,8 @@
 #include <ibrdtn/utils/Utils.h>
 #include <ibrcommon/Logger.h>
 
-#ifdef WITH_BUNDLE_SECURITY
+#include <ibrdtn/ibrdtn.h>
+#ifdef IBRDTN_SUPPORT_BSP
 #include "security/SecurityManager.h"
 #endif
 

@@ -74,18 +74,9 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	AC_SUBST(ibrdtn_LIBS)
 	
 	# Lowpan
-	#AC_SUBST(NL_CFLAGS)
-	#AC_SUBST(NL_LIBS)
-	#AC_DEFINE(HAVE_LOWPAN_SUPPORT, [1], ["enable lowpan support"])
 	use_lowpan="no"
 
-	# Compression
-	AC_DEFINE(WITH_COMPRESSION, [1], ["bundle compression support enabled"])
-	with_compression="yes"
-
 	# DTNSec
-	AC_DEFINE(WITH_BUNDLE_SECURITY, [1], ["bundle security support enabled"])
-	CPPFLAGS="$CPPFLAGS -DWITH_BUNDLE_SECURITY"
 	with_dtnsec="yes"
 
 	# TLS
@@ -207,81 +198,53 @@ AS_IF([test "x$enable_android" = "xyes"], [
 		use_sqlite="no"
 	])
 
-	# Checks for lowpan support (libnl)
-	AC_ARG_WITH(lowpan,
-		AS_HELP_STRING([--with-lowpan], [Build with lowpan support (support in ibrcommon needed)
-			@<:@default=no@:>@]),
-		[
-		if test "x$with_lowpan" = "xyes"; then
-			PKG_CHECK_MODULES([NL], [libnl-3.0], [
-				use_lowpan="yes"
-				AC_SUBST(NL_CFLAGS)
-				AC_SUBST(NL_LIBS)
-				AC_DEFINE(HAVE_LOWPAN_SUPPORT, [1], ["enable lowpan support"])
-				AC_CHECK_HEADERS([arpa/inet.h])
-				AC_CHECK_HEADERS([fcntl.h])
-				AC_CHECK_HEADERS([limits.h])
-				AC_CHECK_HEADERS([netinet/in.h])
-				AC_CHECK_HEADERS([sys/socket.h])
-			], [
-				PKG_CHECK_MODULES([NL], [libnl-1], [
-					use_lowpan="yes"
-					AC_SUBST(NL_CFLAGS)
-					AC_SUBST(NL_LIBS)
-					AC_DEFINE(HAVE_LOWPAN_SUPPORT, [1], ["enable lowpan support"])
-					AC_CHECK_HEADERS([arpa/inet.h])
-					AC_CHECK_HEADERS([fcntl.h])
-					AC_CHECK_HEADERS([limits.h])
-					AC_CHECK_HEADERS([netinet/in.h])
-					AC_CHECK_HEADERS([sys/socket.h])
-				], [
-					use_lowpan="no"
-					AC_MSG_WARN([lowpan extension requested, but no libnl library is found. lowpan support is disabled.])
-				])
-			])
-		else
-			use_lowpan="no"
-		fi
-		],[
+	dnl -----------------------------------------------
+	dnl Check for 6LowPAN support
+	dnl -----------------------------------------------
+	
+	old_CPPFLAGS="$CPPFLAGS"
+	CPPFLAGS="$ibrcommon_CFLAGS"
+	AC_COMPILE_IFELSE([
+		AC_LANG_PROGRAM([[
+			#include <ibrcommon/ibrcommon.h>
+		]], [[
+			#ifdef IBRCOMMON_SUPPORT_LOWPAN
+			// LOWPAN is supported
+			#else
+			# LOWPAN not supported
+			#endif
+		]])
+	], [
+		use_lowpan="yes"
+	], [
+		AC_MSG_WARN([ibrcommon was compiled without 6LowPAN support. 6LowPAN convergence layers are disabled.])
 		use_lowpan="no"
 	])
+	CPPFLAGS="$old_CPPFLAGS"
 
 	dnl -----------------------------------------------
-	dnl optional parameter: compression support
+	dnl Check for Bundle Security Protocol support
 	dnl -----------------------------------------------
-
-	AC_ARG_WITH(compression,
-		AS_HELP_STRING([--with-compression], [build with compression support
-			@<:@default=no@:>@]),
-		[
-		if test "x$with_compression" = "xyes"; then
-			AC_DEFINE(WITH_COMPRESSION, [1], ["bundle compression support enabled"])
-		else
-			with_compression="no"
-		fi
-		],[
-		with_compression="no"
-	])
-
-
-	dnl -----------------------------------------------
-	dnl optional parameter: DTN security support
-	dnl -----------------------------------------------
-
-	AC_ARG_WITH(dtnsec,
-		AS_HELP_STRING([--with-dtnsec], [build with DTNSEC support
-			@<:@default=no@:>@]),
-		[
-		if test "x$with_dtnsec" = "xyes"; then
-			AC_DEFINE(WITH_BUNDLE_SECURITY, [1], ["bundle security support enabled"])
-			CPPFLAGS="$CPPFLAGS -DWITH_BUNDLE_SECURITY"
-		else
-			with_dtnsec="no"
-		fi
-		],[
+	
+	old_CPPFLAGS="$CPPFLAGS"
+	CPPFLAGS="$ibrdtn_CFLAGS"
+	AC_COMPILE_IFELSE([
+		AC_LANG_PROGRAM([[
+			#include <ibrdtn/ibrdtn.h>
+		]], [[
+			#ifdef IBRDTN_SUPPORT_BSP
+			// BSP is supported
+			#else
+			# BSP not supported
+			#endif
+		]])
+	], [
+		with_dtnsec="yes"
+	], [
+		AC_MSG_WARN([ibrdtn was compiled without BSP support. Bundle Security Protocol support is disabled.])
 		with_dtnsec="no"
 	])
-
+	CPPFLAGS="$old_CPPFLAGS"
 
 	dnl -----------------------------------------------
 	dnl optional parameter: TLS support
@@ -371,7 +334,6 @@ AS_IF([test "x$enable_android" = "xyes"], [
 ])
 
 AM_CONDITIONAL(HAVE_PDFLATEX, test x$PDFLATEX = xpdflatex)
-AM_CONDITIONAL(COMPRESSION, test x$with_compression = xyes)
 AM_CONDITIONAL(CURL, test x$use_curl = xyes)
 AM_CONDITIONAL(SQLITE, test x$use_sqlite = xyes)
 AM_CONDITIONAL(LOWPAN, test x$use_lowpan = xyes)

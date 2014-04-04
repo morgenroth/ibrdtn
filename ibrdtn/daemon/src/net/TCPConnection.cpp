@@ -48,7 +48,8 @@
 #include <ibrcommon/ssl/TLSStream.h>
 #endif
 
-#ifdef WITH_BUNDLE_SECURITY
+#include <ibrdtn/ibrdtn.h>
+#ifdef IBRDTN_SUPPORT_BSP
 #include "security/SecurityManager.h"
 #endif
 
@@ -657,7 +658,7 @@ namespace dtn
 						// read the bundle out of the storage
 						dtn::data::Bundle bundle = storage.get(transfer.getBundle());
 
-#ifdef WITH_BUNDLE_SECURITY
+#ifdef IBRDTN_SUPPORT_BSP
 						const int seclevel = dtn::daemon::Configuration::getInstance().getSecurity().getLevel();
 
 						if (seclevel & dtn::daemon::Configuration::Security::SECURITY_LEVEL_AUTHENTICATED)

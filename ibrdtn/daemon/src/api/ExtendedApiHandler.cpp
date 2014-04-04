@@ -34,7 +34,8 @@
 #include "core/BundleCore.h"
 #include <ibrdtn/utils/Random.h>
 
-#ifdef WITH_BUNDLE_SECURITY
+#include <ibrdtn/ibrdtn.h>
+#ifdef IBRDTN_SUPPORT_BSP
 #include "security/SecurityManager.h"
 #endif
 
