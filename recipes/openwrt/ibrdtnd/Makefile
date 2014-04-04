@@ -17,14 +17,14 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/releases
 
 PKG_INSTALL:=1
-PKG_BUILD_DEPENDS:=dtndht ibrdtn libopenssl libsqlite3
+PKG_BUILD_DEPENDS:=dtndht ibrdtn libsqlite3
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/ibrdtnd
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+dtndht +ibrdtn +libopenssl +libsqlite3
+  DEPENDS:=+dtndht +ibrdtn +libsqlite3
   TITLE:=DTN Deamon
 endef
 
@@ -37,7 +37,7 @@ define Package/ibrdtnd/description
 endef
 
 CONFIGURE_ARGS += \
-        --with-tls --with-dtnsec --with-sqlite --with-compression --with-dht
+        --with-tls --with-sqlite --with-dht
 
 define Package/ibrdtnd/install
 	$(INSTALL_DIR) $(1)/usr/sbin/

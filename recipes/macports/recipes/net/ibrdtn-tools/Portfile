@@ -16,6 +16,7 @@ checksums          ${PKG_CHECKSUMS}
 depends_lib     \
                 port:pkgconfig \
                 port:ibrdtn \
-                port:ibrcommon 
+                port:ibrcommon \
+                port:libarchive
 configure.args   \
                 --mandir=${prefix}/share/man 

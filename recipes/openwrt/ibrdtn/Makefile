@@ -18,14 +18,14 @@ PKG_SOURCE_URL:=http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/releases
 
 PKG_INSTALL:=1
 PKG_FIXUP:=libtool
-PKG_BUILD_DEPENDS:=ibrcommon libopenssl zlib
+PKG_BUILD_DEPENDS:=ibrcommon zlib
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/ibrdtn
   SECTION:=libs
   CATEGORY:=Libraries
-  DEPENDS:=+ibrcommon +libopenssl +zlib
+  DEPENDS:=+ibrcommon +zlib
   TITLE:=IBR-DTN Library
 endef
 
@@ -34,7 +34,6 @@ define Package/ibrdtn/description
 endef
 
 CONFIGURE_ARGS += \
-	--with-dtnsec \
 	--with-compression
 
 define Build/InstallDev

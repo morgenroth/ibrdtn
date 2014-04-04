@@ -15,8 +15,6 @@ master_sites       ${PKG_URL}
 checksums          ${PKG_CHECKSUMS}
 depends_lib     \
                 port:pkgconfig \
-                port:openssl \
-                port:zlib \
                 port:sqlite3 \
                 port:ibrdtn \
                 port:ibrcommon \
@@ -25,7 +23,6 @@ configure.args   \
                 --with-curl \
                 --with-sqlite \
                 --with-tls \
-                --with-dtnsec \
                 --mandir=${prefix}/share/man 
 
 

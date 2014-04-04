@@ -20,5 +20,4 @@ depends_lib     \
                 port:glib2 
 configure.args   \
                 --with-compression \
-                --with-dtnsec \
                 --mandir=${prefix}/share/man 
