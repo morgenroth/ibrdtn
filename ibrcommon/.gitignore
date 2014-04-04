@@ -9,7 +9,8 @@ autom4te.cache
 config.log
 config.status
 configure
-*.in
+Makefile.in
+config.h.in
 config.guess
 config.sub
 aclocal.m4
@@ -24,7 +25,9 @@ stamp-h1
 version.inc
 depcomp
 *.pc
-config.h
+ibrcommon/config.h
+ibrcommon/ibrcommon.h
+ibrcommon/stamp-h2
 version.m4
 
 .libs

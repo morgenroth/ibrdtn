@@ -11,8 +11,8 @@ dnl --------------------------------
 
 AC_INIT([ibrcommon], PKG_FULL_VERSION, morgenro@ibr.cs.tu-bs.de)
 AC_CONFIG_MACRO_DIR([m4])
-AC_CONFIG_SRCDIR(ibrcommon/ibrcommon.h)
-AC_CONFIG_HEADER(ibrcommon/config.h)
+AC_CONFIG_SRCDIR(ibrcommon/Logger.cpp)
+AC_CONFIG_HEADER([ibrcommon/config.h ibrcommon/ibrcommon.h])
 LT_INIT
 AM_PATH_CPPUNIT(1.9.6)
 AM_INIT_AUTOMAKE
@@ -120,7 +120,8 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	use_netlink="yes"
 	
 	# OpenSSL
-	AC_DEFINE(HAVE_OPENSSL, [1], [])
+	AC_DEFINE(HAVE_OPENSSL, [1], ["openssl library is available"])
+	AC_DEFINE(IBRCOMMON_SUPPORT_SSL, [1], ["ssl extension is available"])
 	OPENSSL_LIBS="-lssl -lcrypto"
 	AC_SUBST(OPENSSL_LIBS)
 	use_openssl="yes"
@@ -305,6 +306,7 @@ AS_IF([test "x$enable_android" = "xyes"], [
 			PKG_CHECK_MODULES(OPENSSL, openssl, [
 				use_openssl="yes"
 				AC_DEFINE(HAVE_OPENSSL, [1], ["openssl library is available"])
+				AC_DEFINE(IBRCOMMON_SUPPORT_SSL, [1], ["ssl extension is available"])
 				AC_SUBST(OPENSSL_CFLAGS)
 				AC_SUBST(OPENSSL_LIBS)
 				REQUIRES_LIBS="$REQUIRES_LIBS openssl"
@@ -329,6 +331,7 @@ AS_IF([test "x$enable_android" = "xyes"], [
 			AS_IF([test "x$use_netlink" = "xyes"], [
 				use_lowpan="yes"
 				AC_DEFINE(HAVE_LOWPAN_SUPPORT, [1], ["enable lowpan support"])
+				AC_DEFINE(IBRCOMMON_SUPPORT_LOWPAN, [1], ["lowpan extension is available"])
 			], [
 				use_lowpan="no"
 				AC_MSG_WARN([lowpan extension requested, but no libnl library is found. lowpan support is disabled.])
@@ -349,6 +352,7 @@ AS_IF([test "x$enable_android" = "xyes"], [
 			PKG_CHECK_MODULES(LIBXML, libxml-2.0, [
 				use_xml="yes"
 				AC_DEFINE(HAVE_LIBXML, [1], ["xml library is available"])
+				AC_DEFINE(IBRCOMMON_SUPPORT_XML, [1], ["xml extension is available"])
 				AC_SUBST(LIBXML_CFLAGS)
 				AC_SUBST(LIBXML_LIBS)
 				REQUIRES_LIBS="$REQUIRES_LIBS libxml-2.0"

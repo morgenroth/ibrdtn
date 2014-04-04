@@ -1,7 +1,7 @@
 /*
  * ibrcommon.h
  *
- * Copyright (C) 2011 IBR, TU Braunschweig
+ * Copyright (C) 2014 IBR, TU Braunschweig
  *
  * Written-by: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
  *
@@ -19,12 +19,11 @@
  *
  */
 
-#ifndef IBRCOMMON_H_
-#define IBRCOMMON_H_
+/* "lowpan extension is available" */
+#undef IBRCOMMON_SUPPORT_LOWPAN
 
-#include <ibrcommon/appstreambuf.h>
-#include <ibrcommon/Exceptions.h>
-#include <ibrcommon/refcnt_ptr.h>
-#include <ibrcommon/SyslogStream.h>
+/* "ssl extension is available" */
+#undef IBRCOMMON_SUPPORT_SSL
 
-#endif /* IBRCOMMON_H_ */
+/* "xml extension is available" */
+#undef IBRCOMMON_SUPPORT_XML
