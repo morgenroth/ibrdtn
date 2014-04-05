@@ -20,7 +20,7 @@
  */
 
 /* "bundle security protocol supported" */
-#define IBRDTN_SUPPORT_BSP 1
+#undef IBRDTN_SUPPORT_BSP
 
 /* "bundle compression support" */
-#define IBRDTN_SUPPORT_COMPRESSION 1
+#undef IBRDTN_SUPPORT_COMPRESSION
