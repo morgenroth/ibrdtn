@@ -31,6 +31,7 @@ class HashStreamTest : public CPPUNIT_NS :: TestFixture
 {
 	CPPUNIT_TEST_SUITE (HashStreamTest);
 	CPPUNIT_TEST (hmacstream_test01);
+	CPPUNIT_TEST (md5stream_test02);
 	CPPUNIT_TEST_SUITE_END ();
 
 public:
@@ -39,6 +40,7 @@ public:
 
 protected:
 	void hmacstream_test01();
+	void md5stream_test02();
 
 private:
 	std::string getHex(std::istream &stream);

@@ -22,6 +22,7 @@
 #include "ssl/HashStreamTest.h"
 
 #include <ibrcommon/ssl/HMacStream.h>
+#include <ibrcommon/ssl/MD5Stream.h>
 #include <stdlib.h>
 #include <iostream>
 #include <sstream>
@@ -74,4 +75,17 @@ void HashStreamTest::hmacstream_test01()
 		}
 	}
 
+}
+
+void HashStreamTest::md5stream_test02()
+{
+	std::string hash_data("0123456789");
+
+	ibrcommon::MD5Stream md5;
+	md5 << hash_data << std::flush;
+
+	if ("78:1e:5e:24:5d:69:b5:66:97:9b:86:e2:8d:23:f2:c7:" != getHex(md5))
+	{
+		throw ibrcommon::Exception("unexpected hash value");
+	}
 }
