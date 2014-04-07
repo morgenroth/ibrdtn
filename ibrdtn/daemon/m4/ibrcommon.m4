@@ -1,5 +1,6 @@
-AC_DEFUN([LOCAL_CHECK_IBRCOMMON],
+AC_DEFUN([AC_CHECK_IBRCOMMON],
 [
+	AC_MSG_CHECKING([checking for ibrcommon >= $1])
 	ibrcommon=notfound
 
 	AC_ARG_WITH([ibrcommon],
@@ -21,31 +22,104 @@ AC_DEFUN([LOCAL_CHECK_IBRCOMMON],
 		export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:${ibrcommon_path}"
 		
 		# check for the svn version of ibrcommon
-		if pkg-config --atleast-version=$LOCAL_IBRCOMMON_VERSION ibrcommon; then
+		if pkg-config --atleast-version=$1 ibrcommon; then
 			# read LIBS options for ibrcommon
 			ibrcommon_LIBS="-L${ibrcommon_path}/ibrcommon/.libs $(pkg-config --libs ibrcommon)"
 			
 			# read CFLAGS options for ibrcommon
 			ibrcommon_CFLAGS="-I${ibrcommon_path} $(pkg-config --cflags ibrcommon)"
 			
-			# some output
-			AC_MSG_NOTICE([using ibrcommon library in ${ibrcommon_path}])
-			AC_MSG_NOTICE([  with CFLAGS: $ibrcommon_CFLAGS])
-			AC_MSG_NOTICE([  with LIBS: $ibrcommon_LIBS])
-			
 			# set ibrcommon as available
 			ibrcommon=yes
+			AC_MSG_RESULT([yes])
 		fi
 	])
 	
 	AS_IF([test "x${ibrcommon}" = "xnotfound"], [
 		# check for ibrcommon library
-		PKG_CHECK_MODULES([ibrcommon], [ibrcommon >= $LOCAL_IBRCOMMON_VERSION], [
-			AC_MSG_NOTICE([using ibrcommon])
-			AC_MSG_NOTICE([  with CFLAGS: $ibrcommon_CFLAGS])
-			AC_MSG_NOTICE([  with LIBS: $ibrcommon_LIBS])
+		PKG_CHECK_MODULES([ibrcommon], [ibrcommon >= $1], [
+			AC_MSG_RESULT([yes])
 		], [
+			AC_MSG_RESULT([no])
 			AC_MSG_ERROR([ibrcommon library not found!])
 		])
 	])
+	
+	AC_SUBST(ibrcommon_CFLAGS)
+	AC_SUBST(ibrcommon_LIBS)
+])
+
+AC_DEFUN([AC_CHECK_IBRCOMMON_SSL],
+[
+	AC_MSG_CHECKING([checking whether ibrcommon has SSL extensions])
+	old_CPPFLAGS="$CPPFLAGS"
+	CPPFLAGS="$ibrcommon_CFLAGS"
+	AC_COMPILE_IFELSE([
+		AC_LANG_PROGRAM([[
+			#include <ibrcommon/ibrcommon.h>
+		]], [[
+			#ifdef IBRCOMMON_SUPPORT_SSL
+			// SSL is supported
+			#else
+			# SSL not supported
+			#endif
+		]])
+	], [
+		AC_MSG_RESULT([yes])
+		$1
+	], [
+		AC_MSG_RESULT([no])
+		$2
+	])
+	CPPFLAGS="$old_CPPFLAGS"
+])
+
+AC_DEFUN([AC_CHECK_IBRCOMMON_LOWPAN],
+[
+	AC_MSG_CHECKING([checking whether ibrcommon has 6lowpan extensions])
+	old_CPPFLAGS="$CPPFLAGS"
+	CPPFLAGS="$ibrcommon_CFLAGS"
+	AC_COMPILE_IFELSE([
+		AC_LANG_PROGRAM([[
+			#include <ibrcommon/ibrcommon.h>
+		]], [[
+			#ifdef IBRCOMMON_SUPPORT_LOWPAN
+			// LOWPAN is supported
+			#else
+			# LOWPAN not supported
+			#endif
+		]])
+	], [
+		AC_MSG_RESULT([yes])
+		$1
+	], [
+		AC_MSG_RESULT([no])
+		$2
+	])
+	CPPFLAGS="$old_CPPFLAGS"
+])
+
+AC_DEFUN([AC_CHECK_IBRCOMMON_XML],
+[
+	AC_MSG_CHECKING([checking whether ibrcommon has XML extensions])
+	old_CPPFLAGS="$CPPFLAGS"
+	CPPFLAGS="$ibrcommon_CFLAGS"
+	AC_COMPILE_IFELSE([
+		AC_LANG_PROGRAM([[
+			#include <ibrcommon/ibrcommon.h>
+		]], [[
+			#ifdef IBRCOMMON_SUPPORT_XML
+			// XML is supported
+			#else
+			# XML not supported
+			#endif
+		]])
+	], [
+		AC_MSG_RESULT([yes])
+		$1
+	], [
+		AC_MSG_RESULT([no])
+		$2
+	])
+	CPPFLAGS="$old_CPPFLAGS"
 ])

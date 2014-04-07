@@ -40,26 +40,21 @@ AC_PROG_LIBTOOL
 
 AC_LANG_CPLUSPLUS
 
-# Option to build for win32
-AC_ARG_ENABLE([win32],
-	AS_HELP_STRING([--enable-win32], [Enable compile switches for win32 systems]), [
-		AC_DEFINE(WIN32, [1], [Compiling for Win32!])
-		AC_DEFINE(WINVER, [0x0601], [Minimum platform is Windows 7])
-		AC_DEFINE(_WIN32_WINNT, [0x0601], [Minimum platform is Windows 7])
+# check if we build for win32
+MINGW_AC_BUILD([
+	AC_MSG_NOTICE([Compiling for Win32])
+	AC_DEFINE(WIN32, [1], [Compiling for Win32!])
+	AC_DEFINE(WINVER, [0x0601], [Minimum platform is Windows 7])
+	AC_DEFINE(_WIN32_WINNT, [0x0601], [Minimum platform is Windows 7])
 
-		# do win32 related library checking
-		AC_CHECK_LIB([ws2_32], [main],[LIBS="$LIBS -lws2_32"], AC_ERROR([lib ws2_32 not found]))
+	# do win32 related library checking
+	AC_CHECK_LIB([ws2_32], [main],[LIBS="$LIBS -lws2_32"], AC_ERROR([lib ws2_32 not found]))
 
-		AC_ARG_ENABLE([ntservice], AS_HELP_STRING([--enable-ntservice], [Build an NT Service (requires --enable-win32)]))
-	])
-
+	AC_ARG_ENABLE([ntservice], AS_HELP_STRING([--enable-ntservice], [Build an NT Service (win32 only)]))
+], [
 # ANDROID configuration
-# We generate a mostly static configuration for Android as PKG_CHECK_MODULES obviously does not work with the Android NDK
-AC_ARG_ENABLE([android],
-	AS_HELP_STRING([--enable-android], [Enable compile switches for Android]))
-
-AS_IF([test "x$enable_android" = "xyes"], [
-	AC_MSG_WARN([Compiling for Android! Overriding other parameters!])
+ANDROID_AC_BUILD([
+	AC_MSG_NOTICE([Compiling for Android])
 
 	# Check for presence of androgenizer
 	AC_CHECK_PROG(ANDROGENIZER, androgenizer, androgenizer)
@@ -110,16 +105,10 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	AC_CHECK_LIB([m], [pow])
 
 	# check for ibrcommon library
-	LOCAL_IBRCOMMON_VERSION=0.10
-	LOCAL_CHECK_IBRCOMMON
-	AC_SUBST(ibrcommon_CFLAGS)
-	AC_SUBST(ibrcommon_LIBS)
+	AC_CHECK_IBRCOMMON([0.13])
 	
 	# check for ibrdtn library
-	LOCAL_IBRDTN_VERSION=0.10
-	LOCAL_CHECK_IBRDTN
-	AC_SUBST(ibrdtn_CFLAGS)
-	AC_SUBST(ibrdtn_LIBS)
+	AC_CHECK_IBRDTN([0.13])
 
 	# Checks for header files.
 	AC_CHECK_HEADERS([syslog.h pwd.h sys/inotify.h])
@@ -204,49 +193,23 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	dnl Check for 6LowPAN support
 	dnl -----------------------------------------------
 	
-	old_CPPFLAGS="$CPPFLAGS"
-	CPPFLAGS="$ibrcommon_CFLAGS"
-	AC_COMPILE_IFELSE([
-		AC_LANG_PROGRAM([[
-			#include <ibrcommon/ibrcommon.h>
-		]], [[
-			#ifdef IBRCOMMON_SUPPORT_LOWPAN
-			// LOWPAN is supported
-			#else
-			# LOWPAN not supported
-			#endif
-		]])
-	], [
+	AC_CHECK_IBRCOMMON_LOWPAN([
 		use_lowpan="yes"
 	], [
 		AC_MSG_WARN([ibrcommon was compiled without 6LowPAN support. 6LowPAN convergence layers are disabled.])
 		use_lowpan="no"
 	])
-	CPPFLAGS="$old_CPPFLAGS"
 
 	dnl -----------------------------------------------
 	dnl Check for Bundle Security Protocol support
 	dnl -----------------------------------------------
 	
-	old_CPPFLAGS="$CPPFLAGS"
-	CPPFLAGS="$ibrdtn_CFLAGS"
-	AC_COMPILE_IFELSE([
-		AC_LANG_PROGRAM([[
-			#include <ibrdtn/ibrdtn.h>
-		]], [[
-			#ifdef IBRDTN_SUPPORT_BSP
-			// BSP is supported
-			#else
-			# BSP not supported
-			#endif
-		]])
-	], [
+	AC_CHECK_IBRDTN_BSP([
 		with_dtnsec="yes"
 	], [
 		AC_MSG_WARN([ibrdtn was compiled without BSP support. Bundle Security Protocol support is disabled.])
 		with_dtnsec="no"
 	])
-	CPPFLAGS="$old_CPPFLAGS"
 
 	dnl -----------------------------------------------
 	dnl optional parameter: TLS support
@@ -257,8 +220,17 @@ AS_IF([test "x$enable_android" = "xyes"], [
 			@<:@default=no@:>@]),
 		[
 		if test "x$with_tls" = "xyes"; then
-			AC_DEFINE(WITH_TLS, [1], ["tls support enabled"])
-			CPPFLAGS="$CPPFLAGS -DWITH_TLS"
+			PKG_CHECK_MODULES(OPENSSL, openssl, [
+				AC_DEFINE(HAVE_OPENSSL, [1], ["openssl library is available"])
+				AC_DEFINE(WITH_TLS, [1], ["tls support enabled"])
+				AC_SUBST(OPENSSL_CFLAGS)
+				AC_SUBST(OPENSSL_LIBS)
+				with_tls="no"
+				CPPFLAGS="$CPPFLAGS -DWITH_TLS"
+			], [
+				AC_MSG_WARN([no openssl libraries are found. Security extensions are disabled.])
+				with_tls="no"
+			])
 		else
 			with_tls="no"
 		fi
@@ -331,9 +303,8 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	], [
 		have_regex="no"
 	])
-
 #ANDROID else end
-])
+])])
 
 AM_CONDITIONAL(HAVE_PDFLATEX, test x$PDFLATEX = xpdflatex)
 AM_CONDITIONAL(CURL, test x$use_curl = xyes)
