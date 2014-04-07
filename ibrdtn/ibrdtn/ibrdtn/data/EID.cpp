@@ -168,18 +168,14 @@ namespace dtn
 			// there is no standard mapping, hash required
 #ifdef IBRCOMMON_SUPPORT_SSL
 			ibrcommon::MD5Stream md5;
-			std::string hash;
-
-			md5 << app;
-			md5 >> hash;
+			md5 << app << std::flush;
 
 			// use 4 byte as integer
-			uint32_t number = GUINT32_TO_BE((const uint32_t&)(*hash.c_str()));
+			uint32_t hash = 0;
+			md5.read((char*)&hash, sizeof(uint32_t));
 
 			// set the highest bit
-			number |= 0x80000000;
-
-			return Number(number);
+			return Number(0x80000000 | GUINT32_TO_BE(hash));
 #else
 			return 0;
 #endif
