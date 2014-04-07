@@ -81,6 +81,8 @@ AS_IF([test "x$enable_android" = "xyes"], [
 
 	# TLS
 	AC_DEFINE(WITH_TLS, [1], ["tls support enabled"])
+	OPENSSL_LIBS="-lssl -lcrypto"
+	AC_SUBST(OPENSSL_LIBS)
 	CPPFLAGS="$CPPFLAGS -DWITH_TLS"
 	with_tls="yes"
 
