@@ -148,12 +148,12 @@ namespace io
 #ifdef IBRCOMMON_SUPPORT_SSL
 		// update hash
 		ibrcommon::MD5Stream md5;
-		md5 << _file->lastmodify() << "|" << _file->size() << "|" << _file->getPath();
+		md5 << _file->lastmodify() << "|" << _file->size() << "|" << _file->getPath() << std::flush;
 
-		std::string hash;
-		md5 >> hash;
+		std::stringstream ss;
+		md5.extract(ss);
 
-		return FileHash(_file->getPath(), hash);
+		return FileHash(_file->getPath(), ss.str());
 #else
 		std::stringstream ss;
 		ss << _file->lastmodify() << "|" << _file->size() << "|" << _file->getPath();
