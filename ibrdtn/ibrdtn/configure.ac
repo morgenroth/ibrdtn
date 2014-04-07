@@ -67,24 +67,19 @@ AM_SANITY_CHECK
 
 AC_LANG_CPLUSPLUS
 
-# Option to build for win32
-AC_ARG_ENABLE([win32],
-	AS_HELP_STRING([--enable-win32], [Enable compile switches for win32 systems]), [
-		AC_DEFINE(WIN32, [1], [Compiling for Win32!])
-		AC_DEFINE(WINVER, [0x0601], [Minimum platform is Windows 7])
-		AC_DEFINE(_WIN32_WINNT, [0x0601], [Minimum platform is Windows 7])
-		
-		# set activate win32 check exceptions
-		enable_win32=yes
-	])
-
+# check if we build for win32
+MINGW_AC_BUILD([
+	AC_MSG_NOTICE([Compiling for Win32])
+	AC_DEFINE(WIN32, [1], [Compiling for Win32!])
+	AC_DEFINE(WINVER, [0x0601], [Minimum platform is Windows 7])
+	AC_DEFINE(_WIN32_WINNT, [0x0601], [Minimum platform is Windows 7])
+	
+	# set activate win32 check exceptions
+	enable_win32=yes
+], [
 # ANDROID configuration
-# We generate a mostly static configuration for Android as PKG_CHECK_MODULES obviously does not work with the Android NDK
-AC_ARG_ENABLE([android],
-	AS_HELP_STRING([--enable-android], [Enable compile switches for Android]))
-
-AS_IF([test "x$enable_android" = "xyes"], [
-	AC_MSG_WARN([Compiling for Android! Overriding other parameters!])
+ANDROID_AC_BUILD([
+	AC_MSG_NOTICE([Compiling for Android])
 
 	# Check for presence of androgenizer
 	AC_CHECK_PROG(ANDROGENIZER, androgenizer, androgenizer)
@@ -125,10 +120,7 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	AC_CHECK_LIB([rt], [clock_gettime])
 
 	# check for ibrcommon library
-	LOCAL_IBRCOMMON_VERSION=0.8
-	LOCAL_CHECK_IBRCOMMON
-	AC_SUBST(ibrcommon_CFLAGS)
-	AC_SUBST(ibrcommon_LIBS)
+	AC_CHECK_IBRCOMMON([0.13])
 
 	# Checks for header files.
 	AC_CHECK_HEADERS([inttypes.h stddef.h stdint.h stdlib.h string.h sys/time.h unistd.h])
@@ -179,19 +171,7 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	dnl check for DTN security support
 	dnl -----------------------------------------------
 	
-	old_CPPFLAGS="$CPPFLAGS"
-	CPPFLAGS="$ibrcommon_CFLAGS"
-	AC_COMPILE_IFELSE([
-		AC_LANG_PROGRAM([[
-			#include <ibrcommon/ibrcommon.h>
-		]], [[
-			#ifdef IBRCOMMON_SUPPORT_SSL
-			// SSL is supported
-			#else
-			# SSL not supported
-			#endif
-		]])
-	], [
+	AC_CHECK_IBRCOMMON_SSL([
 		PKG_CHECK_MODULES(OPENSSL, openssl, [
 			AC_DEFINE(IBRDTN_SUPPORT_BSP, [1], [bundle security protocol supported])
 			AC_DEFINE(HAVE_OPENSSL, [1], ["openssl library is available"])
@@ -207,7 +187,6 @@ AS_IF([test "x$enable_android" = "xyes"], [
 		AC_MSG_WARN([ibrcommon was compiled without SSL support. Security extensions are disabled.])
 		with_dtnsec="no"
 	])
-	CPPFLAGS="$old_CPPFLAGS"
 
 	dnl -----------------------------------------------
 	dnl optional parameter: compression support
@@ -246,9 +225,8 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	],[
 		with_compression="no"
 	])
-
 #ANDROID else end
-])
+])])
 
 # Variables for Makefile.am
 AM_CONDITIONAL(DTNSEC, test x$with_dtnsec = xyes)
