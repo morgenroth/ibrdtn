@@ -225,10 +225,10 @@ ANDROID_AC_BUILD([
 				AC_DEFINE(WITH_TLS, [1], ["tls support enabled"])
 				AC_SUBST(OPENSSL_CFLAGS)
 				AC_SUBST(OPENSSL_LIBS)
-				with_tls="no"
+				with_tls="yes"
 				CPPFLAGS="$CPPFLAGS -DWITH_TLS"
 			], [
-				AC_MSG_WARN([no openssl libraries are found. Security extensions are disabled.])
+				AC_MSG_WARN([no openssl libraries are found. TLS extensions are disabled.])
 				with_tls="no"
 			])
 		else
