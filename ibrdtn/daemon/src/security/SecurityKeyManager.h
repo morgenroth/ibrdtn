@@ -30,8 +30,6 @@
 #include <ibrcommon/data/File.h>
 #include <iostream>
 
-#include <openssl/rsa.h>
-
 namespace dtn
 {
 	namespace security
@@ -65,25 +63,6 @@ namespace dtn
 
 		private:
 			SecurityKeyManager();
-
-			/**
-			Reads a private key into rsa
-			@param filename the file where the key is stored
-			@param rsa the rsa file
-			@return zero if all is ok, something different from zero when something
-			failed
-			*/
-			static int read_private_key(const ibrcommon::File &file, RSA ** rsa);
-
-			/**
-			Reads a public key into rsa
-			@param filename the file where the key is stored
-			@param rsa the rsa file
-			@return zero if all is ok, something different from zero when something
-			failed
-			*/
-			static int read_public_key(const ibrcommon::File &file, RSA ** rsa);
-
 
 			static const std::string hash(const dtn::data::EID &eid);
 
