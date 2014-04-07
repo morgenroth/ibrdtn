@@ -67,34 +67,30 @@ AM_SANITY_CHECK
 
 AC_LANG_CPLUSPLUS
 
-# Option to build for win32
-AC_ARG_ENABLE([win32],
-	AS_HELP_STRING([--enable-win32], [Enable compile switches for win32 systems]), [
-		AC_DEFINE(WIN32, [1], [Compiling for Win32!])
-		AC_DEFINE(WINVER, [0x0601], [Minimum platform is Windows 7])
-		AC_DEFINE(_WIN32_WINNT, [0x0601], [Minimum platform is Windows 7])
+# check if we build for win32
+MINGW_AC_BUILD([
+	AC_MSG_NOTICE([Compiling for Win32])
+	
+	AC_DEFINE(WIN32, [1], [Compiling for Win32!])
+	AC_DEFINE(WINVER, [0x0601], [Minimum platform is Windows 7])
+	AC_DEFINE(_WIN32_WINNT, [0x0601], [Minimum platform is Windows 7])
 
-		# do win32 related library checking
-		AC_CHECK_LIB([ws2_32], [main], [
-			LIBS="$LIBS -lws2_32"
-			WIN32_LIBS_EXTRA="-lws2_32"
-			AC_SUBST(WIN32_LIBS_EXTRA)
-		], AC_ERROR([lib ws2_32 not found]))
+	# do win32 related library checking
+	AC_CHECK_LIB([ws2_32], [main], [
+		LIBS="$LIBS -lws2_32"
+		WIN32_LIBS_EXTRA="-lws2_32"
+		AC_SUBST(WIN32_LIBS_EXTRA)
+	], AC_ERROR([lib ws2_32 not found]))
 
-		AC_CHECK_LIB([iphlpapi], [main], [
-			LIBS="$LIBS -liphlpapi"
-			WIN32_LIBS_EXTRA="-liphlpapi"
-			AC_SUBST(WIN32_LIBS_EXTRA)
-		], AC_ERROR([lib iphlpapi not found]))
-	])
-
+	AC_CHECK_LIB([iphlpapi], [main], [
+		LIBS="$LIBS -liphlpapi"
+		WIN32_LIBS_EXTRA="-liphlpapi"
+		AC_SUBST(WIN32_LIBS_EXTRA)
+	], AC_ERROR([lib iphlpapi not found]))
+], [
 # ANDROID configuration
-# We generate a mostly static configuration for Android as PKG_CHECK_MODULES obviously does not work with the Android NDK
-AC_ARG_ENABLE([android],
-	AS_HELP_STRING([--enable-android], [Enable compile switches for Android]))
-
-AS_IF([test "x$enable_android" = "xyes"], [
-	AC_MSG_WARN([Compiling for Android! Overriding other parameters!])
+ANDROID_AC_BUILD([
+	AC_MSG_NOTICE([Compiling for Android])
 
 	# Check for presence of androgenizer
 	AC_CHECK_PROG(ANDROGENIZER, androgenizer, androgenizer)
@@ -307,6 +303,7 @@ AS_IF([test "x$enable_android" = "xyes"], [
 				use_openssl="yes"
 				AC_DEFINE(HAVE_OPENSSL, [1], ["openssl library is available"])
 				AC_DEFINE(IBRCOMMON_SUPPORT_SSL, [1], ["ssl extension is available"])
+				OPENSSL_LIBS="-Wl,-Bstatic -lssl -lcrypto -Wl,-Bdynamic"
 				AC_SUBST(OPENSSL_CFLAGS)
 				AC_SUBST(OPENSSL_LIBS)
 				REQUIRES_LIBS="$REQUIRES_LIBS openssl"
@@ -366,10 +363,8 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	],[
 		use_xml="no"
 	])
-
-
 #ANDROID else end
-])
+])])
 
 # Variables for Makefile.am
 AM_CONDITIONAL(OPENSSL, test x$use_openssl = xyes)
