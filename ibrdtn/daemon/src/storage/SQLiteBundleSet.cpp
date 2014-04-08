@@ -156,6 +156,12 @@ namespace dtn
 			// create a new bundle-set
 			SQLiteBundleSet *set = new SQLiteBundleSet(Factory::create(_sqldb), false, NULL, _bf_size, _sqldb);
 
+			// copy Bloom-filter
+			set->_bf_size = _bf_size;
+			set->_bf = _bf;
+			set->_consistent = _consistent;
+			set->_next_expiration = _next_expiration;
+
 			// copy all entries
 			try {
 				SQLiteDatabase::Statement st(_sqldb._database, SQLiteDatabase::_sql_queries[SQLiteDatabase::BUNDLE_SET_COPY]);
@@ -166,9 +172,6 @@ namespace dtn
 			} catch (const SQLiteDatabase::SQLiteQueryException&) {
 				// error
 			}
-
-			// rebuild the bloom-filter
-			set->rebuild_bloom_filter();
 
 			return refcnt_ptr<dtn::data::BundleSetImpl>(set);
 		}
@@ -184,6 +187,12 @@ namespace dtn
 			// incompatible bundle-set implementation - abort here
 			if (set == NULL) return;
 
+			// copy Bloom-filter
+			_bf_size = set->_bf_size;
+			_bf = set->_bf;
+			_consistent = set->_consistent;
+			_next_expiration = set->_next_expiration;
+
 			// copy all entries
 			try {
 				SQLiteDatabase::Statement st(_sqldb._database, SQLiteDatabase::_sql_queries[SQLiteDatabase::BUNDLE_SET_COPY]);
@@ -194,9 +203,6 @@ namespace dtn
 			} catch (const SQLiteDatabase::SQLiteQueryException&) {
 				// error
 			}
-
-			// rebuild the bloom-filter
-			rebuild_bloom_filter();
 		}
 
 		void SQLiteBundleSet::add(const dtn::data::MetaBundle &bundle) throw ()
