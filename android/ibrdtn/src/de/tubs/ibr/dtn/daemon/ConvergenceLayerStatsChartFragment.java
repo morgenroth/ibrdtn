@@ -49,7 +49,6 @@ public class ConvergenceLayerStatsChartFragment extends Fragment implements Cust
 
     private static final String TAG = "ClStatsChartFragment";
     
-    private Object mServiceLock = new Object();
     private DaemonService mService = null;
     
     private LinearLayout mChartView = null;
@@ -62,9 +61,7 @@ public class ConvergenceLayerStatsChartFragment extends Fragment implements Cust
     
     private ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName name, IBinder s) {
-            synchronized(mServiceLock) {
-                mService = ((LocalDTNService)s).getLocal();
-            }
+            mService = ((LocalDTNService)s).getLocal();
             if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "service connected");
 
             // initialize the loader
@@ -76,9 +73,7 @@ public class ConvergenceLayerStatsChartFragment extends Fragment implements Cust
             getLoaderManager().destroyLoader(DB_LOADER_ID);
             getLoaderManager().destroyLoader(STATS_LOADER_ID);
 
-            synchronized(mServiceLock) {
-                mService = null;
-            }
+            mService = null;
             if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "service disconnected");
         }
     };

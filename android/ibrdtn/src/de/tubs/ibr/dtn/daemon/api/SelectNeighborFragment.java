@@ -55,15 +55,12 @@ public class SelectNeighborFragment extends ListFragment implements
 
     private static final String TAG = "SelectNeighborFragment";
     
-    private Object mServiceLock = new Object();
     private DTNService mService = null;
     private NeighborListAdapter mAdapter = null;
 
     private ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName name, IBinder s) {
-        	synchronized(mServiceLock) {
-        		mService = DTNService.Stub.asInterface(s);
-        	}
+    		mService = DTNService.Stub.asInterface(s);
         	if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "service connected");
 
         	// initialize the loader
@@ -73,9 +70,7 @@ public class SelectNeighborFragment extends ListFragment implements
         public void onServiceDisconnected(ComponentName name) {
         	getLoaderManager().destroyLoader(LOADER_ID);
         	
-            synchronized(mServiceLock) {
-            	mService = null;
-            }
+        	mService = null;
             if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "service disconnected");
         }
     };
