@@ -56,10 +56,14 @@ namespace dtn
 		{
 			MemoryBundleSet *set = new MemoryBundleSet(_listener, _bf_size);
 
-			for (bundle_set::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
-			{
-				set->add(*iter);
-			}
+			// copy Bloom-filter
+			set->_bf_size = _bf_size;
+			set->_bf = _bf;
+			set->_consistent = _consistent;
+
+			// copy bundles
+			set->_bundles = _bundles;
+			set->_expire = _expire;
 
 			return refcnt_ptr<BundleSetImpl>(set);
 		}
@@ -75,11 +79,14 @@ namespace dtn
 			// incompatible bundle-set implementation - abort here
 			if (set == NULL) return;
 
-			// add all bundles
-			for (bundle_set::const_iterator iter = set->_bundles.begin(); iter != set->_bundles.end(); iter++)
-			{
-				add(*iter);
-			}
+			// copy Bloom-filter
+			_bf_size = set->_bf_size;
+			_bf = set->_bf;
+			_consistent = set->_consistent;
+
+			// copy bundles
+			_bundles = set->_bundles;
+			_expire = set->_expire;
 		}
 
 		void MemoryBundleSet::add(const dtn::data::MetaBundle &bundle) throw ()
