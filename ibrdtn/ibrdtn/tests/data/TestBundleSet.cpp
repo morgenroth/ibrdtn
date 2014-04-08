@@ -21,6 +21,7 @@
 
 #include "data/TestBundleSet.h"
 #include <ibrdtn/data/Bundle.h>
+#include <ibrdtn/data/MetaBundle.h>
 #include <ibrdtn/data/EID.h>
 #include <ibrdtn/utils/Clock.h>
 #include <iostream>
@@ -142,3 +143,28 @@ void TestBundleSet::orderTest(void)
 	CPPUNIT_ASSERT(ebc.counter == 2000);
 }
 
+void TestBundleSet::copyTest(void)
+{
+	dtn::data::BundleSet l;
+
+	dtn::data::Bundle b;
+	b.lifetime = 3600;
+	b.timestamp = 449917232;
+	b.sequencenumber = 0;
+
+	dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(b);
+	l.add(meta);
+
+	std::stringstream ss;
+	ss << l;
+	ss.clear();
+	ss.seekg(0, std::stringstream::beg);
+
+	dtn::data::BundleSet h;
+	ss >> h;
+
+	dtn::data::BundleSet r;
+	r = h;
+
+	CPPUNIT_ASSERT(meta.isIn(r.getBloomFilter()));
+}

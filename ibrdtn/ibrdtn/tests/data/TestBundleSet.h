@@ -31,6 +31,7 @@ class TestBundleSet : public CPPUNIT_NS :: TestFixture
 	CPPUNIT_TEST_SUITE (TestBundleSet);
 	CPPUNIT_TEST (orderTest);
 	CPPUNIT_TEST (containTest);
+	CPPUNIT_TEST (copyTest);
 	CPPUNIT_TEST_SUITE_END ();
 
 public:
@@ -40,6 +41,7 @@ public:
 protected:
 	void orderTest(void);
 	void containTest(void);
+	void copyTest(void);
 
 private:
 	class ExpiredBundleCounter : public dtn::data::BundleSet::Listener
