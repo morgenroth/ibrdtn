@@ -29,12 +29,10 @@ import java.util.List;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
-import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Binder;
@@ -92,6 +90,8 @@ public class DaemonService extends Service {
 
 	private volatile Looper mServiceLooper;
 	private volatile ServiceHandler mServiceHandler;
+	
+	private int MSG_WHAT_STOP_DISCOVERY = 1;
 
 	// session manager for all active sessions
 	private SessionManager mSessionManager = null;
@@ -336,27 +336,18 @@ public class DaemonService extends Service {
 			
 			if (intent.hasExtra(EXTRA_DISCOVERY_DURATION) && !stayOn) {
 				Long duration = intent.getLongExtra(EXTRA_DISCOVERY_DURATION, 120);
-
-				// create a new pending intent
-				PendingIntent pi = PendingIntent.getService(this, 0, stopIntent,
-						PendingIntent.FLAG_CANCEL_CURRENT);
-
-				// get the AlarmManager service
-				AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-				am.set(AlarmManager.RTC_WAKEUP, new Date().getTime() + (duration * 1000), pi);
+				
+				Message msg = mServiceHandler.obtainMessage();
+				msg.what = MSG_WHAT_STOP_DISCOVERY;
+				msg.arg1 = startId;
+				msg.obj = stopIntent;
+				mServiceHandler.sendMessageDelayed(msg, duration * 1000);
 
 				Log.i(TAG, "Discovery stop scheduled in " + duration + " seconds.");
 			}
 			else {
-				// check if there is a pending intent
-				PendingIntent pi = PendingIntent.getService(this,  0, stopIntent,  PendingIntent.FLAG_NO_CREATE);
-				
-				if (pi != null) {
-					// clear pending stop discovery intent
-					AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-					am.cancel(pi);
-					pi.cancel();
-				}
+				mServiceHandler.removeMessages(MSG_WHAT_STOP_DISCOVERY);
+				Log.i(TAG, "Scheduled discovery stop removed.");
 			}
 
 			// only start discovery if not active
@@ -375,23 +366,6 @@ public class DaemonService extends Service {
 				requestNotificationUpdate(getResources().getString(R.string.ticker_discovery_started));
 			}
 		} else if (ACTION_STOP_DISCOVERY.equals(action)) {
-			// create a new wakeup intent
-			Intent stopIntent = new Intent(this, DaemonService.class);
-			intent.setAction(DaemonService.ACTION_STOP_DISCOVERY);
-
-			// check if the presence alarm is already active
-			PendingIntent pi = PendingIntent.getService(this, 0, stopIntent,
-					PendingIntent.FLAG_NO_CREATE);
-
-			if (pi != null) {
-				// get the AlarmManager service
-				AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-				am.cancel(pi);
-				pi.cancel();
-
-				Log.i(TAG, "Scheduled discovery stop canceled.");
-			}
-
 			// only stop discovery if active
 			if (mDiscoveryState) {
 				// stop P2P discovery and disable IPND
@@ -407,6 +381,10 @@ public class DaemonService extends Service {
 				// request notification update
 				requestNotificationUpdate(getResources().getString(R.string.ticker_discovery_stopped));
 			}
+			
+			// remove all stop discovery messages
+			mServiceHandler.removeMessages(MSG_WHAT_STOP_DISCOVERY);
+			Log.i(TAG, "Scheduled discovery stop removed.");
 		}
 
 		// stop the daemon if it should be offline
