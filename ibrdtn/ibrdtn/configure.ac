@@ -76,7 +76,8 @@ MINGW_AC_BUILD([
 	
 	# set activate win32 check exceptions
 	enable_win32=yes
-], [
+])
+
 # ANDROID configuration
 ANDROID_AC_BUILD([
 	AC_MSG_NOTICE([Compiling for Android])
@@ -226,7 +227,7 @@ ANDROID_AC_BUILD([
 		with_compression="no"
 	])
 #ANDROID else end
-])])
+])
 
 # Variables for Makefile.am
 AM_CONDITIONAL(DTNSEC, test x$with_dtnsec = xyes)
