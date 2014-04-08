@@ -48,7 +48,6 @@ public abstract class StatsChartFragment extends Fragment implements CustomLabel
 
     private static final String TAG = "StatsChartFragment";
     
-    private Object mServiceLock = new Object();
     private DaemonService mService = null;
     
     private LinearLayout mChartView = null;
@@ -61,9 +60,7 @@ public abstract class StatsChartFragment extends Fragment implements CustomLabel
     
     private ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName name, IBinder s) {
-            synchronized(mServiceLock) {
-                mService = ((LocalDTNService)s).getLocal();
-            }
+            mService = ((LocalDTNService)s).getLocal();
             if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "service connected");
 
             // initialize the loader
@@ -75,9 +72,7 @@ public abstract class StatsChartFragment extends Fragment implements CustomLabel
             getLoaderManager().destroyLoader(DB_LOADER_ID);
             getLoaderManager().destroyLoader(STATS_LOADER_ID);
 
-            synchronized(mServiceLock) {
-                mService = null;
-            }
+            mService = null;
             if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "service disconnected");
         }
     };
