@@ -87,7 +87,8 @@ MINGW_AC_BUILD([
 		WIN32_LIBS_EXTRA="-liphlpapi"
 		AC_SUBST(WIN32_LIBS_EXTRA)
 	], AC_ERROR([lib iphlpapi not found]))
-], [
+])
+
 # ANDROID configuration
 ANDROID_AC_BUILD([
 	AC_MSG_NOTICE([Compiling for Android])
@@ -363,7 +364,7 @@ ANDROID_AC_BUILD([
 		use_xml="no"
 	])
 #ANDROID else end
-])])
+])
 
 # Variables for Makefile.am
 AM_CONDITIONAL(OPENSSL, test x$use_openssl = xyes)
