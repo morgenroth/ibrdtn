@@ -51,7 +51,8 @@ MINGW_AC_BUILD([
 	AC_CHECK_LIB([ws2_32], [main],[LIBS="$LIBS -lws2_32"], AC_ERROR([lib ws2_32 not found]))
 
 	AC_ARG_ENABLE([ntservice], AS_HELP_STRING([--enable-ntservice], [Build an NT Service (win32 only)]))
-], [
+])
+
 # ANDROID configuration
 ANDROID_AC_BUILD([
 	AC_MSG_NOTICE([Compiling for Android])
@@ -304,7 +305,7 @@ ANDROID_AC_BUILD([
 		have_regex="no"
 	])
 #ANDROID else end
-])])
+])
 
 AM_CONDITIONAL(HAVE_PDFLATEX, test x$PDFLATEX = xpdflatex)
 AM_CONDITIONAL(CURL, test x$use_curl = xyes)
