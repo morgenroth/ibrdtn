@@ -285,9 +285,6 @@ namespace dtn
 			// we do only support version = 1
 			if (version != 1) return false;
 
-			// do not sync if the timestamps are equal in seconds
-			if (timestamp == dtn::utils::Clock::getTime()) return false;
-
 			// do not sync if the quality is worse than ours
 			if ((quality * (1 - _sync_state.sync_threshold)) <= dtn::utils::Clock::getRating()) return false;
 
