@@ -255,47 +255,56 @@ namespace dtn
 				// if synchronization is enabled
 				if (_sync)
 				{
+					float best_rating = 0.0;
+					dtn::data::EID best_peer;
+
 					// search for other nodes with better credentials
 					const std::set<dtn::core::Node> nodes = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
-					for (std::set<dtn::core::Node>::const_iterator iter = nodes.begin(); iter != nodes.end(); ++iter) {
-						if (shouldSyncWith(*iter)) {
-							syncWith(*iter);
+
+					// walk through all nodes and find the best peer to sync with
+					for (std::set<dtn::core::Node>::const_iterator iter = nodes.begin(); iter != nodes.end(); ++iter)
+					{
+						float rating = getPeerRating(*iter);
+
+						if (rating > best_rating) {
+							best_peer = (*iter).getEID();
+							best_rating = rating;
 						}
 					}
+
+					// sync with best found peer
+					if (!best_peer.isNone()) syncWith(best_peer);
 				}
 			} catch (const std::bad_cast&) { };
 		}
 
-		bool DTNTPWorker::shouldSyncWith(const dtn::core::Node &node) const
+		float DTNTPWorker::getPeerRating(const dtn::core::Node &node) const
 		{
 			// only query for time sync if the other node supports this
-			if (!node.has("dtntp")) return false;
+			if (!node.has("dtntp")) return 0.0;
 
 			// get discovery attribute
 			const std::list<dtn::core::Node::Attribute> attrs = node.get("dtntp");
 
-			if (attrs.empty()) return false;
+			if (attrs.empty()) return 0.0;
 
 			// decode attribute parameter
 			unsigned int version = 0;
 			dtn::data::Timestamp timestamp = 0;
-			float quality = 0.0;
-			decode(attrs.front(), version, timestamp, quality);
+			float rating = 0.0;
+			decode(attrs.front(), version, timestamp, rating);
 
 			// we do only support version = 1
-			if (version != 1) return false;
+			if (version != 1) return 0.0;
 
 			// do not sync if the quality is worse than ours
-			if ((quality * (1 - _sync_state.sync_threshold)) <= dtn::utils::Clock::getRating()) return false;
+			if ((rating * (1 - _sync_state.sync_threshold)) <= dtn::utils::Clock::getRating()) return false;
 
-			return true;
+			return rating;
 		}
 
-		void DTNTPWorker::syncWith(const dtn::core::Node &node)
+		void DTNTPWorker::syncWith(const dtn::data::EID &peer)
 		{
-			// get the EID of the peer
-			const dtn::data::EID &peer = node.getEID();
-
 			// check sync peers
 			{
 				ibrcommon::MutexLock l(_peer_lock);

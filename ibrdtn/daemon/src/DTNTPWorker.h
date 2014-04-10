@@ -168,13 +168,13 @@ namespace dtn
 			 * check if we should sync with another node
 			 * @param node
 			 */
-			bool shouldSyncWith(const dtn::core::Node &node) const;
+			float getPeerRating(const dtn::core::Node &node) const;
 
 			/**
 			 * Start sync'ing with another node
 			 * @param node
 			 */
-			void syncWith(const dtn::core::Node &node);
+			void syncWith(const dtn::data::EID &peer);
 
 			/**
 			 * Determine if this node is configured as reference or not
