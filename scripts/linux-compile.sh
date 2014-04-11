@@ -25,7 +25,7 @@ rm -rf ${DESTDIR}
 
 cd ibrcommon
 if [ ${CLEAN} -eq 1 ]; then
-    make clean
+    [ -f Makefile ] && make clean
     bash autogen.sh
     ./configure --prefix=${DESTDIR} --with-openssl --with-lowpan
 fi
@@ -35,7 +35,7 @@ cd ..
 
 cd ibrdtn/ibrdtn
 if [ ${CLEAN} -eq 1 ]; then
-    make clean
+    [ -f Makefile ] && make clean
     bash autogen.sh
     ./configure --prefix=${DESTDIR} --with-dtnsec --with-compression
 fi
@@ -45,7 +45,7 @@ cd ..
 
 cd daemon
 if [ ${CLEAN} -eq 1 ]; then
-    make clean
+    [ -f Makefile ] && make clean
     bash autogen.sh
     ./configure --prefix=${DESTDIR} --with-curl --with-lowpan --with-sqlite --with-dtnsec --with-compression --with-tls --with-cppunit 
 fi
