@@ -61,6 +61,7 @@ namespace io
 
 	private:
 		const FatImageReader &_reader;
+		const static std::string TAG;
 	};
 }
 #endif /* FATFILE_H_ */

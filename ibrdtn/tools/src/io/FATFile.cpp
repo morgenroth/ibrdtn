@@ -23,9 +23,12 @@
 
 #include "io/FATFile.h"
 #include "io/FatImageReader.h"
+#include <ibrcommon/Logger.h>
 
 namespace io
 {
+	const std::string FATFile::TAG = "FatFile";
+
 	FATFile::FATFile(const FatImageReader &reader)
 	 : ibrcommon::File("/", DT_DIR), _reader(reader)
 	{
@@ -48,6 +51,7 @@ namespace io
 		} catch (const FatImageReader::FatImageException &e) {
 			return e.getErrorCode();
 		}
+		IBRCOMMON_LOGGER_TAG(TAG,notice) << "getFile returning " << files.size() << " files" << IBRCOMMON_LOGGER_ENDL;
 		return 0;
 	}
 
