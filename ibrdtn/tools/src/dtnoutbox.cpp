@@ -30,6 +30,7 @@
 #include <ibrcommon/data/BLOB.h>
 #include <ibrcommon/data/File.h>
 #include <ibrcommon/appstreambuf.h>
+#include <ibrcommon/Logger.h>
 
 #include "io/TarUtils.h"
 #include "io/ObservedFile.h"
@@ -57,6 +58,8 @@ bool _running = true;
 //global wait conditional
 ibrcommon::Conditional _wait_cond;
 bool _wait_abort = false;
+
+const std::string TAG = "dtnoutbox";
 
 class config {
 public:
@@ -99,6 +102,32 @@ struct option long_options[] =
 	{"quiet", no_argument, 0, 'q'},
 	{0, 0, 0, 0}
 };
+
+void init_logger()
+{
+	// logging options
+	const unsigned char logopts = 0;
+
+	// error filter
+	const unsigned char logerr = ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT;
+
+	// logging filter, everything but debug, err and crit
+	const unsigned char logstd = ibrcommon::Logger::LOGGER_ALL ^ (ibrcommon::Logger::LOGGER_DEBUG | logerr);
+
+	// syslog filter, everything but DEBUG and NOTICE
+	const unsigned char logsys = ibrcommon::Logger::LOGGER_ALL ^ (ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_NOTICE);
+
+	const unsigned char logall = ibrcommon::Logger::LOGGER_ALL;
+	// add logging to the cout
+	//ibrcommon::Logger::addStream(std::cout, logstd, logopts);
+
+	// add logging to the cerr
+	//ibrcommon::Logger::addStream(std::cerr, logerr, logopts);
+
+	// add logging to the cerr TODO
+	ibrcommon::Logger::addStream(std::cout, logall, logopts);
+}
+
 void print_help()
 {
 	std::cout << "-- dtnoutbox (IBR-DTN) --" << std::endl;
@@ -207,7 +236,7 @@ void read_configuration(int argc, char** argv, config_t &conf)
 	//compile regex, if set
 	if (conf.regex_str.length() > 0 && regcomp(&conf.regex,conf.regex_str.c_str(),0))
 	{
-		std::cout << "ERROR: invalid regex: " << optarg << std::endl;
+		IBRCOMMON_LOGGER_TAG(TAG,error) << "ERROR: invalid regex: " << optarg << IBRCOMMON_LOGGER_ENDL;
 		exit(-1);
 	}
 
@@ -219,6 +248,7 @@ void read_configuration(int argc, char** argv, config_t &conf)
 
 void sighandler_func(int signal)
 {
+	IBRCOMMON_LOGGER_TAG(TAG,info) << "got signal " << signal << IBRCOMMON_LOGGER_ENDL;
 	switch (signal)
 	{
 	case SIGTERM:
@@ -260,6 +290,8 @@ int main( int argc, char** argv )
 
 	// configration object
 	config_t conf;
+
+	init_logger();
 
 	// read the configuration
 	read_configuration(argc, argv, conf);
@@ -303,7 +335,7 @@ int main( int argc, char** argv )
 		const io::FATFile fat_root(*imagereader, conf.path);
 		root = io::ObservedFile(fat_root);
 #else
-		std::cout << "ERROR: image-file provided, but this tool has been compiled without libtffs support!" << std::endl;
+		IBRCOMMON_LOGGER_TAG(TAG,error) << "ERROR: image-file provided, but this tool has been compiled without libtffs support!" << IBRCOMMON_LOGGER_ENDL;
 		return -1;
 #endif
 	}
@@ -315,7 +347,10 @@ int main( int argc, char** argv )
 		root = io::ObservedFile(outbox_file);
 	}
 
-	if (!conf.quiet) std::cout << "-- dtnoutbox --" << std::endl;
+	if (!conf.quiet)
+	{
+		IBRCOMMON_LOGGER_TAG(TAG,info) << "-- dtnoutbox --" << IBRCOMMON_LOGGER_ENDL;
+	}
 
 	// loop, if no stop if requested
 	while (_running)
@@ -365,7 +400,10 @@ int main( int argc, char** argv )
 					observed_files.remove(deletedFile);
 
 					// output
-					if (!conf.quiet) std::cout << "file removed: " << deletedFile.getFile().getBasename() << std::endl;
+					if (!conf.quiet)
+					{
+						IBRCOMMON_LOGGER_TAG(TAG,info) << "file removed: " << deletedFile.getFile().getBasename() << IBRCOMMON_LOGGER_ENDL;
+					}
 				}
 
 				// determine new files
@@ -388,14 +426,17 @@ int main( int argc, char** argv )
 					{
 							char msgbuf[100];
 							regerror(reg_ret,&conf.regex,msgbuf,sizeof(msgbuf));
-							std::cerr << "ERROR: regex match failed : " << std::string(msgbuf) << std::endl;
+							IBRCOMMON_LOGGER_TAG(TAG,error) << "ERROR: regex match failed : " << std::string(msgbuf) << IBRCOMMON_LOGGER_ENDL;
 					}
 
 					// add new file to the observed set
 					observed_files.push_back(of);
 
 					// log output
-					if (!conf.quiet) std::cout << "file found: " << of.getFile().getBasename() << std::endl;
+					if (!conf.quiet)
+					{
+						IBRCOMMON_LOGGER_TAG(TAG, info) << "file found: " << of.getFile().getBasename() << IBRCOMMON_LOGGER_ENDL;
+					}
 				}
 
 				// store current files for the next round
@@ -422,15 +463,23 @@ int main( int argc, char** argv )
 					}
 				}
 
+				IBRCOMMON_LOGGER_TAG(TAG,notice)
+						<< "file statistics: "
+						<< observed_files.size() << " observed, "
+						<< deleted_files.size() << " deleted,"
+						<< new_files.size() << " new"
+						<< IBRCOMMON_LOGGER_ENDL;
+
+
 				if (!files_to_send.empty())
 				{
 					if (!conf.quiet)
 					{
-						std::cout << "send files: ";
+						std::stringstream ss;
 						for (fileset::const_iterator it = files_to_send.begin(); it != files_to_send.end(); ++it) {
-							std::cout << (*it).getFile().getBasename() << " ";
+							ss << (*it).getFile().getBasename() << " ";
 						}
-						std::cout << std::endl;
+						IBRCOMMON_LOGGER_TAG("dtnoutbox",info) << "files sent: " << ss.str() << IBRCOMMON_LOGGER_ENDL;
 					}
 
 					try {
@@ -463,12 +512,13 @@ int main( int argc, char** argv )
 						client << b;
 						client.flush();
 					} catch (const ibrcommon::IOException &e) {
-						std::cerr << "send failed: " << e.what() << std::endl;
+						IBRCOMMON_LOGGER_TAG(TAG,error) << "send failed: " << e.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 				}
 
 				// wait defined seconds
 				ibrcommon::MutexLock l(_wait_cond);
+				IBRCOMMON_LOGGER_TAG(TAG, notice) << conf.interval <<" ms wait" << IBRCOMMON_LOGGER_ENDL;
 				while (!_wait_abort && _running) {
 					_wait_cond.wait(conf.interval);
 				}
@@ -489,7 +539,7 @@ int main( int argc, char** argv )
 		{
 			if (_running)
 			{
-				std::cout << "Connection to bundle daemon failed. Retry in " << backoff << " seconds." << std::endl;
+				IBRCOMMON_LOGGER_TAG(TAG,error) << "Connection to bundle daemon failed. Retry in " << backoff << " seconds." << IBRCOMMON_LOGGER_ENDL;
 				ibrcommon::Thread::sleep(backoff * 1000);
 
 				// if backoff < 10 minutes
@@ -504,7 +554,7 @@ int main( int argc, char** argv )
 		{
 			if (_running)
 			{
-				std::cout << "Connection to bundle daemon failed. Retry in " << backoff << " seconds." << std::endl;
+				IBRCOMMON_LOGGER_TAG(TAG,error) << "Connection to bundle daemon failed. Retry in " << backoff << " seconds." << IBRCOMMON_LOGGER_ENDL;
 				ibrcommon::Thread::sleep(backoff * 1000);
 
 				// if backoff < 10 minutes
