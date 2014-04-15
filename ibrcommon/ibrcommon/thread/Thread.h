@@ -118,6 +118,14 @@ namespace ibrcommon
 		static void sleep(time_t timeout);
 
 		/**
+		 * Test if thread is currently running.
+		 * @return true while thread is running.
+		 */
+		inline bool isRunning(void)
+			{ return _state == THREAD_RUNNING; };
+
+	protected:
+		/**
 		 * This method is called before the run.
 		 */
 		virtual void setup(void) throw ()  { };
@@ -149,12 +157,9 @@ namespace ibrcommon
 		 * @param other The thread to compare.
 		 * @return True, if both threads are the same.
 		 */
-		bool operator==(const ibrcommon::Thread &other)
-		{
-			return (equal(other.tid, tid) != 0);
-		}
+		inline bool operator==(const ibrcommon::Thread &other)
+			{ return (equal(other.tid, tid) != 0); }
 
-	protected:
 		/**
 		 * sends a signal to this thread
 		 * @param sig
@@ -192,7 +197,7 @@ namespace ibrcommon
 	 * exits.
 	 * @author David Sugar <dyfet@gnutelephony.org>
 	 */
-	class JoinableThread : protected Thread
+	class JoinableThread : public Thread
 	{
 	protected:
 		/**
@@ -214,13 +219,6 @@ namespace ibrcommon
 		 * Threads should always return through their run() method.
 		 */
 		void join(void) throw (ThreadException);
-
-		/**
-		 * Test if thread is currently running.
-		 * @return true while thread is running.
-		 */
-		inline bool isRunning(void)
-			{ return _state == THREAD_RUNNING; };
 
 		/**
 		 * Start execution of child context.  This must be called after the
@@ -245,7 +243,7 @@ namespace ibrcommon
 	 * exiting, or explicity calling the exit member function.
 	 * @author David Sugar <dyfet@gnutelephony.org>
 	 */
-	class DetachedThread : protected Thread
+	class DetachedThread : public Thread
 	{
 	protected:
 		/**
