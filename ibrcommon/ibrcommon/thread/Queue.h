@@ -279,6 +279,8 @@ namespace ibrcommon
 
 			void push(const T &p)
 			{
+				if (_limit) _queue._sem.wait();
+
 				_queue._queue.push(p);
 				_changed = true;
 			}
