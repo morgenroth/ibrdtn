@@ -155,7 +155,7 @@ namespace dtn
 
 		Registration::NOTIFY_CALL Registration::wait()
 		{
-			return _notify_queue.getnpop(true);
+			return _notify_queue.poll();
 		}
 
 		bool Registration::hasSubscribed(const dtn::data::EID &endpoint)
@@ -356,7 +356,7 @@ namespace dtn
 
 		dtn::data::MetaBundle Registration::RegistrationQueue::pop() throw (const ibrcommon::QueueUnblockedException)
 		{
-			return _queue.getnpop(false);
+			return _queue.take();
 		}
 
 		bool Registration::RegistrationQueue::has(const dtn::data::BundleID &bundle) const throw ()

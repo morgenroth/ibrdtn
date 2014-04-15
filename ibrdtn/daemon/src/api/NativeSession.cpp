@@ -234,7 +234,7 @@ namespace dtn
 		void NativeSession::next(RegisterIndex ri) throw (BundleNotFoundException)
 		{
 			try {
-				const dtn::data::BundleID id = _bundle_queue.getnpop();
+				const dtn::data::BundleID id = _bundle_queue.take();
 
 				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Next bundle in queue is " << id.toString() << IBRCOMMON_LOGGER_ENDL;
 

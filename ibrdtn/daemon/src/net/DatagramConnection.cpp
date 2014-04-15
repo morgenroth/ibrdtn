@@ -779,7 +779,7 @@ namespace dtn
 				while(_stream.good())
 				{
 					// get the next job
-					dtn::net::BundleTransfer job = queue.getnpop(true);
+					dtn::net::BundleTransfer job = queue.poll();
 
 					try {
 						// read the bundle out of the storage

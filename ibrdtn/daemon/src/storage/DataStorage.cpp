@@ -121,7 +121,7 @@ namespace dtn
 			try {
 				while (true)
 				{
-					Task *t = _tasks.getnpop(false);
+					Task *t = _tasks.take();
 					delete t;
 				}
 			} catch (const ibrcommon::QueueUnblockedException&) {
@@ -205,7 +205,8 @@ namespace dtn
 			try {
 				while (true)
 				{
-					Task *t = _tasks.get(true);
+					_tasks.wait(ibrcommon::Queue<Task*>::QUEUE_NOT_EMPTY);
+					Task *t = _tasks.front();
 
 					try {
 						StoreDataTask &store = dynamic_cast<StoreDataTask&>(*t);

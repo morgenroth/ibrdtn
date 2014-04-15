@@ -192,7 +192,7 @@ namespace dtn
 			while (true)
 			{
 				try {
-					Task *t = _taskqueue.getnpop(true);
+					Task *t = _taskqueue.poll();
 					std::auto_ptr<Task> killer(t);
 
 					IBRCOMMON_LOGGER_DEBUG_TAG(FloodRoutingExtension::TAG, 50) << "processing task " << t->toString() << IBRCOMMON_LOGGER_ENDL;

@@ -100,7 +100,7 @@ namespace dtn
 		void BinaryStreamClient::eventBundleRefused() throw ()
 		{
 			try {
-				const dtn::data::Bundle bundle = _sentqueue.getnpop();
+				const dtn::data::Bundle bundle = _sentqueue.take();
 
 				// set ACK to zero
 				_lastack = 0;
@@ -113,7 +113,7 @@ namespace dtn
 		void BinaryStreamClient::eventBundleForwarded() throw ()
 		{
 			try {
-				const dtn::data::Bundle bundle = _sentqueue.getnpop();
+				const dtn::data::Bundle bundle = _sentqueue.take();
 				const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(bundle);
 
 				// notify bundle as delivered

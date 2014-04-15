@@ -151,7 +151,7 @@ namespace dtn
 				std::list<const StaticRoute*> routes;
 
 				try {
-					Task *t = _taskqueue.getnpop(true);
+					Task *t = _taskqueue.poll();
 					std::auto_ptr<Task> killer(t);
 
 					IBRCOMMON_LOGGER_DEBUG_TAG(StaticRoutingExtension::TAG, 5) << "processing task " << t->toString() << IBRCOMMON_LOGGER_ENDL;

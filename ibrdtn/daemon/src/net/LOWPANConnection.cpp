@@ -128,7 +128,7 @@ namespace dtn
 			try {
 				while(_stream.good())
 				{
-					dtn::net::BundleTransfer job = _queue.getnpop(true);
+					dtn::net::BundleTransfer job = _queue.poll();
 					dtn::data::DefaultSerializer serializer(_stream);
 
 					IBRCOMMON_LOGGER_DEBUG_TAG("LOWPANConnectionSender", 85) << "run"<< IBRCOMMON_LOGGER_ENDL;

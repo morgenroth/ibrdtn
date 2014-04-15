@@ -102,7 +102,7 @@ namespace dtn
 			try {
 				while (_running)
 				{
-					dtn::data::BundleID id = _receive_bundles.getnpop(true);
+					dtn::data::BundleID id = _receive_bundles.poll();
 
 					try {
 						dtn::data::Bundle b = storage.get( id );

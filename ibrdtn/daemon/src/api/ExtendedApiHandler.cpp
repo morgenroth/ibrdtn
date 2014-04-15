@@ -443,7 +443,7 @@ namespace dtn
 
 							if (cmd[2] == "queue")
 							{
-								id = _bundle_queue.getnpop();
+								id = _bundle_queue.take();
 							}
 							else
 							{

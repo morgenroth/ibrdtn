@@ -91,7 +91,7 @@ namespace dtn
 			try {
 				while (true)
 				{
-					Task *t = _tasks.getnpop(true);
+					Task *t = _tasks.poll();
 
 					try {
 						switch (t->action)

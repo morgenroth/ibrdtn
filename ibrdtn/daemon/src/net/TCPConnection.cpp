@@ -649,7 +649,7 @@ namespace dtn
 
 				while (stream.good())
 				{
-					dtn::net::BundleTransfer transfer = ibrcommon::Queue<dtn::net::BundleTransfer>::getnpop(true);
+					dtn::net::BundleTransfer transfer = ibrcommon::Queue<dtn::net::BundleTransfer>::poll(true);
 
 					// check if the transfer is directed to the connected neighbor
 					if (transfer.getNeighbor() != _connection.getNode().getEID()) continue;

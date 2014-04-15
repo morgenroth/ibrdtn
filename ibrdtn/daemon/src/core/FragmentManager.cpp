@@ -80,7 +80,7 @@ namespace dtn
 			try {
 				while (_running)
 				{
-					dtn::data::MetaBundle meta = _incoming.getnpop(true);
+					dtn::data::MetaBundle meta = _incoming.poll();
 
 					// skip merge if complete bundle is already in the storage
 					dtn::data::BundleID origin(meta);

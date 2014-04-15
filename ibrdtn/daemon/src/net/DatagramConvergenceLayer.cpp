@@ -384,7 +384,7 @@ namespace dtn
 			try {
 				while (_running || (_connections.size() > 0))
 				{
-					Action *action = _action_queue.getnpop(true);
+					Action *action = _action_queue.poll();
 
 					IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "processing task" << IBRCOMMON_LOGGER_ENDL;
 

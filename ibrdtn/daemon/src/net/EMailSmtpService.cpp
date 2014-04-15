@@ -131,7 +131,7 @@ namespace dtn
 
 				try {
 					// Get Task
-					Task *t = _queue.getnpop(true, _config.getSmtpKeepAliveTimeout());
+					Task *t = _queue.poll(_config.getSmtpKeepAliveTimeout());
 
 					//Check if bundle is still in the storage
 					if ( ! _storage.contains(t->getJob().getBundle()) )
