@@ -55,7 +55,7 @@ namespace ibrcommon
 	void SignalHandler::run(void) throw ()
 	{
 		try {
-			int signal = _signal_queue.getnpop(true);
+			int signal = _signal_queue.poll();
 			_handler(signal);
 		} catch (const ibrcommon::QueueUnblockedException &e) {
 			// unblocked

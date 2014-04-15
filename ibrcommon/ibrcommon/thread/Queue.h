@@ -143,55 +143,49 @@ namespace ibrcommon
 			__pop();
 		}
 
-		T get(bool blocking = false, size_t timeout = 0) throw (QueueUnblockedException)
+		/**
+		 * Retrieves and removes the head of this queue.
+		 * If the queue is empty an QueueUnblockedException is thrown.
+		 *
+		 * @return The next element of the queue
+		 */
+		T take() throw (QueueUnblockedException)
 		{
 			try {
 				ibrcommon::MutexLock l(_cond);
 				if (_queue.empty())
 				{
-					if (blocking)
-					{
-						if (timeout == 0)
-						{
-							__wait(QUEUE_NOT_EMPTY);
-						}
-						else
-						{
-							__wait(QUEUE_NOT_EMPTY, timeout);
-						}
-					}
-					else
-					{
-						throw QueueUnblockedException(QueueUnblockedException::QUEUE_ABORT, "getnpop(): queue is empty!");
-					}
+					throw QueueUnblockedException(QueueUnblockedException::QUEUE_ABORT, "take(): queue is empty!");
 				}
 
-				return _queue.front();
+				T ret = _queue.front();
+				__pop();
+				return ret;
 			} catch (const ibrcommon::Conditional::ConditionalAbortException &ex) {
-				throw QueueUnblockedException(ex, "getnpop()");
+				throw QueueUnblockedException(ex, "take()");
 			}
 		}
 
-		T getnpop(bool blocking = false, size_t timeout = 0) throw (QueueUnblockedException)
+		/**
+		 * Retrieves and removes the head of this queue, waiting if necessary up
+		 * to the specified wait time if no elements are present on this queue.
+		 *
+		 * @param timeout A timeout in milliseconds
+		 * @return The next element of the queue
+		 */
+		T poll(size_t timeout = 0) throw (QueueUnblockedException)
 		{
 			try {
 				ibrcommon::MutexLock l(_cond);
 				if (_queue.empty())
 				{
-					if (blocking)
+					if (timeout == 0)
 					{
-						if (timeout == 0)
-						{
-							__wait(QUEUE_NOT_EMPTY);
-						}
-						else
-						{
-							__wait(QUEUE_NOT_EMPTY, timeout);
-						}
+						__wait(QUEUE_NOT_EMPTY);
 					}
 					else
 					{
-						throw QueueUnblockedException(QueueUnblockedException::QUEUE_ABORT, "getnpop(): queue is empty!");
+						__wait(QUEUE_NOT_EMPTY, timeout);
 					}
 				}
 
@@ -199,7 +193,7 @@ namespace ibrcommon
 				__pop();
 				return ret;
 			} catch (const ibrcommon::Conditional::ConditionalAbortException &ex) {
-				throw QueueUnblockedException(ex, "getnpop()");
+				throw QueueUnblockedException(ex, "poll()");
 			}
 		}
 

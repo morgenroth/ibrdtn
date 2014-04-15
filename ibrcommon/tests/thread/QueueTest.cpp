@@ -49,7 +49,7 @@ void QueueTest::TestThread::run() throw ()
 	try {
 		while (true)
 		{
-			std::string data = _queue.getnpop(true);
+			std::string data = _queue.poll();
 			_count++;
 
 			if (_time > 0) ibrcommon::Thread::sleep(_time);

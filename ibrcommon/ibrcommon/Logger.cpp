@@ -619,7 +619,7 @@ namespace ibrcommon
 		try {
 			while (true)
 			{
-				Logger log = _queue.getnpop(true);
+				Logger log = _queue.poll();
 				flush(log);
 
 				// add to ring-buffer
