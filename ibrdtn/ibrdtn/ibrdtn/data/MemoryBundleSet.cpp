@@ -62,8 +62,14 @@ namespace dtn
 			set->_consistent = _consistent;
 
 			// copy bundles
-			set->_bundles = _bundles;
-			set->_expire = _expire;
+			set->_bundles.insert(_bundles.begin(), _bundles.end());
+
+			// create a new expiration set
+			for (bundle_set::const_iterator it = set->_bundles.begin(); it != set->_bundles.end(); ++it)
+			{
+				BundleSetImpl::ExpiringBundle exb(*it);
+				set->_expire.insert(exb);
+			}
 
 			return refcnt_ptr<BundleSetImpl>(set);
 		}
@@ -73,20 +79,31 @@ namespace dtn
 			// clear all bundles first
 			clear();
 
-			// cast the given set to a MemoryBundleSet
-			const MemoryBundleSet *set = dynamic_cast<const MemoryBundleSet*>(other.getPointer());
+			try {
+				// cast the given set to a MemoryBundleSet
+				const MemoryBundleSet &set = dynamic_cast<const MemoryBundleSet&>(*other);
 
-			// incompatible bundle-set implementation - abort here
-			if (set == NULL) return;
+				// copy Bloom-filter
+				_bf_size = set._bf_size;
+				_bf = set._bf;
+				_consistent = set._consistent;
 
-			// copy Bloom-filter
-			_bf_size = set->_bf_size;
-			_bf = set->_bf;
-			_consistent = set->_consistent;
+				// clear bundles and expiration set
+				_bundles.clear();
+				_expire.clear();
 
-			// copy bundles
-			_bundles = set->_bundles;
-			_expire = set->_expire;
+				// copy bundles
+				_bundles.insert(set._bundles.begin(), set._bundles.end());
+
+				// create a new expiration set
+				for (bundle_set::const_iterator it = _bundles.begin(); it != _bundles.end(); ++it)
+				{
+					BundleSetImpl::ExpiringBundle exb(*it);
+					_expire.insert(exb);
+				}
+			} catch (const std::bad_cast&) {
+				// incompatible bundle-set implementation - abort here
+			}
 		}
 
 		void MemoryBundleSet::add(const dtn::data::MetaBundle &bundle) throw ()
@@ -259,17 +276,17 @@ namespace dtn
 			if (!__store_path__.exists())
 			ibrcommon::File::createDirectory(__store_path__);
 
-			//delete file for bundles, if it exists
+			// delete file for bundles, if it exists
 			std::stringstream ss; ss << __store_path__.getPath() << "/" << _name;
 			ibrcommon::File path_bundles(ss.str().c_str());
 			if(path_bundles.exists())
 			path_bundles.remove();
 
-			//open file
+			// open file
 			ofstream output_file;
 			output_file.open(path_bundles.getPath().c_str());
 
-			//write number of bundles
+			// write number of bundles
 			output_file << _bundles.size();
 
 			bundle_set::iterator iter = _bundles.begin();
@@ -289,14 +306,13 @@ namespace dtn
 			std::stringstream ss; ss << __store_path__.getPath() << "/" << _name;
 			ibrcommon::File path_bundles(ss.str().c_str());
 
-			//abort if storage files does not exist
-			if(!path_bundles.exists())
-			return;
+			// abort if storage files does not exist
+			if (!path_bundles.exists()) return;
 
 			ifstream input_file;
 			input_file.open(ss.str().c_str());
 
-			//read number of bundles
+			// read number of bundles
 			size_t num_bundles;
 			input_file >> num_bundles;
 			size_t i = 0;
@@ -304,7 +320,7 @@ namespace dtn
 			{
 				MetaBundle b;
 				input_file >> b;
-				_bundles.insert(b);
+				add(b);
 				i++;
 			}
 
