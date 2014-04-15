@@ -182,26 +182,27 @@ namespace dtn
 			clear();
 
 			// cast the given set to a MemoryBundleSet
-			const SQLiteBundleSet *set = dynamic_cast<const SQLiteBundleSet*>(other.getPointer());
-
-			// incompatible bundle-set implementation - abort here
-			if (set == NULL) return;
-
-			// copy Bloom-filter
-			_bf_size = set->_bf_size;
-			_bf = set->_bf;
-			_consistent = set->_consistent;
-			_next_expiration = set->_next_expiration;
-
-			// copy all entries
 			try {
-				SQLiteDatabase::Statement st(_sqldb._database, SQLiteDatabase::_sql_queries[SQLiteDatabase::BUNDLE_SET_COPY]);
-				sqlite3_bind_int64(*st, 1, _set_id);	// destination
-				sqlite3_bind_int64(*st, 2, set->_set_id);	// source
+				const SQLiteBundleSet &set = dynamic_cast<const SQLiteBundleSet&>(*other);
 
-				st.step();
-			} catch (const SQLiteDatabase::SQLiteQueryException&) {
-				// error
+				// copy Bloom-filter
+				_bf_size = set._bf_size;
+				_bf = set._bf;
+				_consistent = set._consistent;
+				_next_expiration = set._next_expiration;
+
+				// copy all entries
+				try {
+					SQLiteDatabase::Statement st(_sqldb._database, SQLiteDatabase::_sql_queries[SQLiteDatabase::BUNDLE_SET_COPY]);
+					sqlite3_bind_int64(*st, 1, _set_id);	// destination
+					sqlite3_bind_int64(*st, 2, set._set_id);	// source
+
+					st.step();
+				} catch (const SQLiteDatabase::SQLiteQueryException&) {
+					// error
+				}
+			} catch (const std::bad_cast&) {
+				// incompatible bundle-set implementation - abort here
 			}
 		}
 
