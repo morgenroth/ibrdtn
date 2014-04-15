@@ -28,7 +28,7 @@
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/Conditional.h>
 
-#include <list>
+#include <queue>
 #include <map>
 
 namespace dtn
@@ -77,9 +77,9 @@ namespace dtn
 			};
 
 			ibrcommon::Conditional _queue_cond;
-			std::list<Task*> _queue;
-			std::list<Task*> _prio_queue;
-			std::list<Task*> _low_queue;
+			std::queue<Task*> _queue;
+			std::queue<Task*> _prio_queue;
+			std::queue<Task*> _low_queue;
 
 			void process();
 

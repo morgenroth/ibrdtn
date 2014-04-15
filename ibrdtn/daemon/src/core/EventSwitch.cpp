@@ -49,9 +49,9 @@ namespace dtn
 			// routine checked for throw() on 15.02.2013
 
 			// clear all queues
-			_queue.clear();
-			_prio_queue.clear();
-			_low_queue.clear();
+			_queue = std::queue<Task*>();
+			_prio_queue = std::queue<Task*>();
+			_low_queue = std::queue<Task*>();
 
 			// reset component state
 			_running = true;
@@ -101,17 +101,17 @@ namespace dtn
 				if (!_prio_queue.empty())
 				{
 					t = _prio_queue.front();
-					_prio_queue.pop_front();
+					_prio_queue.pop();
 				}
 				else if (!_queue.empty())
 				{
 					t = _queue.front();
-					_queue.pop_front();
+					_queue.pop();
 				}
 				else if (!_low_queue.empty())
 				{
 					t = _low_queue.front();
-					_low_queue.pop_front();
+					_low_queue.pop();
 				}
 				else if (_shutdown)
 				{
@@ -183,15 +183,15 @@ namespace dtn
 
 			if (evt->prio > 0)
 			{
-				s._prio_queue.push_back(t);
+				s._prio_queue.push(t);
 			}
 			else if (evt->prio < 0)
 			{
-				s._low_queue.push_back(t);
+				s._low_queue.push(t);
 			}
 			else
 			{
-				s._queue.push_back(t);
+				s._queue.push(t);
 			}
 			s._queue_cond.signal();
 		}
