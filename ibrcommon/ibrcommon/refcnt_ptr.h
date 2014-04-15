@@ -88,13 +88,21 @@ template <class T> class refcnt_ptr
 			return *this;
 		}
 
+		bool operator==(const T *other) const
+		{
+			return h_->ptr_ == other;
+		}
+
+		bool operator==(const refcnt_ptr<T> &other) const
+		{
+			return h_->ptr_ == other.h_->ptr_;
+		}
+
 		// access to the managed object
 		T* operator-> () { return h_->ptr_; }
 		T& operator* () { return *h_->ptr_; }
-		T* getPointer() { return h_->ptr_; }
 
 		const T* operator-> () const { return h_->ptr_; }
 		const T& operator* () const { return *h_->ptr_; }
-		const T* getPointer() const { return h_->ptr_; }
 };
 #endif
