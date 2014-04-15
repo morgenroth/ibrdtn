@@ -267,12 +267,12 @@ namespace ibrcommon
 				return _queue._queue.front();
 			}
 
-			bool empty()
+			bool empty() const
 			{
 				return _queue._queue.empty();
 			}
 
-			size_t size()
+			size_t size() const
 			{
 				return _queue._queue.size();
 			}
@@ -295,12 +295,6 @@ namespace ibrcommon
 		}
 
 	protected:
-		void __push( const T& x )
-		{
-			_queue.push(x);
-			_cond.signal(true);
-		}
-
 		void __pop()
 		{
 			if (!_queue.empty())
