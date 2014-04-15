@@ -22,6 +22,7 @@
 #ifndef IBRCOMMON_SEMAPHORE_H_
 #define IBRCOMMON_SEMAPHORE_H_
 
+#include "ibrcommon/thread/Mutex.h"
 #include <sys/types.h>
 
 #ifdef HAVE_SYS_SEMAPHORE_H
@@ -32,7 +33,7 @@
 
 namespace ibrcommon
 {
-	class Semaphore
+	class Semaphore : public MutexInterface
 	{
 		public:
 			Semaphore(unsigned int value = 0);
@@ -41,6 +42,9 @@ namespace ibrcommon
 			void wait();
 			void post();
 
+			void trylock() throw (MutexException);
+			void enter() throw (MutexException);
+			void leave() throw (MutexException);
 		private:
 			sem_t count_sem;
 	};
