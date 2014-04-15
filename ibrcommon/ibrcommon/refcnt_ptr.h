@@ -46,12 +46,12 @@ template <class T> class refcnt_ptr
 	private:
 		void down()
 		{
-			try {
+			bool final = false;
+			{
 				ibrcommon::MutexLock l(h_->lock);
-				if (--h_->count_ == 0) throw true;
-			} catch (const bool&) {
-				delete h_;
+				if (--h_->count_ == 0) final = true;
 			}
+			if (final) delete h_;
 		}
 
 	public:
