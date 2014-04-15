@@ -100,7 +100,7 @@ namespace dtn
 		{
 			for (iterator it = begin(); it != end(); ++it)
 			{
-				dtn::data::Block *b = (*it).getPointer();
+				const refcnt_ptr<Block> &b = (*it);
 				if (b == &block)
 				{
 					erase(it);

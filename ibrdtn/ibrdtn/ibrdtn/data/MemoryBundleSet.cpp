@@ -73,20 +73,21 @@ namespace dtn
 			// clear all bundles first
 			clear();
 
-			// cast the given set to a MemoryBundleSet
-			const MemoryBundleSet *set = dynamic_cast<const MemoryBundleSet*>(other.getPointer());
+			try {
+				// cast the given set to a MemoryBundleSet
+				const MemoryBundleSet &set = dynamic_cast<const MemoryBundleSet&>(*other);
 
-			// incompatible bundle-set implementation - abort here
-			if (set == NULL) return;
+				// copy Bloom-filter
+				_bf_size = set._bf_size;
+				_bf = set._bf;
+				_consistent = set._consistent;
 
-			// copy Bloom-filter
-			_bf_size = set->_bf_size;
-			_bf = set->_bf;
-			_consistent = set->_consistent;
-
-			// copy bundles
-			_bundles = set->_bundles;
-			_expire = set->_expire;
+				// copy bundles
+				_bundles = set._bundles;
+				_expire = set._expire;
+			} catch (const std::bad_cast&) {
+				// incompatible bundle-set implementation - abort here
+			}
 		}
 
 		void MemoryBundleSet::add(const dtn::data::MetaBundle &bundle) throw ()
