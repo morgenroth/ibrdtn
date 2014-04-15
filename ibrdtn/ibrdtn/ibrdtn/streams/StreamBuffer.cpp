@@ -546,7 +546,7 @@ namespace dtn
 								}
 								else try
 								{
-									StreamDataSegment qs = _segments.getnpop();
+									StreamDataSegment qs = _segments.take();
 
 									// we received a NACK
 									IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 20) << "NACK received!" << IBRCOMMON_LOGGER_ENDL;

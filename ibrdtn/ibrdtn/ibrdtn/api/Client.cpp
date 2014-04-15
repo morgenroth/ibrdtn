@@ -209,7 +209,7 @@ namespace dtn
 		dtn::data::Bundle Client::getBundle(const dtn::data::Timeout timeout) throw (ConnectionException)
 		{
 			try {
-				return _inqueue.getnpop(true, timeout * 1000);
+				return _inqueue.poll(timeout * 1000);
 			} catch (const ibrcommon::QueueUnblockedException &ex) {
 				if (ex.reason == ibrcommon::QueueUnblockedException::QUEUE_TIMEOUT)
 				{
