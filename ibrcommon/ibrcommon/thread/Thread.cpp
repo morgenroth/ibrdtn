@@ -212,11 +212,6 @@ namespace ibrcommon
 		return (pthread_equal(t1, t2) != 0);
 	}
 
-	bool Thread::isFinalized() throw ()
-	{
-		return _state == THREAD_FINALIZED;
-	}
-
 	JoinableThread::JoinableThread(size_t size)
 	 : Thread(size)
 	{

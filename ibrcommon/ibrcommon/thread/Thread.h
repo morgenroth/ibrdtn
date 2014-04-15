@@ -141,7 +141,8 @@ namespace ibrcommon
 		/**
 		 * Returns true if this thread was started and finalized before.
 		 */
-		bool isFinalized() throw ();
+		inline bool isFinalized(void) throw ()
+			{ return _state == THREAD_FINALIZED; };
 
 		/**
 		 * Determine if two thread identifiers refer to the same thread.
