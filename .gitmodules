@@ -1,3 +1,6 @@
 [submodule "android/speex"]
 	path = android/speex
 	url = https://github.com/yayanyang/speex-android.git
+[submodule "android/android-quick-response-code"]
+	path = android/android-quick-response-code
+	url = https://github.com/TechSmith/android-quick-response-code.git
