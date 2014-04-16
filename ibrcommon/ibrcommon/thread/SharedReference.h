@@ -22,7 +22,8 @@
 #ifndef SHAREDREFERENCE_H_
 #define SHAREDREFERENCE_H_
 
-#include "ibrcommon/thread/RWLock.h"
+#include "ibrcommon/thread/RWMutex.h"
+#include "ibrcommon/thread/MutexLock.h"
 #include "ibrcommon/Exceptions.h"
 
 namespace ibrcommon {
@@ -32,7 +33,7 @@ namespace ibrcommon {
 	{
 	public:
 		SharedReference(T* ref, RWMutex& mutex)
-			: _item(ref), _l(mutex, RWMutex::LOCK_READONLY)
+			: _item(ref), _l(mutex)
 		{}
 
 		T& operator*() const throw (ibrcommon::Exception)
@@ -43,7 +44,7 @@ namespace ibrcommon {
 
 	private:
 		T* _item;
-		RWLock _l;
+		MutexLock _l;
 	};
 
 } // namespace ibrcommon

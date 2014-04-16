@@ -27,24 +27,21 @@
 
 namespace ibrcommon
 {
-	class RWMutex
+	class RWMutex : public MutexInterface
 	{
 	public:
-		enum LockState {
-			LOCK_READONLY = 0,
-			LOCK_READWRITE = 1
-		};
-
 		RWMutex();
 		virtual ~RWMutex();
 
-		virtual void trylock(LockState state) throw (MutexException);
-		virtual void enter(LockState state) throw (MutexException);
+		virtual void trylock() throw (MutexException);
+		virtual void enter() throw (MutexException);
 		virtual void leave() throw (MutexException);
+
+		virtual void trylock_wr() throw (MutexException);
+		virtual void enter_wr() throw (MutexException);
 
 	protected:
 		pthread_rwlock_t _rwlock;
-		//pthread_mutexattr_t m_attr;
 	};
 } /* namespace ibrcommon */
 #endif /* RWMUTEX_H_ */

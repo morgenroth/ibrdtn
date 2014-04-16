@@ -34,21 +34,9 @@ namespace ibrcommon
 		pthread_rwlock_destroy(&_rwlock);
 	}
 
-	void RWMutex::trylock(LockState state) throw (MutexException)
+	void RWMutex::trylock() throw (MutexException)
 	{
-		int ret = 0;
-
-		switch (state) {
-		case LOCK_READONLY:
-			ret = pthread_rwlock_tryrdlock(&_rwlock);
-			break;
-
-		case LOCK_READWRITE:
-			ret = pthread_rwlock_trywrlock(&_rwlock);
-			break;
-		}
-
-		switch (ret)
+		switch (pthread_rwlock_tryrdlock(&_rwlock))
 		{
 		case 0:
 			break;
@@ -59,21 +47,31 @@ namespace ibrcommon
 		}
 	}
 
-	void RWMutex::enter(LockState state) throw (MutexException)
+	void RWMutex::enter() throw (MutexException)
 	{
-		switch (state) {
-		case LOCK_READONLY:
-			pthread_rwlock_rdlock(&_rwlock);
-			break;
-
-		case LOCK_READWRITE:
-			pthread_rwlock_wrlock(&_rwlock);
-			break;
-		}
+		pthread_rwlock_rdlock(&_rwlock);
 	}
 
 	void RWMutex::leave() throw (MutexException)
 	{
 		pthread_rwlock_unlock(&_rwlock);
+	}
+
+	void RWMutex::trylock_wr() throw (MutexException)
+	{
+		switch (pthread_rwlock_trywrlock(&_rwlock))
+		{
+		case 0:
+			break;
+
+		case EBUSY:
+			throw MutexException("The mutex could not be acquired because it was already locked.");
+			break;
+		}
+	}
+
+	void RWMutex::enter_wr() throw (MutexException)
+	{
+		pthread_rwlock_wrlock(&_rwlock);
 	}
 } /* namespace ibrcommon */

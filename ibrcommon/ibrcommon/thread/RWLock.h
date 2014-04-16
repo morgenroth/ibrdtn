@@ -29,7 +29,7 @@ namespace ibrcommon
 	class RWLock
 	{
 	public:
-		RWLock(RWMutex &mutex, RWMutex::LockState state);
+		RWLock(RWMutex &mutex);
 		virtual ~RWLock();
 
 	private:

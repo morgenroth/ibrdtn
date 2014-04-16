@@ -23,10 +23,10 @@
 
 namespace ibrcommon
 {
-	RWLock::RWLock(RWMutex &mutex, RWMutex::LockState state)
+	RWLock::RWLock(RWMutex &mutex)
 	 : _mutex(mutex)
 	{
-		_mutex.enter(state);
+		_mutex.enter_wr();
 	}
 
 	RWLock::~RWLock()

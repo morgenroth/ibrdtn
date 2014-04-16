@@ -96,13 +96,13 @@ void MutexTests::rwmutex_test_readonly()
 	ibrcommon::RWMutex rwm;
 
 	// lock the mutex for read-only access
-	ibrcommon::RWLock l(rwm, ibrcommon::RWMutex::LOCK_READONLY);
+	ibrcommon::MutexLock l(rwm);
 
 	// try to lock the mutex for a second read-only access (should work)
-	CPPUNIT_ASSERT_NO_THROW(rwm.trylock(ibrcommon::RWMutex::LOCK_READONLY));
+	CPPUNIT_ASSERT_NO_THROW(rwm.trylock());
 
 	// try to lock the mutex for a read-write access (should fail)
-	CPPUNIT_ASSERT_THROW(rwm.trylock(ibrcommon::RWMutex::LOCK_READWRITE), ibrcommon::MutexException);
+	CPPUNIT_ASSERT_THROW(rwm.trylock_wr(), ibrcommon::MutexException);
 }
 
 void MutexTests::rwmutex_test_readwrite()
@@ -110,8 +110,8 @@ void MutexTests::rwmutex_test_readwrite()
 	ibrcommon::RWMutex rwm;
 
 	// lock the mutex for read-only access
-	ibrcommon::RWLock l(rwm, ibrcommon::RWMutex::LOCK_READWRITE);
+	ibrcommon::RWLock l(rwm);
 
 	// try to lock the mutex for a read-only access (should fail)
-	CPPUNIT_ASSERT_THROW(rwm.trylock(ibrcommon::RWMutex::LOCK_READONLY), ibrcommon::MutexException);
+	CPPUNIT_ASSERT_THROW(rwm.trylock(), ibrcommon::MutexException);
 }
