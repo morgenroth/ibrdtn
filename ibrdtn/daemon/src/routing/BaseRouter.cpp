@@ -82,13 +82,13 @@ namespace dtn
 		 */
 		void BaseRouter::add(RoutingExtension *extension)
 		{
-			ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READWRITE);
+			ibrcommon::RWLock l(_extensions_mutex);
 			_extensions.insert(extension);
 		}
 
 		void BaseRouter::remove(RoutingExtension *extension)
 		{
-			ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READWRITE);
+			ibrcommon::RWLock l(_extensions_mutex);
 			_extensions.erase(extension);
 		}
 
@@ -104,7 +104,7 @@ namespace dtn
 
 		void BaseRouter::clearExtensions()
 		{
-			ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READWRITE);
+			ibrcommon::RWLock l(_extensions_mutex);
 
 			// delete all extensions
 			for (extension_list::iterator iter = _extensions.begin(); iter != _extensions.end(); ++iter)
@@ -117,7 +117,7 @@ namespace dtn
 
 		void BaseRouter::extensionsUp() throw ()
 		{
-			ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READONLY);
+			ibrcommon::MutexLock l(_extensions_mutex);
 
 			_nh_extension.componentUp();
 			_retransmission_extension.componentUp();
@@ -144,7 +144,7 @@ namespace dtn
 
 		void BaseRouter::extensionsDown() throw ()
 		{
-			ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READONLY);
+			ibrcommon::MutexLock l(_extensions_mutex);
 
 			_extension_state = false;
 
@@ -161,7 +161,7 @@ namespace dtn
 
 		void BaseRouter::processHandshake(const dtn::data::EID &source, NodeHandshake &answer)
 		{
-			ibrcommon::RWLock l(getExtensionMutex(), ibrcommon::RWMutex::LOCK_READONLY);
+			ibrcommon::MutexLock l(getExtensionMutex());
 
 			// walk through all extensions to process the contents of the response
 			const BaseRouter::extension_list& extensions = getExtensions();
@@ -181,7 +181,7 @@ namespace dtn
 
 		void BaseRouter::responseHandshake(const dtn::data::EID &source, const NodeHandshake &request, NodeHandshake &answer)
 		{
-			ibrcommon::RWLock l(getExtensionMutex(), ibrcommon::RWMutex::LOCK_READONLY);
+			ibrcommon::MutexLock l(getExtensionMutex());
 
 			// walk through all extensions to process the contents of the response
 			const BaseRouter::extension_list& extensions = getExtensions();
@@ -201,7 +201,7 @@ namespace dtn
 
 		void BaseRouter::requestHandshake(const dtn::data::EID &destination, NodeHandshake &request)
 		{
-			ibrcommon::RWLock l(getExtensionMutex(), ibrcommon::RWMutex::LOCK_READONLY);
+			ibrcommon::MutexLock l(getExtensionMutex());
 
 			// walk through all extensions to process the contents of the response
 			const BaseRouter::extension_list& extensions = getExtensions();

@@ -127,7 +127,7 @@ namespace dtn
 			_blobPath = path.get("blob");
 
 			try {
-				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READWRITE);
+				ibrcommon::RWLock l(_global_lock);
 
 				// delete all old BLOB container
 				_blobPath.remove(true);
@@ -151,7 +151,7 @@ namespace dtn
 			dtn::data::BundleSet::setFactory(NULL);
 
 			try {
-				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READWRITE);
+				ibrcommon::RWLock l(_global_lock);
 
 				// close the database
 				_database.close();
@@ -226,7 +226,7 @@ namespace dtn
 		const SQLiteBundleStorage::eid_set SQLiteBundleStorage::getDistinctDestinations()
 		{
 			try {
-				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READONLY);
+				ibrcommon::MutexLock l(_global_lock);
 				return _database.getDistinctDestinations();
 			} catch (const SQLiteDatabase::SQLiteQueryException &ex) {
 				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
@@ -236,7 +236,7 @@ namespace dtn
 
 		void SQLiteBundleStorage::get(const BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException)
 		{
-			ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READONLY);
+			ibrcommon::MutexLock l(_global_lock);
 			_database.get(cb, result);
 		}
 
@@ -246,7 +246,7 @@ namespace dtn
 			dtn::data::Bundle bundle;
 
 			try {
-				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READONLY);
+				ibrcommon::MutexLock l(_global_lock);
 
 				// query the data base for the bundle
 				_database.get(id, bundle, blocks);
@@ -343,7 +343,7 @@ namespace dtn
 		{
 			IBRCOMMON_LOGGER_DEBUG_TAG(SQLiteBundleStorage::TAG, 25) << "store bundle " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
-			ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READWRITE);
+			ibrcommon::RWLock l(_global_lock);
 
 			// get size of the bundle
 			dtn::data::DefaultSerializer s(std::cout);
@@ -467,7 +467,7 @@ namespace dtn
 		bool SQLiteBundleStorage::contains(const dtn::data::BundleID &id)
 		{
 			try {
-				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READONLY);
+				ibrcommon::MutexLock l(_global_lock);
 				return _database.contains(id);
 			} catch (const SQLiteDatabase::SQLiteQueryException&) {
 				return false;
@@ -477,7 +477,7 @@ namespace dtn
 		dtn::data::MetaBundle SQLiteBundleStorage::info(const dtn::data::BundleID &id)
 		{
 			try {
-				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READONLY);
+				ibrcommon::MutexLock l(_global_lock);
 				dtn::data::MetaBundle ret;
 				_database.get(id, ret);
 				return ret;
@@ -490,7 +490,7 @@ namespace dtn
 		{
 			// remove the bundle in locked state
 			try {
-				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READWRITE);
+				ibrcommon::RWLock l(_global_lock);
 				freeSpace( _database.remove(id) );
 
 				// raise bundle removed event
@@ -502,7 +502,7 @@ namespace dtn
 
 		void SQLiteBundleStorage::clear()
 		{
-			ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READWRITE);
+			ibrcommon::RWLock l(_global_lock);
 
 			try {
 				_database.clear();
@@ -521,7 +521,7 @@ namespace dtn
 		bool SQLiteBundleStorage::empty()
 		{
 			try {
-				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READONLY);
+				ibrcommon::MutexLock l(_global_lock);
 				return _database.empty();
 			} catch (const ibrcommon::Exception &ex) {
 				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
@@ -532,7 +532,7 @@ namespace dtn
 		dtn::data::Size SQLiteBundleStorage::count()
 		{
 			try {
-				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READONLY);
+				ibrcommon::MutexLock l(_global_lock);
 				return _database.count();
 			} catch (const ibrcommon::Exception &ex) {
 				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
@@ -575,7 +575,7 @@ namespace dtn
 		void SQLiteBundleStorage::TaskExpire::run(SQLiteBundleStorage &storage)
 		{
 			try {
-				ibrcommon::RWLock l(storage._global_lock, ibrcommon::RWMutex::LOCK_READWRITE);
+				ibrcommon::RWLock l(storage._global_lock);
 				storage._database.expire(_timestamp);
 			} catch (const ibrcommon::Exception &ex) {
 				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
@@ -597,7 +597,7 @@ namespace dtn
 				 * and otherwise cleans up the database file structure.
 				 */
 				try {
-					ibrcommon::RWLock l(storage._global_lock, ibrcommon::RWMutex::LOCK_READWRITE);
+					ibrcommon::RWLock l(storage._global_lock);
 					storage._database.vacuum();
 				} catch (const ibrcommon::Exception &ex) {
 					IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
@@ -619,7 +619,7 @@ namespace dtn
 		void SQLiteBundleStorage::releaseCustody(const dtn::data::EID &custodian, const dtn::data::BundleID &id)
 		{
 			try {
-				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READONLY);
+				ibrcommon::MutexLock l(_global_lock);
 
 				// custody is successful transferred to another node.
 				// it is safe to delete this bundle now. (depending on the routing algorithm.)

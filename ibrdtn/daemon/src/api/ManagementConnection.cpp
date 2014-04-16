@@ -355,7 +355,7 @@ namespace dtn
 						dtn::routing::BaseRouter &router = dtn::core::BundleCore::getInstance().getRouter();
 
 						// lock the extension list during the processing
-						ibrcommon::RWLock l(router.getExtensionMutex(), ibrcommon::RWMutex::LOCK_READONLY);
+						ibrcommon::MutexLock l(router.getExtensionMutex());
 
 						const dtn::routing::BaseRouter::extension_list& routingExtensions = router.getExtensions();
 						dtn::routing::BaseRouter::extension_list::const_iterator it;

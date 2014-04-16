@@ -60,7 +60,7 @@ namespace dtn
 		{
 			IBRCOMMON_LOGGER_DEBUG_TAG(SimpleBundleStorage::TAG, 30) << "element successfully stored: " << hash.value << IBRCOMMON_LOGGER_ENDL;
 
-			ibrcommon::RWLock l(_pending_lock, ibrcommon::RWMutex::LOCK_READWRITE);
+			ibrcommon::RWLock l(_pending_lock);
 			_pending_bundles.erase(hash);
 		}
 
@@ -71,7 +71,7 @@ namespace dtn
 			dtn::data::MetaBundle meta;
 
 			{
-				ibrcommon::RWLock l(_pending_lock, ibrcommon::RWMutex::LOCK_READONLY);
+				ibrcommon::MutexLock l(_pending_lock);
 
 				// get the reference to the bundle
 				const dtn::data::Bundle &b = _pending_bundles[hash];
@@ -79,13 +79,13 @@ namespace dtn
 			}
 
 			{
-				ibrcommon::RWLock l(_pending_lock, ibrcommon::RWMutex::LOCK_READWRITE);
+				ibrcommon::RWLock l(_pending_lock);
 
 				// delete the pending bundle
 				_pending_bundles.erase(hash);
 			}
 
-			ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READWRITE);
+			ibrcommon::RWLock l(_meta_lock);
 
 			// remove bundle and decrement the storage size
 			freeSpace( _metastore.remove(meta) );
@@ -95,7 +95,7 @@ namespace dtn
 		{
 			IBRCOMMON_LOGGER_DEBUG_TAG(SimpleBundleStorage::TAG, 30) << "element successfully removed: " << hash.value << IBRCOMMON_LOGGER_ENDL;
 
-			ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READWRITE);
+			ibrcommon::RWLock l(_meta_lock);
 
 			for (MetaStorage::const_iterator it = _metastore.begin(); it != _metastore.end(); ++it)
 			{
@@ -150,7 +150,7 @@ namespace dtn
 				allocSpace(bundle_size);
 
 				// lock the bundle lists
-				ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READWRITE);
+				ibrcommon::RWLock l(_meta_lock);
 
 				// add the bundle to the stored bundles
 				_metastore.store(meta, bundle_size);
@@ -177,7 +177,7 @@ namespace dtn
 
 			// some output
 			{
-				ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READONLY);
+				ibrcommon::MutexLock l(_meta_lock);
 				IBRCOMMON_LOGGER_TAG(SimpleBundleStorage::TAG, info) << _metastore.size() << " Bundles restored." << IBRCOMMON_LOGGER_ENDL;
 			}
 
@@ -204,7 +204,7 @@ namespace dtn
 				_datastore.reset();
 
 				// clear all data structures
-				ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READWRITE);
+				ibrcommon::RWLock l(_meta_lock);
 				_metastore.clear();
 				clearSpace();
 			} catch (const ibrcommon::Exception &ex) {
@@ -218,7 +218,7 @@ namespace dtn
 				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
 				if (time.getAction() == dtn::core::TIME_SECOND_TICK)
 				{
-					ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READWRITE);
+					ibrcommon::RWLock l(_meta_lock);
 					_metastore.expire(time.getTimestamp());
 				}
 			} catch (const std::bad_cast&) { }
@@ -231,7 +231,7 @@ namespace dtn
 
 		bool SimpleBundleStorage::empty()
 		{
-			ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READONLY);
+			ibrcommon::MutexLock l(_meta_lock);
 			return _metastore.empty();
 		}
 
@@ -243,7 +243,7 @@ namespace dtn
 
 		dtn::data::Size SimpleBundleStorage::count()
 		{
-			ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READONLY);
+			ibrcommon::MutexLock l(_meta_lock);
 			return _metastore.size();
 		}
 
@@ -263,7 +263,7 @@ namespace dtn
 			size_t items_added = 0;
 
 			// we have to iterate through all bundles
-			ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READONLY);
+			ibrcommon::MutexLock l(_meta_lock);
 
 			for (MetaStorage::const_iterator iter = _metastore.begin(); (iter != _metastore.end()) && ((cb.limit() == 0) || (items_added < cb.limit())); ++iter)
 			{
@@ -285,7 +285,7 @@ namespace dtn
 		dtn::data::Bundle SimpleBundleStorage::get(const dtn::data::BundleID &id)
 		{
 			try {
-				ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READONLY);
+				ibrcommon::MutexLock l(_meta_lock);
 
 				// faulty mechanism for unit-testing
 				if (_faulty) {
@@ -300,7 +300,7 @@ namespace dtn
 
 				// check pending bundles
 				{
-					ibrcommon::RWLock l(_pending_lock, ibrcommon::RWMutex::LOCK_READONLY);
+					ibrcommon::MutexLock l(_pending_lock);
 
 					pending_map::iterator it = _pending_bundles.find(hash);
 
@@ -351,7 +351,7 @@ namespace dtn
 
 		const SimpleBundleStorage::eid_set SimpleBundleStorage::getDistinctDestinations()
 		{
-			ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READONLY);
+			ibrcommon::MutexLock l(_meta_lock);
 			return _metastore.getDistinctDestinations();
 		}
 
@@ -388,7 +388,7 @@ namespace dtn
 
 		bool SimpleBundleStorage::contains(const dtn::data::BundleID &id)
 		{
-			ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READONLY);
+			ibrcommon::MutexLock l(_meta_lock);
 
 			// search for the bundle in the meta storage
 			return _metastore.contains(id);
@@ -396,7 +396,7 @@ namespace dtn
 
 		dtn::data::MetaBundle SimpleBundleStorage::info(const dtn::data::BundleID &id)
 		{
-			ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READONLY);
+			ibrcommon::MutexLock l(_meta_lock);
 
 			// search for the bundle in the meta storage
 			return _metastore.find(dtn::data::MetaBundle::create(id));
@@ -404,7 +404,7 @@ namespace dtn
 
 		void SimpleBundleStorage::remove(const dtn::data::BundleID &id)
 		{
-			ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READONLY);
+			ibrcommon::MutexLock l(_meta_lock);
 			const dtn::data::MetaBundle &meta = _metastore.find(dtn::data::MetaBundle::create(id));
 
 			// first check if the bundles is already marked as removed
@@ -435,7 +435,7 @@ namespace dtn
 
 			// enter critical section - lock pending bundles
 			{
-				ibrcommon::RWLock l(_pending_lock, ibrcommon::RWMutex::LOCK_READWRITE);
+				ibrcommon::RWLock l(_pending_lock);
 
 				// add bundle to the pending bundles
 				_pending_bundles[hash] = bundle;
@@ -443,7 +443,7 @@ namespace dtn
 
 			// enter critical section - lock all data structures
 			{
-				ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READWRITE);
+				ibrcommon::RWLock l(_meta_lock);
 
 				// add the new bundles to the meta storage
 				_metastore.store(meta, bundle_size);
@@ -459,7 +459,7 @@ namespace dtn
 
 		void SimpleBundleStorage::clear()
 		{
-			ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READWRITE);
+			ibrcommon::RWLock l(_meta_lock);
 
 			// mark all bundles for deletion
 			for (MetaStorage::const_iterator iter = _metastore.begin(); iter != _metastore.end(); ++iter)

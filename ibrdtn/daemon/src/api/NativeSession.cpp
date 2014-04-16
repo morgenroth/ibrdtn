@@ -69,7 +69,7 @@ namespace dtn
 		{
 			// invalidate the callback pointer
 			{
-				ibrcommon::RWLock l(_cb_mutex, ibrcommon::RWMutex::LOCK_READWRITE);
+				ibrcommon::RWLock l(_cb_mutex);
 				_session_cb = NULL;
 				_serializer_cb = NULL;
 			}
@@ -92,21 +92,21 @@ namespace dtn
 
 		void NativeSession::fireNotificationBundle(const dtn::data::BundleID &id) throw ()
 		{
-			ibrcommon::RWLock l(_cb_mutex, ibrcommon::RWMutex::LOCK_READONLY);
+			ibrcommon::MutexLock l(_cb_mutex);
 			if (_session_cb == NULL) return;
 			_session_cb->notifyBundle(id);
 		}
 
 		void NativeSession::fireNotificationStatusReport(const dtn::data::EID &source, const dtn::data::StatusReportBlock &report) throw ()
 		{
-			ibrcommon::RWLock l(_cb_mutex, ibrcommon::RWMutex::LOCK_READONLY);
+			ibrcommon::MutexLock l(_cb_mutex);
 			if (_session_cb == NULL) return;
 			_session_cb->notifyStatusReport(source, report);
 		}
 
 		void NativeSession::fireNotificationCustodySignal(const dtn::data::EID &source, const dtn::data::CustodySignalBlock &custody) throw ()
 		{
-			ibrcommon::RWLock l(_cb_mutex, ibrcommon::RWMutex::LOCK_READONLY);
+			ibrcommon::MutexLock l(_cb_mutex);
 			if (_session_cb == NULL) return;
 			_session_cb->notifyCustodySignal(source, custody);
 		}
@@ -263,7 +263,7 @@ namespace dtn
 
 		void NativeSession::get(RegisterIndex ri) throw ()
 		{
-			ibrcommon::RWLock l(_cb_mutex, ibrcommon::RWMutex::LOCK_READONLY);
+			ibrcommon::MutexLock l(_cb_mutex);
 			if (_serializer_cb == NULL) return;
 
 			NativeSerializer serializer(*_serializer_cb, NativeSerializer::BUNDLE_FULL);
@@ -276,7 +276,7 @@ namespace dtn
 
 		void NativeSession::getInfo(RegisterIndex ri) throw ()
 		{
-			ibrcommon::RWLock l(_cb_mutex, ibrcommon::RWMutex::LOCK_READONLY);
+			ibrcommon::MutexLock l(_cb_mutex);
 			if (_serializer_cb == NULL) return;
 
 			NativeSerializer serializer(*_serializer_cb, NativeSerializer::BUNDLE_INFO);

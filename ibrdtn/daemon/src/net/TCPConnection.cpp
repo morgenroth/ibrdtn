@@ -35,6 +35,7 @@
 #include <ibrcommon/TimeMeasurement.h>
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/thread/Conditional.h>
+#include <ibrcommon/thread/RWLock.h>
 #include <ibrcommon/Logger.h>
 
 #include <iostream>
@@ -79,7 +80,7 @@ namespace dtn
 
 			// clean-up
 			{
-				ibrcommon::RWLock l(_protocol_stream_mutex, ibrcommon::RWMutex::LOCK_READWRITE);
+				ibrcommon::RWLock l(_protocol_stream_mutex);
 				delete _protocol_stream;
 				_protocol_stream = NULL;
 			}
@@ -418,7 +419,7 @@ namespace dtn
 			// create a new stream connection
 			dtn::data::Length chunksize = dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize();
 
-			ibrcommon::RWLock l(_protocol_stream_mutex, ibrcommon::RWMutex::LOCK_READWRITE);
+			ibrcommon::RWLock l(_protocol_stream_mutex);
 			if (_protocol_stream != NULL) delete _protocol_stream;
 			_protocol_stream = new dtn::streams::StreamConnection(*this, (_sec_stream == NULL) ? *_socket_stream : *_sec_stream, chunksize);
 			_protocol_stream->exceptions(std::ios::badbit | std::ios::eofbit);
