@@ -37,7 +37,7 @@ APP_CFLAGS:=
 # ibrcommon
 # openssl headers
 # include openssl headers for ibrcommon/ibrcommon/ssl/gcm/gcm_aes.c, APP_CFLAGS are also used for c++
-APP_CFLAGS+=-I$(abspath $(LOCAL_PATH))/openssl/include
+APP_CFLAGS+=-I$(abspath $(LOCAL_PATH))/openssl/include -DOPENSSL_EXPERIMENTAL_JPAKE
 
 # ibrdtn
 # include ibrcommon headers
@@ -48,6 +48,6 @@ APP_CPPFLAGS+=-I$(abspath $(LOCAL_PATH))/ibrcommon
 APP_CPPFLAGS+=-I$(abspath $(LOCAL_PATH))/ibrdtn
 
 # If APP_MODULES is not set, all modules are compiled!
-APP_MODULES:=crypto ssl ibrcommon ibrdtn dtnd android-glue
+APP_MODULES:=cryptox ssl ibrcommon ibrdtn dtnd android-glue
 #APP_MODULES:=all
 

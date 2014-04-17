@@ -119,7 +119,7 @@ ANDROID_AC_BUILD([
 	# OpenSSL
 	AC_DEFINE(HAVE_OPENSSL, [1], ["openssl library is available"])
 	AC_DEFINE(IBRCOMMON_SUPPORT_SSL, [1], ["ssl extension is available"])
-	OPENSSL_LIBS="-lssl -lcrypto"
+	OPENSSL_LIBS="-lssl -lcryptox"
 	AC_SUBST(OPENSSL_LIBS)
 	use_openssl="yes"
 

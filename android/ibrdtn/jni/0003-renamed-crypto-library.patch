@@ -1,0 +1,48 @@
+From 07b96890a66f4f2879350fc930367b65be581c57 Mon Sep 17 00:00:00 2001
+From: Thomas Schrader <schrader.thomas@gmail.com>
+Date: Mon, 7 Apr 2014 20:32:24 +0200
+Subject: [PATCH 3/3] renamed crypto library
+
+---
+ Crypto.mk | 4 ++--
+ Ssl.mk    | 2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/Crypto.mk b/Crypto.mk
+index 4d1523e..ff1f791 100644
+--- a/Crypto.mk
++++ b/Crypto.mk
+@@ -597,7 +597,7 @@ ifeq ($(TARGET_ARCH),x86)
+   LOCAL_CFLAGS += $(x86_cflags)
+ endif
+ LOCAL_MODULE_TAGS := optional
+-LOCAL_MODULE:= libcrypto_static
++LOCAL_MODULE:= libcryptox_static
+ LOCAL_ADDITIONAL_DEPENDENCIES := $(local_additional_dependencies)
+ include $(BUILD_STATIC_LIBRARY)
+ 
+@@ -634,7 +634,7 @@ ifeq ($(TARGET_ARCH),x86)
+   LOCAL_CFLAGS += $(x86_cflags)
+ endif
+ LOCAL_MODULE_TAGS := optional
+-LOCAL_MODULE:= libcrypto
++LOCAL_MODULE:= libcryptox
+ LOCAL_ADDITIONAL_DEPENDENCIES := $(local_additional_dependencies)
+ include $(BUILD_SHARED_LIBRARY)
+ 
+diff --git a/Ssl.mk b/Ssl.mk
+index 0e18507..fc33501 100644
+--- a/Ssl.mk
++++ b/Ssl.mk
+@@ -80,7 +80,7 @@ endif
+ 
+ LOCAL_SRC_FILES += $(local_src_files)
+ LOCAL_C_INCLUDES += $(local_c_includes)
+-LOCAL_SHARED_LIBRARIES += libcrypto $(log_shared_libraries)
++LOCAL_SHARED_LIBRARIES += libcryptox $(log_shared_libraries)
+ LOCAL_MODULE_TAGS := optional
+ LOCAL_MODULE:= libssl
+ LOCAL_ADDITIONAL_DEPENDENCIES := $(local_additional_dependencies)
+-- 
+1.8.3.2
+

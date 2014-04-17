@@ -77,7 +77,7 @@ ANDROID_AC_BUILD([
 	
 	# OPENSSL
 	AC_DEFINE(HAVE_OPENSSL, [1], ["openssl library is available"])
-	OPENSSL_LIBS="-lssl -lcrypto"
+	OPENSSL_LIBS="-lssl -lcryptox"
 	AC_SUBST(OPENSSL_LIBS)
 
 	# TLS

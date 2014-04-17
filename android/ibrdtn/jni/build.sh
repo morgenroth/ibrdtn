@@ -37,6 +37,9 @@ fi
 cd openssl
 git fetch --tags
 git checkout 8c6a9abf76767407afd652ed65fba32620c38e04
+git am < ../0001-jpake.h-added.patch
+git am < ../0002-enabled-jpake.patch
+git am < ../0003-renamed-crypto-library.patch
 cd ..
 
 echo ""

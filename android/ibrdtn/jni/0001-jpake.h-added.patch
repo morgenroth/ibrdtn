@@ -1,0 +1,21 @@
+From 81e72218f4518dca0f26fadc80d972ae334e415f Mon Sep 17 00:00:00 2001
+From: Thomas Schrader <schrader.thomas@gmail.com>
+Date: Fri, 4 Apr 2014 15:33:22 +0200
+Subject: [PATCH] jpake.h added
+
+---
+ include/openssl/jpake.h | 1 +
+ 1 file changed, 1 insertion(+)
+ create mode 120000 include/openssl/jpake.h
+
+diff --git a/include/openssl/jpake.h b/include/openssl/jpake.h
+new file mode 120000
+index 0000000..ed43bac
+--- /dev/null
++++ b/include/openssl/jpake.h
+@@ -0,0 +1 @@
++../../crypto/jpake/jpake.h
+\ No newline at end of file
+-- 
+1.8.3.2
+

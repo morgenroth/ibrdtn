@@ -65,7 +65,7 @@ public class DaemonProcess {
     private WifiManager.MulticastLock mMcastLock = null;
 
 	private final static String GNUSTL_NAME = "gnustl_shared";
-	private final static String CRYPTO_NAME = "crypto";
+	private final static String CRYPTO_NAME = "cryptox";
 	private final static String SSL_NAME = "ssl";
 	private final static String IBRCOMMON_NAME = "ibrcommon";
 	private final static String IBRDTN_NAME = "ibrdtn";

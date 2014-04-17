@@ -102,7 +102,7 @@ ANDROID_AC_BUILD([
 	# OpenSSL
 	AC_DEFINE(IBRDTN_SUPPORT_BSP, [1], [bundle security protocol supported])
 	AC_DEFINE(HAVE_OPENSSL, [1], [])
-	OPENSSL_LIBS="-lssl -lcrypto"
+	OPENSSL_LIBS="-lssl -lcryptox"
 	AC_SUBST(OPENSSL_LIBS)
 	with_dtnsec="yes"
 
