@@ -31,8 +31,8 @@ dtnd_sources = \
 	NativeDaemon.h \
 	NativeDaemon.cpp
 
-AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS) $(CURL_CFLAGS) $(SQLITE_CFLAGS) $(DAEMON_CFLAGS) $(DTNDHT_CFLAGS) $(WIFIP2P_CFLAGS)
-AM_LDFLAGS = $(ibrdtn_LIBS) $(CURL_LIBS) $(SQLITE_LIBS) $(DAEMON_LIBS) $(DTNDHT_LIBS) $(WIFIP2P_LIBS)
+AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS) $(CURL_CFLAGS) $(SQLITE_CFLAGS) $(DAEMON_CFLAGS) $(DTNDHT_CFLAGS) $(WIFIP2P_CFLAGS) $(OPENSSL_CFLAGS)
+AM_LDFLAGS = $(ibrdtn_LIBS) $(CURL_LIBS) $(SQLITE_LIBS) $(DAEMON_LIBS) $(DTNDHT_LIBS) $(WIFIP2P_LIBS) $(OPENSSL_LIBS)
 
 dtnd_libs = core/libcore.la storage/libstorage.la net/libnet.la routing/librouting.la api/libapi.la
 
