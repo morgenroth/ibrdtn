@@ -11,7 +11,8 @@ h_sources = \
 	AES128Stream.h \
 	TLSStream.h \
 	iostreamBIO.h \
-	MD5Stream.h
+	MD5Stream.h \
+	SHA256Stream.h
 
 cc_sources = \
 	CipherStream.cpp \
@@ -22,7 +23,8 @@ cc_sources = \
 	AES128Stream.cpp \
 	TLSStream.cpp \
 	iostreamBIO.cpp \
-	MD5Stream.cpp
+	MD5Stream.cpp \
+	SHA256Stream.cpp
 
 #Install the headers in a versioned directory
 library_includedir = $(includedir)/$(GENERIC_LIBRARY_NAME)-$(GENERIC_API_VERSION)/$(GENERIC_LIBRARY_NAME)/ssl
