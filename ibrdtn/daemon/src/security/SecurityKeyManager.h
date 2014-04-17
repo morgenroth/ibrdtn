@@ -39,15 +39,6 @@ namespace dtn
 			static const std::string TAG;
 
 		public:
-			class KeyNotFoundException : public ibrcommon::Exception
-			{
-			public:
-				KeyNotFoundException(std::string what = "Requested key not found.") : ibrcommon::Exception(what)
-				{};
-
-				virtual ~KeyNotFoundException() throw() {};
-			};
-
 			static SecurityKeyManager& getInstance();
 
 			virtual ~SecurityKeyManager();
@@ -58,7 +49,7 @@ namespace dtn
 			virtual void onConfigurationChanged(const dtn::daemon::Configuration &conf) throw ();
 
 			bool hasKey(const dtn::data::EID &ref, const dtn::security::SecurityKey::KeyType type = dtn::security::SecurityKey::KEY_UNSPEC) const;
-			dtn::security::SecurityKey get(const dtn::data::EID &ref, const dtn::security::SecurityKey::KeyType type = dtn::security::SecurityKey::KEY_UNSPEC) const throw (SecurityKeyManager::KeyNotFoundException);
+			dtn::security::SecurityKey get(const dtn::data::EID &ref, const dtn::security::SecurityKey::KeyType type = dtn::security::SecurityKey::KEY_UNSPEC) const throw (SecurityKey::KeyNotFoundException);
 			void store(const dtn::data::EID &ref, const std::string &data, const dtn::security::SecurityKey::KeyType type = dtn::security::SecurityKey::KEY_UNSPEC);
 
 		private:

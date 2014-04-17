@@ -59,7 +59,7 @@ namespace dtn
 
 				// sign the bundle with BABs
 				dtn::security::BundleAuthenticationBlock::auth(bundle, key);
-			} catch (const SecurityKeyManager::KeyNotFoundException &ex) {
+			} catch (const SecurityKey::KeyNotFoundException &ex) {
 				throw KeyMissingException(ex.what());
 			}
 		}
@@ -74,7 +74,7 @@ namespace dtn
 
 				// sign the bundle with PIB
 				dtn::security::PayloadIntegrityBlock::sign(bundle, key, bundle.destination.getNode());
-			} catch (const SecurityKeyManager::KeyNotFoundException &ex) {
+			} catch (const SecurityKey::KeyNotFoundException &ex) {
 				throw KeyMissingException(ex.what());
 			}
 		}
@@ -120,7 +120,7 @@ namespace dtn
 
 					IBRCOMMON_LOGGER_DEBUG_TAG("SecurityManager", 5) << "Bundle " << bundle.toString() << " successfully verified" << IBRCOMMON_LOGGER_ENDL;
 					continue;
-				} catch (const SecurityKeyManager::KeyNotFoundException&) {
+				} catch (const SecurityKey::KeyNotFoundException&) {
 					// un-set the verify bit
 					bundle.set(dtn::data::Bundle::DTNSEC_STATUS_VERIFIED, false);
 				} catch (const std::bad_cast&) {
@@ -159,7 +159,7 @@ namespace dtn
 
 					// at least one BAB has been authenticated, we're done!
 					break;
-				} catch (const SecurityKeyManager::KeyNotFoundException&) {
+				} catch (const SecurityKey::KeyNotFoundException&) {
 					// no key for this node found
 				}
 			}

@@ -127,7 +127,7 @@ namespace dtn
 			RSA_free(rsa);
 		}
 
-		dtn::security::SecurityKey SecurityKeyManager::get(const dtn::data::EID &ref, const dtn::security::SecurityKey::KeyType type) const throw (SecurityKeyManager::KeyNotFoundException)
+		dtn::security::SecurityKey SecurityKeyManager::get(const dtn::data::EID &ref, const dtn::security::SecurityKey::KeyType type) const throw (SecurityKey::KeyNotFoundException)
 		{
 			dtn::security::SecurityKey keydata;
 			keydata.reference = ref.getNode();
@@ -153,7 +153,7 @@ namespace dtn
 						}
 
 						IBRCOMMON_LOGGER_TAG(SecurityKeyManager::TAG, warning) << "Key file for " << ref.getString() << " (" << keyfile.getPath() << ") not found" << IBRCOMMON_LOGGER_ENDL;
-						throw SecurityKeyManager::KeyNotFoundException();
+						throw SecurityKey::KeyNotFoundException();
 					}
 
 					keydata.file = keyfile;
@@ -170,7 +170,7 @@ namespace dtn
 					if (!keyfile.exists())
 					{
 						IBRCOMMON_LOGGER_TAG(SecurityKeyManager::TAG, warning) << "Key file for " << ref.getString() << " (" << keyfile.getPath() << ") not found" << IBRCOMMON_LOGGER_ENDL;
-						throw SecurityKeyManager::KeyNotFoundException();
+						throw SecurityKey::KeyNotFoundException();
 					}
 
 
