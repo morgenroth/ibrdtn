@@ -68,6 +68,8 @@ namespace dtn
 
 			virtual const std::string getData() const;
 
+			virtual const std::string getFingerprint() const;
+
 			static void free(RSA* key);
 			static void free(EVP_PKEY* key);
 
@@ -102,6 +104,9 @@ namespace dtn
 				// To support concatenation of streaming calls, we return the reference to the input stream.
 				return stream;
 			}
+
+			static std::string getFingerprint(const ibrcommon::File &file);
+			static std::string getFingerprint(RSA* rsa);
 
 		private:
 			RSA* getPublicRSA() const;

@@ -20,10 +20,13 @@
  */
 
 #include "ibrdtn/security/SecurityKey.h"
+#include <ibrcommon/ssl/SHA256Stream.h>
 #include <ibrcommon/Logger.h>
 #include <fstream>
 #include <sstream>
+#include <iomanip>
 
+#include <openssl/sha.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
 
@@ -101,6 +104,31 @@ namespace dtn
 			return ret;
 		}
 
+		const std::string SecurityKey::getFingerprint() const
+		{
+			switch (type)
+			{
+				case KEY_PRIVATE:
+				{
+					RSA* rsa = getPrivateRSA();
+					std::string ret = getFingerprint(rsa);
+					free(rsa);
+					return ret;
+				}
+				case KEY_PUBLIC:
+				{
+					RSA* rsa = getPublicRSA();
+					std::string ret = getFingerprint(rsa);
+					free(rsa);
+					return ret;
+				}
+				default:
+				{
+					return getFingerprint(file);
+				}
+			}
+		}
+
 		RSA* SecurityKey::getPrivateRSA() const
 		{
 			RSA *rsa = RSA_new();
@@ -135,6 +163,59 @@ namespace dtn
 			}
 			fclose(rsa_pkey_file);
 			return rsa;
+		}
+
+		std::string SecurityKey::getFingerprint(const ibrcommon::File &file)
+		{
+			// create a hash stream
+			ibrcommon::SHA256Stream sha;
+
+			// open the file
+			ifstream stream(file.getPath().c_str());
+
+			// hash the contents of the file
+			if (!stream.good()) {
+				sha << stream.rdbuf() << std::flush;
+			}
+
+			// convert bytes to hex fingerprint
+			std::stringstream fingerprint;
+			while (sha.good())
+			{
+				fingerprint << std::hex << std::setw(2) << std::setfill('0') << (int)sha.get();
+			}
+
+			return fingerprint.str();
+		}
+
+		std::string SecurityKey::getFingerprint(RSA* rsa)
+		{
+			unsigned char *p = NULL;
+			int length = i2d_RSA_PUBKEY(rsa, &p);
+
+			std::string ret = "";
+			if (length > 0)
+			{
+				ret = std::string((const char*)p, length);
+			}
+			else
+			{
+				OPENSSL_free(p);
+				free(rsa);
+				throw(ibrcommon::Exception("Error while parsing rsa key"));
+			}
+
+			unsigned char hash[SHA256_DIGEST_LENGTH];
+			SHA256(p, length, hash);
+
+			std::stringstream stream;
+			for(int i = 0; i < SHA256_DIGEST_LENGTH; i++)
+			{
+				stream << std::hex << std::setw(2) << std::setfill('0') << (int)hash[i];
+			}
+
+			OPENSSL_free(p);
+			return stream.str();
 		}
 	}
 }
