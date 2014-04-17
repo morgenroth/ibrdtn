@@ -57,6 +57,11 @@ namespace dtn
 			 */
 			void store(const dtn::security::SecurityKey &key);
 
+			/**
+			 * Returns the prefixes path to the key of given type
+			 */
+			const ibrcommon::File getKeyFile(const std::string &prefix, const dtn::data::EID &peer, const dtn::security::SecurityKey::KeyType type = dtn::security::SecurityKey::KEY_UNSPEC) const;
+
 		private:
 			SecurityKeyManager();
 

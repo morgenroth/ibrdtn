@@ -193,14 +193,53 @@ namespace dtn
 
 		void SecurityKeyManager::store(const dtn::data::EID &ref, const std::string &data, const dtn::security::SecurityKey::KeyType type)
 		{
-			ibrcommon::File keyfile = _path.get(hash(ref.getNode()) + ".pem");
+			switch (type)
+			{
+				case SecurityKey::KEY_SHARED:
+				{
+					ibrcommon::File keyfile = _path.get(hash(ref.getNode()) + ".mac");
 
-			// delete if already exists
-			if (keyfile.exists()) keyfile.remove();
+					// delete if already exists
+					if (keyfile.exists()) keyfile.remove();
 
-			std::ofstream keystream(keyfile.getPath().c_str());
-			keystream << data;
-			keystream.close();
+					std::ofstream keystream(keyfile.getPath().c_str());
+					keystream << data;
+					keystream.close();
+					break;
+				}
+
+				case SecurityKey::KEY_UNSPEC:
+				case SecurityKey::KEY_PUBLIC:
+				case SecurityKey::KEY_PRIVATE:
+				{
+					ibrcommon::File keyfile = _path.get(hash(ref.getNode()) + ".pem");
+
+					// delete if already exists
+					if (keyfile.exists()) keyfile.remove();
+
+					std::ofstream keystream(keyfile.getPath().c_str());
+					keystream << data;
+					keystream.close();
+					break;
+				}
+			}
+		}
+
+		const ibrcommon::File SecurityKeyManager::getKeyFile(const std::string &prefix, const dtn::data::EID &peer, const dtn::security::SecurityKey::KeyType type) const
+		{
+			switch (type)
+			{
+				case SecurityKey::KEY_SHARED:
+					return _path.get(prefix + "." + hash(peer) + ".mac");
+
+				case SecurityKey::KEY_UNSPEC:
+				case SecurityKey::KEY_PUBLIC:
+				case SecurityKey::KEY_PRIVATE:
+					return _path.get(prefix + "." + hash(peer) + ".pem");
+
+				default:
+					return _path.get(prefix + "." + hash(peer) + ".key");
+			}
 		}
 	}
 }
