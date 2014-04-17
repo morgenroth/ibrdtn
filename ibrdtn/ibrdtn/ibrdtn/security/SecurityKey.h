@@ -47,6 +47,15 @@ namespace dtn
 				KEY_PUBLIC = 3
 			};
 
+			class KeyNotFoundException : public ibrcommon::Exception
+			{
+			public:
+				KeyNotFoundException(std::string what = "Requested key not found.") : ibrcommon::Exception(what)
+				{};
+
+				virtual ~KeyNotFoundException() throw() {};
+			};
+
 			SecurityKey();
 			virtual ~SecurityKey();
 
