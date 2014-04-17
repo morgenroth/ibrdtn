@@ -62,6 +62,8 @@ namespace dtn
 			// key file
 			ibrcommon::File file;
 
+			bool operator==(const SecurityKey &key);
+
 			virtual RSA* getRSA() const;
 
 			virtual EVP_PKEY* getEVP() const;

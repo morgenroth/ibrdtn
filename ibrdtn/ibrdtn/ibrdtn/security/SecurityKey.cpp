@@ -51,6 +51,11 @@ namespace dtn
 			EVP_PKEY_free(key);
 		}
 
+		bool SecurityKey::operator==(const SecurityKey &key)
+		{
+			return getFingerprint() == key.getFingerprint();
+		}
+
 		const std::string SecurityKey::getData() const
 		{
 			std::ifstream stream(file.getPath().c_str(), ios::in);
