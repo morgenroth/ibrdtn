@@ -52,6 +52,11 @@ namespace dtn
 			dtn::security::SecurityKey get(const dtn::data::EID &ref, const dtn::security::SecurityKey::KeyType type = dtn::security::SecurityKey::KEY_UNSPEC) const throw (SecurityKey::KeyNotFoundException);
 			void store(const dtn::data::EID &ref, const std::string &data, const dtn::security::SecurityKey::KeyType type = dtn::security::SecurityKey::KEY_UNSPEC);
 
+			/**
+			 * Store a security key object in the standard key path
+			 */
+			void store(const dtn::security::SecurityKey &key);
+
 		private:
 			SecurityKeyManager();
 

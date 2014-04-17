@@ -183,6 +183,14 @@ namespace dtn
 			return keydata;
 		}
 
+		void SecurityKeyManager::store(const dtn::security::SecurityKey &key)
+		{
+			ifstream stream(key.file.getPath().c_str(), std::iostream::in);
+			std::stringstream ss;
+			ss << stream.rdbuf();
+			store(key.reference, ss.str(), key.type);
+		}
+
 		void SecurityKeyManager::store(const dtn::data::EID &ref, const std::string &data, const dtn::security::SecurityKey::KeyType type)
 		{
 			ibrcommon::File keyfile = _path.get(hash(ref.getNode()) + ".pem");
