@@ -55,6 +55,9 @@ namespace dtn
 		private:
 			SecurityKeyManager();
 
+			/**
+			 * Hash an EID into a string
+			 */
 			static const std::string hash(const dtn::data::EID &eid);
 
 			/**
