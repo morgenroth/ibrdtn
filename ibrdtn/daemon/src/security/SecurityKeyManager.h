@@ -66,6 +66,11 @@ namespace dtn
 
 			static const std::string hash(const dtn::data::EID &eid);
 
+			/**
+			 * Create a fresh RSA key pair
+			 */
+			void createRSA(const dtn::data::EID &ref, const int bits = 2048);
+
 			ibrcommon::File _path;
 			ibrcommon::File _ca;
 			ibrcommon::File _key;

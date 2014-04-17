@@ -20,6 +20,7 @@
  */
 
 #include "Configuration.h"
+#include "core/BundleCore.h"
 #include "security/SecurityKeyManager.h"
 #include <ibrdtn/data/DTNTime.h>
 #include <ibrcommon/Logger.h>
@@ -28,6 +29,7 @@
 #include <fstream>
 
 #include <openssl/pem.h>
+#include <openssl/rsa.h>
 #include <openssl/err.h>
 
 namespace dtn
@@ -62,6 +64,15 @@ namespace dtn
 				_path = sec.getPath();
 				_key = sec.getKey();
 				_ca = sec.getCertificate();
+
+				// check if there is a local key
+				if (!dtn::core::BundleCore::local.isNone() && !hasKey(dtn::core::BundleCore::local, SecurityKey::KEY_PUBLIC))
+				{
+					IBRCOMMON_LOGGER_TAG(SecurityKeyManager::TAG, info) << "generate a new local key-pair" << IBRCOMMON_LOGGER_ENDL;
+
+					// generate a new local key
+					createRSA(dtn::core::BundleCore::local);
+				}
 			}
 			else
 			{
@@ -86,6 +97,34 @@ namespace dtn
 		{
 			const ibrcommon::File keyfile = _path.get(hash(ref.getNode()) + ".pem");
 			return keyfile.exists();
+		}
+
+		void SecurityKeyManager::createRSA(const dtn::data::EID &ref, const int bits)
+		{
+			const ibrcommon::File keyfile = _path.get(hash(ref.getNode()) + ".pem");
+			RSA* rsa = RSA_new();
+			BIGNUM* e = BN_new();
+
+			BN_set_word(e, 65537);
+
+			RSA_generate_key_ex(rsa, bits, e, NULL);
+
+			BN_free(e);
+			e = NULL;
+
+			FILE * rsa_key_file = fopen(keyfile.getPath().c_str(), "w");
+
+			if (!rsa_key_file) {
+				IBRCOMMON_LOGGER_TAG(SecurityKeyManager::TAG, error) << "Failed to open " << _path.getPath() << IBRCOMMON_LOGGER_ENDL;
+				RSA_free(rsa);
+				return;
+			}
+
+			PEM_write_RSA_PUBKEY(rsa_key_file, rsa);
+			PEM_write_RSAPrivateKey(rsa_key_file, rsa, NULL, NULL, 0, NULL, NULL);
+			fclose(rsa_key_file);
+
+			RSA_free(rsa);
 		}
 
 		dtn::security::SecurityKey SecurityKeyManager::get(const dtn::data::EID &ref, const dtn::security::SecurityKey::KeyType type) const throw (SecurityKeyManager::KeyNotFoundException)
