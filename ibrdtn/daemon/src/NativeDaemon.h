@@ -81,6 +81,13 @@ namespace dtn
 			Type type;
 		};
 
+		class NativeKeyInfo {
+		public:
+			std::string fingerprint;
+			std::string data;
+			int trustlevel;
+		};
+
 		class NativeStats {
 		public:
 			NativeStats()
@@ -230,6 +237,26 @@ namespace dtn
 			 * initiate a connection to a given neighbor
 			 */
 			void initiateConnection(std::string eid);
+
+			/**
+			 * Start the key exchange with the given neighbor and protocol
+			 */
+			void onKeyExchangeBegin(std::string eid, int protocol, std::string password) const;
+
+			/**
+			 * Respond to a exchange request
+			 */
+			void onKeyExchangeResponse(std::string eid, int protocol, int session, int step, std::string data) const;
+
+			/**
+			 * Returns security key data
+			 */
+			NativeKeyInfo getKeyInfo(std::string eid) const throw (NativeDaemonException);
+
+			/**
+			 * Remove an existing key
+			 */
+			void removeKey(std::string eid) const throw (NativeDaemonException);
 
 			/**
 			 * @see dtn::core::EventReceiver::raiseEvent()

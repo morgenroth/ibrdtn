@@ -110,6 +110,8 @@
 #ifdef IBRDTN_SUPPORT_BSP
 #include "security/SecurityManager.h"
 #include "security/SecurityKeyManager.h"
+#include "security/exchange/KeyExchanger.h"
+#include "security/exchange/KeyExchangeEvent.h"
 #endif
 
 #ifdef WITH_TLS
@@ -194,6 +196,10 @@ namespace dtn
 				dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::add(this);
 				dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::add(this);
 				dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
+
+#ifdef IBRDTN_SUPPORT_BSP
+				dtn::core::EventDispatcher<dtn::security::KeyExchangeEvent>::add(this);
+#endif
 			}
 		}
 
@@ -209,6 +215,10 @@ namespace dtn
 				dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::remove(this);
 				dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::remove(this);
 				dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::remove(this);
+
+#ifdef IBRDTN_SUPPORT_BSP
+				dtn::core::EventDispatcher<dtn::security::KeyExchangeEvent>::remove(this);
+#endif
 			}
 		}
 
@@ -433,6 +443,48 @@ namespace dtn
 				addEventData(queued.bundle, data);
 			} catch (const std::bad_cast&) { };
 
+#ifdef IBRDTN_SUPPORT_BSP
+			try {
+				const dtn::security::KeyExchangeEvent &keyExchange = dynamic_cast<const dtn::security::KeyExchangeEvent&>(*evt);
+
+				// set action
+				switch (keyExchange.getData().getAction()) {
+					case dtn::security::KeyExchangeData::COMPLETE:
+						action = "COMPLETE";
+						break;
+					case dtn::security::KeyExchangeData::PASSWORD_REQUEST:
+						action = "PASSWORDREQUEST";
+						break;
+					case dtn::security::KeyExchangeData::WRONG_PASSWORD:
+						action = "WRONGPASSWORD";
+						break;
+					case dtn::security::KeyExchangeData::HASH_COMMIT:
+						action = "HASHCOMMIT";
+						data.push_back("data: " + keyExchange.getData().str());
+						break;
+					case dtn::security::KeyExchangeData::NEWKEY_FOUND:
+						data.push_back("data: " + keyExchange.getData().str());
+						action = "NEWKEY";
+						break;
+					case dtn::security::KeyExchangeData::ERROR:
+						action = "ERROR";
+						break;
+					default:
+						return;
+				}
+
+				std::stringstream sstm;
+				data.push_back("EID: " + keyExchange.getEID().getString());
+
+				sstm << "session: " << keyExchange.getData().getSessionId();
+				data.push_back(sstm.str());
+
+				sstm.str("");
+				sstm << "protocol: " << keyExchange.getData().getProtocol();
+				data.push_back(sstm.str());
+			} catch (const std::bad_cast&) { };
+#endif
+
 			// signal event to the callback interface
 			_eventcb->eventRaised(event, action, data);
 		}
@@ -600,6 +652,77 @@ namespace dtn
 			} catch (const ibrcommon::Exception&) {
 				// ignore errors
 			}
+		}
+
+		void NativeDaemon::onKeyExchangeBegin(std::string eid, int protocol, std::string password) const
+		{
+#ifdef IBRDTN_SUPPORT_BSP
+			const dtn::data::EID peer(eid);
+			dtn::security::KeyExchangeData ked(dtn::security::KeyExchangeData::START, protocol);
+
+			if (!password.empty()) {
+				ked.str(password);
+			}
+
+			dtn::security::KeyExchangeEvent::raise(peer, ked);
+#endif
+		}
+
+		void NativeDaemon::onKeyExchangeResponse(std::string eid, int protocol, int session, int step, std::string data) const
+		{
+#ifdef IBRDTN_SUPPORT_BSP
+			dtn::security::KeyExchangeData ked(dtn::security::KeyExchangeData::RESPONSE, protocol);
+			ked.setStep(step);
+			ked.setSessionId(session);
+
+			if (!data.empty()) {
+				ked.str(data);
+			}
+
+			dtn::security::KeyExchangeEvent::raise(dtn::data::EID(eid), ked);
+#endif
+		}
+
+		NativeKeyInfo NativeDaemon::getKeyInfo(std::string eid) const throw (NativeDaemonException)
+		{
+#ifdef IBRDTN_SUPPORT_BSP
+			try {
+				// convert address into an EID
+				const dtn::data::EID endpoint(eid);
+
+				// get public key
+				dtn::security::SecurityKey key = dtn::security::SecurityKeyManager::getInstance().get(endpoint, dtn::security::SecurityKey::KEY_PUBLIC);
+
+				NativeKeyInfo info;
+				info.data = key.getData();
+				info.fingerprint = key.getFingerprint();
+				info.trustlevel = key.trustlevel;
+
+				return info;
+			} catch (ibrcommon::Exception &e) {
+				throw NativeDaemonException(e.what());
+			}
+#else
+			throw NativeDaemonException("not supported");
+#endif
+		}
+
+		void NativeDaemon::removeKey(std::string eid) const throw (NativeDaemonException)
+		{
+#ifdef IBRDTN_SUPPORT_BSP
+			try {
+				// convert address into an EID
+				const dtn::data::EID endpoint(eid);
+
+				// get public key
+				dtn::security::SecurityKey key = dtn::security::SecurityKeyManager::getInstance().get(endpoint, dtn::security::SecurityKey::KEY_PUBLIC);
+				dtn::security::SecurityKeyManager::getInstance().remove(key);
+			} catch (ibrcommon::Exception &e) {
+				throw NativeDaemonException(e.what());
+			}
+#else
+			throw NativeDaemonException("not supported");
+#endif
 		}
 
 		void NativeDaemon::setLogging(const std::string &defaultTag, int logLevel) const throw ()
@@ -1100,6 +1223,11 @@ namespace dtn
 
 			// add DevNull module
 			_apps.push_back( new dtn::daemon::DevNull() );
+
+#ifdef IBRDTN_SUPPORT_BSP
+			// add key-exchanger component
+			_components[RUNLEVEL_API].push_back(new dtn::security::KeyExchanger());
+#endif
 
 			if (conf.getNetwork().doFragmentation())
 			{
