@@ -74,13 +74,20 @@ ANDROID_AC_BUILD([
 
 	# DTNSec
 	with_dtnsec="yes"
+	
+	# OPENSSL
+	AC_DEFINE(HAVE_OPENSSL, [1], ["openssl library is available"])
+	OPENSSL_LIBS="-lssl -lcrypto"
+	AC_SUBST(OPENSSL_LIBS)
 
 	# TLS
 	AC_DEFINE(WITH_TLS, [1], ["tls support enabled"])
-	OPENSSL_LIBS="-lssl -lcrypto"
-	AC_SUBST(OPENSSL_LIBS)
 	CPPFLAGS="$CPPFLAGS -DWITH_TLS"
 	with_tls="yes"
+	
+	# enable JPAKE for key-exchange
+	AC_DEFINE(HAVE_OPENSSL_JPAKE_H, [1], ["openssl jpake extension available"])
+	with_jpake="yes"
 
 	# REGEX
 	AC_DEFINE(HAVE_REGEX_H, [1] ["Define to 1 if you have the <regex.h> header file."])
@@ -90,7 +97,6 @@ ANDROID_AC_BUILD([
 	#AC_DEFINE(HAVE_LIBDAEMON, [1], ["daemon library is available"])
 	#AC_DEFINE(HAVE_LIBCURL, [1], ["curl library is available"])
 	#AC_DEFINE(HAVE_SQLITE, [1], ["sqlite library is available"])
-
 
 	# triggers other conditionals at the end
 	PDFLATEX="no"
@@ -200,6 +206,30 @@ ANDROID_AC_BUILD([
 		AC_MSG_WARN([ibrcommon was compiled without 6LowPAN support. 6LowPAN convergence layers are disabled.])
 		use_lowpan="no"
 	])
+	
+	dnl -----------------------------------------------
+	dnl check for openssl library
+	dnl -----------------------------------------------
+	
+	PKG_CHECK_MODULES(OPENSSL, openssl, [
+		AC_DEFINE(HAVE_OPENSSL, [1], ["openssl library is available"])
+		AC_DEFINE(WITH_TLS, [1], ["tls support enabled"])
+		AC_SUBST(OPENSSL_CFLAGS)
+		AC_SUBST(OPENSSL_LIBS)
+		
+		old_CPPFLAGS="$CPPFLAGS"
+		CPPFLAGS="$OPENSSL_CFLAGS"
+		AC_CHECK_HEADERS([openssl/jpake.h], [
+			with_jpake="yes"
+		], [
+			with_jpake="no"
+		])
+		CPPFLAGS="$old_CPPFLAGS"
+		
+		with_openssl="yes"
+	], [
+		with_openssl="no"
+	])
 
 	dnl -----------------------------------------------
 	dnl Check for Bundle Security Protocol support
@@ -221,17 +251,12 @@ ANDROID_AC_BUILD([
 			@<:@default=no@:>@]),
 		[
 		if test "x$with_tls" = "xyes"; then
-			PKG_CHECK_MODULES(OPENSSL, openssl, [
-				AC_DEFINE(HAVE_OPENSSL, [1], ["openssl library is available"])
-				AC_DEFINE(WITH_TLS, [1], ["tls support enabled"])
-				AC_SUBST(OPENSSL_CFLAGS)
-				AC_SUBST(OPENSSL_LIBS)
-				with_tls="yes"
+			if test "x$with_openssl" = "xyes"; then
 				CPPFLAGS="$CPPFLAGS -DWITH_TLS"
-			], [
+			else
 				AC_MSG_WARN([no openssl libraries are found. TLS extensions are disabled.])
 				with_tls="no"
-			])
+			fi
 		else
 			with_tls="no"
 		fi
@@ -321,6 +346,7 @@ AM_CONDITIONAL(WIFIP2P, test x$with_wifi_p2p = xyes)
 AM_CONDITIONAL(VMIME, test x$with_vmime = xyes)
 AM_CONDITIONAL(WIN32, test x$enable_win32 = xyes)
 AM_CONDITIONAL(WIN32_NTSERVICE, test x$enable_ntservice = xyes)
+AM_CONDITIONAL(OPENSSL_JPAKE, test x$with_jpake = xyes)
 
 dnl -----------------------------------------------
 dnl Generates Makefiles, configuration files and scripts
@@ -336,6 +362,7 @@ AC_CONFIG_FILES([Makefile \
 	src/routing/flooding/Makefile \
 	src/routing/prophet/Makefile \
 	src/security/Makefile \
+	src/security/exchange/Makefile \
 	src/api/Makefile \
 	etc/Makefile \
 	doc/Makefile \

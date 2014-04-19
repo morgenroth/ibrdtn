@@ -40,6 +40,8 @@
 #include "routing/QueueBundleEvent.h"
 #include "routing/RequeueBundleEvent.h"
 
+#include "security/exchange/KeyExchangeEvent.h"
+
 #include <ibrcommon/Logger.h>
 #include <iostream>
 
@@ -76,6 +78,8 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::routing::RequeueBundleEvent>::add(this);
 
+			dtn::core::EventDispatcher<dtn::security::KeyExchangeEvent>::add(this);
+
 			/**
 				NodeHandshakeEvent
 				TimeEvent
@@ -103,6 +107,8 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::routing::StaticRouteChangeEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::routing::RequeueBundleEvent>::remove(this);
+
+			dtn::core::EventDispatcher<dtn::security::KeyExchangeEvent>::remove(this);
 		}
 
 		void EventDebugger::raiseEvent(const dtn::core::Event *evt) throw ()

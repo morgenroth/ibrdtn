@@ -1,4 +1,5 @@
 ## sub directory
+SUBDIRS = exchange
 
 security_SOURCES =
 
@@ -19,6 +20,8 @@ endif
 AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS) $(OPENSSL_CFLAGS)
 AM_LDFLAGS = $(ibrdtn_LIBS) $(OPENSSL_LIBS)
 
+libsecurity_la_LIBADD = exchange/libsecexchange.la
+
 if ANDROID
 noinst_DATA = Android.mk
 CLEANFILES = Android.mk
@@ -34,4 +37,7 @@ Android.mk: Makefile.am
 		-:SOURCES $(security_SOURCES) \
 		-:CPPFLAGS $(CPPFLAGS) $(AM_CPPFLAGS) \
 		-:LDFLAGS $(AM_LDFLAGS) \
+			$(subst lib,libdtnd_, $(libsecurity_la_LIBADD)) \
+		-:LIBFILTER_WHOLE dtnd_secexchange \
+		-:SUBDIR $(patsubst %,src/security/%, $(SUBDIRS)) \
 		> $@
