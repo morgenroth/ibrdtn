@@ -40,6 +40,9 @@
 #include "routing/RequeueBundleEvent.h"
 #include "core/TimeAdjustmentEvent.h"
 
+#include "security/exchange/KeyExchangeData.h"
+#include "security/exchange/KeyExchangeEvent.h"
+
 #include <ibrdtn/utils/Clock.h>
 #include <ibrdtn/utils/Utils.h>
 
@@ -473,6 +476,87 @@ namespace dtn
 
 						_stream << ClientHandler::API_STATUS_ACCEPTED << " STATS RESET" << std::endl;
 					} else {
+						throw ibrcommon::Exception("malformed command");
+					}
+				}
+				else if (cmd[0] == "key-exchange")
+				{
+					if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
+
+					const dtn::data::EID peer(cmd[2]);
+
+					if (cmd[1] == "none")
+					{
+						dtn::security::KeyExchangeData kedata(dtn::security::KeyExchangeData::START, 0);
+						dtn::security::KeyExchangeEvent::raise(peer, kedata);
+					}
+					else if (cmd[1] == "dh")
+					{
+						dtn::security::KeyExchangeData kedata(dtn::security::KeyExchangeData::START, 1);
+						dtn::security::KeyExchangeEvent::raise(peer, kedata);
+					}
+					else if (cmd[1] == "jpake")
+					{
+						if (cmd.size() < 4) throw ibrcommon::Exception("password required");
+
+						dtn::security::KeyExchangeData kedata(dtn::security::KeyExchangeData::START, 2);
+
+						// set data
+						kedata.str(cmd[3]);
+
+						dtn::security::KeyExchangeEvent::raise(peer, kedata);
+					}
+					else if (cmd[1] == "hash")
+					{
+						dtn::security::KeyExchangeData kedata(dtn::security::KeyExchangeData::START, 3);
+						dtn::security::KeyExchangeEvent::raise(peer, kedata);
+					}
+					else if (cmd[1] == "password")
+					{
+						if (cmd.size() < 4) throw ibrcommon::Exception("password required");
+
+						dtn::security::KeyExchangeData kedata(dtn::security::KeyExchangeData::RESPONSE, 2);
+
+						// set session id
+						kedata.setSessionId(atoi(cmd[3].c_str()));
+
+						// set data
+						kedata.str(cmd[4]);
+
+						dtn::security::KeyExchangeEvent::raise(peer, kedata);
+					}
+					else if (cmd[1] == "hashcompare")
+					{
+						if (cmd.size() < 4) throw ibrcommon::Exception("selection required");
+						if (cmd[4] != "0" && cmd[4] != "1") throw ibrcommon::Exception("wrong value");
+
+						dtn::security::KeyExchangeData kedata(dtn::security::KeyExchangeData::RESPONSE, 100);
+
+						// set session id
+						kedata.setSessionId(atoi(cmd[3].c_str()));
+
+						// set step
+						kedata.setStep(atoi(cmd[4].c_str()));
+
+						dtn::security::KeyExchangeEvent::raise(peer, kedata);
+					}
+					else if (cmd[1] == "newkey")
+					{
+						if (cmd.size() < 4) throw ibrcommon::Exception("selection required");
+						if (cmd[4] != "0" && cmd[4] != "1") throw ibrcommon::Exception("wrong value");
+
+						dtn::security::KeyExchangeData kedata(dtn::security::KeyExchangeData::RESPONSE, 101);
+
+						// set session id
+						kedata.setSessionId(atoi(cmd[3].c_str()));
+
+						// set step
+						kedata.setStep(atoi(cmd[4].c_str()));
+
+						dtn::security::KeyExchangeEvent::raise(peer, kedata);
+					}
+					else
+					{
 						throw ibrcommon::Exception("malformed command");
 					}
 				}
