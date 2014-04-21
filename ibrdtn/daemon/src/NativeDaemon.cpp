@@ -892,13 +892,13 @@ namespace dtn
 			}
 #endif
 
+			// initialize core component
+			core.initialize();
+
 #ifdef IBRDTN_SUPPORT_BSP
 			// initialize the key manager for the security extensions
 			dtn::security::SecurityKeyManager::getInstance().onConfigurationChanged( conf );
 #endif
-
-			// initialize core component
-			core.initialize();
 		}
 
 		void NativeDaemon::shutdown_core() throw (NativeDaemonException)
