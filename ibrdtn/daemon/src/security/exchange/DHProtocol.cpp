@@ -26,6 +26,10 @@
 #include <ibrdtn/data/BundleString.h>
 
 #include <ibrcommon/ssl/HMacStream.h>
+#include <ibrcommon/Logger.h>
+
+#include <openssl/rand.h>
+#include <openssl/pem.h>
 
 #define DH_KEY_LENGTH 2048
 
@@ -33,6 +37,8 @@ namespace dtn
 {
 	namespace security
 	{
+		const std::string DHProtocol::TAG = "DHProtocol";
+
 		DHProtocol::DHState::DHState()
 		 : dh(NULL)
 		{
@@ -44,12 +50,70 @@ namespace dtn
 		}
 
 		DHProtocol::DHProtocol(KeyExchangeManager &manager)
-		 : KeyExchangeProtocol(manager, 1)
+		 : KeyExchangeProtocol(manager, 1), _dh_params(NULL)
 		{
+			try {
+				// set path for DH params
+				_dh_params_file = dtn::daemon::Configuration::getInstance().getPath("dh_params");
+
+				struct timeval time;
+				::gettimeofday(&time, NULL);
+
+				// initialize random seed generator
+				RAND_seed(&time, sizeof time);
+
+				// check if DH params already exist
+				if (_dh_params_file.exists())
+				{
+					// load DH params from file
+					FILE *fd = fopen(_dh_params_file.getPath().c_str(), "r");
+					if (fd != NULL)
+					{
+						_dh_params = PEM_read_DHparams(fd, NULL, NULL, NULL);
+						fclose(fd);
+					}
+				}
+				else
+				{
+					// create new params
+					_dh_params = DH_new();
+
+					IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "Generate new DH parameters" << IBRCOMMON_LOGGER_ENDL;
+
+					if (!DH_generate_parameters_ex(_dh_params, DH_KEY_LENGTH, DH_GENERATOR_2, NULL))
+					{
+						throw ibrcommon::Exception("Error while generating DH parameters");
+					}
+
+					// store params in the file
+					FILE *fd = fopen(_dh_params_file.getPath().c_str(), "w");
+					if (fd != NULL)
+					{
+						PEM_write_DHparams(fd, _dh_params);
+						fclose(fd);
+					}
+				}
+			} catch (const dtn::daemon::Configuration::ParameterNotSetException&) {
+				// DH file not set
+			}
+
+			if (_dh_params == NULL)
+			{
+				// create new params
+				_dh_params = DH_new();
+
+				IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "Generate new DH parameters" << IBRCOMMON_LOGGER_ENDL;
+
+				if (!DH_generate_parameters_ex(_dh_params, DH_KEY_LENGTH, DH_GENERATOR_2, NULL))
+				{
+					throw ibrcommon::Exception("Error while generating DH parameters");
+				}
+			}
 		}
 
 		DHProtocol::~DHProtocol()
 		{
+			if (_dh_params) DH_free(_dh_params);
 		}
 
 		KeyExchangeSession* DHProtocol::createSession(const dtn::data::EID &peer, unsigned int uniqueId)
@@ -62,19 +126,18 @@ namespace dtn
 			// get session state
 			DHState &state = session.getState<DHState>();
 
-			// assign new DH
-			state.dh = DH_new();
+			// copy DH params for new context
+			state.dh = DHparams_dup(_dh_params);
 
-			if (!DH_generate_parameters_ex(state.dh, DH_KEY_LENGTH, DH_GENERATOR_2, NULL))
-			{
-				throw ibrcommon::Exception("Error while generating DH parameters");
-			}
+			IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 25) << "Checking DH parameters" << IBRCOMMON_LOGGER_ENDL;
 
 			int codes;
 			if (!DH_check(state.dh, &codes))
 			{
 				throw ibrcommon::Exception("Error while checking DH parameters");
 			}
+
+			IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 25) << "Generate DH keys" << IBRCOMMON_LOGGER_ENDL;
 
 			if (!DH_generate_key(state.dh))
 			{

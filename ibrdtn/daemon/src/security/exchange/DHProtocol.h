@@ -35,6 +35,8 @@ namespace dtn
 	{
 		class DHProtocol : public dtn::security::KeyExchangeProtocol
 		{
+			static const std::string TAG;
+
 		public:
 			DHProtocol(KeyExchangeManager &manager);
 			virtual ~DHProtocol();
@@ -56,6 +58,9 @@ namespace dtn
 
 			static void write(std::ostream &stream, const BIGNUM* bn);
 			static void read(std::istream &stream, BIGNUM **bn);
+
+			ibrcommon::File _dh_params_file;
+			DH* _dh_params;
 		};
 	} /* namespace security */
 } /* namespace dtn */
