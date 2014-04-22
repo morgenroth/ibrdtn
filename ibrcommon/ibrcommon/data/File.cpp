@@ -87,7 +87,7 @@ namespace ibrcommon
 #ifndef __WIN32__
 		std::string::iterator iter = _path.begin();
 
-		if ((*iter) != FILE_DELIMITER_CHAR)
+		if ((*iter) != FILE_DELIMITER_CHAR && (*iter) != '.')
 		{
 			_path = "." + std::string(FILE_DELIMITER) + _path;
 		}
