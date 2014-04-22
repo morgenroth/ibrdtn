@@ -96,75 +96,27 @@ namespace dtn
 
 		dtn::security::SecurityKey KeyExchangeSession::getKey(const dtn::security::SecurityKey::KeyType type) const throw (SecurityKey::KeyNotFoundException)
 		{
-			dtn::security::SecurityKey keydata;
-			keydata.reference = _peer;
-			keydata.type = type;
+			unsigned int id = getUniqueId();
+			std::string prefix((char*)&id, sizeof id);
 
-			std::stringstream prefix;
-			prefix << getSessionKey() << ".";
-
-			// get keyfile path
-			const ibrcommon::File keyfile = SecurityKeyManager::getInstance().getKeyFile(prefix.str(), _peer, type);
-
-			switch (type)
-			{
-				case SecurityKey::KEY_SHARED:
-				{
-					if (!keyfile.exists())
-					{
-						// get the default shared key
-						const ibrcommon::File default_key = dtn::daemon::Configuration::getInstance().getSecurity().getBABDefaultKey();
-
-						if (default_key.exists())
-						{
-							keydata.file = default_key;
-							keydata.lastupdate = DTNTime(default_key.lastmodify(), 0);
-							break;
-						}
-
-						IBRCOMMON_LOGGER_TAG(TAG, warning) << "Key file for " << _peer.getString() << " (" << keyfile.getPath() << ") not found" << IBRCOMMON_LOGGER_ENDL;
-						throw SecurityKey::KeyNotFoundException();
-					}
-
-					keydata.file = keyfile;
-					keydata.lastupdate = DTNTime(keyfile.lastmodify(), 0);
-					break;
-				}
-
-				case SecurityKey::KEY_UNSPEC:
-				case SecurityKey::KEY_PUBLIC:
-				case SecurityKey::KEY_PRIVATE:
-				{
-					if (!keyfile.exists())
-					{
-						IBRCOMMON_LOGGER_TAG(TAG, warning) << "Key file for " << _peer.getString() << " (" << keyfile.getPath() << ") not found" << IBRCOMMON_LOGGER_ENDL;
-						throw SecurityKey::KeyNotFoundException();
-					}
-
-
-					keydata.file = keyfile;
-					keydata.lastupdate = DTNTime(keyfile.lastmodify(), 0);
-					break;
-				}
-			}
-
-			return keydata;
+			return SecurityKeyManager::getInstance().get(prefix, _peer, type);
 		}
 
 		void KeyExchangeSession::putKey(const std::string &data, const dtn::security::SecurityKey::KeyType type)
 		{
-			std::stringstream prefix;
-			prefix << getSessionKey() << ".";
+			unsigned int id = getUniqueId();
+			std::string prefix((char*)&id, sizeof id);
 
-			// get keyfile path
-			ibrcommon::File keyfile = SecurityKeyManager::getInstance().getKeyFile(prefix.str(), _peer, type);
+			dtn::security::SecurityKey keydata;
 
-			// delete if already exists
-			if (keyfile.exists()) keyfile.remove();
+			// assign key type
+			keydata.type = type;
 
-			std::ofstream keystream(keyfile.getPath().c_str());
-			keystream << data;
-			keystream.close();
+			// assign reference
+			keydata.reference = _peer;
+
+			// store security key
+			SecurityKeyManager::getInstance().store(prefix, keydata, data);
 		}
 
 		void KeyExchangeSession::clearKeys()
@@ -176,14 +128,12 @@ namespace dtn
 
 			for (std::list<dtn::security::SecurityKey::KeyType>::const_iterator it = types.begin(); it != types.end(); ++it)
 			{
-				std::stringstream prefix;
-				prefix << getSessionKey() << ".";
-
-				// get keyfile path
-				ibrcommon::File keyfile = SecurityKeyManager::getInstance().getKeyFile(prefix.str(), _peer, *it);
-
-				// delete if exists
-				if (keyfile.exists()) keyfile.remove();
+				try {
+					SecurityKeyManager::getInstance().remove( getKey(*it) );
+				} catch (const SecurityKey::KeyNotFoundException &e) {
+					// key not found
+					IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 25) << e.what() << IBRCOMMON_LOGGER_ENDL;
+				}
 			}
 		}
 	} /* namespace security */

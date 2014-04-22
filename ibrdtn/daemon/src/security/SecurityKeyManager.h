@@ -48,9 +48,30 @@ namespace dtn
 			 */
 			virtual void onConfigurationChanged(const dtn::daemon::Configuration &conf) throw ();
 
+			/**
+			 * Checks if a security key exists
+			 */
 			bool hasKey(const dtn::data::EID &ref, const dtn::security::SecurityKey::KeyType type = dtn::security::SecurityKey::KEY_UNSPEC) const;
+
+			/**
+			 * Get a security key from the standard key path
+			 */
 			dtn::security::SecurityKey get(const dtn::data::EID &ref, const dtn::security::SecurityKey::KeyType type = dtn::security::SecurityKey::KEY_UNSPEC) const throw (SecurityKey::KeyNotFoundException);
-			void store(const dtn::data::EID &ref, const std::string &data, const dtn::security::SecurityKey::KeyType type = dtn::security::SecurityKey::KEY_UNSPEC);
+
+			/**
+			 * Get a security key from the prefixed path
+			 */
+			dtn::security::SecurityKey get(const std::string &prefix, const dtn::data::EID &ref, const dtn::security::SecurityKey::KeyType type = dtn::security::SecurityKey::KEY_UNSPEC) const throw (SecurityKey::KeyNotFoundException);
+
+			/**
+			 * Store a security key in the standard key path
+			 */
+			void store(const dtn::security::SecurityKey &key, const std::string &data);
+
+			/**
+			 * Store a security key in the prefixed path
+			 */
+			void store(const std::string &prefix, const dtn::security::SecurityKey &key, const std::string &data);
 
 			/**
 			 * Store a security key object in the standard key path
@@ -62,6 +83,16 @@ namespace dtn
 			 */
 			const ibrcommon::File getKeyFile(const std::string &prefix, const dtn::data::EID &peer, const dtn::security::SecurityKey::KeyType type = dtn::security::SecurityKey::KEY_UNSPEC) const;
 
+			/**
+			 * Returns the path to the key of given type
+			 */
+			const ibrcommon::File getKeyFile(const dtn::data::EID &peer, const dtn::security::SecurityKey::KeyType type = dtn::security::SecurityKey::KEY_UNSPEC) const;
+
+			/**
+			 * Remove a security key
+			 */
+			void remove(const SecurityKey &key);
+
 		private:
 			SecurityKeyManager();
 
@@ -71,9 +102,19 @@ namespace dtn
 			static const std::string hash(const dtn::data::EID &eid);
 
 			/**
+			 * Hash an string into a hex string
+			 */
+			static const std::string hash(const std::string &value);
+
+			/**
 			 * Create a fresh RSA key pair
 			 */
 			void createRSA(const dtn::data::EID &ref, const int bits = 2048);
+
+			/**
+			 * Load a security key
+			 */
+			void load(dtn::security::SecurityKey &key) const;
 
 			ibrcommon::File _path;
 			ibrcommon::File _ca;
