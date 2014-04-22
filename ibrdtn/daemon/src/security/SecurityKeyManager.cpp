@@ -27,6 +27,7 @@
 #include <sstream>
 #include <iomanip>
 #include <fstream>
+#include <fcntl.h>
 
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
@@ -106,7 +107,8 @@ namespace dtn
 
 		void SecurityKeyManager::createRSA(const dtn::data::EID &ref, const int bits)
 		{
-			const ibrcommon::File keyfile = _path.get(hash(ref.getNode()) + ".pem");
+			const ibrcommon::File privkey = getKeyFile(ref, SecurityKey::KEY_PRIVATE);
+			const ibrcommon::File pubkey = getKeyFile(ref, SecurityKey::KEY_PUBLIC);
 			RSA* rsa = RSA_new();
 			BIGNUM* e = BN_new();
 
@@ -117,22 +119,32 @@ namespace dtn
 			BN_free(e);
 			e = NULL;
 
-			FILE * rsa_key_file = fopen(keyfile.getPath().c_str(), "w");
+			// write private key
+			int fd = ::open(privkey.getPath().c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0600);
 
-			if (!rsa_key_file) {
-				IBRCOMMON_LOGGER_TAG(SecurityKeyManager::TAG, error) << "Failed to open " << _path.getPath() << IBRCOMMON_LOGGER_ENDL;
+			FILE * rsa_privkey_file = fdopen(fd, "w");
+			if (!rsa_privkey_file) {
+				IBRCOMMON_LOGGER_TAG(SecurityKeyManager::TAG, error) << "Failed to open " << privkey.getPath() << IBRCOMMON_LOGGER_ENDL;
 				RSA_free(rsa);
 				return;
 			}
+			PEM_write_RSAPrivateKey(rsa_privkey_file, rsa, NULL, NULL, 0, NULL, NULL);
+			fclose(rsa_privkey_file);
 
-			PEM_write_RSA_PUBKEY(rsa_key_file, rsa);
-			PEM_write_RSAPrivateKey(rsa_key_file, rsa, NULL, NULL, 0, NULL, NULL);
-			fclose(rsa_key_file);
+			// write public key
+			FILE * rsa_pubkey_file = fopen(pubkey.getPath().c_str(), "w+");
+			if (!rsa_pubkey_file) {
+				IBRCOMMON_LOGGER_TAG(SecurityKeyManager::TAG, error) << "Failed to open " << privkey.getPath() << IBRCOMMON_LOGGER_ENDL;
+				RSA_free(rsa);
+				return;
+			}
+			PEM_write_RSA_PUBKEY(rsa_pubkey_file, rsa);
+			fclose(rsa_pubkey_file);
 
 			RSA_free(rsa);
 
 			// set trust-level to high
-			SecurityKey key = get(ref, SecurityKey::KEY_PRIVATE);
+			SecurityKey key = get(ref, SecurityKey::KEY_PUBLIC);
 			key.trustlevel = SecurityKey::HIGH;
 			store(key);
 		}
@@ -250,10 +262,11 @@ namespace dtn
 				case SecurityKey::KEY_SHARED:
 					return _path.get(hash(peer) + ".mac");
 
-				case SecurityKey::KEY_UNSPEC:
 				case SecurityKey::KEY_PUBLIC:
+					return _path.get(hash(peer) + ".pub");
+
 				case SecurityKey::KEY_PRIVATE:
-					return _path.get(hash(peer) + ".pem");
+					return _path.get(hash(peer) + ".pkey");
 
 				default:
 					return _path.get(hash(peer) + ".key");
@@ -267,10 +280,11 @@ namespace dtn
 				case SecurityKey::KEY_SHARED:
 					return _path.get(hash(prefix) + "." + hash(peer) + ".mac");
 
-				case SecurityKey::KEY_UNSPEC:
 				case SecurityKey::KEY_PUBLIC:
+					return _path.get(hash(prefix) + "." + hash(peer) + ".pub");
+
 				case SecurityKey::KEY_PRIVATE:
-					return _path.get(hash(prefix) + "." + hash(peer) + ".pem");
+					return _path.get(hash(prefix) + "." + hash(peer) + ".pkey");
 
 				default:
 					return _path.get(hash(prefix) + "." + hash(peer) + ".key");
