@@ -35,7 +35,7 @@ namespace dtn
 	namespace security
 	{
 		SecurityKey::SecurityKey()
-		 : type(KEY_UNSPEC)
+		 : type(KEY_UNSPEC), trustlevel(NONE)
 		{}
 
 		SecurityKey::~SecurityKey()
@@ -54,6 +54,11 @@ namespace dtn
 		bool SecurityKey::operator==(const SecurityKey &key)
 		{
 			return getFingerprint() == key.getFingerprint();
+		}
+
+		ibrcommon::File SecurityKey::getMetaFilename() const
+		{
+			return ibrcommon::File(file.getPath() + ".txt");
 		}
 
 		const std::string SecurityKey::getData() const

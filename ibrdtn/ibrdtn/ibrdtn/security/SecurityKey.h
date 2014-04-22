@@ -47,6 +47,14 @@ namespace dtn
 				KEY_PUBLIC = 3
 			};
 
+			enum TrustLevel
+			{
+				NONE,
+				LOW,
+				MEDIUM,
+				HIGH
+			};
+
 			class KeyNotFoundException : public ibrcommon::Exception
 			{
 			public:
@@ -68,10 +76,15 @@ namespace dtn
 			// last update time
 			dtn::data::DTNTime lastupdate;
 
+			// trust-level of this key
+			TrustLevel trustlevel;
+
 			// key file
 			ibrcommon::File file;
 
 			bool operator==(const SecurityKey &key);
+
+			ibrcommon::File getMetaFilename() const;
 
 			virtual RSA* getRSA() const;
 
@@ -93,7 +106,10 @@ namespace dtn
 				stream << dtn::data::BundleString(key.reference.getString());
 
 				// timestamp of last update
-				stream << key.lastupdate;
+				stream << dtn::data::DTNTime();
+
+				// store trust-level
+				stream << dtn::data::Number(key.trustlevel);
 
 				// To support concatenation of streaming calls, we return the reference to the output stream.
 				return stream;
@@ -111,6 +127,11 @@ namespace dtn
 
 				// timestamp of last update
 				stream >> key.lastupdate;
+
+				// load trust-level
+				dtn::data::Number tl;
+				stream >> tl;
+				key.trustlevel = TrustLevel(tl.get<size_t>());
 
 				// To support concatenation of streaming calls, we return the reference to the input stream.
 				return stream;
