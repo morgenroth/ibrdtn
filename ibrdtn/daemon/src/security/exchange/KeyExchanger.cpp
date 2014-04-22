@@ -268,6 +268,12 @@ namespace dtn
 
 				if (newKey == oldKey)
 				{
+					if (newKey.trustlevel > oldKey.trustlevel)
+					{
+						// update existing key
+						SecurityKeyManager::getInstance().store(newKey);
+					}
+
 					event.setAction(KeyExchangeData::COMPLETE);
 				}
 				else
