@@ -38,7 +38,7 @@ namespace dtn
 		void NFCProtocol::begin(KeyExchangeSession &session, KeyExchangeData &data)
 		{
 			// store received key in the session
-			session.putKey(data.str(), SecurityKey::KEY_PUBLIC);
+			session.putKey(data.str(), SecurityKey::KEY_PUBLIC, SecurityKey::HIGH);
 
 			// finish the key-exchange
 			manager.finish(session);

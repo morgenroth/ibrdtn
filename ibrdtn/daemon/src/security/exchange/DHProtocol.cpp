@@ -253,7 +253,7 @@ namespace dtn
 						}
 
 						// write key in tmp file
-						session.putKey(publicK, SecurityKey::KEY_PUBLIC);
+						session.putKey(publicK, SecurityKey::KEY_PUBLIC, SecurityKey::LOW);
 
 						// get local public key
 						const SecurityKey pkey = SecurityKeyManager::getInstance().get(dtn::core::BundleCore::local, SecurityKey::KEY_PUBLIC);
@@ -295,7 +295,7 @@ namespace dtn
 						}
 
 						// write key in tmp file
-						session.putKey(publicK, SecurityKey::KEY_PUBLIC);
+						session.putKey(publicK, SecurityKey::KEY_PUBLIC, SecurityKey::LOW);
 
 						// finish the key-exchange
 						manager.finish(session);

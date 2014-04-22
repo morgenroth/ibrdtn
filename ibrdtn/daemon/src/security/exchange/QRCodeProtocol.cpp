@@ -40,13 +40,20 @@ namespace dtn
 
 		void QRCodeProtocol::begin(KeyExchangeSession &session, KeyExchangeData &data)
 		{
-			std::string fingerprint = SecurityKeyManager::getInstance().get(session.getPeer(), SecurityKey::KEY_PUBLIC).getFingerprint();
+			// get existing security key
+			SecurityKey key = SecurityKeyManager::getInstance().get(session.getPeer(), SecurityKey::KEY_PUBLIC);
+
+			// get key fingerprint
+			const std::string fingerprint = key.getFingerprint();
 
 			// prepare a response
 			KeyExchangeData response(KeyExchangeData::COMPLETE, session);
 
 			if (fingerprint == data.str())
 			{
+				// store existing key with HIGH trust level
+				session.putKey(key.getData(), key.type, SecurityKey::HIGH);
+
 				response.setAction(KeyExchangeData::COMPLETE);
 				KeyExchangeEvent::raise(session.getPeer(), response);
 

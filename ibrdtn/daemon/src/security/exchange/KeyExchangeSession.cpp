@@ -102,7 +102,7 @@ namespace dtn
 			return SecurityKeyManager::getInstance().get(prefix, _peer, type);
 		}
 
-		void KeyExchangeSession::putKey(const std::string &data, const dtn::security::SecurityKey::KeyType type)
+		void KeyExchangeSession::putKey(const std::string &data, const dtn::security::SecurityKey::KeyType type, const dtn::security::SecurityKey::TrustLevel trust) const
 		{
 			unsigned int id = getUniqueId();
 			std::string prefix((char*)&id, sizeof id);
@@ -114,6 +114,9 @@ namespace dtn
 
 			// assign reference
 			keydata.reference = _peer;
+
+			// assign trust level
+			keydata.trustlevel = trust;
 
 			// store security key
 			SecurityKeyManager::getInstance().store(prefix, keydata, data);

@@ -91,7 +91,7 @@ namespace dtn
 				/**
 				 * Stores a key in the session
 				 */
-				void putKey(const std::string &data, const dtn::security::SecurityKey::KeyType type = dtn::security::SecurityKey::KEY_UNSPEC);
+				void putKey(const std::string &data, const dtn::security::SecurityKey::KeyType type, const dtn::security::SecurityKey::TrustLevel trust) const;
 
 				/**
 				 * Clear all stored key in the session

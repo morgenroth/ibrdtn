@@ -259,7 +259,7 @@ namespace dtn
 			}
 
 			// prepare event
-			KeyExchangeData event(KeyExchangeData::COMPLETE, session.getProtocol());
+			KeyExchangeData event(KeyExchangeData::COMPLETE, session);
 
 			try
 			{
@@ -359,7 +359,7 @@ namespace dtn
 							SecurityKeyManager::getInstance().store(key);
 
 							// prepare event
-							KeyExchangeData event(KeyExchangeData::NEWKEY_FOUND, _data.getProtocol());
+							KeyExchangeData event(KeyExchangeData::NEWKEY_FOUND, session);
 							event.str(key.getFingerprint());
 
 							// trigger further actions

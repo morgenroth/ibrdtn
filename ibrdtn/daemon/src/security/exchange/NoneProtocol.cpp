@@ -58,7 +58,7 @@ namespace dtn
 			if (data.getAction() == KeyExchangeData::REQUEST)
 			{
 				// write key in tmp file
-				session.putKey(data.str(), SecurityKey::KEY_PUBLIC);
+				session.putKey(data.str(), SecurityKey::KEY_PUBLIC, SecurityKey::LOW);
 
 				// prepare response
 				KeyExchangeData response;
@@ -79,7 +79,7 @@ namespace dtn
 			else if (data.getAction() == KeyExchangeData::RESPONSE)
 			{
 				// write key to session
-				session.putKey(data.str(), SecurityKey::KEY_PUBLIC);
+				session.putKey(data.str(), SecurityKey::KEY_PUBLIC, SecurityKey::LOW);
 
 				// finish the key-exchange
 				manager.finish(session);

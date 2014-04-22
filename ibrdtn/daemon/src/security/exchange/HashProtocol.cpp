@@ -146,7 +146,7 @@ namespace dtn
 						}
 
 						// write key in tmp file
-						session.putKey(pub, SecurityKey::KEY_PUBLIC);
+						session.putKey(pub, SecurityKey::KEY_PUBLIC, SecurityKey::MEDIUM);
 
 						const std::string random(&state.random[0], RANDOM_NUMBER_LENGTH);
 
@@ -187,7 +187,7 @@ namespace dtn
 						}
 
 						// write key in tmp file
-						session.putKey(pub, SecurityKey::KEY_PUBLIC);
+						session.putKey(pub, SecurityKey::KEY_PUBLIC, SecurityKey::MEDIUM);
 
 						const std::string random(state.random.begin(), state.random.end());
 
