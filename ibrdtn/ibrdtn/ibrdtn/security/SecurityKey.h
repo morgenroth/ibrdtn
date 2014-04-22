@@ -82,6 +82,9 @@ namespace dtn
 			// key file
 			ibrcommon::File file;
 
+			// flags
+			dtn::data::SDNV<unsigned int> flags;
+
 			bool operator==(const SecurityKey &key);
 
 			ibrcommon::File getMetaFilename() const;
@@ -111,6 +114,9 @@ namespace dtn
 				// store trust-level
 				stream << dtn::data::Number(key.trustlevel);
 
+				// store flags
+				stream << key.flags;
+
 				// To support concatenation of streaming calls, we return the reference to the output stream.
 				return stream;
 			}
@@ -132,6 +138,9 @@ namespace dtn
 				dtn::data::Number tl;
 				stream >> tl;
 				key.trustlevel = TrustLevel(tl.get<size_t>());
+
+				// load flags
+				stream >> key.flags;
 
 				// To support concatenation of streaming calls, we return the reference to the input stream.
 				return stream;
