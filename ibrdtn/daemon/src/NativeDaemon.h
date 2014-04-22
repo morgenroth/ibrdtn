@@ -236,7 +236,7 @@ namespace dtn
 			/**
 			 * initiate a connection to a given neighbor
 			 */
-			void initiateConnection(std::string eid);
+			void initiateConnection(std::string eid) const;
 
 			/**
 			 * Start the key exchange with the given neighbor and protocol

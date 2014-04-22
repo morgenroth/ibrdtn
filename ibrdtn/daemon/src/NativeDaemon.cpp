@@ -641,7 +641,7 @@ namespace dtn
 			}
 		}
 
-		void NativeDaemon::initiateConnection(std::string eid)
+		void NativeDaemon::initiateConnection(std::string eid) const
 		{
 			dtn::data::EID neighbor(eid);
 			dtn::net::ConnectionManager &cm = dtn::core::BundleCore::getInstance().getConnectionManager();
