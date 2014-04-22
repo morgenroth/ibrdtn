@@ -24,8 +24,14 @@
 #include "ibrcommon/thread/MutexLock.h"
 #include "ibrcommon/Logger.h"
 
+#if defined HAVE_LIBNL || HAVE_LIBNL2
 #include <netlink/object-api.h>
 #include <netlink/cache-api.h>
+#else
+#include <netlink/object.h>
+#include <netlink/cache.h>
+#endif
+
 #include <netlink/route/link.h>
 #include <netlink/route/addr.h>
 #include <netlink/route/rtnl.h>
@@ -162,9 +168,9 @@ namespace ibrcommon
 #if defined HAVE_LIBNL2 || HAVE_LIBNL3
 				LinkEvent::Action evt_action = LinkEvent::ACTION_UNKOWN;
 
-				if (action == NL_ACT_NEW)
+				if (action == 1) // NL_ACT_NEW
 					evt_action = LinkEvent::ACTION_ADDRESS_ADDED;
-				else if (action == NL_ACT_DEL)
+				else if (action == 2) // NL_ACT_DEL
 					evt_action = LinkEvent::ACTION_ADDRESS_REMOVED;
 
 				int ifindex = rtnl_addr_get_ifindex((struct rtnl_addr *) obj);
