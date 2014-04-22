@@ -86,6 +86,7 @@ namespace dtn
 			std::string fingerprint;
 			std::string data;
 			int trustlevel;
+			unsigned int flags;
 		};
 
 		class NativeStats {

@@ -118,6 +118,9 @@ namespace dtn
 			// assign trust level
 			keydata.trustlevel = trust;
 
+			// set protocol flags
+			keydata.flags = (1 << getProtocol());
+
 			// store security key
 			SecurityKeyManager::getInstance().store(prefix, keydata, data);
 		}

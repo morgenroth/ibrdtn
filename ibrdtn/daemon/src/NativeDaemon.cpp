@@ -697,6 +697,7 @@ namespace dtn
 				info.data = key.getData();
 				info.fingerprint = key.getFingerprint();
 				info.trustlevel = key.trustlevel;
+				info.flags = key.flags.get<unsigned int>();
 
 				return info;
 			} catch (ibrcommon::Exception &e) {
