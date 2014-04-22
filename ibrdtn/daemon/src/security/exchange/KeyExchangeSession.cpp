@@ -122,7 +122,7 @@ namespace dtn
 			SecurityKeyManager::getInstance().store(prefix, keydata, data);
 		}
 
-		void KeyExchangeSession::clearKeys()
+		void KeyExchangeSession::clearKeys() const
 		{
 			std::list<dtn::security::SecurityKey::KeyType> types;
 			types.push_back(dtn::security::SecurityKey::KEY_SHARED);

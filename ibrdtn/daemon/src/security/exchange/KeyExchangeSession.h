@@ -96,7 +96,7 @@ namespace dtn
 				/**
 				 * Clear all stored key in the session
 				 */
-				void clearKeys();
+				void clearKeys() const;
 
 				/**
 				 * Returns the session state or throws an exception if the
