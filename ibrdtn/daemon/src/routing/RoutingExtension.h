@@ -42,6 +42,9 @@ namespace dtn
 			RoutingExtension();
 			virtual ~RoutingExtension() = 0;
 
+			virtual void componentUp() throw () = 0;
+			virtual void componentDown() throw () = 0;
+
 			/**
 			 * This method is called every time something has changed. The module
 			 * should search again for bundles to transfer to the given peer.
@@ -57,18 +60,6 @@ namespace dtn
 			 * This method is called every time a bundle was queued
 			 */
 			virtual void eventBundleQueued(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw () { };
-
-
-			virtual void componentUp() throw () = 0;
-			virtual void componentDown() throw () = 0;
-
-			enum CALLBACK_ACTION
-			{
-				ROUTE_CALLBACK_FORWARDED = 0,
-				ROUTE_CALLBACK_ABORTED = 1,
-				ROUTE_CALLBACK_REJECTED = 2,
-				ROUTE_CALLBACK_DELETED = 3
-			};
 
 			/**
 			 * If some data of another node is required. These method is called to collect all
@@ -94,6 +85,7 @@ namespace dtn
 			 */
 			virtual void processHandshake(const dtn::data::EID&, NodeHandshake&) { };
 
+		protected:
 			/**
 			 * Transfer one bundle to another node.
 			 * @throw BundleNotFoundException if the bundle do not exist.
@@ -102,7 +94,6 @@ namespace dtn
 			 */
 			void transferTo(const dtn::data::EID &destination, const dtn::data::MetaBundle &meta);
 
-		protected:
 			BaseRouter& operator*();
 		};
 	} /* namespace routing */

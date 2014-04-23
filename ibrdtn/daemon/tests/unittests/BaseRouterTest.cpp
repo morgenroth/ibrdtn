@@ -108,6 +108,11 @@ void BaseRouterTest::testTransferTo()
 
 		void componentUp() throw () {};
 		void componentDown() throw () {};
+
+		void testTransfer(const dtn::data::EID &destination, const dtn::data::MetaBundle &meta)
+		{
+			transferTo(destination, meta);
+		}
 	};
 
 	/* test signature (const dtn::data::EID &destination, const dtn::data::BundleID &id) */
@@ -131,11 +136,11 @@ void BaseRouterTest::testTransferTo()
 	// create the neighbor in the neighbor database
 	{
 		ibrcommon::MutexLock l(db);
-		dtn::routing::NeighborDatabase::NeighborEntry &entry = db.create(neighbor);
+		db.create(neighbor);
 	}
 
 	try {
-		ex->transferTo(neighbor, dtn::data::MetaBundle::create(b));
+		ex->testTransfer(neighbor, dtn::data::MetaBundle::create(b));
 		router.terminate();
 	} catch (const ibrcommon::Exception &ex) {
 		std::cout << ex.what() << std::endl;
