@@ -31,7 +31,7 @@ namespace dtn
 
 		const std::string P2PDialupEvent::getName() const
 		{
-			return P2PDialupEvent::className;
+			return "P2PDialupEvent";
 		}
 
 
@@ -47,7 +47,5 @@ namespace dtn
 
 			return "unknown event";
 		}
-
-		const std::string P2PDialupEvent::className = "P2PDialupEvent";
 	} /* namespace net */
 } /* namespace dtn */

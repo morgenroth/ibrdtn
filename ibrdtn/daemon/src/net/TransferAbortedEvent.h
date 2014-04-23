@@ -49,8 +49,6 @@ namespace dtn
 
 			std::string getMessage() const;
 
-			static const std::string className;
-
 			static void raise(const dtn::data::EID &peer, const dtn::data::BundleID &id, const AbortReason reason = REASON_UNDEFINED);
 
 			const dtn::data::EID& getPeer() const;

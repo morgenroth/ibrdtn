@@ -43,7 +43,7 @@ namespace dtn
 
 		const std::string GlobalEvent::getName() const
 		{
-			return GlobalEvent::className;
+			return "GlobalEvent";
 		}
 
 		std::string GlobalEvent::getMessage() const
@@ -81,7 +81,5 @@ namespace dtn
 			// raise the new event
 			dtn::core::EventDispatcher<GlobalEvent>::queue( new GlobalEvent(a) );
 		}
-
-		const std::string GlobalEvent::className = "GlobalEvent";
 	}
 }

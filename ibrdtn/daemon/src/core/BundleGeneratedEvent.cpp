@@ -48,7 +48,7 @@ namespace dtn
 
 		const std::string BundleGeneratedEvent::getName() const
 		{
-			return BundleGeneratedEvent::className;
+			return "BundleGeneratedEvent";
 		}
 
 		std::string BundleGeneratedEvent::getMessage() const
@@ -60,8 +60,6 @@ namespace dtn
 		{
 			return _bundle;
 		}
-
-		const string BundleGeneratedEvent::className = "BundleGeneratedEvent";
 	}
 
 }

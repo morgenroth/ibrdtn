@@ -42,8 +42,6 @@ namespace dtn
 
 			const dtn::data::BundleID& getBundle() const;
 
-			static const string className;
-
 			static void raise(const dtn::data::Bundle &bundle);
 			static void raise(const dtn::data::BundleID &bundle);
 

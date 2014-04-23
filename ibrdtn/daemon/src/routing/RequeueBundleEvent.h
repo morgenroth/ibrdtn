@@ -43,8 +43,6 @@ namespace dtn
 
 			const dtn::data::BundleID& getBundle() const;
 
-			static const string className;
-
 			static void raise(const dtn::data::EID peer, const dtn::data::BundleID &id);
 
 		private:

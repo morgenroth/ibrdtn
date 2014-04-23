@@ -37,7 +37,7 @@ namespace dtn
 
 		const std::string NodeHandshakeEvent::getName() const
 		{
-			return NodeHandshakeEvent::className;
+			return "NodeHandshakeEvent";
 		}
 
 		std::string NodeHandshakeEvent::getMessage() const
@@ -62,7 +62,5 @@ namespace dtn
 		{
 			dtn::core::EventDispatcher<NodeHandshakeEvent>::queue( new NodeHandshakeEvent(state, peer) );
 		}
-
-		const string NodeHandshakeEvent::className = "NodeHandshakeEvent";
 	} /* namespace routing */
 } /* namespace dtn */

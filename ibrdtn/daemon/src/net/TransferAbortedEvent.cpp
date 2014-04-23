@@ -44,7 +44,7 @@ namespace dtn
 
 		const std::string TransferAbortedEvent::getName() const
 		{
-			return TransferAbortedEvent::className;
+			return "TransferAbortedEvent";
 		}
 
 		const dtn::data::EID& TransferAbortedEvent::getPeer() const
@@ -84,7 +84,5 @@ namespace dtn
 		{
 			return "transfer of bundle " + _bundle.toString() + " to " + _peer.getString() + " aborted. (" + getReason(reason) + ")";
 		}
-
-		const std::string TransferAbortedEvent::className = "TransferAbortedEvent";
 	}
 }

@@ -29,8 +29,6 @@ namespace dtn
 
 			std::string getMessage() const;
 
-			static const std::string className;
-
 			static void raise(p2p_event_type, const ibrcommon::vinterface&);
 
 			const p2p_event_type type;

@@ -57,8 +57,6 @@ namespace dtn
 			const std::string pattern;
 			dtn::data::Number timeout;
 
-			static const std::string className;
-
 		private:
 			StaticRouteChangeEvent(CHANGE_TYPE type);
 			StaticRouteChangeEvent(CHANGE_TYPE type, const dtn::data::EID &nexthop, const std::string &pattern, const dtn::data::Number &timeout = 0);

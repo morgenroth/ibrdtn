@@ -49,7 +49,6 @@ namespace dtn
 			const REASON_CODE reason;
 
 			static void raise(const dtn::data::MetaBundle &meta, REASON_CODE reason = DELIVERED);
-			static const std::string className;
 
 		private:
 			BundlePurgeEvent(const dtn::data::MetaBundle &meta, REASON_CODE reason);

@@ -27,8 +27,6 @@ namespace dtn
 
 			static void raise(const timeval &offset, const double &rating);
 
-			static const std::string className;
-
 			timeval offset;
 			double rating;
 

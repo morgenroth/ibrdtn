@@ -51,8 +51,6 @@ namespace dtn
 
 			const dtn::core::Node& getNode() const;
 
-			static const string className;
-
 			static void raise(State, const dtn::core::Node&);
 
 		private:

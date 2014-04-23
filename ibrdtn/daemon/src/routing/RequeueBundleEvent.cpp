@@ -46,7 +46,7 @@ namespace dtn
 
 		const string RequeueBundleEvent::getName() const
 		{
-			return RequeueBundleEvent::className;
+			return "RequeueBundleEvent";
 		}
 
 		string RequeueBundleEvent::getMessage() const
@@ -63,7 +63,5 @@ namespace dtn
 		{
 			return _bundle;
 		}
-
-		const string RequeueBundleEvent::className = "RequeueBundleEvent";
 	}
 }

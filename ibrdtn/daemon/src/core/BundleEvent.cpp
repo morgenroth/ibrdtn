@@ -49,7 +49,7 @@ namespace dtn
 
 		const std::string BundleEvent::getName() const
 		{
-			return BundleEvent::className;
+			return "BundleEvent";
 		}
 
 		std::string BundleEvent::getMessage() const
@@ -80,7 +80,5 @@ namespace dtn
 			// raise the new event
 			dtn::core::EventDispatcher<BundleEvent>::queue( new BundleEvent(bundle, action, reason) );
 		}
-
-		const string BundleEvent::className = "BundleEvent";
 	}
 }

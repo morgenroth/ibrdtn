@@ -54,8 +54,6 @@ namespace dtn
 
 			static void raise(const Action a);
 
-			static const std::string className;
-
 		private:
 			GlobalEvent(const Action a);
 			Action _action;

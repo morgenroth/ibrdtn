@@ -50,8 +50,6 @@ namespace dtn
 
 			static void raise(const dtn::data::MetaBundle &bundle, const EventCustodyAction action);
 
-			static const std::string className;
-
 		private:
 			CustodyEvent(const dtn::data::MetaBundle &bundle, const EventCustodyAction action);
 

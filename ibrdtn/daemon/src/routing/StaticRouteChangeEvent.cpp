@@ -48,7 +48,7 @@ namespace dtn
 
 		const std::string StaticRouteChangeEvent::getName() const
 		{
-			return StaticRouteChangeEvent::className;
+			return "StaticRouteChangeEvent";
 		}
 
 		std::string StaticRouteChangeEvent::getMessage() const
@@ -125,7 +125,5 @@ namespace dtn
 		{
 			dtn::core::EventDispatcher<StaticRouteChangeEvent>::queue( new StaticRouteChangeEvent(t, n, d, to) );
 		}
-
-		const string StaticRouteChangeEvent::className = "StaticRouteChangeEvent";
 	} /* namespace routing */
 } /* namespace dtn */

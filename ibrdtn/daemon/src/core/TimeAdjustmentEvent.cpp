@@ -31,7 +31,7 @@ namespace dtn
 
 		const std::string TimeAdjustmentEvent::getName() const
 		{
-			return className;
+			return "TimeAdjustmentEvent";
 		}
 
 		std::string TimeAdjustmentEvent::getMessage() const
@@ -40,7 +40,5 @@ namespace dtn
 			ss << "time adjusted by " << dtn::utils::Clock::toDouble(offset) << "s, based on clock with rating " << rating;
 			return ss.str();
 		}
-
-		const std::string TimeAdjustmentEvent::className = "TimeAdjustmentEvent";
 	} /* namespace core */
 } /* namespace dtn */

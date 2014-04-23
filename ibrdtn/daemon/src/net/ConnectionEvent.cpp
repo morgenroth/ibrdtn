@@ -45,7 +45,7 @@ namespace dtn
 
 		const string ConnectionEvent::getName() const
 		{
-			return ConnectionEvent::className;
+			return "ConnectionEvent";
 		}
 
 
@@ -74,7 +74,5 @@ namespace dtn
 		{
 			return _node;
 		}
-
-		const string ConnectionEvent::className = "ConnectionEvent";
 	}
 }

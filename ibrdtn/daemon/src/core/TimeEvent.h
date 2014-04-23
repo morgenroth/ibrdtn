@@ -47,8 +47,6 @@ namespace dtn
 
 			std::string getMessage() const;
 
-			static const std::string className;
-
 		private:
 			TimeEvent(const dtn::data::Timestamp &timestamp, const TimeEventAction action);
 

@@ -64,7 +64,7 @@ namespace dtn
 
 		const string NodeEvent::getName() const
 		{
-			return NodeEvent::className;
+			return "NodeEvent";
 		}
 
 		string NodeEvent::getMessage() const
@@ -85,7 +85,5 @@ namespace dtn
 
 			return "unknown";
 		}
-
-		const string NodeEvent::className = "NodeEvent";
 	}
 }

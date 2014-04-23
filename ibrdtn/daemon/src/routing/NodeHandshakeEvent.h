@@ -50,8 +50,6 @@ namespace dtn
 			HANDSHAKE_STATE state;
 			dtn::data::EID peer;
 
-			static const string className;
-
 		private:
 			NodeHandshakeEvent(HANDSHAKE_STATE state, const dtn::data::EID &peer);
 		};

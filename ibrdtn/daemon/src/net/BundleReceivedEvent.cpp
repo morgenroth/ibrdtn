@@ -52,7 +52,7 @@ namespace dtn
 
 		const std::string BundleReceivedEvent::getName() const
 		{
-			return BundleReceivedEvent::className;
+			return "BundleReceivedEvent";
 		}
 
 		std::string BundleReceivedEvent::getMessage() const
@@ -63,7 +63,5 @@ namespace dtn
 				return "Bundle received " + bundle.toString() + " from " + peer.getString();
 			}
 		}
-
-		const string BundleReceivedEvent::className = "BundleReceivedEvent";
 	}
 }

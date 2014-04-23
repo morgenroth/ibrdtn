@@ -52,8 +52,6 @@ namespace dtn
 
 			static void raise(const Node &n, const EventNodeAction action);
 
-			static const std::string className;
-
 		private:
 			NodeEvent(const Node &n, const EventNodeAction action);
 

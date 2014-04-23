@@ -46,7 +46,7 @@ namespace dtn
 
 		const string TransferCompletedEvent::getName() const
 		{
-			return TransferCompletedEvent::className;
+			return "TransferCompletedEvent";
 		}
 
 		const dtn::data::EID& TransferCompletedEvent::getPeer() const
@@ -63,7 +63,5 @@ namespace dtn
 		{
 			return "transfer of bundle " + _bundle.toString() + " to " + _peer.getString() + " completed";
 		}
-
-		const string TransferCompletedEvent::className = "TransferCompletedEvent";
 	}
 }

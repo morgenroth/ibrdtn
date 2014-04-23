@@ -40,8 +40,6 @@ namespace dtn
 
 			std::string getMessage() const;
 
-			static const string className;
-
 			static void raise(const dtn::data::MetaBundle &bundle, const dtn::data::EID &origin);
 
 			const dtn::data::MetaBundle bundle;

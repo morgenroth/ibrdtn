@@ -43,14 +43,12 @@ namespace dtn
 
 		const std::string BundlePurgeEvent::getName() const
 		{
-			return BundlePurgeEvent::className;
+			return "BundlePurgeEvent";
 		}
 
 		std::string BundlePurgeEvent::getMessage() const
 		{
 			return "purging bundle " + bundle.toString();
 		}
-
-		const std::string BundlePurgeEvent::className = "BundlePurgeEvent";
 	} /* namespace core */
 } /* namespace dtn */

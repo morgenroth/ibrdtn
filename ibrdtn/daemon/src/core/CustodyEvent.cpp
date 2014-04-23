@@ -48,7 +48,7 @@ namespace dtn
 
 		const std::string CustodyEvent::getName() const
 		{
-			return CustodyEvent::className;
+			return "CustodyEvent";
 		}
 
 		std::string CustodyEvent::getMessage() const
@@ -77,7 +77,5 @@ namespace dtn
 		{
 			dtn::core::EventDispatcher<CustodyEvent>::queue( new CustodyEvent(bundle, action) );
 		}
-
-		const std::string CustodyEvent::className = "CustodyEvent";
 	}
 }

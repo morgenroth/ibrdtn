@@ -46,14 +46,12 @@ namespace dtn
 
 		const string QueueBundleEvent::getName() const
 		{
-			return QueueBundleEvent::className;
+			return "QueueBundleEvent";
 		}
 
 		string QueueBundleEvent::getMessage() const
 		{
 			return "New bundle queued " + bundle.toString();
 		}
-
-		const string QueueBundleEvent::className = "QueueBundleEvent";
 	}
 }

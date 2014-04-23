@@ -50,7 +50,7 @@ namespace dtn
 
 		const std::string TimeEvent::getName() const
 		{
-			return TimeEvent::className;
+			return "TimeEvent";
 		}
 
 		void TimeEvent::raise(const dtn::data::Timestamp &timestamp, const TimeEventAction action)
@@ -66,7 +66,5 @@ namespace dtn
 			}
 			return "unknown";
 		}
-
-		const std::string TimeEvent::className = "TimeEvent";
 	}
 }

@@ -58,7 +58,7 @@ namespace dtn
 
 		const string BundleExpiredEvent::getName() const
 		{
-			return BundleExpiredEvent::className;
+			return "BundleExpiredEvent";
 		}
 
 		std::string BundleExpiredEvent::getMessage() const
@@ -70,7 +70,5 @@ namespace dtn
 		{
 			return _bundle;
 		}
-
-		const string BundleExpiredEvent::className = "BundleExpiredEvent";
 	}
 }
