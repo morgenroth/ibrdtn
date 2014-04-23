@@ -60,7 +60,15 @@ namespace dtn
 			const int prio;
 
 		protected:
+			/**
+			 * Constructor of Event
+			 * Accepts a priority lower or higher than zero.
+			 */
 			Event(int prio = 0);
+
+			/**
+			 * Specify if this event should be logged
+			 */
 			void setLoggable(bool val);
 
 		private:
