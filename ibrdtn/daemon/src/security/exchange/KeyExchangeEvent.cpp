@@ -31,7 +31,19 @@ namespace dtn
 	{
 		KeyExchangeEvent::KeyExchangeEvent(const dtn::data::EID &eid, const dtn::security::KeyExchangeData &data)
 		 : _eid(eid), _data(data)
-		{}
+		{
+			switch (_data.getAction())
+			{
+			case dtn::security::KeyExchangeData::START:
+			case dtn::security::KeyExchangeData::REQUEST:
+			case dtn::security::KeyExchangeData::RESPONSE:
+				setLoggable(false);
+				break;
+
+			default:
+				break;
+			}
+		}
 
 		KeyExchangeEvent::~KeyExchangeEvent()
 		{}
@@ -53,23 +65,31 @@ namespace dtn
 
 		std::string KeyExchangeEvent::getMessage() const
 		{
-			if (_data.getAction() == dtn::security::KeyExchangeData::PASSWORD_REQUEST)
+			switch (_data.getAction())
 			{
-				return "Please enter the password";
-			}
-			else if (_data.getAction() == dtn::security::KeyExchangeData::HASH_COMMIT)
-			{
-				return "Please compare the hash values: " + _data.str();
-			}
-			else if (_data.getAction() == dtn::security::KeyExchangeData::NEWKEY_FOUND)
-			{
-				return "A new key was found. Please select a key.";
-			}
-			else
-			{
-				std::stringstream sstm;
-				sstm << "peer: " << _eid.getString() << " with " << _data.toString();
-				return sstm.str();
+				case dtn::security::KeyExchangeData::PASSWORD_REQUEST:
+					return "Please enter the password for " + _eid.getString();
+
+				case dtn::security::KeyExchangeData::HASH_COMMIT:
+					return "Please compare the hash values: " + _data.str();
+
+				case dtn::security::KeyExchangeData::NEWKEY_FOUND:
+					return "A new key was found. Please select a key for " + _eid.getString();
+
+				case dtn::security::KeyExchangeData::COMPLETE:
+					return "Key-exchange completed with " + _eid.getString();
+
+				case dtn::security::KeyExchangeData::ERROR:
+					return "Key-exchange failed with " + _eid.getString();
+
+				case dtn::security::KeyExchangeData::WRONG_PASSWORD:
+					return "Entered password does not match the peer.";
+
+				default: {
+					std::stringstream sstm;
+					sstm << "peer: " << _eid.getString() << " with " << _data.toString();
+					return sstm.str();
+				}
 			}
 		}
 
