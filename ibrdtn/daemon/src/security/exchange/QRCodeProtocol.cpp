@@ -54,9 +54,6 @@ namespace dtn
 				// store existing key with HIGH trust level
 				session.putKey(key.getData(), key.type, SecurityKey::HIGH);
 
-				response.setAction(KeyExchangeData::COMPLETE);
-				KeyExchangeEvent::raise(session.getPeer(), response);
-
 				// finish the key-exchange
 				manager.finish(session);
 			}

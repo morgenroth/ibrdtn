@@ -374,7 +374,7 @@ namespace dtn
 							SecurityKeyManager::getInstance().store(key);
 
 							// prepare event
-							KeyExchangeData event(KeyExchangeData::NEWKEY_FOUND, session);
+							KeyExchangeData event(KeyExchangeData::COMPLETE, session);
 							event.str(key.getFingerprint());
 
 							// trigger further actions
