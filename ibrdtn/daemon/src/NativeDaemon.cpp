@@ -1226,8 +1226,11 @@ namespace dtn
 			_apps.push_back( new dtn::daemon::DevNull() );
 
 #ifdef IBRDTN_SUPPORT_BSP
-			// add key-exchanger component
-			_components[RUNLEVEL_API].push_back(new dtn::security::KeyExchanger());
+			if (conf.getSecurity().enabled())
+			{
+				// add key-exchanger component
+				_components[RUNLEVEL_API].push_back(new dtn::security::KeyExchanger());
+			}
 #endif
 
 			if (conf.getNetwork().doFragmentation())
