@@ -26,6 +26,9 @@
 
 #if defined HAVE_LIBNL2 || HAVE_LIBNL3
 #include <netlink/version.h>
+#endif
+
+#ifdef HAVE_LIBNL3
 #if (LIBNL_VER_NUM >= LIBNL_VER(3,2)) && (LIBNL_VER_MIC == 21)
 #define LIBNL_ABOVE_3_2_21
 #endif
