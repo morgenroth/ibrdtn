@@ -372,8 +372,8 @@ public class Preferences extends PreferenceActivity {
 			// class name because we want a specific service implementation that
 			// we know will be running in our own process (and thus won't be
 			// supporting component replacement by other applications).
-			bindService(new Intent(Preferences.this,
-					DaemonService.class), mConnection, Context.BIND_AUTO_CREATE);
+	        Intent bindIntent = DaemonService.createDtnServiceIntent(this);
+	        bindService(bindIntent, mConnection, Context.BIND_AUTO_CREATE);
 			mBound = true;
 		}
 

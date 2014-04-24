@@ -33,6 +33,7 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Binder;
@@ -52,6 +53,7 @@ import android.widget.Toast;
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.R;
+import de.tubs.ibr.dtn.Services;
 import de.tubs.ibr.dtn.api.DTNSession;
 import de.tubs.ibr.dtn.api.Node;
 import de.tubs.ibr.dtn.api.Registration;
@@ -188,7 +190,26 @@ public class DaemonService extends Service {
 
 	@Override
 	public IBinder onBind(Intent intent) {
-		return mBinder;
+		if (Services.SERVICE_APPLICATION.match(intent)) {
+			return mBinder;
+		} else {
+			return null;
+		}
+	}
+	
+	public static Intent createDtnServiceIntent(Context context) {
+        Intent i = new Intent(context, DaemonService.class);
+        
+        // set action to make the intent unique
+        i.setAction(DTNService.class.getName());
+        
+        // add Service name
+        i.putExtra(Services.EXTRA_NAME, DTNService.class.getName());
+        
+        // add Service version
+        i.putExtra(Services.EXTRA_VERSION, Services.VERSION_APPLICATION);
+        
+		return i;
 	}
 
 	@SuppressLint("HandlerLeak")

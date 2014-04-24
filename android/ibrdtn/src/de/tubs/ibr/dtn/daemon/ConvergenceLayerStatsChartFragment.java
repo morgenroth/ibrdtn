@@ -30,7 +30,6 @@ import com.jjoe64.graphview.GraphViewSeries;
 import com.jjoe64.graphview.GraphViewSeries.GraphViewSeriesStyle;
 import com.jjoe64.graphview.LineGraphView;
 
-import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.daemon.data.ConvergenceLayerStatsListAdapter;
 import de.tubs.ibr.dtn.daemon.data.ConvergenceLayerStatsLoader;
@@ -197,8 +196,8 @@ public class ConvergenceLayerStatsChartFragment extends Fragment implements Cust
         // class name because we want a specific service implementation that
         // we know will be running in our own process (and thus won't be
         // supporting component replacement by other applications).
-        getActivity().bindService(new Intent(DTNService.class.getName()), mConnection,
-                Context.BIND_AUTO_CREATE);
+        Intent bindIntent = DaemonService.createDtnServiceIntent(getActivity());
+        getActivity().bindService(bindIntent, mConnection, Context.BIND_AUTO_CREATE);
     }
     
     private ConvergenceLayerStatsListAdapter.ColorProvider mColorProvider = new ConvergenceLayerStatsListAdapter.ColorProvider() {

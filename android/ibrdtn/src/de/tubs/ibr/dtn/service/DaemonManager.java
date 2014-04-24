@@ -7,6 +7,7 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import de.tubs.ibr.dtn.DtnManager;
+import de.tubs.ibr.dtn.Services;
 import de.tubs.ibr.dtn.daemon.Preferences;
 
 public class DaemonManager extends Service {
@@ -34,6 +35,10 @@ public class DaemonManager extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        return mBinder;
+    	if (Services.SERVICE_MANAGER.match(intent)) {
+    		return mBinder;
+    	} else {
+    		return null;
+    	}
     }
 }

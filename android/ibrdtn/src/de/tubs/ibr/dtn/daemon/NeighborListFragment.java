@@ -115,8 +115,8 @@ public class NeighborListFragment extends ListFragment implements
         // class name because we want a specific service implementation that
         // we know will be running in our own process (and thus won't be
         // supporting component replacement by other applications).
-        getActivity().bindService(new Intent(DTNService.class.getName()), mConnection,
-                Context.BIND_AUTO_CREATE);
+        Intent bindIntent = DaemonService.createDtnServiceIntent(getActivity());
+        getActivity().bindService(bindIntent, mConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
