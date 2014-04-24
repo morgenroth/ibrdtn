@@ -24,21 +24,32 @@
 #include "ibrcommon/thread/MutexLock.h"
 #include "ibrcommon/Logger.h"
 
-#if defined HAVE_LIBNL || HAVE_LIBNL2
-#include <netlink/object-api.h>
-#include <netlink/cache-api.h>
-#else
+#if defined HAVE_LIBNL2 || HAVE_LIBNL3
+#include <netlink/version.h>
+#if (LIBNL_VER_NUM >= LIBNL_VER(3,2)) && (LIBNL_VER_MIC == 21)
+#define LIBNL_ABOVE_3_2_21
+#endif
+#endif
+
+#ifdef LIBNL_ABOVE_3_2_21
+// netlink API header for >= 3.2.21
 #include <netlink/object.h>
 #include <netlink/cache.h>
+// BEGIN: workaround for missing NL_ACT_* declaration in version 3.2.21
+#if !(defined NL_ACT_NEW || defined NL_ACT_DEL)
+#define NL_ACT_NEW 1
+#define NL_ACT_DEL 2
+#endif
+// END: workaround
+#else
+// netlink API header for < 3.2.21
+#include <netlink/object-api.h>
+#include <netlink/cache-api.h>
 #endif
 
 #include <netlink/route/link.h>
 #include <netlink/route/addr.h>
 #include <netlink/route/rtnl.h>
-
-#if defined HAVE_LIBNL2 || HAVE_LIBNL3
-#include <netlink/version.h>
-#endif
 
 #include <netdb.h>
 #include <sys/socket.h>
@@ -168,9 +179,9 @@ namespace ibrcommon
 #if defined HAVE_LIBNL2 || HAVE_LIBNL3
 				LinkEvent::Action evt_action = LinkEvent::ACTION_UNKOWN;
 
-				if (action == 1) // NL_ACT_NEW
+				if (action == NL_ACT_NEW)
 					evt_action = LinkEvent::ACTION_ADDRESS_ADDED;
-				else if (action == 2) // NL_ACT_DEL
+				else if (action == NL_ACT_DEL)
 					evt_action = LinkEvent::ACTION_ADDRESS_REMOVED;
 
 				int ifindex = rtnl_addr_get_ifindex((struct rtnl_addr *) obj);
