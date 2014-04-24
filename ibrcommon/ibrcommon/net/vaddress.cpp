@@ -107,13 +107,52 @@ namespace ibrcommon
 
 		if (_address == localhost) return true;
 
-		try {
-			const std::string n = name();
-			if (n.length() < localhost.length()) return false;
-			return (0 == n.compare(n.length() - localhost.length(), localhost.length(), localhost));
-		} catch (const address_exception&) { }
+		struct addrinfo hints;
+		struct addrinfo *res, *lo_res;
+		int ret = 0;
 
-		return false;
+		memset(&hints, 0, sizeof(struct addrinfo));
+		hints.ai_family = PF_UNSPEC;
+		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_flags = AI_NUMERICHOST | AI_NUMERICSERV;
+
+		// resolve the name into a numeric address
+		if ((ret = ::getaddrinfo(_address.c_str(), "4556", &hints, &res)) != 0)
+		{
+			throw address_exception("getaddrinfo(): " + std::string(gai_strerror(ret)));
+		}
+
+		// get all loop-back addresses
+		if ((ret = ::getaddrinfo(NULL, "4556", &hints, &lo_res)) != 0)
+		{
+			freeaddrinfo(res);
+			throw address_exception("getaddrinfo(): " + std::string(gai_strerror(ret)));
+		}
+
+		// return value
+		bool result = false;
+
+		// iterate over all loop-back addresses and
+		// compare the origin address with it
+		for (struct addrinfo *lo_addr = lo_res; lo_addr != NULL; lo_addr = lo_addr->ai_next)
+		{
+			// only compare if the address len is equal
+			if (lo_addr->ai_addrlen != res->ai_addrlen) continue;
+
+			// only compare if the address family is equal
+			if (lo_addr->ai_addr->sa_family != res->ai_addr->sa_family) continue;
+
+			if (memcmp(lo_addr->ai_addr, res->ai_addr, lo_addr->ai_addrlen) == 0)
+			{
+				result = true;
+				break;
+			}
+		}
+
+		freeaddrinfo(lo_res);
+		freeaddrinfo(res);
+
+		return result;
 	}
 
 	bool vaddress::isAny() const
