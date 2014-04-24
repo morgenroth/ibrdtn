@@ -58,6 +58,8 @@ namespace dtn
 			 */
 			virtual KeyExchangeSession* createSession(const dtn::data::EID &peer, unsigned int uniqueId);
 
+			virtual void initialize() {};
+
 			virtual void begin(KeyExchangeSession &session, KeyExchangeData &data) = 0;
 			virtual void step(KeyExchangeSession &session, KeyExchangeData &data) = 0;
 

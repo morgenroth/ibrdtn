@@ -52,6 +52,15 @@ namespace dtn
 		DHProtocol::DHProtocol(KeyExchangeManager &manager)
 		 : KeyExchangeProtocol(manager, 1), _dh_params(NULL)
 		{
+		}
+
+		DHProtocol::~DHProtocol()
+		{
+			if (_dh_params) DH_free(_dh_params);
+		}
+
+		void DHProtocol::initialize()
+		{
 			try {
 				// set path for DH params
 				_dh_params_file = dtn::daemon::Configuration::getInstance().getPath("dh_params");
@@ -109,11 +118,6 @@ namespace dtn
 					throw ibrcommon::Exception("Error while generating DH parameters");
 				}
 			}
-		}
-
-		DHProtocol::~DHProtocol()
-		{
-			if (_dh_params) DH_free(_dh_params);
 		}
 
 		KeyExchangeSession* DHProtocol::createSession(const dtn::data::EID &peer, unsigned int uniqueId)

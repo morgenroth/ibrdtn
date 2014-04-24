@@ -109,6 +109,13 @@ namespace dtn
 
 		void KeyExchanger::componentRun() throw ()
 		{
+			// initialize all protocols
+			for (std::map<int, KeyExchangeProtocol*>::iterator it = _protocols.begin(); it != _protocols.end(); ++it)
+			{
+				KeyExchangeProtocol *p = (*it).second;
+				p->initialize();
+			}
+
 			try
 			{
 				while (true)
