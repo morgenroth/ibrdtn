@@ -286,6 +286,8 @@ namespace dtn
 				else
 				{
 					event.setAction(KeyExchangeData::NEWKEY_FOUND);
+
+					// store new keys fingerprint
 					event.str(newKey.getFingerprint());
 				}
 			}
@@ -294,7 +296,7 @@ namespace dtn
 				// no old key available - store the new key
 				SecurityKeyManager::getInstance().store(newKey);
 
-				event.setAction(KeyExchangeData::NEWKEY_FOUND);
+				// store new keys fingerprint
 				event.str(newKey.getFingerprint());
 			}
 
@@ -441,7 +443,7 @@ namespace dtn
 						throw;
 					}
 				}
-				else
+				else if ((_data.getAction() == KeyExchangeData::REQUEST) || (_data.getAction() == KeyExchangeData::RESPONSE))
 				{
 					// get the session
 					KeyExchangeSession &session = exchanger.getSession(_peer, _data);
