@@ -32,8 +32,6 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
-import android.content.pm.ResolveInfo;
-import android.content.pm.ServiceInfo;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
@@ -41,6 +39,7 @@ import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import de.tubs.ibr.dtn.DTNService;
+import de.tubs.ibr.dtn.Services;
 
 public final class DTNClient {
 	
@@ -72,8 +71,10 @@ public final class DTNClient {
 	public DTNClient() {
 		// add dummy handler
 		mSessionHandler = new SessionConnection() {
+			@Override
 			public void onSessionConnected(Session session) { }
 
+			@Override
 			public void onSessionDisconnected() { }
 		};
 	}
@@ -107,8 +108,13 @@ public final class DTNClient {
 	   
 	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName name, IBinder service) {
-			mService = DTNService.Stub.asInterface(service);
-			initializeSession(mRegistration);
+			if (service == null) {
+				// handle error (wrong API version)
+				terminate();
+			} else {
+				mService = DTNService.Stub.asInterface(service);
+				initializeSession(mRegistration);
+			}
 		}
 
 		public void onServiceDisconnected(ComponentName name) {
@@ -432,17 +438,6 @@ public final class DTNClient {
   		// store registration
   		mRegistration = reg;
   		
-		Intent queryIntent = new Intent(DTNService.class.getName());
-		List<ResolveInfo> list = context.getPackageManager().queryIntentServices(queryIntent, 0);
-		if (list.size() == 0) throw new ServiceNotAvailableException();
-		
-		// get the first found service
-		ServiceInfo serviceInfo = list.get(0).serviceInfo;
-		
-		// create bind intent to the first service
-		Intent bindIntent = new Intent();
-		bindIntent.setClassName(serviceInfo.packageName, serviceInfo.name);
-  		
 		// create new executor
 		mShutdown = false;
   		
@@ -455,7 +450,7 @@ public final class DTNClient {
 		mInitialized = true;
   		
 		// Establish a connection with the service.
-		context.bindService(bindIntent, mConnection, Context.BIND_AUTO_CREATE);
+		Services.SERVICE_APPLICATION.bind(mContext, mConnection, Context.BIND_AUTO_CREATE);
 	}
 	
 	/**
