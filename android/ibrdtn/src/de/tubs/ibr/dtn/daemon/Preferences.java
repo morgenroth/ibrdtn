@@ -67,6 +67,7 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.Switch;
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.R;
+import de.tubs.ibr.dtn.keyexchange.KeyInformationActivity;
 import de.tubs.ibr.dtn.service.DaemonService;
 import de.tubs.ibr.dtn.service.DaemonService.LocalDTNService;
 import de.tubs.ibr.dtn.service.P2pManager;
@@ -224,6 +225,13 @@ public class Preferences extends PreferenceActivity {
 			case R.id.itemStats: {
 				// open statistic activity
 				Intent i = new Intent(Preferences.this, StatsActivity.class);
+				startActivity(i);
+				return true;
+			}
+			
+			case R.id.itemKeyPanel: {
+				// open statistic activity
+				Intent i = new Intent(Preferences.this, KeyInformationActivity.class);
 				startActivity(i);
 				return true;
 			}

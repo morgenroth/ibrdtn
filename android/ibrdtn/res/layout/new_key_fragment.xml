@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+    
+	<TextView
+        android:id="@+id/textViewInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:gravity="center_horizontal"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="@color/light_blue" />
+	
+	<ScrollView 
+	    android:layout_width="match_parent"
+    	android:layout_height="wrap_content"
+		android:layout_marginTop="14dp"
+		android:layout_below="@id/textViewInfo"
+		android:layout_alignBottom="@+id/ViewLine" >
+	    
+	    <RelativeLayout
+    		android:layout_width="match_parent"
+    		android:layout_height="wrap_content"
+    		android:layout_marginRight="14dp"
+    		android:layout_marginLeft="14dp" >
+	
+			<TextView
+		        android:id="@+id/textViewOldKeyTitle"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_marginTop="12dp"
+		        android:layout_marginLeft="8dp"
+		        android:layout_marginRight="8dp"
+		        android:text="@string/old_key"
+		        android:textAllCaps="true"
+		        android:textColor="@color/light_blue"
+		        android:textSize="14sp"
+		        android:textStyle="bold" />
+		
+		    <View
+		        android:layout_width="match_parent"
+		        android:layout_height="1dp"
+		        android:layout_below="@id/textViewOldKeyTitle"
+		        android:layout_centerHorizontal="true"
+		        android:layout_marginTop="6dp"
+		        android:background="@color/light_blue" />
+		
+		    <TextView
+		        android:id="@+id/textViewOldKey"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_alignParentLeft="true"
+		        android:layout_below="@id/textViewOldKeyTitle"
+		        android:layout_marginTop="14dp"
+		        android:layout_marginLeft="8dp"
+		        android:layout_marginRight="8dp"
+		        android:text=""
+		        android:textSize="14sp"
+		        android:typeface="monospace" />
+		    
+		    <RelativeLayout 
+		        android:id="@+id/RLayoutOldKey"
+		    	android:layout_width="wrap_content"
+		    	android:layout_height="wrap_content"
+		    	android:orientation="horizontal"
+		    	android:layout_above="@id/textViewOldKey"
+		    	android:layout_alignParentRight="true"
+		        android:layout_marginBottom="-4dp"
+		        android:layout_marginRight="8dp"
+		        android:layout_marginLeft="8dp" >
+		    
+			    <ImageView 
+			        android:id="@+id/imageViewTrustLevelOldKey1"
+			        android:layout_width="wrap_content"
+			        android:layout_height="wrap_content"
+			        android:src="@drawable/ic_action_security_open"
+			        android:contentDescription="@string/trust_level_image"/>
+			    
+			    <ImageView 
+			        android:id="@+id/imageViewTrustLevelOldKey2"
+			        android:layout_width="wrap_content"
+			        android:layout_height="wrap_content"
+			        android:layout_toRightOf="@id/imageViewTrustLevelOldKey1"
+			        android:layout_alignBottom="@id/imageViewTrustLevelOldKey1"
+			        android:src="@drawable/ic_action_security_open"
+			        android:contentDescription="@string/trust_level_image"/>
+			    
+			    <ImageView 
+			        android:id="@+id/imageViewTrustLevelOldKey3"
+			        android:layout_width="wrap_content"
+			        android:layout_height="wrap_content"
+			        android:layout_toRightOf="@id/imageViewTrustLevelOldKey2"
+			        android:layout_alignBottom="@id/imageViewTrustLevelOldKey1"
+			        android:src="@drawable/ic_action_security_open"
+			        android:contentDescription="@string/trust_level_image"/>
+		        
+		    </RelativeLayout>
+		    
+		    <TextView
+		        android:id="@+id/textViewNewKeyTitle"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_below="@id/textViewOldKey"
+		        android:layout_marginLeft="8dp"
+		        android:layout_marginRight="8dp"
+		        android:layout_marginTop="14dp"
+		        android:text="@string/new_key"
+		        android:textAllCaps="true"
+		        android:textColor="@color/light_blue"
+		        android:textSize="14sp"
+		        android:textStyle="bold" />
+		
+		    <View
+		        android:layout_width="match_parent"
+		        android:layout_height="1dp"
+		        android:layout_below="@id/textViewNewKeyTitle"
+		        android:layout_centerHorizontal="true"
+		        android:layout_marginTop="6dp"
+		        android:background="@color/light_blue" />
+		
+		    <TextView
+		        android:id="@+id/textViewNewKey"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_alignParentLeft="true"
+		        android:layout_below="@id/textViewNewKeyTitle"
+		        android:layout_marginTop="14dp"
+		        android:layout_marginLeft="8dp"
+		        android:layout_marginRight="8dp"
+		        android:text=""
+		        android:textSize="14sp"
+		        android:typeface="monospace" />
+		    
+		    <RelativeLayout 
+		        android:id="@+id/RLayoutNewKey"
+		    	android:layout_width="wrap_content"
+		    	android:layout_height="wrap_content"
+		    	android:orientation="horizontal"
+		    	android:layout_above="@id/textViewNewKey"
+		    	android:layout_alignParentRight="true"
+		        android:layout_marginBottom="-4dp"
+		        android:layout_marginRight="8dp"
+		        android:layout_marginLeft="8dp" >
+		    
+			    <ImageView 
+			        android:id="@+id/imageViewTrustLevelNewKey1"
+			        android:layout_width="wrap_content"
+			        android:layout_height="wrap_content"
+			        android:src="@drawable/ic_action_security_open"
+			        android:contentDescription="@string/trust_level_image"/>
+			    
+			    <ImageView 
+			        android:id="@+id/imageViewTrustLevelNewKey2"
+			        android:layout_width="wrap_content"
+			        android:layout_height="wrap_content"
+			        android:layout_toRightOf="@id/imageViewTrustLevelNewKey1"
+			        android:layout_alignBottom="@id/imageViewTrustLevelNewKey1"
+			        android:src="@drawable/ic_action_security_open"
+			        android:contentDescription="@string/trust_level_image"/>
+			    
+			    <ImageView 
+			        android:id="@+id/imageViewTrustLevelNewKey3"
+			        android:layout_width="wrap_content"
+			        android:layout_height="wrap_content"
+			        android:layout_toRightOf="@id/imageViewTrustLevelNewKey2"
+			        android:layout_alignBottom="@id/imageViewTrustLevelNewKey1"
+			        android:src="@drawable/ic_action_security_open"
+			        android:contentDescription="@string/trust_level_image"/>
+		        
+		    </RelativeLayout>
+    
+    	</RelativeLayout>
+    
+    </ScrollView>
+    
+	<Button
+        android:id="@+id/buttonOld"
+        android:background="@drawable/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignLeft="@+id/ViewMiddle"
+        android:text="@string/old_key" />
+	
+	<Button
+	    android:id="@+id/buttonNew"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_alignParentBottom="true"
+	    android:layout_alignParentLeft="true"
+        android:layout_alignRight="@id/ViewMiddle"
+	    android:background="@drawable/button"
+	    android:text="@string/new_key" />
+    
+    <View
+        android:id="@+id/ViewLine"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_alignTop="@id/buttonNew"
+        android:layout_centerHorizontal="true"
+        android:background="@color/dark_gray"/>
+    
+    <View
+        android:id="@+id/ViewMiddle"
+        android:layout_width="1dp"
+        android:layout_height="100dp"
+        android:layout_alignTop="@id/ViewLine"
+        android:layout_centerHorizontal="true"
+        android:background="@color/dark_gray"/>
+
+</RelativeLayout>

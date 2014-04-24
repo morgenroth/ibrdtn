@@ -30,6 +30,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Parcelable;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
@@ -48,6 +49,7 @@ import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.api.Node;
 import de.tubs.ibr.dtn.daemon.data.NeighborListAdapter;
 import de.tubs.ibr.dtn.daemon.data.NeighborListLoader;
+import de.tubs.ibr.dtn.keyexchange.ProtocolSelectionActivity;
 import de.tubs.ibr.dtn.service.DaemonService;
 
 public class NeighborListFragment extends ListFragment implements
@@ -156,12 +158,23 @@ public class NeighborListFragment extends ListFragment implements
 		
 		switch (item.getItemId()) {
 			case R.id.itemConnect:
+			{
 		        // initiate connection via intent
 		        final Intent intent = new Intent(getActivity(), DaemonService.class);
 		        intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_INITIATE_CONNECTION);
-		        intent.putExtra("endpoint", n.endpoint.toString());
+		        intent.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, n.endpoint.toString());
 		        getActivity().startService(intent);
 				return true;
+			}
+				
+			case R.id.itemKeyInfo:
+			{
+		        // open keyinfo panel
+		        final Intent intent = new Intent(getActivity(), ProtocolSelectionActivity.class);
+		        intent.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Parcelable)n.endpoint);
+		        getActivity().startActivity(intent);
+				return true;
+			}
 
 			default:
 				return super.onContextItemSelected(item);

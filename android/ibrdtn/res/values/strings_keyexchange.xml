@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="showkeypanel">Keyinfo</string>
+    <string name="menu_neighbor_keyinfo">Keyinfo</string>
+    <string name="content_security_icon">Security icon</string>
+    <string name="list_protocol">Protocols</string>
+    <string name="increase_trust">Increase trust</string>
+    <string name="key_information">Key Information</string>
+    <string name="my_eid">My Endpoint ID</string>
+    <string name="qr_code">My QR-Code</string>
+    <string name="my_fingerprint">My Key-Fingerprint</string>
+    <string name="qr_code_image">QR-Code Image</string>
+    <string name="key_exchange">Key Exchange</string>
+    <string name="trust_level">Trust Level</string>
+    <string name="trust_level_image">Trust Level Image</string>
+    <string name="eid">Endpoint ID</string>
+    <string name="fingerprint">Key-Fingerprint</string>
+    <string name="password_hint">Please enter password here</string>
+    <string name="hash_commit">Hash-Commit</string>
+    <string name="no_match">No match</string>
+    <string name="qr_code_scan">Scan QR-Code</string>
+    <string name="delete_key">Delete Key</string>
+    <string name="select_hash">Please select the same word combination as your partner.</string>
+    <string name="content_hash_icon">Hash icon</string>
+    <string name="content_success_icon">Success icon</string>
+    <string name="success">Key exchange successful</string>
+    <string name="complete">Complete</string>
+    <string name="new_key">New Key</string>
+    <string name="old_key">Old Key</string>
+    <string name="protocol_none_title">Exchange without security</string>
+    <string name="protocol_dh_title">Encrypted exchange without authentication</string>
+    <string name="protocol_jpake_title">Authenticated exchange using a password</string>
+    <string name="protocol_hash_title">Authenticated exchange using comparison</string>
+    <string name="protocol_qr_title">QR-Code verification</string>
+    <string name="protocol_nfc_title">Exchange via NFC</string>
+    
+    <string name="qr_scan_aborted">Scan aborted.</string>
+    <string name="qr_hint">Please place the QR code within the window.</string>
+    <string name="hash_wrong_combination">You have chosen the wrong combination.</string>
+    <string name="none_pending">The key-exchange is executed without any protocol. Depending on the network, this process may take a while. You get notified if the exchange has been finished.</string>
+    <string name="dh_pending">The key-exchange is executed using Diffie-Helmann approach. Depending on the network, this process may take a while. You get notified if the exchange has been finished.</string>
+    <string name="jpake_pending">The key-exchange is executed using JPAKE approach. Please enter a password to proceed.</string>
+    <string name="hash_pending">The key-exchange is executed using a hash commitment approach. Depending on the network, this process may take a while and requires further user input. You get notified if user input is necessary.</string>
+    <string name="qr_nokey">No key has been exchanged before. The exchange proceeds with a non-authenticated key-exchange. If this finishes, you can proceed with the QR code verification.</string>
+    <string name="qr_scan_hint">You can verify the security key of you partner. Please scan the QR code to proceed.</string>
+    <string name="qr_scan_action">Scan</string>
+    <string name="nfc_hint">The key-exchange is executed using NFC. Please place your device next to the device of your partner and confirm the action by pushing the display.</string>
+    <string name="jpake_password_prompt">Your partner wants to exchange a key using JPAKE. Please enter a password.</string>
+    <string name="error_hint">An error occurred. The key-exchange has been aborted.</string>
+    
+	<string name="notification_password_request">Password requested</string>
+    <string name="notification_password_request_text">Please enter a password for the key-exchange.</string>
+    <string name="notification_password_wrong">Wrong password</string>
+    <string name="notification_password_wrong_text">You have entered a wrong password.</string>
+    <string name="notification_hash_compare">Hash commit</string>
+    <string name="notification_hash_compare_text">Please compare the word orders.</string>
+    <string name="notification_not_equal">No correlation</string>
+    <string name="notification_not_equal_text">The new key does not match the existing one.</string>
+    <string name="notification_error">Error</string>
+    <string name="notification_error_text">An error occurred.</string>
+    <string name="notification_success">Key-exchange</string>
+    <string name="notification_success_text">The key-exchange was successful.</string>
+    
+    <string name="key_selection_request">The received key is different to the existing one. Which key should be stored?</string>
+    <string name="key_dropped">The new key has been discarded.</string>
+    <string name="key_generation_in_progress">The generation of the key-pair is still in progress.</string>
+    <string name="key_deletion_confirm">Key deletion</string>
+    <string name="key_deletion_confirm_text">Should the existing key get deleted?</string>
+    
+    <string name="protocol_already_used">Approach already applied</string>
+    <string name="protocol_already_used_text">Do you want to re-use this approach again?</string>
+    
+    <string name="no_key_available">No key available</string>
+</resources>

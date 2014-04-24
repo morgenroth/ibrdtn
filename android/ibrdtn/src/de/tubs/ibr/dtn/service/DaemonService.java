@@ -44,6 +44,7 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.os.Parcelable;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
@@ -53,17 +54,24 @@ import android.widget.Toast;
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.R;
+import de.tubs.ibr.dtn.SecurityService;
 import de.tubs.ibr.dtn.Services;
 import de.tubs.ibr.dtn.api.DTNSession;
 import de.tubs.ibr.dtn.api.Node;
 import de.tubs.ibr.dtn.api.Registration;
+import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.daemon.NeighborActivity;
 import de.tubs.ibr.dtn.daemon.Preferences;
 import de.tubs.ibr.dtn.daemon.api.SelectNeighborActivity;
+import de.tubs.ibr.dtn.keyexchange.KeyExchangeManager;
+import de.tubs.ibr.dtn.keyexchange.KeyExchangeService;
+import de.tubs.ibr.dtn.keyexchange.KeyInformationActivity;
+import de.tubs.ibr.dtn.keyexchange.ProtocolSelectionActivity;
 import de.tubs.ibr.dtn.stats.ConvergenceLayerStatsEntry;
 import de.tubs.ibr.dtn.stats.StatsDatabase;
 import de.tubs.ibr.dtn.stats.StatsEntry;
 import de.tubs.ibr.dtn.swig.DaemonRunLevel;
+import de.tubs.ibr.dtn.swig.EID;
 import de.tubs.ibr.dtn.swig.NativeStats;
 import de.tubs.ibr.dtn.swig.StringVec;
 
@@ -85,8 +93,17 @@ public class DaemonService extends Service {
 	public static final String ACTION_START_DISCOVERY = "de.tubs.ibr.dtn.action.START_DISCOVERY";
 	public static final String ACTION_STOP_DISCOVERY = "de.tubs.ibr.dtn.action.STOP_DISCOVERY";
 	public static final String EXTRA_DISCOVERY_DURATION = "de.tubs.ibr.dtn.intent.DISCOVERY_DURATION";
+	
+	public static final String ACTION_START_KEY_EXCHANGE = "de.tubs.ibr.dtn.action.ACTION_START_KEY_EXCHANGE";
+	public static final String ACTION_GIVE_PASSWORD_RESPONSE = "de.tubs.ibr.dtn.action.ACTION_GIVE_PASSWORD_RESPONSE";
+	public static final String ACTION_GIVE_HASH_RESPONSE = "de.tubs.ibr.dtn.action.ACTION_GIVE_HASH_RESPONSE";
+	public static final String ACTION_GIVE_NEW_KEY_RESPONSE = "de.tubs.ibr.dtn.action.ACTION_GIVE_NEW_KEY_RESPONSE";
+	public static final String ACTION_GIVE_QR_RESPONSE = "de.tubs.ibr.dtn.action.ACTION_GIVE_QR_RESPONSE";
+	public static final String ACTION_GIVE_NFC_RESPONSE = "de.tubs.ibr.dtn.action.ACTION_GIVE_NFC_RESPONSE";
 
 	public static final String PREFERENCE_NAME = "de.tubs.ibr.dtn.service_prefs";
+	
+	public static final String ACTION_REMOVE_KEY = "de.tubs.ibr.dtn.action.ACTION_REMOVE_KEY";
 
 	private final String TAG = "DaemonService";
 
@@ -164,6 +181,50 @@ public class DaemonService extends Service {
 			return ret;
 		}
 	};
+	
+    private final KeyExchangeManager.Stub mKeyExchangeBinder = new KeyExchangeManager.Stub() {
+		@Override
+		public SingletonEndpoint getEndpoint() throws RemoteException {
+			return new SingletonEndpoint(Preferences.getEndpoint(DaemonService.this));
+		}
+
+		@Override
+		public boolean hasKey(SingletonEndpoint endpoint) throws RemoteException {
+			return (mDaemonProcess.getKeyInfo(endpoint) != null);
+		}
+
+		@Override
+		public Bundle getKeyInfo(SingletonEndpoint endpoint) throws RemoteException {
+			return mDaemonProcess.getKeyInfo(endpoint);
+		}
+    };
+    
+    private final SecurityService.Stub mSecurityBinder = new SecurityService.Stub() {
+		@Override
+		public Bundle getSecurityInfoIntent() throws RemoteException {
+			Bundle ret = new Bundle();
+			Intent intent = new Intent(DaemonService.this, KeyInformationActivity.class);
+			PendingIntent pi = PendingIntent.getActivity(DaemonService.this, 0, intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_UPDATE_CURRENT);
+			ret.putParcelable(de.tubs.ibr.dtn.Intent.EXTRA_PENDING_INTENT, pi);
+			return ret;
+		}
+
+		@Override
+		public Bundle getKeyExchangeIntent(SingletonEndpoint endpoint) throws RemoteException {
+			Bundle ret = new Bundle();
+			Intent intent = new Intent(DaemonService.this, ProtocolSelectionActivity.class);
+			
+			// reduce endpoint to node address
+			EID node = new EID(endpoint.toString()).getNode();
+			SingletonEndpoint node_endpoint = new SingletonEndpoint(node.getString());
+			
+			intent.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Parcelable)node_endpoint);
+			
+			PendingIntent pi = PendingIntent.getActivity(DaemonService.this, 0, intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_UPDATE_CURRENT);
+			ret.putParcelable(de.tubs.ibr.dtn.Intent.EXTRA_PENDING_INTENT, pi);
+			return ret;
+		}
+    };
 
 	public boolean isP2pActive() {
 		if (mP2pManager == null)
@@ -190,7 +251,14 @@ public class DaemonService extends Service {
 
 	@Override
 	public IBinder onBind(Intent intent) {
-		if (Services.SERVICE_APPLICATION.match(intent)) {
+		// the requested service name
+		String name = intent.getStringExtra(Services.EXTRA_NAME);
+		
+		if (KeyExchangeManager.class.getName().equals(name)) {
+			return mKeyExchangeBinder;
+		} else if (Services.SERVICE_SECURITY.match(intent)) {
+			return mSecurityBinder;
+		} else if (Services.SERVICE_APPLICATION.match(intent)) {
 			return mBinder;
 		} else {
 			return null;
@@ -208,6 +276,18 @@ public class DaemonService extends Service {
         
         // add Service version
         i.putExtra(Services.EXTRA_VERSION, Services.VERSION_APPLICATION);
+        
+		return i;
+	}
+	
+	public static Intent createKeyExchangeManagerIntent(Context context) {
+        Intent i = new Intent(context, DaemonService.class);
+        
+        // set action to make the intent unique
+        i.setAction(KeyExchangeManager.class.getName());
+        
+        // add Service name
+        i.putExtra(Services.EXTRA_NAME, KeyExchangeManager.class.getName());
         
 		return i;
 	}
@@ -406,6 +486,57 @@ public class DaemonService extends Service {
 			// remove all stop discovery messages
 			mServiceHandler.removeMessages(MSG_WHAT_STOP_DISCOVERY);
 			Log.i(TAG, "Scheduled discovery stop removed.");
+		} else if (ACTION_START_KEY_EXCHANGE.equals(action)) {
+			int protocol = intent.getIntExtra("protocol", -1);
+			SingletonEndpoint endpoint = intent.getParcelableExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT);
+			String password = intent.getStringExtra("password");
+			
+			if (password == null) {
+				password = "";
+			}
+			
+			mDaemonProcess.startKeyExchange(endpoint.toString(), protocol, password);
+		} else if (ACTION_GIVE_PASSWORD_RESPONSE.equals(action)) {
+			SingletonEndpoint endpoint = intent.getParcelableExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT);
+			int session = intent.getIntExtra("session", -1);
+			String password = intent.getStringExtra("password");
+			
+			if (password == null) {
+				password = "";
+			}
+			
+			mDaemonProcess.givePasswordResponse(endpoint.toString(), session, password);
+		} else if (ACTION_GIVE_HASH_RESPONSE.equals(action)) {
+			SingletonEndpoint endpoint = intent.getParcelableExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT);
+			int session = intent.getIntExtra("session", -1);
+			int equals = intent.getIntExtra("equals", -1);
+			
+			mDaemonProcess.giveHashResponse(endpoint.toString(), session, equals);
+		} else if (ACTION_GIVE_NEW_KEY_RESPONSE.equals(action)) {
+			SingletonEndpoint endpoint = intent.getParcelableExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT);
+			int session = intent.getIntExtra("session", -1);
+			int newKey = intent.getIntExtra("newKey", -1);
+			
+			mDaemonProcess.giveNewKeyResponse(endpoint.toString(), session, newKey);
+		} else if (ACTION_GIVE_QR_RESPONSE.equals(action)) {
+			SingletonEndpoint endpoint = intent.getParcelableExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT);
+			String data = intent.getStringExtra("data");
+			
+			mDaemonProcess.giveQRResponse(endpoint.toString(), data);
+		} else if (ACTION_GIVE_NFC_RESPONSE.equals(action)) {
+			SingletonEndpoint endpoint = intent.getParcelableExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT);
+			String data = intent.getStringExtra("data");
+			
+			mDaemonProcess.giveNFCResponse(endpoint.toString(), data);
+		} else if (ACTION_REMOVE_KEY.equals(action)) {
+			SingletonEndpoint endpoint = intent.getParcelableExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT);
+			mDaemonProcess.removeKey(endpoint);
+			
+			// send intent to refresh views
+			Intent broadcastIntent = new Intent(KeyExchangeService.INTENT_KEY_EXCHANGE);
+			broadcastIntent.putExtra(KeyExchangeService.EXTRA_ACTION, KeyExchangeService.ACTION_KEY_UPDATED);
+			broadcastIntent.putExtra(KeyExchangeService.EXTRA_ENDPOINT, endpoint.toString());
+			sendBroadcast(broadcastIntent);
 		}
 
 		// stop the daemon if it should be offline
@@ -685,7 +816,12 @@ public class DaemonService extends Service {
 
 		@Override
 		public void onEvent(Intent intent) {
-			sendBroadcast(intent);
+			if (KeyExchangeService.INTENT_KEY_EXCHANGE.equals(intent.getAction())) {
+				sendOrderedBroadcast(intent, null);
+			}
+			else {
+				sendBroadcast(intent);
+			}
 		}
 
 	};

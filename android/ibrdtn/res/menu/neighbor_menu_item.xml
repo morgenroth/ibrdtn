@@ -2,4 +2,5 @@
 <menu
   xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/itemConnect" android:title="@string/menu_neighbor_connect" android:alphabeticShortcut="@string/menu_neighbor_connect" />
+    <item android:id="@+id/itemKeyInfo" android:title="@string/menu_neighbor_keyinfo" android:alphabeticShortcut="@string/menu_neighbor_keyinfo" />
 </menu>

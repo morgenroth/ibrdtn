@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+    
+    <SurfaceView android:id="@+id/preview_view"
+               android:layout_width="fill_parent"
+               android:layout_height="fill_parent">
+  	</SurfaceView>
+
+	<com.jwetherell.quick_response_code.ViewfinderView
+	    android:id="@+id/viewfinder_view"
+	    android:layout_width="fill_parent"
+	    android:layout_height="fill_parent"
+	    android:background="@color/transparent">
+	</com.jwetherell.quick_response_code.ViewfinderView>
+	
+	<LinearLayout android:id="@+id/result_view"
+	              android:orientation="vertical"
+	              android:layout_width="fill_parent"
+	              android:layout_height="fill_parent"
+	              android:background="@color/result_view"
+	              android:gravity="center"
+	              android:padding="4dip">
+	
+	    <ImageView android:id="@+id/barcode_image_view"
+	               android:layout_width="wrap_content"
+	               android:layout_height="wrap_content"
+	               android:layout_marginBottom="4dip"
+	               android:adjustViewBounds="true"
+	               android:scaleType="centerInside"
+	               android:contentDescription="@string/barcode_image">
+	    </ImageView>
+	    
+	    <TextView android:id="@+id/contents_text_view"
+	                android:layout_width="wrap_content"
+	                android:layout_height="wrap_content"
+	                android:textColor="@color/result_text"
+	                android:textColorLink="@color/result_text"
+	                android:textSize="22sp"
+	                android:paddingLeft="12dip">
+	     </TextView>
+	
+	</LinearLayout>
+	
+	<TextView android:id="@+id/status_view"
+	          android:layout_width="wrap_content"
+	          android:layout_height="wrap_content"
+	          android:layout_gravity="bottom|center_horizontal"
+	          android:background="@color/transparent"
+	          android:text="@string/msg_default_status"
+	          android:textColor="@color/status_text"
+	          android:textSize="14sp">
+	</TextView>
+
+</FrameLayout>

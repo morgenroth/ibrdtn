@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <TextView
+        android:id="@+id/textInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:gravity="center_horizontal"
+        android:text="@string/select_hash"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="@color/light_blue" />
+
+    <ListView
+        android:id="@+id/listViewHash"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@id/textInfo"
+        android:layout_alignBottom="@+id/ViewLine" >
+    </ListView>
+
+    <Button
+        android:id="@+id/buttonNoMatch"
+        android:background="@drawable/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:text="@string/no_match" />
+    
+    <View
+        android:id="@+id/ViewLine"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_alignTop="@id/buttonNoMatch"
+        android:layout_centerHorizontal="true"
+        android:background="@color/dark_gray"/>
+
+</RelativeLayout>

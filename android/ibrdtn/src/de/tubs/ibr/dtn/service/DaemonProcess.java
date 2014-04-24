@@ -37,17 +37,20 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.wifi.WifiManager;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.api.Node;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.daemon.Preferences;
+import de.tubs.ibr.dtn.keyexchange.KeyExchangeService;
 import de.tubs.ibr.dtn.swig.DaemonRunLevel;
 import de.tubs.ibr.dtn.swig.NativeDaemon;
 import de.tubs.ibr.dtn.swig.NativeDaemonCallback;
 import de.tubs.ibr.dtn.swig.NativeDaemonException;
 import de.tubs.ibr.dtn.swig.NativeEventCallback;
+import de.tubs.ibr.dtn.swig.NativeKeyInfo;
 import de.tubs.ibr.dtn.swig.NativeNode;
 import de.tubs.ibr.dtn.swig.NativeStats;
 import de.tubs.ibr.dtn.swig.StringVec;
@@ -172,6 +175,76 @@ public class DaemonProcess {
     	if (getState().equals(DaemonState.ONLINE)) {
     		mDaemon.initiateConnection(endpoint);
     	}
+    }
+    
+    public synchronized void startKeyExchange(String eid, int protocol, String password) {
+    	mDaemon.onKeyExchangeBegin(eid, protocol, password);
+    }
+    
+    public synchronized void givePasswordResponse(String eid, int session, String password) {
+    	mDaemon.onKeyExchangeResponse(eid, 2, session, 0, "");
+    }
+    
+    public synchronized void giveHashResponse(String eid, int session, int equals) {
+    	mDaemon.onKeyExchangeResponse(eid, 100, session, equals, "");
+    }
+    
+    public synchronized void giveNewKeyResponse(String eid, int session, int newKey) {
+    	mDaemon.onKeyExchangeResponse(eid, 101, session, newKey, "");
+    }
+    
+    public synchronized void giveQRResponse(String eid, String data) {
+    	mDaemon.onKeyExchangeBegin(eid, 4, data);
+    }
+    
+    public synchronized void giveNFCResponse(String eid, String data) {
+    	mDaemon.onKeyExchangeBegin(eid, 5, data);
+    }
+    
+    public synchronized void removeKey(SingletonEndpoint endpoint) {
+    	try {
+			mDaemon.removeKey(endpoint.toString());
+		} catch (NativeDaemonException e) {
+			Log.e(TAG, "", e);
+		}
+    }
+    
+    public synchronized Bundle getKeyInfo(SingletonEndpoint endpoint) {
+		try {
+			NativeKeyInfo info = mDaemon.getKeyInfo(endpoint.toString());
+			Bundle ret = new Bundle();
+			ret.putString("fingerprint", info.getFingerprint());
+			ret.putString("data", info.getData());
+			ret.putLong("flags", info.getFlags());
+			
+    		long flags = info.getFlags();
+    		int trustlevel = 0;
+    		
+    		boolean pNone = (flags & 0x01) > 0;
+    		boolean pDh = (flags & 0x02) > 0;
+    		boolean pJpake = (flags & 0x04) > 0;
+    		boolean pHash = (flags & 0x08) > 0;
+    		boolean pQrCode = (flags & 0x10) > 0;
+    		boolean pNfc = (flags & 0x20) > 0;
+    		
+    		if (pNfc || pQrCode) {
+    			trustlevel = 100;
+    		}
+    		else if (pHash || pJpake) {
+    			trustlevel = 60;
+    		}
+    		else if (pDh) {
+    			trustlevel = 10;
+    		}
+    		else if (pNone) {
+    			trustlevel = 1;
+    		}
+			
+			ret.putInt("trustlevel", trustlevel);
+			return ret;
+		} catch (NativeDaemonException e) {
+			return null;
+		}
     }
     
     public synchronized void initialize() {
@@ -461,13 +534,18 @@ public class DaemonProcess {
         public void eventRaised(String eventName, String action, StringVec data) {
             Intent event = new Intent(de.tubs.ibr.dtn.Intent.EVENT);
             Intent neighborIntent = null;
+            Intent keyExchangeIntent = null;
 
             event.addCategory(Intent.CATEGORY_DEFAULT);
             event.putExtra("name", eventName);
 
-            if (eventName.equals("NodeEvent")) {
+            if ("NodeEvent".equals(eventName)) {
                 neighborIntent = new Intent(de.tubs.ibr.dtn.Intent.NEIGHBOR);
                 neighborIntent.addCategory(Intent.CATEGORY_DEFAULT);
+            }
+            else if ("KeyExchangeEvent".equals(eventName)) {
+            	keyExchangeIntent = new Intent(KeyExchangeService.INTENT_KEY_EXCHANGE);
+            	keyExchangeIntent.addCategory(Intent.CATEGORY_DEFAULT);
             }
 
             // place the action into the intent
@@ -477,6 +555,9 @@ public class DaemonProcess {
                 
                 if (neighborIntent != null) {
                 	neighborIntent.putExtra("action", action);
+                }
+                else if (keyExchangeIntent != null) {
+                	keyExchangeIntent.putExtra("action", action);
                 }
             }
 
@@ -492,6 +573,9 @@ public class DaemonProcess {
                 if (neighborIntent != null) {
                     neighborIntent.putExtra("attr:" + entry_data[0], entry_data[1]);
                 }
+                else if (keyExchangeIntent != null) {
+                	keyExchangeIntent.putExtra(entry_data[0], entry_data[1]);
+                }
             }
 
             // send event intent
@@ -500,6 +584,9 @@ public class DaemonProcess {
             if (neighborIntent != null) {
                 mHandler.onEvent(neighborIntent);
                 mHandler.onNeighborhoodChanged();
+            }
+            else if (keyExchangeIntent != null) {
+            	mHandler.onEvent(keyExchangeIntent);
             }
 
             if (Log.isLoggable(TAG, Log.DEBUG)) {
@@ -568,14 +655,16 @@ public class DaemonProcess {
 			p.println("limit_blocksize = 250M");
 			p.println("limit_foreign_blocksize = 50M");
 
-			String secmode = preferences.getString("security_mode", "disabled");
-
-			if (!secmode.equals("disabled")) {
-				File sec_folder = new File(context.getFilesDir().getPath() + "/bpsec");
-				if (!sec_folder.exists() || sec_folder.isDirectory()) {
-					p.println("security_path = " + sec_folder.getPath());
-				}
+			// specify a security path for keys
+			File sec_folder = new File(context.getFilesDir().getPath() + "/bpsec");
+			if (!sec_folder.exists() || sec_folder.isDirectory()) {
+				p.println("security_path = " + sec_folder.getPath());
 			}
+			
+			// set a file for DH params
+			p.println("dh_params_path = " + sec_folder.getPath() + "/dh_params.txt");
+			
+			String secmode = preferences.getString("security_mode", "encrypt");
 
 			if (secmode.equals("bab")) {
 				// write default BAB key to file

@@ -38,11 +38,16 @@
     
     <!-- This app uses wifi direct if available -->
     <uses-feature android:name="android.hardware.wifi.direct" android:required="false" />
+    
+    <!-- This app uses nfc if available -->
+    <uses-feature android:name="android.hardware.nfc" android:required="false" />
 
     <uses-sdk
         android:minSdkVersion="9"
         android:targetSdkVersion="19" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.NFC"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
 
     <application
         android:allowBackup="true"
@@ -68,6 +73,7 @@
                 <action android:name="de.tubs.ibr.dtn.intent.REGISTER" />
                 <action android:name="de.tubs.ibr.dtn.intent.UNREGISTER" />
                 <action android:name="de.tubs.ibr.dtn.DTNService" />
+                <action android:name="de.tubs.ibr.dtn.SecurityService" />
             </intent-filter>
         </service>
 
@@ -127,6 +133,48 @@
 		        android:name="android.support.PARENT_ACTIVITY"
 		        android:value=".daemon.Preferences" />
         </activity>
+        <activity
+            android:name="de.tubs.ibr.dtn.keyexchange.KeyInformationActivity"
+            android:icon="@drawable/ic_action_key"
+            android:label="@string/key_information" >
+        </activity>
+        <activity
+            android:name="de.tubs.ibr.dtn.keyexchange.ProtocolSelectionActivity"
+            android:icon="@drawable/ic_action_security_closed"
+            android:label="@string/increase_trust">
+        </activity>
+        
+        <activity
+            android:name="de.tubs.ibr.dtn.keyexchange.CaptureActivity"
+            android:icon="@drawable/ic_action_security_closed"
+            android:label="@string/qr_code_scan"
+            android:screenOrientation="landscape" />
+        
+        <activity
+            android:name="de.tubs.ibr.dtn.keyexchange.NFCReceiver" >
+        
+            <intent-filter>
+				<action android:name="android.nfc.action.NDEF_DISCOVERED"/>
+				<category android:name="android.intent.category.DEFAULT"/>
+				<data android:mimeType="text/plain"/>
+			</intent-filter>
+		</activity>
+        
+        <service android:name=".keyexchange.KeyExchangeService" />
+        
+        <receiver
+            android:name=".keyexchange.KeyExchangeReceiver"
+            android:exported="false"
+            android:label="KeyExchangeReceiver" >
+            <intent-filter>
+                <action android:name="de.tubs.ibr.dtn.Intent.KEY_EXCHANGE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="de.tubs.ibr.dtn.Intent.NFC_EXCHANGE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </receiver>
 
         <receiver
             android:name=".service.OnBootReceiver"
