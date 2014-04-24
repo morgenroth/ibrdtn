@@ -40,14 +40,13 @@ namespace dtn
 		void NoneProtocol::begin(KeyExchangeSession &session, KeyExchangeData &data)
 		{
 			// prepare request
-			KeyExchangeData request;
+			KeyExchangeData request(KeyExchangeData::REQUEST, session);
 
 			// get local public key
 			const SecurityKey pkey = SecurityKeyManager::getInstance().get(dtn::core::BundleCore::local, SecurityKey::KEY_PUBLIC);
 
 			// set request parameters
-			data.setAction(KeyExchangeData::REQUEST);
-			data.str(pkey.getData());
+			request.str(pkey.getData());
 
 			// send request to the other peer
 			manager.submit(session, request);
@@ -61,13 +60,12 @@ namespace dtn
 				session.putKey(data.str(), SecurityKey::KEY_PUBLIC, SecurityKey::LOW);
 
 				// prepare response
-				KeyExchangeData response;
+				KeyExchangeData response(KeyExchangeData::RESPONSE, session);
 
 				// get local public key
 				const SecurityKey pkey = SecurityKeyManager::getInstance().get(dtn::core::BundleCore::local, SecurityKey::KEY_PUBLIC);
 
 				// reply with the own key
-				response.setAction(KeyExchangeData::RESPONSE);
 				response.str(pkey.getData());
 
 				// send bundle to peer
