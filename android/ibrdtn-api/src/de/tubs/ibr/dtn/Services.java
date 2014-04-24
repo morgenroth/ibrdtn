@@ -22,8 +22,15 @@ public class Services {
 	 */
 	public static final Integer VERSION_MANAGER = 1;
 	
+	/**
+	 * Version = 0 (< 0.13)
+	 * Version = 1 (0.13)
+	 */
+	public static final Integer VERSION_SECURITY = 1;
+	
 	public static final Service SERVICE_APPLICATION = new Service(DTNService.class.getName(), VERSION_APPLICATION);
 	public static final Service SERVICE_MANAGER = new Service(DtnManager.class.getName(), VERSION_MANAGER);
+	public static final Service SERVICE_SECURITY = new Service(SecurityService.class.getName(), VERSION_SECURITY);
 	
 	public static final String EXTRA_VERSION = "de.tubs.ibr.dtn.Service.VERSION";
 	public static final String EXTRA_NAME = "de.tubs.ibr.dtn.Service.NAME";
