@@ -52,7 +52,33 @@ namespace dtn
 		std::string KeyExchangeData::toString() const
 		{
 			std::stringstream sstm;
-			sstm << " --- Session: " << _session_id << ", Protocol: " << _protocol << ", Step: " << _step;
+
+			switch (_protocol)
+			{
+			case 0:
+				sstm << "none";
+				break;
+			case 1:
+				sstm << "dh";
+				break;
+			case 2:
+				sstm << "jpake";
+				break;
+			case 3:
+				sstm << "hash";
+				break;
+			case 4:
+				sstm << "password";
+				break;
+			case 5:
+				sstm << "qr";
+				break;
+			case 6:
+				sstm << "nfc";
+				break;
+			}
+
+			sstm << "::" << _session_id << "[" << _step << "]";
 			return sstm.str();
 		}
 

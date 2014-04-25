@@ -68,26 +68,26 @@ namespace dtn
 			switch (_data.getAction())
 			{
 				case dtn::security::KeyExchangeData::PASSWORD_REQUEST:
-					return "Please enter the password for " + _eid.getString();
+					return "Please enter the password for " + _eid.getString() + " " + _data.toString();
 
 				case dtn::security::KeyExchangeData::HASH_COMMIT:
-					return "Please compare the hash values: " + _data.str();
+					return "Please compare the hash values for " + _eid.getString() + " " + _data.toString() + ": " + _data.str();
 
 				case dtn::security::KeyExchangeData::NEWKEY_FOUND:
-					return "A new key was found. Please select a key for " + _eid.getString();
+					return "A new key was found. Please select a key for " + _eid.getString() + " " + _data.toString();
 
 				case dtn::security::KeyExchangeData::COMPLETE:
-					return "Key-exchange completed with " + _eid.getString();
+					return "Key-exchange completed for " + _eid.getString() + " " + _data.toString();
 
 				case dtn::security::KeyExchangeData::ERROR:
-					return "Key-exchange failed with " + _eid.getString();
+					return "Key-exchange failed for " + _eid.getString() + " " + _data.toString();
 
 				case dtn::security::KeyExchangeData::WRONG_PASSWORD:
-					return "Entered password does not match the peer.";
+					return "Entered password does not match the peer; Session " + _eid.getString() + " " + _data.toString();
 
 				default: {
 					std::stringstream sstm;
-					sstm << "peer: " << _eid.getString() << " with " << _data.toString();
+					sstm << "peer " << _eid.getString() << " for " << _data.toString();
 					return sstm.str();
 				}
 			}
