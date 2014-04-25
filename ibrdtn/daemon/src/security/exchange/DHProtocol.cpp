@@ -172,32 +172,43 @@ namespace dtn
 						BIGNUM* pub_key = BN_new();
 						read(data, &pub_key);
 
-						DH* dh = DH_new();
-						read(data, &dh->p);
-						read(data, &dh->g);
+						// create new params
+						state.dh = DH_new();
 
-						// DH* erzeugen
-						DH_generate_key(dh);
+						// read p and g paramter from message
+						read(data, &state.dh->p);
+						read(data, &state.dh->g);
+
+						int codes;
+						if (!DH_check(state.dh, &codes))
+						{
+							throw ibrcommon::Exception("Error while checking DH parameters");
+						}
+
+						IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 25) << "Generate DH keys" << IBRCOMMON_LOGGER_ENDL;
+
+						if (!DH_generate_key(state.dh))
+						{
+							throw ibrcommon::Exception("Error while generating DH key");
+						}
 
 						unsigned char* secret;
-						long int length = sizeof(unsigned char) * (DH_size(dh));
+						long int length = sizeof(unsigned char) * (DH_size(state.dh));
 						if (NULL == (secret = (unsigned char*) OPENSSL_malloc(length)))
 						{
-							DH_free(dh);
 							BN_free(pub_key);
 							throw ibrcommon::Exception("Error while allocating space for secret key");
 						}
 
-						DH_compute_key(secret, pub_key, dh);
+						DH_compute_key(secret, pub_key, state.dh);
 
 						state.secret.assign((const char*)secret, length);
 
 						KeyExchangeData response(KeyExchangeData::RESPONSE, session);
-						write(response, dh->pub_key);
+						write(response, state.dh->pub_key);
 
 						manager.submit(session, response);
 
-						DH_free(dh);
 						BN_free(pub_key);
 					}
 					else
@@ -267,7 +278,7 @@ namespace dtn
 						hstream << pkey.getData() << std::flush;
 
 						// bundle erzeugen: EID, hmac/publicKey, response, round 1
-						KeyExchangeData response(KeyExchangeData::REQUEST, session);
+						KeyExchangeData response(KeyExchangeData::RESPONSE, session);
 						response.setStep(1);
 
 						const dtn::data::BundleString local_hmac(ibrcommon::HashStream::extract(hstream));
