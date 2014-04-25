@@ -542,7 +542,9 @@ namespace dtn
 			std::map<std::string, KeyExchangeSession*>::iterator it = _sessionmap.find(session_key);
 			if (it == _sessionmap.end())
 			{
-				throw ibrcommon::Exception("Session not found");
+				std::stringstream ss;
+				ss << "Session " << data.getSessionId() << " for " << peer.getString() << " not found";
+				throw ibrcommon::Exception(ss.str());
 			}
 			return *(*it).second;
 		}
