@@ -201,7 +201,7 @@ namespace dtn
 
 		void KeyExchanger::submit(KeyExchangeSession &session, const KeyExchangeData &data)
 		{
-			dtn::data::Bundle b(true);
+			dtn::data::Bundle b;
 
 			try {
 				ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
