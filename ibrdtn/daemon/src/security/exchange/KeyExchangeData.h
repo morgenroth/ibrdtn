@@ -23,8 +23,6 @@
 #ifndef KEYEXCHANGEDATA_H_
 #define KEYEXCHANGEDATA_H_
 
-#include "security/exchange/KeyExchangeSession.h"
-
 #include <string>
 #include <sstream>
 #include <iostream>
@@ -33,6 +31,9 @@ namespace dtn
 {
 	namespace security
 	{
+		// forward declaration to avoid a dependency on openssl
+		// caused by a header inclusion chain
+		class KeyExchangeSession;
 
 		class KeyExchangeData : public std::stringstream
 		{

@@ -21,6 +21,7 @@
  */
 
 #include "security/exchange/KeyExchangeData.h"
+#include "security/exchange/KeyExchangeSession.h"
 #include <ibrdtn/data/BundleString.h>
 
 namespace dtn
