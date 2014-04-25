@@ -114,7 +114,11 @@ namespace ibrcommon
 		memset(&hints, 0, sizeof(struct addrinfo));
 		hints.ai_family = PF_UNSPEC;
 		hints.ai_socktype = SOCK_STREAM;
+#ifdef __WIN32__
+		hints.ai_flags = AI_NUMERICHOST;
+#else
 		hints.ai_flags = AI_NUMERICHOST | AI_NUMERICSERV;
+#endif
 
 		// resolve the name into a numeric address
 		if ((ret = ::getaddrinfo(_address.c_str(), "4556", &hints, &res)) != 0)
