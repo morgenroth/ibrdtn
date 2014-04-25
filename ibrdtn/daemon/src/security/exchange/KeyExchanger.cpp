@@ -165,8 +165,8 @@ namespace dtn
 					dtn::security::KeyExchangeData data;
 					(*stream) >> data;
 
-					// create a new task to process
-					_queue.push(new ExchangeTask(b.source, data));
+					// distribute the received message as event
+					KeyExchangeEvent::raise(b.source, data);
 				}
 
 			} catch (const ibrcommon::Exception&) {}
@@ -336,20 +336,16 @@ namespace dtn
 				{
 					case 100:
 					{
+						// get the session
+						KeyExchangeSession &session = exchanger.getSession(_peer, _data);
+
 						if (_data.getStep() == 0)
 						{
-							// clean-up the session
-							exchanger.freeSession(_peer, _data.getSessionId());
+							// finalize the session
+							exchanger.error(session);
 						}
 						else
 						{
-							// Hash response
-							KeyExchangeData response(_data);
-							response.setProtocol(3);
-
-							// get the session
-							KeyExchangeSession &session = exchanger.getSession(_peer, response);
-
 							// finalize the session
 							exchanger.finish(session);
 						}
