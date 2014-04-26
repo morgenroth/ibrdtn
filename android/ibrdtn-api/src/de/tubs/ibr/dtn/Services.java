@@ -68,14 +68,22 @@ public class Services {
 		}
 		
 		public boolean match(Intent intent) {
+			// the requested API version
+			Integer version = intent.getIntExtra(Services.EXTRA_VERSION, 0);
+			
 			// the requested service name
 			String name = intent.getStringExtra(Services.EXTRA_NAME);
 			
+			// check old-style API binds
+			if ((name == null) && (version == 0))
+			{
+				if (mClassName.equals(intent.getAction())) return true;
+				if (mClassName.equals(DTNService.class.getName())) return true;
+				return false;
+			}
+			
 			// check if API version matches
 			if (!mClassName.equals(name)) return false;
-			
-			// the requested API version
-			Integer version = intent.getIntExtra(Services.EXTRA_VERSION, 0);
 			
 			// check if API version matches
 			if (version != mVersion) return false;
