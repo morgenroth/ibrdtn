@@ -40,8 +40,11 @@
 #include "routing/RequeueBundleEvent.h"
 #include "core/TimeAdjustmentEvent.h"
 
+#include <ibrdtn/ibrdtn.h>
+#ifdef IBRDTN_SUPPORT_BSP
 #include "security/exchange/KeyExchangeData.h"
 #include "security/exchange/KeyExchangeEvent.h"
+#endif
 
 #include <ibrdtn/utils/Clock.h>
 #include <ibrdtn/utils/Utils.h>
@@ -479,6 +482,7 @@ namespace dtn
 						throw ibrcommon::Exception("malformed command");
 					}
 				}
+#ifdef IBRDTN_SUPPORT_BSP
 				else if (cmd[0] == "key-exchange")
 				{
 					if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
@@ -560,6 +564,7 @@ namespace dtn
 						throw ibrcommon::Exception("malformed command");
 					}
 				}
+#endif
 				else
 				{
 					_stream << ClientHandler::API_STATUS_BAD_REQUEST << " UNKNOWN COMMAND" << std::endl;
