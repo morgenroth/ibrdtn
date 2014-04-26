@@ -48,12 +48,12 @@ namespace dtn
 		KeyExchangeEvent::~KeyExchangeEvent()
 		{}
 
-		const dtn::data::EID& KeyExchangeEvent::getEID() const
+		const dtn::data::EID KeyExchangeEvent::getEID() const
 		{
 			return _eid;
 		}
 
-		const dtn::security::KeyExchangeData& KeyExchangeEvent::getData() const
+		const dtn::security::KeyExchangeData KeyExchangeEvent::getData() const
 		{
 			return _data;
 		}

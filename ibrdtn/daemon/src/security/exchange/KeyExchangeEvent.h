@@ -39,8 +39,8 @@ namespace dtn
 			public:
 				virtual ~KeyExchangeEvent();
 
-				const dtn::data::EID& getEID() const;
-				const dtn::security::KeyExchangeData& getData() const;
+				const dtn::data::EID getEID() const;
+				const dtn::security::KeyExchangeData getData() const;
 
 				const std::string getName() const;
 				std::string getMessage() const;
@@ -54,7 +54,7 @@ namespace dtn
 				KeyExchangeEvent(const dtn::data::EID &eid, const dtn::security::KeyExchangeData &data);
 
 				const dtn::data::EID _eid;
-				const KeyExchangeData _data;
+				const dtn::security::KeyExchangeData _data;
 		};
 
 	} /* namespace security */
