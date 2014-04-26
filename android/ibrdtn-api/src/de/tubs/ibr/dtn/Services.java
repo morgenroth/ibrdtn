@@ -12,21 +12,18 @@ import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
 public class Services {
 	/**
 	 * Version = 0 (< 0.13)
-	 * Version = 1 (0.13)
 	 */
-	public static final Integer VERSION_APPLICATION = 1;
+	public static final Integer VERSION_APPLICATION = 0;
 	
 	/**
 	 * Version = 0 (< 0.13)
-	 * Version = 1 (0.13)
 	 */
-	public static final Integer VERSION_MANAGER = 1;
+	public static final Integer VERSION_MANAGER = 0;
 	
 	/**
 	 * Version = 0 (< 0.13)
-	 * Version = 1 (0.13)
 	 */
-	public static final Integer VERSION_SECURITY = 1;
+	public static final Integer VERSION_SECURITY = 0;
 	
 	public static final Service SERVICE_APPLICATION = new Service(DTNService.class.getName(), VERSION_APPLICATION);
 	public static final Service SERVICE_MANAGER = new Service(DtnManager.class.getName(), VERSION_MANAGER);
