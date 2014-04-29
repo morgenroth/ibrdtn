@@ -28,26 +28,47 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    
     <!-- READ_LOGS is needed on Android < 4.1, On Android >= 4.1 an app can read it's own logs without permission -->
     <uses-permission android:name="android.permission.READ_LOGS" />
+    
+    <!-- Custom permission to send/received bundles using the DTN services -->
     <uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION" />
+    
+    <!-- Custom permission to control the DTN services -->
     <uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_SERVER"/>
     
-    <!-- This app uses wifi direct if available -->
+    <!-- This app require access to NFC to send the local security key -->
+    <uses-permission android:name="android.permission.NFC"/>
+    
+    <!-- This app require access to the camera to scan QR codes -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    
+    <!-- This app uses but not require Wi-Fi direct -->
     <uses-feature android:name="android.hardware.wifi.direct" android:required="false" />
     
-    <!-- This app uses nfc if available -->
+    <!-- This app uses NFC if available -->
     <uses-feature android:name="android.hardware.nfc" android:required="false" />
+    
+    <!-- This app uses the camera to scan QR codes -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    
+    <!-- This app uses but not require the camera auto-focus -->
+	<uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+
+    <!-- This app uses but not require a touchscreen -->
+	<uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+
+    <!-- This app uses but not require Wi-Fi -->
+	<uses-feature android:name="android.hardware.wifi" android:required="false" />
 
     <uses-sdk
         android:minSdkVersion="9"
         android:targetSdkVersion="19" />
-    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>
-    <uses-permission android:name="android.permission.NFC"/>
-    <uses-permission android:name="android.permission.CAMERA"/>
 
     <application
         android:allowBackup="true"
@@ -147,8 +168,7 @@
         <activity
             android:name="de.tubs.ibr.dtn.keyexchange.CaptureActivity"
             android:icon="@drawable/ic_action_security_closed"
-            android:label="@string/qr_code_scan"
-            android:screenOrientation="landscape" />
+            android:label="@string/qr_code_scan" />
         
         <activity
             android:name="de.tubs.ibr.dtn.keyexchange.NFCReceiver" >
