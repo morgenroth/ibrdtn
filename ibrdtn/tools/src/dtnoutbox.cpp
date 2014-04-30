@@ -443,9 +443,18 @@ int main( int argc, char** argv )
 				prev_files.clear();
 				prev_files.insert(current_files.begin(), current_files.end());
 
+				IBRCOMMON_LOGGER_TAG(TAG,notice)
+						<< "file statistics: "
+						<< observed_files.size() << " observed, "
+						<< deleted_files.size() << " deleted, "
+						<< new_files.size() << " new"
+						<< IBRCOMMON_LOGGER_ENDL;
+
 				// find files to send, create std::list
 				files_to_send.clear();
 
+
+				IBRCOMMON_LOGGER_TAG(TAG,notice) << "updating observed files:" << IBRCOMMON_LOGGER_ENDL;
 				for (filelist::iterator iter = observed_files.begin(); iter != observed_files.end(); ++iter)
 				{
 					io::ObservedFile &of = (*iter);
@@ -461,15 +470,13 @@ int main( int argc, char** argv )
 							files_to_send.insert(*iter);
 						}
 					}
-				}
 
-				IBRCOMMON_LOGGER_TAG(TAG,notice)
-						<< "file statistics: "
-						<< observed_files.size() << " observed, "
-						<< deleted_files.size() << " deleted,"
-						<< new_files.size() << " new"
+					IBRCOMMON_LOGGER_TAG(TAG,notice)
+						<< "\t"
+						<< of.getFile().getBasename() << ": "
+						<< of.getStableCounter()
 						<< IBRCOMMON_LOGGER_ENDL;
-
+				}
 
 				if (!files_to_send.empty())
 				{
