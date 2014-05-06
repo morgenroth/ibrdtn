@@ -65,7 +65,7 @@ class config {
 public:
 	config()
 	 : interval(5000), rounds(3), path("/"), regex_str("^\\."),
-		bundle_group(false), invert(false), quiet(false), fat(false), enabled(true)
+		bundle_group(false), invert(false), quiet(false), verbose(false), fat(false), enabled(true)
 	{}
 
 	//global conf values
@@ -84,6 +84,7 @@ public:
 	int bundle_group;
 	int invert;
 	int quiet;
+	int verbose;
 	int fat;
 	int enabled;
 };
@@ -100,11 +101,13 @@ struct option long_options[] =
 	{"path", required_argument, 0, 'p'},
 	{"regex", required_argument, 0, 'R'},
 	{"quiet", no_argument, 0, 'q'},
+	{"verbose", no_argument, 0, 'v'},
 	{0, 0, 0, 0}
 };
 
-void init_logger()
+void init_logger(config_t &conf)
 {
+
 	// logging options
 	const unsigned char logopts = 0;
 
@@ -118,14 +121,19 @@ void init_logger()
 	const unsigned char logsys = ibrcommon::Logger::LOGGER_ALL ^ (ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_NOTICE);
 
 	const unsigned char logall = ibrcommon::Logger::LOGGER_ALL;
-	// add logging to the cout
-	//ibrcommon::Logger::addStream(std::cout, logstd, logopts);
+
+	//log notice messages to cout, if quiet not configured
+	if(!conf.quiet)
+	{
+		ibrcommon::Logger::addStream(std::cout, logsys, logopts);
+		if(conf.verbose)
+		{
+			ibrcommon::Logger::addStream(std::cout, logall, logopts);
+		}
+	}
 
 	// add logging to the cerr
-	//ibrcommon::Logger::addStream(std::cerr, logerr, logopts);
-
-	// add logging to the cerr TODO
-	ibrcommon::Logger::addStream(std::cout, logall, logopts);
+	ibrcommon::Logger::addStream(std::cerr, logerr, logopts);
 }
 
 void print_help()
@@ -157,6 +165,7 @@ void print_help()
 	std::cout << "                  will be ignored. default: ^\\." << std::endl;
 	std::cout << " -I|--invert      Invert the regular expression defined with -R"<< std::endl;
 	std::cout << " -q|--quiet       Only print error messages" << std::endl;
+	std::cout << " -v|--verbose     print more verbose info messages, only works without -q" << std::endl;
 
 	_running = false; //stop this app, after printing help
 
@@ -175,7 +184,7 @@ void read_configuration(int argc, char** argv, config_t &conf)
 	{
 		/* getopt_long stores the option index here. */
 		int option_index = 0;
-		int c = getopt_long (argc, argv, "hw:i:r:p:R:qIg",
+		int c = getopt_long (argc, argv, "hw:i:r:p:R:qvIg",
 				long_options, &option_index);
 		/* Detect the end of the options. */
 		if (c == -1)
@@ -218,6 +227,9 @@ void read_configuration(int argc, char** argv, config_t &conf)
 		case 'q':
 			conf.quiet = true;
 			break;
+		case 'v':
+			conf.verbose = true;
+			break;
 		case 'I':
 			conf.invert = true;
 			break;
@@ -248,7 +260,7 @@ void read_configuration(int argc, char** argv, config_t &conf)
 
 void sighandler_func(int signal)
 {
-	IBRCOMMON_LOGGER_TAG(TAG,info) << "got signal " << signal << IBRCOMMON_LOGGER_ENDL;
+	IBRCOMMON_LOGGER_TAG(TAG,notice) << "got signal " << signal << IBRCOMMON_LOGGER_ENDL;
 	switch (signal)
 	{
 	case SIGTERM:
@@ -291,10 +303,10 @@ int main( int argc, char** argv )
 	// configration object
 	config_t conf;
 
-	init_logger();
-
 	// read the configuration
 	read_configuration(argc, argv, conf);
+
+	init_logger(conf);
 
 	// initialize sighandler after possible exit call
 	sighandler.initialize();
@@ -347,10 +359,7 @@ int main( int argc, char** argv )
 		root = io::ObservedFile(outbox_file);
 	}
 
-	if (!conf.quiet)
-	{
-		IBRCOMMON_LOGGER_TAG(TAG,info) << "-- dtnoutbox --" << IBRCOMMON_LOGGER_ENDL;
-	}
+	IBRCOMMON_LOGGER_TAG(TAG,info) << "-- dtnoutbox --" << IBRCOMMON_LOGGER_ENDL;
 
 	// loop, if no stop if requested
 	while (_running)
@@ -400,10 +409,7 @@ int main( int argc, char** argv )
 					observed_files.remove(deletedFile);
 
 					// output
-					if (!conf.quiet)
-					{
-						IBRCOMMON_LOGGER_TAG(TAG,info) << "file removed: " << deletedFile.getFile().getBasename() << IBRCOMMON_LOGGER_ENDL;
-					}
+					IBRCOMMON_LOGGER_TAG(TAG,info) << "file removed: " << deletedFile.getFile().getBasename() << IBRCOMMON_LOGGER_ENDL;
 				}
 
 				// determine new files
@@ -426,24 +432,21 @@ int main( int argc, char** argv )
 					{
 							char msgbuf[100];
 							regerror(reg_ret,&conf.regex,msgbuf,sizeof(msgbuf));
-							IBRCOMMON_LOGGER_TAG(TAG,error) << "ERROR: regex match failed : " << std::string(msgbuf) << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_TAG(TAG,info) << "ERROR: regex match failed : " << std::string(msgbuf) << IBRCOMMON_LOGGER_ENDL;
 					}
 
 					// add new file to the observed set
 					observed_files.push_back(of);
 
 					// log output
-					if (!conf.quiet)
-					{
-						IBRCOMMON_LOGGER_TAG(TAG, info) << "file found: " << of.getFile().getBasename() << IBRCOMMON_LOGGER_ENDL;
-					}
+					IBRCOMMON_LOGGER_TAG(TAG, info) << "file found: " << of.getFile().getBasename() << IBRCOMMON_LOGGER_ENDL;
 				}
 
 				// store current files for the next round
 				prev_files.clear();
 				prev_files.insert(current_files.begin(), current_files.end());
 
-				IBRCOMMON_LOGGER_TAG(TAG,notice)
+				IBRCOMMON_LOGGER_TAG(TAG, notice)
 						<< "file statistics: "
 						<< observed_files.size() << " observed, "
 						<< deleted_files.size() << " deleted, "
@@ -454,7 +457,7 @@ int main( int argc, char** argv )
 				files_to_send.clear();
 
 
-				IBRCOMMON_LOGGER_TAG(TAG,notice) << "updating observed files:" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(TAG, notice) << "updating observed files:" << IBRCOMMON_LOGGER_ENDL;
 				for (filelist::iterator iter = observed_files.begin(); iter != observed_files.end(); ++iter)
 				{
 					io::ObservedFile &of = (*iter);
@@ -471,7 +474,7 @@ int main( int argc, char** argv )
 						}
 					}
 
-					IBRCOMMON_LOGGER_TAG(TAG,notice)
+					IBRCOMMON_LOGGER_TAG(TAG, notice)
 						<< "\t"
 						<< of.getFile().getBasename() << ": "
 						<< of.getStableCounter()
@@ -480,14 +483,11 @@ int main( int argc, char** argv )
 
 				if (!files_to_send.empty())
 				{
-					if (!conf.quiet)
-					{
-						std::stringstream ss;
-						for (fileset::const_iterator it = files_to_send.begin(); it != files_to_send.end(); ++it) {
-							ss << (*it).getFile().getBasename() << " ";
-						}
-						IBRCOMMON_LOGGER_TAG("dtnoutbox",info) << "files sent: " << ss.str() << IBRCOMMON_LOGGER_ENDL;
+					std::stringstream ss;
+					for (fileset::const_iterator it = files_to_send.begin(); it != files_to_send.end(); ++it) {
+						ss << (*it).getFile().getBasename() << " ";
 					}
+					IBRCOMMON_LOGGER_TAG("dtnoutbox",info) << "files sent: " << ss.str() << IBRCOMMON_LOGGER_ENDL;
 
 					try {
 						// create a blob
