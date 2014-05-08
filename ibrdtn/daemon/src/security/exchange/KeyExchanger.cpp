@@ -309,12 +309,12 @@ namespace dtn
 			}
 		}
 
-		void KeyExchanger::error(KeyExchangeSession &session)
+		void KeyExchanger::error(KeyExchangeSession &session, bool reportError)
 		{
 			// generate an error report
 			KeyExchangeData error(KeyExchangeData::ERROR, session);
 			KeyExchangeEvent::raise(session.getPeer(), error);
-			submit(session, error);
+			if (reportError) submit(session, error);
 		}
 
 		KeyExchanger::Task::~Task()
@@ -342,7 +342,7 @@ namespace dtn
 						if (_data.getStep() == 0)
 						{
 							// finalize the session
-							exchanger.error(session);
+							exchanger.error(session, false);
 						}
 						else
 						{
@@ -416,7 +416,7 @@ namespace dtn
 						p.begin(session, _data);
 					} catch (ibrcommon::Exception &e) {
 						// trigger error handling
-						exchanger.error(session);
+						exchanger.error(session, false);
 
 						throw;
 					}
@@ -434,7 +434,7 @@ namespace dtn
 						p.step(session, _data);
 					} catch (ibrcommon::Exception &e) {
 						// trigger error handling
-						exchanger.error(session);
+						exchanger.error(session, true);
 
 						throw;
 					}
@@ -452,7 +452,7 @@ namespace dtn
 						p.step(session, _data);
 					} catch (ibrcommon::Exception &e) {
 						// trigger error handling
-						exchanger.error(session);
+						exchanger.error(session, true);
 
 						throw;
 					}
@@ -489,7 +489,7 @@ namespace dtn
 
 					// expired - trigger an error
 					// the error event will finally delete the session
-					error(session);
+					error(session, false);
 				}
 				else
 				{

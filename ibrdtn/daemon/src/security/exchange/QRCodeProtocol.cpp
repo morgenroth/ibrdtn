@@ -60,12 +60,13 @@ namespace dtn
 			else
 			{
 				// signal error
-				manager.error(session);
+				throw ibrcommon::Exception("fingerprint is missing");
 			}
 		}
 
 		void QRCodeProtocol::step(KeyExchangeSession &session, KeyExchangeData &data)
 		{
+			throw ibrcommon::Exception("invalid step");
 		}
 	} /* namespace security */
 } /* namespace dtn */

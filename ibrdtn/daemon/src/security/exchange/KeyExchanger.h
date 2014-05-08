@@ -99,7 +99,7 @@ namespace dtn
 				 */
 				virtual void submit(KeyExchangeSession &session, const KeyExchangeData &data);
 				virtual void finish(KeyExchangeSession &session);
-				virtual void error(KeyExchangeSession &session);
+				virtual void error(KeyExchangeSession &session, bool reportError);
 
 			private:
 				class Task

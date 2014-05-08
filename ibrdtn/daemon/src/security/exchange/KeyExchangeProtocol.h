@@ -37,7 +37,6 @@ namespace dtn
 			virtual ~KeyExchangeManager() = 0;
 			virtual void submit(KeyExchangeSession &session, const KeyExchangeData &data) = 0;
 			virtual void finish(KeyExchangeSession &session) = 0;
-			virtual void error(KeyExchangeSession &session) = 0;
 		};
 
 		class KeyExchangeProtocol
