@@ -39,6 +39,15 @@ namespace dtn
 			static const std::string TAG;
 
 		public:
+			class PathNotFoundException : public ibrcommon::Exception
+			{
+			public:
+				PathNotFoundException(std::string what = "No security path configured.") : ibrcommon::Exception(what)
+				{};
+
+				virtual ~PathNotFoundException() throw() {};
+			};
+
 			static SecurityKeyManager& getInstance();
 
 			virtual ~SecurityKeyManager();
@@ -87,6 +96,11 @@ namespace dtn
 			 * Returns the path to the key of given type
 			 */
 			const ibrcommon::File getKeyFile(const dtn::data::EID &peer, const dtn::security::SecurityKey::KeyType type = dtn::security::SecurityKey::KEY_UNSPEC) const;
+
+			/**
+			 * Returns the path to a security related file based on the keyword.
+			 */
+			const ibrcommon::File getFilePath(const std::string &keyword, const std::string &extension) const;
 
 			/**
 			 * Remove a security key

@@ -97,7 +97,7 @@ namespace dtn
 		{}
 
 		Configuration::Security::Security()
-		 : _enabled(false), _tlsEnabled(false), _tlsRequired(false), _tlsOptionalOnBadClock(false), _level(SECURITY_LEVEL_NONE), _disableEncryption(false)
+		 : _enabled(false), _tlsEnabled(false), _tlsRequired(false), _tlsOptionalOnBadClock(false), _level(SECURITY_LEVEL_NONE), _disableEncryption(false), _generate_dh_params(false)
 		{}
 
 		Configuration::Daemon::Daemon()
@@ -1177,6 +1177,12 @@ namespace dtn
 				}
 			} catch (const ibrcommon::ConfigFile::key_not_found&) {
 			}
+
+			// automatic DH parameters
+			try {
+				_generate_dh_params = conf.read<std::string>("generate_dh_params") == "yes";
+			} catch (const ibrcommon::ConfigFile::key_not_found&) {
+			}
 #endif
 		}
 
@@ -1232,6 +1238,11 @@ namespace dtn
 		bool Configuration::Security::TLSEncryptionDisabled() const
 		{
 			return _disableEncryption;
+		}
+
+		bool Configuration::Security::isGenerateDHParamsEnabled() const
+		{
+			return _generate_dh_params;
 		}
 
 		bool Configuration::Logger::quiet() const

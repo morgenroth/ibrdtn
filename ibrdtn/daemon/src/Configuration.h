@@ -406,6 +406,7 @@ namespace dtn
 				bool _tlsEnabled;
 				bool _tlsRequired;
 				bool _tlsOptionalOnBadClock;
+				bool _generate_dh_params;
 
 			protected:
 				Security();
@@ -474,6 +475,12 @@ namespace dtn
 				 * \return true if encryption shall be disabled, false otherwise
 				 */
 				bool TLSEncryptionDisabled() const;
+
+				/*!
+				 * \brief Generate DH parameters automatically if necessary.
+				 * \return true if the DH parameters shall be generated automatically, false otherwise
+				 */
+				bool isGenerateDHParamsEnabled() const;
 
 			private:
 				// security related files

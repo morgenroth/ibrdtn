@@ -31,7 +31,7 @@
 #include <openssl/rand.h>
 #include <openssl/pem.h>
 
-#define DH_KEY_LENGTH 2048
+#define DH_KEY_LENGTH 1024
 
 namespace dtn
 {
@@ -50,8 +50,10 @@ namespace dtn
 		}
 
 		DHProtocol::DHProtocol(KeyExchangeManager &manager)
-		 : KeyExchangeProtocol(manager, 1), _dh_params(NULL)
+		 : KeyExchangeProtocol(manager, 1), _dh_params(NULL), _auto_generate_params(false)
 		{
+			// check if auto generation of parameters is enabled
+			_auto_generate_params = dtn::daemon::Configuration::getInstance().getSecurity().isGenerateDHParamsEnabled();
 		}
 
 		DHProtocol::~DHProtocol()
@@ -59,64 +61,67 @@ namespace dtn
 			if (_dh_params) DH_free(_dh_params);
 		}
 
-		void DHProtocol::initialize()
+		void DHProtocol::generate_params()
 		{
-			try {
-				// set path for DH params
-				_dh_params_file = dtn::daemon::Configuration::getInstance().getPath("dh_params");
+			// if there are already parameters do not generate them again
+			if (_dh_params != NULL) return;
 
-				struct timeval time;
-				::gettimeofday(&time, NULL);
-
-				// initialize random seed generator
-				RAND_seed(&time, sizeof time);
-
-				// check if DH params already exist
-				if (_dh_params_file.exists())
+			// check if DH params already exist
+			if (_dh_params_file.exists())
+			{
+				// load DH params from file
+				FILE *fd = fopen(_dh_params_file.getPath().c_str(), "r");
+				if (fd != NULL)
 				{
-					// load DH params from file
-					FILE *fd = fopen(_dh_params_file.getPath().c_str(), "r");
-					if (fd != NULL)
-					{
-						_dh_params = PEM_read_DHparams(fd, NULL, NULL, NULL);
-						fclose(fd);
-					}
+					_dh_params = PEM_read_DHparams(fd, NULL, NULL, NULL);
+					fclose(fd);
+
+					// finish here, if the parameters are loaded from file
+					if (_dh_params != NULL) return;
 				}
-				else
-				{
-					// create new params
-					_dh_params = DH_new();
-
-					IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "Generate new DH parameters" << IBRCOMMON_LOGGER_ENDL;
-
-					if (!DH_generate_parameters_ex(_dh_params, DH_KEY_LENGTH, DH_GENERATOR_2, NULL))
-					{
-						throw ibrcommon::Exception("Error while generating DH parameters");
-					}
-
-					// store params in the file
-					FILE *fd = fopen(_dh_params_file.getPath().c_str(), "w");
-					if (fd != NULL)
-					{
-						PEM_write_DHparams(fd, _dh_params);
-						fclose(fd);
-					}
-				}
-			} catch (const dtn::daemon::Configuration::ParameterNotSetException&) {
-				// DH file not set
 			}
 
-			if (_dh_params == NULL)
+			// only generate parameters if this feature is enabled
+			if (!_auto_generate_params)
+				throw ibrcommon::Exception("automatic generation of DH parameters disabled");
+
+			struct timeval time;
+			::gettimeofday(&time, NULL);
+
+			// initialize random seed generator
+			RAND_seed(&time, sizeof time);
+
+			// create new params
+			_dh_params = DH_new();
+
+			IBRCOMMON_LOGGER_TAG(TAG, notice) << "Generate new DH parameters -- This may take a while!" << IBRCOMMON_LOGGER_ENDL;
+
+			if (!DH_generate_parameters_ex(_dh_params, DH_KEY_LENGTH, DH_GENERATOR_2, NULL))
 			{
-				// create new params
-				_dh_params = DH_new();
+				throw ibrcommon::Exception("Error while generating DH parameters");
+			}
 
-				IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "Generate new DH parameters" << IBRCOMMON_LOGGER_ENDL;
+			// store params in the file
+			FILE *fd = fopen(_dh_params_file.getPath().c_str(), "w");
+			if (fd != NULL)
+			{
+				PEM_write_DHparams(fd, _dh_params);
+				fclose(fd);
+			}
 
-				if (!DH_generate_parameters_ex(_dh_params, DH_KEY_LENGTH, DH_GENERATOR_2, NULL))
-				{
-					throw ibrcommon::Exception("Error while generating DH parameters");
-				}
+			IBRCOMMON_LOGGER_TAG(TAG, notice) << "New DH parameters generated" << IBRCOMMON_LOGGER_ENDL;
+		}
+
+		void DHProtocol::initialize()
+		{
+			// set path for DH params
+			_dh_params_file = SecurityKeyManager::getInstance().getFilePath("dh_params", "pem");
+
+			try {
+				// generate parameters
+				generate_params();
+			} catch (const ibrcommon::Exception&) {
+				// generation failed
 			}
 		}
 
@@ -129,6 +134,9 @@ namespace dtn
 		{
 			// get session state
 			DHState &state = session.getState<DHState>();
+
+			// generate parameters
+			generate_params();
 
 			// copy DH params for new context
 			state.dh = DHparams_dup(_dh_params);

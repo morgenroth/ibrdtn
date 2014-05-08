@@ -61,8 +61,11 @@ namespace dtn
 			static void write(std::ostream &stream, const BIGNUM* bn);
 			static void read(std::istream &stream, BIGNUM **bn);
 
+			void generate_params();
+
 			ibrcommon::File _dh_params_file;
 			DH* _dh_params;
+			bool _auto_generate_params;
 		};
 	} /* namespace security */
 } /* namespace dtn */

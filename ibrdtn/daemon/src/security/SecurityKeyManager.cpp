@@ -290,5 +290,10 @@ namespace dtn
 					return _path.get(hash(prefix) + "." + hash(peer) + ".key");
 			}
 		}
+
+		const ibrcommon::File SecurityKeyManager::getFilePath(const std::string &keyword, const std::string &extension) const
+		{
+			return _path.get(keyword + "." + extension);
+		}
 	}
 }
