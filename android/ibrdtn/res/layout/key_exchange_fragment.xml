@@ -11,9 +11,9 @@
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
-        android:gravity="center_horizontal"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:textColor="@color/light_blue" />
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="@string/none_pending"
+        android:layout_margin="24dp" />
 
     <EditText
         android:id="@+id/editTextPassword"
@@ -23,12 +23,25 @@
         android:layout_alignParentRight="true"
         android:layout_below="@id/textInfo"
         android:ems="10"
+        android:layout_marginTop="12dp"
+        android:layout_marginLeft="24dp"
+        android:layout_marginRight="24dp"
         android:inputType="textPassword"
-        android:hint="@string/password_hint"
-        android:visibility="invisible" >
+        android:hint="@string/password_hint" >
 
         <requestFocus />
     </EditText>
+    
+    <CheckBox
+        android:id="@+id/checkVisiblePassword"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/editTextPassword"
+        android:layout_marginBottom="24dp"
+        android:layout_below="@id/editTextPassword"
+        android:layout_centerVertical="true"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="@string/text_show_password" />
 
     <Button
         android:id="@+id/buttonOk"
@@ -37,7 +50,8 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentRight="true" />
+        android:layout_alignParentRight="true"
+        android:text="@android:string/ok" />
     
     <View
         android:layout_width="match_parent"

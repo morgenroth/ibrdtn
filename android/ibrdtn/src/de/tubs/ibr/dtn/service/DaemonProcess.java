@@ -214,8 +214,8 @@ public class DaemonProcess {
 			NativeKeyInfo info = mDaemon.getKeyInfo(endpoint.toString());
 			Bundle ret = new Bundle();
 			ret.putString("fingerprint", info.getFingerprint());
-			ret.putString("data", info.getData());
-			ret.putLong("flags", info.getFlags());
+			ret.putString(KeyExchangeService.EXTRA_DATA, info.getData());
+			ret.putLong(KeyExchangeService.EXTRA_FLAGS, info.getFlags());
 			
     		long flags = info.getFlags();
     		int trustlevel = 0;

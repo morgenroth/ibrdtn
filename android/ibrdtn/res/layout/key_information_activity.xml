@@ -1,112 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent" 
-    android:layout_height="fill_parent">
-
-<RelativeLayout 
-    android:id="@+id/RelativeLayout"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
-    android:layout_marginRight="14dp"
-    android:layout_marginLeft="14dp" >
-
-    <TextView
-        android:id="@+id/textViewTitleEID"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:layout_marginRight="8dp"
-        android:layout_marginLeft="8dp"
-        android:text="@string/my_eid"
-        android:textSize="14sp"
-        android:textColor="@color/light_blue"
-        android:textStyle="bold"
-        android:textAllCaps="true" />
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_below="@+id/textViewTitleEID"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="6dp"
-        android:background="@color/light_blue" />
-
-    <TextView
-        android:id="@+id/textViewEID"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@id/textViewTitleEID"
-        android:layout_below="@+id/textViewTitleEID"
-        android:layout_marginTop="14dp"
-        android:text=""
-        android:textSize="14sp" />
-
-    <TextView
-        android:id="@+id/textViewTitleQRCode"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@id/textViewEID"
-        android:layout_below="@+id/textViewEID"
-        android:layout_marginTop="20dp"
-        android:text="@string/qr_code"
-        android:textSize="14sp"
-        android:textColor="@color/light_blue"
-        android:textStyle="bold"
-        android:textAllCaps="true" />
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_below="@id/textViewTitleQRCode"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="6dp"
-        android:background="@color/light_blue" />
-
-    <ImageView
-        android:id="@+id/imageViewQRCode"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/textViewTitleQRCode"
-        android:layout_marginTop="20dp"
-        android:layout_marginRight="8dp"
-        android:layout_marginLeft="8dp"
-        android:layout_centerHorizontal="true"
-        android:contentDescription="@string/qr_code_image" />
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
     
-    <TextView
-        android:id="@+id/textViewTitleFingerprint"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/imageViewQRCode"
-        android:layout_marginTop="10dp"
-        android:layout_marginRight="8dp"
-        android:layout_marginLeft="8dp"
-        android:text="@string/fingerprint"
-        android:textSize="14sp"
-        android:textColor="@color/light_blue"
-        android:textStyle="bold"
-        android:textAllCaps="true" />
+    <FrameLayout
+        android:id="@+id/keyExchange"
+        android:layout_width="fill_parent"
+        android:layout_height="0dip"
+        android:layout_weight="1" />
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_below="@id/textViewTitleFingerprint"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="6dp"
-        android:background="@color/light_blue" />
-
-    <TextView
-        android:id="@+id/textViewFingerprint"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/textViewTitleFingerprint"
-        android:layout_below="@id/textViewTitleFingerprint"
-        android:layout_marginTop="14dp"
-        android:text=""
-        android:textSize="14sp"
-        android:typeface="monospace" />
-
-</RelativeLayout>
-
-</ScrollView>
+</LinearLayout>

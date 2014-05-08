@@ -63,7 +63,7 @@ public class HashCommitListAdapter extends BaseAdapter {
 		ViewHolder holder;
 
         if (convertView == null) {
-            convertView = this.mInflater.inflate(R.layout.hashcommitlist_item, null, true);
+            convertView = this.mInflater.inflate(R.layout.hash_commit_list_item, null, true);
             holder = new ViewHolder();
             holder.imageIcon = (ImageView) convertView.findViewById(R.id.imageIcon);
             holder.textCommit = (TextView) convertView.findViewById(R.id.textName);

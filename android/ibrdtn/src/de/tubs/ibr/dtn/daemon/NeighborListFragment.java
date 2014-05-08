@@ -49,7 +49,7 @@ import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.api.Node;
 import de.tubs.ibr.dtn.daemon.data.NeighborListAdapter;
 import de.tubs.ibr.dtn.daemon.data.NeighborListLoader;
-import de.tubs.ibr.dtn.keyexchange.ProtocolSelectionActivity;
+import de.tubs.ibr.dtn.keyexchange.KeyInformationActivity;
 import de.tubs.ibr.dtn.service.DaemonService;
 
 public class NeighborListFragment extends ListFragment implements
@@ -170,7 +170,7 @@ public class NeighborListFragment extends ListFragment implements
 			case R.id.itemKeyInfo:
 			{
 		        // open keyinfo panel
-		        final Intent intent = new Intent(getActivity(), ProtocolSelectionActivity.class);
+		        final Intent intent = new Intent(getActivity(), KeyInformationActivity.class);
 		        intent.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Parcelable)n.endpoint);
 		        getActivity().startActivity(intent);
 				return true;

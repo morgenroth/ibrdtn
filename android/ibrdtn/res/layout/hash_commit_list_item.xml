@@ -2,10 +2,13 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="?android:attr/listPreferredItemHeight"
-    android:background="@android:color/transparent"
+    android:background="@drawable/selectable_item"
     android:baselineAligned="false"
     android:orientation="horizontal"
-    android:padding="2dp" >
+    android:paddingTop="2dp"
+    android:paddingBottom="2dp"
+    android:paddingLeft="24dp"
+    android:paddingRight="24dp">
     
     <ImageView
         android:contentDescription="@string/content_hash_icon"
@@ -20,6 +23,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
-        android:textAppearance="?android:attr/textAppearanceLarge" />
+        android:textAppearance="?android:attr/textAppearanceMedium" />
 
 </LinearLayout>

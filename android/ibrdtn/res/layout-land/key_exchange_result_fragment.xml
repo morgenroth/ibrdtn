@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent">
+
+	<Button
+		android:id="@+id/buttonOk"
+		android:background="@drawable/button"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_alignParentBottom="true"
+		android:layout_alignParentLeft="true"
+		android:layout_alignParentRight="true"
+		android:text="@android:string/ok" />
+	
+	<View
+		android:id="@+id/buttonLine"
+		android:layout_width="match_parent"
+		android:layout_height="1dp"
+		android:layout_centerHorizontal="true"
+		android:layout_above="@id/buttonOk"
+		android:background="@color/dark_gray"/>
+
+	<LinearLayout
+	    android:layout_width="match_parent"
+	    android:layout_height="match_parent"
+	    android:layout_above="@id/buttonOk"
+	    android:orientation="vertical">
+	
+		<ImageView
+		    android:id="@+id/imageResult"
+		    android:layout_width="match_parent"
+		    android:layout_height="0dp"
+		    android:layout_weight="1"
+		    android:layout_gravity="center_horizontal"
+		    android:contentDescription="@string/content_result_icon"
+		    android:src="@drawable/ic_hint_success"
+		    android:layout_margin="12dp" />
+		
+		<TextView
+		    android:id="@+id/textResult"
+		    android:layout_width="match_parent"
+		    android:layout_height="wrap_content"
+		    android:layout_gravity="center_horizontal"
+		    android:gravity="center"
+		    android:text="@string/keyexchange_success"
+		    android:textAppearance="?android:attr/textAppearanceLarge"
+		    android:textColor="@color/light_blue"
+		    android:layout_marginBottom="12dp" />
+	
+		<!-- Trust Level -->
+		<LinearLayout 
+			android:id="@+id/groupTrustLevel"
+			android:orientation="horizontal"
+			android:layout_width="wrap_content"
+			android:layout_gravity="center_horizontal"
+			android:layout_height="wrap_content"
+			android:layout_marginBottom="12dp">
+		
+			<ImageView 
+				android:id="@+id/viewTrustMarker1"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:src="@drawable/ic_action_security_open"
+				android:contentDescription="@string/trust_level_image"/>
+			
+			<ImageView 
+				android:id="@+id/viewTrustMarker2"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:src="@drawable/ic_action_security_open"
+				android:contentDescription="@string/trust_level_image"/>
+			
+			<ImageView 
+				android:id="@+id/viewTrustMarker3"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:src="@drawable/ic_action_security_open"
+				android:contentDescription="@string/trust_level_image"/>
+		</LinearLayout>
+		
+		<TextView
+		    android:id="@+id/textEndpoint"
+		    android:layout_width="match_parent"
+		    android:layout_height="wrap_content"
+		    android:layout_gravity="center_horizontal"
+		    android:gravity="center"
+		    android:text="@string/dummy_endpoint"
+		    android:textAppearance="?android:attr/textAppearanceMedium"
+		    android:layout_marginBottom="12dp" />
+		
+	</LinearLayout>
+	
+</RelativeLayout>

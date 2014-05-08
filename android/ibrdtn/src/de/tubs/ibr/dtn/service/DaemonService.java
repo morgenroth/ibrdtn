@@ -66,7 +66,6 @@ import de.tubs.ibr.dtn.daemon.api.SelectNeighborActivity;
 import de.tubs.ibr.dtn.keyexchange.KeyExchangeManager;
 import de.tubs.ibr.dtn.keyexchange.KeyExchangeService;
 import de.tubs.ibr.dtn.keyexchange.KeyInformationActivity;
-import de.tubs.ibr.dtn.keyexchange.ProtocolSelectionActivity;
 import de.tubs.ibr.dtn.stats.ConvergenceLayerStatsEntry;
 import de.tubs.ibr.dtn.stats.StatsDatabase;
 import de.tubs.ibr.dtn.stats.StatsEntry;
@@ -204,6 +203,13 @@ public class DaemonService extends Service {
 		public Bundle getSecurityInfoIntent() throws RemoteException {
 			Bundle ret = new Bundle();
 			Intent intent = new Intent(DaemonService.this, KeyInformationActivity.class);
+			
+			// create local singleton endpoint
+			SingletonEndpoint node = new SingletonEndpoint(Preferences.getEndpoint(DaemonService.this));
+			
+			intent.putExtra(KeyInformationActivity.EXTRA_IS_LOCAL, true);
+			intent.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Parcelable)node);
+			
 			PendingIntent pi = PendingIntent.getActivity(DaemonService.this, 0, intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_UPDATE_CURRENT);
 			ret.putParcelable(de.tubs.ibr.dtn.Intent.EXTRA_PENDING_INTENT, pi);
 			return ret;
@@ -212,7 +218,7 @@ public class DaemonService extends Service {
 		@Override
 		public Bundle getKeyExchangeIntent(SingletonEndpoint endpoint) throws RemoteException {
 			Bundle ret = new Bundle();
-			Intent intent = new Intent(DaemonService.this, ProtocolSelectionActivity.class);
+			Intent intent = new Intent(DaemonService.this, KeyInformationActivity.class);
 			
 			// reduce endpoint to node address
 			EID node = new EID(endpoint.toString()).getNode();
@@ -520,12 +526,12 @@ public class DaemonService extends Service {
 			mDaemonProcess.giveNewKeyResponse(endpoint.toString(), session, newKey);
 		} else if (ACTION_GIVE_QR_RESPONSE.equals(action)) {
 			SingletonEndpoint endpoint = intent.getParcelableExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT);
-			String data = intent.getStringExtra("data");
+			String data = intent.getStringExtra(KeyExchangeService.EXTRA_DATA);
 			
 			mDaemonProcess.giveQRResponse(endpoint.toString(), data);
 		} else if (ACTION_GIVE_NFC_RESPONSE.equals(action)) {
 			SingletonEndpoint endpoint = intent.getParcelableExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT);
-			String data = intent.getStringExtra("data");
+			String data = intent.getStringExtra(KeyExchangeService.EXTRA_DATA);
 			
 			mDaemonProcess.giveNFCResponse(endpoint.toString(), data);
 		} else if (ACTION_REMOVE_KEY.equals(action)) {
@@ -536,7 +542,7 @@ public class DaemonService extends Service {
 			Intent broadcastIntent = new Intent(KeyExchangeService.INTENT_KEY_EXCHANGE);
 			broadcastIntent.putExtra(KeyExchangeService.EXTRA_ACTION, KeyExchangeService.ACTION_KEY_UPDATED);
 			broadcastIntent.putExtra(KeyExchangeService.EXTRA_ENDPOINT, endpoint.toString());
-			sendBroadcast(broadcastIntent);
+			sendOrderedBroadcast(broadcastIntent, null);
 		}
 
 		// stop the daemon if it should be offline

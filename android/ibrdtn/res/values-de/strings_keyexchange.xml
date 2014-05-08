@@ -1,38 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="showkeypanel">Schlüsselinfo</string>
-    <string name="menu_neighbor_keyinfo">Schlüsselinfo</string>
+    <string name="menu_local_key">Lokaler Schlüssel</string>
+    <string name="menu_neighbor_keyinfo">Schlüsselinformationen</string>
     <string name="content_security_icon">Sicherheitssymbol</string>
-    <string name="list_protocol">Verfahren</string>
-    <string name="increase_trust">Vertrauen erhöhen</string>
-    <string name="key_information">Schlüsselinformation</string>
-    <string name="my_eid">Meine Endpoint ID</string>
-    <string name="qr_code">Mein QR-Code</string>
-    <string name="my_fingerprint">Mein Schlüssel-Fingerabdruck</string>
+    <string name="list_protocol">Schlüsselaustausch / Verifikation</string>
+    <string name="key_information">Schlüsselinformationen</string>
+    <string name="qr_code">QR-Code</string>
     <string name="qr_code_image">QR-Code Bild</string>
     <string name="key_exchange">Schlüsselaustausch</string>
     <string name="trust_level">Vertrauensstufe</string>
     <string name="trust_level_image">Vertrauensstufe Bild</string>
     <string name="eid">Endpoint ID</string>
     <string name="fingerprint">Schlüssel-Fingerabdruck</string>
-    <string name="password_hint">Bitte hier Passwort eingeben</string>
+    <string name="password_hint">Passwort</string>
     <string name="hash_commit">Hash-Commit</string>
     <string name="no_match">Keine Übereinstimmung</string>
-    <string name="qr_code_scan">Scanne QR-Code</string>
-    <string name="delete_key">Lösche Schlüssel</string>
+    <string name="menu_qr_code_scan">Scanne QR-Code</string>
+    <string name="menu_delete_key">Lösche Schlüssel</string>
+    <string name="menu_untrusted_exchange">Unsicherer Schlüsselaustausch</string>
     <string name="select_hash">Bitte wählen Sie dieselbe Wortfolge wie ihr Partner aus.</string>
     <string name="content_hash_icon">Hashsymbol</string>
-    <string name="content_success_icon">Erfolg icon</string>
-    <string name="success">Schlüsselaustausch erfolgreich</string>
+    <string name="content_result_icon">Ergebnissymbol</string>
+    <string name="keyexchange_success">Schlüsselaustausch erfolgreich</string>
+    <string name="keyexchange_fail">Schlüsselaustausch fehlgeschlagen</string>
     <string name="complete">Abschließen</string>
     <string name="new_key">Neuer Schlüssel</string>
     <string name="old_key">Alter Schlüssel</string>
-    <string name="protocol_none_title">Austausch ohne Verschlüsselung</string>
-    <string name="protocol_dh_title">Verschlüsselter Austausch ohne Authentifizierung</string>
-    <string name="protocol_jpake_title">Authentifizierter Austausch durch Passwort</string>
-    <string name="protocol_hash_title">Authentifizierter Austausch durch Vergleich</string>
-    <string name="protocol_qr_title">QR-Code Verifizierung</string>
-    <string name="protocol_nfc_title">Austausch per NFC</string>
+    <string name="protocol_none_title">Unauthentisiert</string>
+    <string name="protocol_dh_title">Diffie-Hellmann</string>
+    <string name="protocol_jpake_title">Passwort</string>
+    <string name="protocol_hash_title">Wortlistenvergleich</string>
+    <string name="protocol_qr_title">QR-Code</string>
+    <string name="protocol_nfc_title">NFC</string>
     
     <string name="qr_scan_aborted">Scan abgebrochen.</string>
     <string name="qr_hint">Bitte platzieren Sie den QR-Code innerhalb des Fensters, um ihn zu scannen.</string>
@@ -71,4 +70,12 @@
     <string name="protocol_already_used_text">Soll mit dem Verfahren ein erneuter Austausch stattfinden?</string>
     
     <string name="no_key_available">Kein Schlüssel verfügbar</string>
+    <string name="toast_error">Es ist ein Fehler aufgetreten.</string>
+    
+    <string name="showcase_qr_code_title">QR-Code verifizieren</string>
+    <string name="showcase_qr_code_text">Verwende die Kamera um den empfangenen öffentlichen Schlüssel mit Hilfe eines QR-Codes zu verfizieren.</string>
+    <string name="showcase_nfc_title">NFC Schlüsselaustausch</string>
+    <string name="showcase_nfc_text">Um den öffentlichen Schlüssel mit Hilfe von NFC auf ein anderes Gerät zu übertragen, bringen Sie die Geräte zusammen und berühren Sie anschließend den Bildschirm.</string>
+    
+    <string name="text_show_password">Sichtbares Passwort</string>
 </resources>

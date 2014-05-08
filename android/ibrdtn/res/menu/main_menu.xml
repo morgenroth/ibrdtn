@@ -3,7 +3,7 @@
   xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/itemNeighbors" android:title="@string/showneighbors" android:alphabeticShortcut="@string/showneighbors" android:icon="@drawable/ic_menu_neighbors" android:showAsAction="ifRoom"></item>
     <item android:id="@+id/itemStats" android:title="@string/showstats" android:alphabeticShortcut="@string/showstats" android:icon="@drawable/ic_menu_stats" android:showAsAction="ifRoom"></item>
-    <item android:id="@+id/itemKeyPanel" android:title="@string/showkeypanel" android:alphabeticShortcut="@string/showkeypanel" android:icon="@drawable/ic_menu_keypanel" android:showAsAction="ifRoom"></item>
+    <item android:id="@+id/itemKeyPanel" android:title="@string/menu_local_key" android:alphabeticShortcut="@string/menu_local_key" android:icon="@drawable/ic_menu_keypanel" android:showAsAction="ifRoom"></item>
     <item android:id="@+id/itemShowLog" android:title="@string/showlog" android:alphabeticShortcut="@string/showlog" android:icon="@drawable/ic_menu_log" android:showAsAction="ifRoom"></item>
     <item android:id="@+id/itemApps" android:title="@string/list_apps" android:alphabeticShortcut="@string/list_apps" android:icon="@drawable/ic_menu_apps" android:showAsAction="never"></item>
     <item android:id="@+id/itemClearStorage" android:title="@string/clearstorage" android:alphabeticShortcut="@string/clearstorage" android:icon="@drawable/ic_menu_clear" android:showAsAction="never"></item>

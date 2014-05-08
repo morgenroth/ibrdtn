@@ -7,4 +7,7 @@
 
     <!-- Graph Text Size -->
     <dimen name="stats_axis_text">6pt</dimen>
+    
+    <!-- QR Code Size -->
+    <dimen name="qrcode_rect_size">256dp</dimen>
 </resources>

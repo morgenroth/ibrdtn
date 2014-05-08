@@ -2,10 +2,11 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="?android:attr/listPreferredItemHeight"
-    android:background="@android:color/transparent"
+    android:background="@drawable/selectable_item"
     android:baselineAligned="false"
     android:orientation="horizontal"
-    android:padding="2dp" >
+    android:paddingTop="2dp"
+    android:paddingBottom="2dp">
     
     <ImageView
         android:contentDescription="@string/content_security_icon"
@@ -13,7 +14,7 @@
         android:layout_width="32dp"
         android:layout_height="32dp"
         android:layout_gravity="center_vertical"
-        android:layout_margin="8dp"
+        android:layout_margin="6dp"
         android:src="@drawable/ic_action_security_open" />
     
     <TextView
@@ -21,6 +22,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
+        android:text="@string/protocol_hash_title"
         android:textAppearance="?android:attr/textAppearanceMedium" />
 
 </LinearLayout>

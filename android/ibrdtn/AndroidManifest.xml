@@ -132,18 +132,15 @@
 			<meta-data android:name="android.support.PARENT_ACTIVITY"
 				android:value=".daemon.Preferences" />
 		</activity>
+
 		<activity android:name="de.tubs.ibr.dtn.keyexchange.KeyInformationActivity"
 			android:icon="@drawable/ic_action_key" android:label="@string/key_information" />
 
-		<activity android:name="de.tubs.ibr.dtn.keyexchange.ProtocolSelectionActivity"
-			android:icon="@drawable/ic_action_security_closed" android:label="@string/increase_trust" />
-
-
 		<activity android:name="de.tubs.ibr.dtn.keyexchange.CaptureActivity"
-			android:icon="@drawable/ic_action_security_closed" android:label="@string/qr_code_scan" />
+			android:icon="@drawable/ic_action_security_closed" android:label="@string/qr_code_scan"
+			android:screenOrientation="landscape" />
 
 		<activity android:name="de.tubs.ibr.dtn.keyexchange.NFCReceiver">
-
 			<intent-filter>
 				<action android:name="android.nfc.action.NDEF_DISCOVERED" />
 				<category android:name="android.intent.category.DEFAULT" />

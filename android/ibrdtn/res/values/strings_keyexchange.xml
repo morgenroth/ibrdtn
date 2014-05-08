@@ -1,38 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="showkeypanel">Keyinfo</string>
-    <string name="menu_neighbor_keyinfo">Keyinfo</string>
+    <string name="menu_local_key">Local Key</string>
+    <string name="menu_neighbor_keyinfo">Keyinformation</string>
     <string name="content_security_icon">Security icon</string>
-    <string name="list_protocol">Protocols</string>
-    <string name="increase_trust">Increase trust</string>
-    <string name="key_information">Key Information</string>
-    <string name="my_eid">My Endpoint ID</string>
-    <string name="qr_code">My QR-Code</string>
-    <string name="my_fingerprint">My Key-Fingerprint</string>
+    <string name="list_protocol">Key-Exchange / Verification</string>
+    <string name="key_information">Keyinformation</string>
+    <string name="qr_code">QR-Code</string>
     <string name="qr_code_image">QR-Code Image</string>
     <string name="key_exchange">Key Exchange</string>
     <string name="trust_level">Trust Level</string>
     <string name="trust_level_image">Trust Level Image</string>
     <string name="eid">Endpoint ID</string>
     <string name="fingerprint">Key-Fingerprint</string>
-    <string name="password_hint">Please enter password here</string>
+    <string name="password_hint">Password</string>
     <string name="hash_commit">Hash-Commit</string>
     <string name="no_match">No match</string>
     <string name="qr_code_scan">Scan QR-Code</string>
-    <string name="delete_key">Delete Key</string>
+    <string name="menu_delete_key">Delete Key</string>
+    <string name="menu_untrusted_exchange">Untrusted key-exchange</string>
     <string name="select_hash">Please select the same word combination as your partner.</string>
     <string name="content_hash_icon">Hash icon</string>
-    <string name="content_success_icon">Success icon</string>
-    <string name="success">Key exchange successful</string>
+    <string name="content_result_icon">Result icon</string>
+    <string name="keyexchange_success">Key-exchange successful</string>
+    <string name="keyexchange_fail">Key-exchange failed</string>
     <string name="complete">Complete</string>
     <string name="new_key">New Key</string>
     <string name="old_key">Old Key</string>
-    <string name="protocol_none_title">Exchange without security</string>
-    <string name="protocol_dh_title">Encrypted exchange without authentication</string>
-    <string name="protocol_jpake_title">Authenticated exchange using a password</string>
-    <string name="protocol_hash_title">Authenticated exchange using comparison</string>
-    <string name="protocol_qr_title">QR-Code verification</string>
-    <string name="protocol_nfc_title">Exchange via NFC</string>
+    <string name="protocol_none_title">Non-authenticated</string>
+    <string name="protocol_dh_title">Diffie-Hellmann</string>
+    <string name="protocol_jpake_title">Password</string>
+    <string name="protocol_hash_title">Word-list comparison</string>
+    <string name="protocol_qr_title">QR-Code</string>
+    <string name="protocol_nfc_title">NFC</string>
     
     <string name="qr_scan_aborted">Scan aborted.</string>
     <string name="qr_hint">Please place the QR code within the window.</string>
@@ -71,4 +70,13 @@
     <string name="protocol_already_used_text">Do you want to re-use this approach again?</string>
     
     <string name="no_key_available">No key available</string>
+    <string name="dummy_endpoint">dtn://android-012345</string>
+    <string name="toast_error">An error occurred.</string>
+    
+    <string name="showcase_qr_code_title">QR-Code verification</string>
+    <string name="showcase_qr_code_text">Use the camera to verify the received public key using a QR code.</string>
+    <string name="showcase_nfc_title">NFC Key-Exchange</string>
+    <string name="showcase_nfc_text">To beam your public key to another device using NFC, just bring the devices together and touch your display afterwards.</string>
+    
+    <string name="text_show_password">Show password</string>
 </resources>

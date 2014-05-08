@@ -5,6 +5,7 @@
 	<projects>
 		<project>AndroidQuickResponseCode</project>
 		<project>IBR-DTN API for Android</project>
+		<project>showcaselibrary</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

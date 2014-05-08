@@ -4,3 +4,6 @@
 [submodule "android/android-quick-response-code"]
 	path = android/android-quick-response-code
 	url = https://github.com/TechSmith/android-quick-response-code.git
+[submodule "android/showcaseview"]
+	path = android/showcaseview
+	url = https://github.com/ejonny/ShowcaseView.git

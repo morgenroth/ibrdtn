@@ -26,6 +26,7 @@ public class KeyExchangeService extends IntentService {
 	public static final String EXTRA_ENDPOINT = "EID";
 	public static final String EXTRA_DATA = "data";
 	public static final String EXTRA_PASSWORD = "password";
+	public static final String EXTRA_FLAGS = "flags";
 	
 	public static final String ACTION_COMPLETE = "COMPLETE";
 	public static final String ACTION_PASSWORD_REQUEST = "PASSWORDREQUEST";
@@ -72,11 +73,11 @@ public class KeyExchangeService extends IntentService {
 			builder.setContentTitle(getString(R.string.notification_success));
 			builder.setContentText(getString(R.string.notification_success_text));
 			
-			Intent i = new Intent(this, ProtocolSelectionActivity.class);
+			Intent i = new Intent(this, KeyInformationActivity.class);
 			i.setAction(intent.getAction());
-			i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			
 			i.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Parcelable)endpoint);
+			i.putExtra(EXTRA_SESSION, session);
 			i.putExtra(EXTRA_PROTOCOL, protocol);
 			
 			i.setData(Uri.parse(endpoint.toString()));
@@ -89,9 +90,8 @@ public class KeyExchangeService extends IntentService {
 			builder.setContentTitle(getString(R.string.notification_password_request));
 			builder.setContentText(getString(R.string.notification_password_request_text));
 
-			Intent i = new Intent(this, ProtocolSelectionActivity.class);
+			Intent i = new Intent(this, KeyInformationActivity.class);
 			i.setAction(action);
-			i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			
 			i.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Parcelable)endpoint);
 			i.putExtra(EXTRA_SESSION, session);
@@ -107,10 +107,11 @@ public class KeyExchangeService extends IntentService {
 			builder.setContentTitle(getString(R.string.notification_password_wrong));
 			builder.setContentText(getString(R.string.notification_password_wrong_text));
 
-			Intent i = new Intent(this, ProtocolSelectionActivity.class);
-			i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			Intent i = new Intent(this, KeyInformationActivity.class);
+			i.setAction(action);
 			
 			i.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Parcelable)endpoint);
+			i.putExtra(EXTRA_SESSION, session);
 			i.putExtra(EXTRA_PROTOCOL, EnumProtocol.JPAKE.getValue());
 			
 			i.setData(Uri.parse(endpoint.toString()));
@@ -123,12 +124,11 @@ public class KeyExchangeService extends IntentService {
 			builder.setContentTitle(getString(R.string.notification_hash_compare));
 			builder.setContentText(getString(R.string.notification_hash_compare_text));
 
-			Intent i = new Intent(this, ProtocolSelectionActivity.class);
+			Intent i = new Intent(this, KeyInformationActivity.class);
 			i.setAction(action);
-			i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			
 			i.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Parcelable)endpoint);
-			i.putExtra(EXTRA_DATA, session);
+			i.putExtra(EXTRA_SESSION, session);
 			i.putExtra(EXTRA_PROTOCOL, EnumProtocol.HASH.getValue());
 			i.putExtra(EXTRA_DATA, intent.getStringExtra(EXTRA_DATA));
 			
@@ -142,9 +142,8 @@ public class KeyExchangeService extends IntentService {
 			builder.setContentTitle(getString(R.string.notification_not_equal));
 			builder.setContentText(getString(R.string.notification_not_equal_text));
 
-			Intent i = new Intent(this, ProtocolSelectionActivity.class);
+			Intent i = new Intent(this, KeyInformationActivity.class);
 			i.setAction(action);
-			i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			
 			i.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Parcelable)endpoint);
 			i.putExtra(EXTRA_SESSION, session);
@@ -161,9 +160,8 @@ public class KeyExchangeService extends IntentService {
 			builder.setContentTitle(getString(R.string.notification_error));
 			builder.setContentText(getString(R.string.notification_error_text));
 
-			Intent i = new Intent(this, ProtocolSelectionActivity.class);
+			Intent i = new Intent(this, KeyInformationActivity.class);
 			i.setAction(action);
-			i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			
 			i.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Parcelable)endpoint);
 			i.putExtra(EXTRA_SESSION, session);

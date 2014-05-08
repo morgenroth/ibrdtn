@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent" 
+	android:layout_height="match_parent">
+	
+	<LinearLayout
+		android:id="@+id/RelativeLayout"
+		android:orientation="vertical"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:padding="14dp">
+	
+		<!-- Endpoint -->
+		<LinearLayout
+			android:orientation="vertical"
+			android:id="@+id/group_endpoint"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginBottom="16dp">
+			
+			<TextView
+				android:id="@+id/textEndpointTitle"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="@string/eid"
+				android:layout_marginLeft="8dp"
+				android:layout_marginRight="8dp"
+				android:textAppearance="@style/group_header" />
+		
+			<View
+				android:layout_width="match_parent"
+				android:layout_height="1dip"
+				android:layout_marginTop="6dp"
+				android:background="@color/group_separator" />
+		
+			<TextView
+				android:id="@+id/textEndpoint"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="8dp"
+				android:layout_marginLeft="8dp"
+				android:layout_marginRight="8dp"
+				android:text="@string/dummy_endpoint"
+				android:textSize="14sp" />
+		</LinearLayout>
+		
+		<!-- Trust Level -->
+		<LinearLayout
+			android:orientation="vertical"
+			android:id="@+id/group_trustlevel"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginBottom="16dp">
+			
+			<TextView
+				android:id="@+id/textTrustLevelTitle"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="@string/trust_level"
+				android:layout_marginLeft="8dp"
+				android:layout_marginRight="8dp"
+				android:textAppearance="@style/group_header" />
+		
+			<View
+				android:layout_width="match_parent"
+				android:layout_height="1dp"
+				android:layout_marginTop="6dp"
+				android:background="@color/group_separator" />
+			
+			<LinearLayout 
+				android:orientation="horizontal"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="8dp"
+				android:layout_marginRight="8dp"
+				android:layout_marginLeft="8dp" >
+			
+				<ImageView 
+					android:id="@+id/viewTrustMarker1"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:src="@drawable/ic_action_security_open"
+					android:contentDescription="@string/trust_level_image"/>
+				
+				<ImageView 
+					android:id="@+id/viewTrustMarker2"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:src="@drawable/ic_action_security_open"
+					android:contentDescription="@string/trust_level_image"/>
+				
+				<ImageView 
+					android:id="@+id/viewTrustMarker3"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:src="@drawable/ic_action_security_open"
+					android:contentDescription="@string/trust_level_image"/>
+			</LinearLayout>
+			
+		</LinearLayout>
+		
+		<!-- QR Code -->
+		<LinearLayout
+			android:orientation="vertical"
+			android:id="@+id/group_qrcode"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginBottom="16dp">
+			
+			<TextView
+				android:id="@+id/textQRCodeTitle"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:text="@string/qr_code"
+				android:layout_marginLeft="8dp"
+				android:layout_marginRight="8dp"
+				android:textAppearance="@style/group_header" />
+		
+			<View
+				android:layout_width="match_parent"
+				android:layout_height="1dp"
+				android:layout_marginTop="6dp"
+				android:background="@color/group_separator" />
+		
+			<ImageView
+				android:id="@+id/viewQRCode"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="8dp"
+				android:layout_marginRight="12dp"
+				android:layout_marginLeft="12dp"
+				android:layout_gravity="center"
+				android:src="@drawable/ic_action_scan_qr"
+				android:contentDescription="@string/qr_code_image" />
+		</LinearLayout>
+		
+		<!-- Fingerprint -->
+		<LinearLayout
+			android:orientation="vertical"
+			android:id="@+id/group_fingerprint"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginBottom="16dp">
+			
+			<TextView
+				android:id="@+id/textFingerprintTitle"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="@string/fingerprint"
+				android:layout_marginLeft="8dp"
+				android:layout_marginRight="8dp"
+				android:textAppearance="@style/group_header" />
+		
+			<View
+				android:layout_width="match_parent"
+				android:layout_height="1dp"
+				android:layout_marginTop="6dp"
+				android:background="@color/group_separator" />
+		
+			<TextView
+				android:id="@+id/textFingerprint"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="8dp"
+				android:layout_marginLeft="8dp"
+				android:layout_marginRight="8dp"
+				android:text="@string/no_key_available"
+				android:textSize="14sp"
+				android:typeface="monospace" />
+		</LinearLayout>
+	
+		<!-- Exchange Protocols -->
+		<LinearLayout
+			android:orientation="vertical"
+			android:id="@+id/group_protocols"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginBottom="16dp">
+			
+			<TextView
+				android:id="@+id/textProtocolTitle"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="@string/list_protocol"
+				android:layout_marginLeft="8dp"
+				android:layout_marginRight="8dp"
+				android:textAppearance="@style/group_header" />
+		
+			<View
+				android:layout_width="match_parent"
+				android:layout_height="1dp"
+				android:layout_marginTop="6dp"
+				android:background="@color/group_separator" />
+		
+			<LinearLayout
+				android:id="@+id/listProtocols"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:orientation="vertical"
+				android:layout_marginTop="8dp" />
+		</LinearLayout>
+	
+	</LinearLayout>
+
+</ScrollView>

@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
-    <item android:id="@+id/itemDeleteKey" android:title="@string/delete_key" android:icon="@drawable/ic_action_clear" android:showAsAction="ifRoom"></item>
+	<item android:id="@+id/itemQrCodeScan" android:title="@string/menu_qr_code_scan" android:icon="@drawable/ic_menu_scan_qr"></item>
+	<item android:id="@+id/itemKeyPanel" android:title="@string/menu_local_key" android:icon="@drawable/ic_menu_keypanel"></item>
+	<item android:id="@+id/itemDeleteKey" android:title="@string/menu_delete_key" android:icon="@drawable/ic_menu_clear"></item>
+	<!-- <item android:id="@+id/itemUntrustedExchange" android:title="@string/menu_untrusted_exchange" android:icon="@drawable/ic_menu_untrusted"></item>  -->
 </menu>

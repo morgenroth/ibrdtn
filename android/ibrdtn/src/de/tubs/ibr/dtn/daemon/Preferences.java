@@ -49,6 +49,7 @@ import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Parcelable;
 import android.os.RemoteException;
 import android.preference.CheckBoxPreference;
 import android.preference.ListPreference;
@@ -67,6 +68,7 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.Switch;
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.R;
+import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.keyexchange.KeyInformationActivity;
 import de.tubs.ibr.dtn.service.DaemonService;
 import de.tubs.ibr.dtn.service.DaemonService.LocalDTNService;
@@ -232,6 +234,13 @@ public class Preferences extends PreferenceActivity {
 			case R.id.itemKeyPanel: {
 				// open statistic activity
 				Intent i = new Intent(Preferences.this, KeyInformationActivity.class);
+				
+				// create local singleton endpoint
+				SingletonEndpoint node = new SingletonEndpoint(Preferences.getEndpoint(this));
+				
+				i.putExtra(KeyInformationActivity.EXTRA_IS_LOCAL, true);
+				i.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Parcelable)node);
+				
 				startActivity(i);
 				return true;
 			}
