@@ -2,6 +2,7 @@ package de.tubs.ibr.dtn.daemon.data;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.PorterDuff.Mode;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -79,8 +80,8 @@ public abstract class StatsListAdapter extends BaseAdapter {
 
         holder.data = (StatsData)getItem(position);
 
-        holder.imageIcon.setBackgroundColor(mContext.getResources().getColor(getDataColor(position)));
         holder.imageIcon.setImageResource(R.drawable.ic_log);
+        holder.imageIcon.setColorFilter(mContext.getResources().getColor(getDataColor(position)), Mode.SRC_IN);
 
         holder.textName.setText(holder.data.title + ": " + holder.data.value);
 

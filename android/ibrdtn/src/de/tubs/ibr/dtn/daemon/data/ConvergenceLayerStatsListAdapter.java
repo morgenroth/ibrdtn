@@ -3,6 +3,7 @@ package de.tubs.ibr.dtn.daemon.data;
 import java.util.List;
 
 import android.content.Context;
+import android.graphics.PorterDuff.Mode;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -73,8 +74,8 @@ public class ConvergenceLayerStatsListAdapter extends BaseAdapter {
         // generate a data key for this series
         String key = holder.data.getConvergenceLayer() + "|" + holder.data.getDataTag();
 
-        holder.imageIcon.setBackgroundColor(mContext.getResources().getColor(mColorProvider.getColor(key)));
         holder.imageIcon.setImageResource(R.drawable.ic_log);
+        holder.imageIcon.setColorFilter(mContext.getResources().getColor(mColorProvider.getColor(key)), Mode.SRC_IN);
 
         if ("in".equals(holder.data.getDataTag()) || "out".equals(holder.data.getDataTag()))
         {

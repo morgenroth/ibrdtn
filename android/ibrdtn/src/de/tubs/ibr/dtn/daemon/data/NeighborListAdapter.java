@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import android.content.Context;
+import android.graphics.PorterDuff.Mode;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -72,23 +73,27 @@ public class NeighborListAdapter extends BaseAdapter {
         }
 
         holder.node = mList.get(position);
+        
+        int image_color = R.color.light_blue;
 
         if (holder.node.type.equals("NODE_P2P")) {
-            holder.imageIcon.setBackgroundColor(mContext.getResources().getColor(R.color.blue));
             holder.imageIcon.setImageResource(R.drawable.ic_p2p);
+            image_color = R.color.light_blue;
         } else if (holder.node.type.equals("NODE_DISCOVERED")) {
-            holder.imageIcon.setBackgroundColor(mContext.getResources().getColor(R.color.blue));
             holder.imageIcon.setImageResource(R.drawable.ic_wifi);
+            image_color = R.color.light_blue;
         } else if (holder.node.type.equals("NODE_CONNECTED")) {
-            holder.imageIcon.setBackgroundColor(mContext.getResources().getColor(R.color.green));
             holder.imageIcon.setImageResource(R.drawable.ic_node);
+            image_color = R.color.light_green;
         } else if (holder.node.type.equals("NODE_INTERNET")) {
-            holder.imageIcon.setBackgroundColor(mContext.getResources().getColor(R.color.dark_gray));
             holder.imageIcon.setImageResource(R.drawable.ic_world);
+            image_color = R.color.gray;
         } else {
-            holder.imageIcon.setBackgroundColor(mContext.getResources().getColor(R.color.yellow));
             holder.imageIcon.setImageResource(R.drawable.ic_node);
+            image_color = R.color.light_yellow;
         }
+        
+        holder.imageIcon.setColorFilter(mContext.getResources().getColor(image_color), Mode.SRC_IN);
 
         holder.textName.setText(holder.node.endpoint.toString());
 
