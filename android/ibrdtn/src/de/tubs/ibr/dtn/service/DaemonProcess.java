@@ -661,10 +661,7 @@ public class DaemonProcess {
 				p.println("security_path = " + sec_folder.getPath());
 			}
 			
-			// set a file for DH params
-			p.println("dh_params_path = " + sec_folder.getPath() + "/dh_params.txt");
-			
-			String secmode = preferences.getString("security_mode", "encrypt");
+			String secmode = preferences.getString("security_mode", "disabled");
 
 			if (secmode.equals("bab")) {
 				// write default BAB key to file
