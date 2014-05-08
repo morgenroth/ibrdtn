@@ -118,14 +118,14 @@ public class NewKeyFragment extends Fragment {
 		
 		if (trustLevel > 67) {
 			Drawable d = getResources().getDrawable(R.drawable.ic_security_closed).mutate();
-			d.setColorFilter(getResources().getColor(R.color.light_green), Mode.MULTIPLY);
+			d.setColorFilter(getResources().getColor(R.color.light_green), Mode.SRC_IN);
 			trustLevelImageOldKey1.setImageDrawable(d);
 			trustLevelImageOldKey2.setImageDrawable(d);
 			trustLevelImageOldKey3.setImageDrawable(d);
 		}
 		else if (trustLevel > 33) {
 			Drawable d = getResources().getDrawable(R.drawable.ic_security_closed).mutate();
-			d.setColorFilter(getResources().getColor(R.color.light_yellow), Mode.MULTIPLY);
+			d.setColorFilter(getResources().getColor(R.color.light_yellow), Mode.SRC_IN);
 			trustLevelImageOldKey1.setImageDrawable(d);
 			trustLevelImageOldKey2.setImageDrawable(d);
 			
@@ -134,7 +134,7 @@ public class NewKeyFragment extends Fragment {
 		}
 		else if (trustLevel > 0) {
 			Drawable d = getResources().getDrawable(R.drawable.ic_security_closed).mutate();
-			d.setColorFilter(getResources().getColor(R.color.light_red), Mode.MULTIPLY);
+			d.setColorFilter(getResources().getColor(R.color.light_red), Mode.SRC_IN);
 			trustLevelImageOldKey1.setImageDrawable(d);
 			
 			d = getResources().getDrawable(R.drawable.ic_action_security_open);
@@ -158,14 +158,14 @@ public class NewKeyFragment extends Fragment {
 		
 		if (mProtocol == 5 || mProtocol == 4) {
 			Drawable d = getResources().getDrawable(R.drawable.ic_security_closed).mutate();
-			d.setColorFilter(getResources().getColor(R.color.light_green), Mode.MULTIPLY);
+			d.setColorFilter(getResources().getColor(R.color.light_green), Mode.SRC_IN);
 			trustLevelImageNewKey1.setImageDrawable(d);
 			trustLevelImageNewKey2.setImageDrawable(d);
 			trustLevelImageNewKey3.setImageDrawable(d);
 		}
 		else if (mProtocol == 3 || mProtocol == 2) {
 			Drawable d = getResources().getDrawable(R.drawable.ic_security_closed).mutate();
-			d.setColorFilter(getResources().getColor(R.color.light_yellow), Mode.MULTIPLY);
+			d.setColorFilter(getResources().getColor(R.color.light_yellow), Mode.SRC_IN);
 			trustLevelImageNewKey1.setImageDrawable(d);
 			trustLevelImageNewKey2.setImageDrawable(d);
 			
@@ -174,7 +174,7 @@ public class NewKeyFragment extends Fragment {
 		}
 		else if (mProtocol == 1 || mProtocol == 0) {
 			Drawable d = getResources().getDrawable(R.drawable.ic_security_closed).mutate();
-			d.setColorFilter(getResources().getColor(R.color.light_red), Mode.MULTIPLY);
+			d.setColorFilter(getResources().getColor(R.color.light_red), Mode.SRC_IN);
 			trustLevelImageNewKey1.setImageDrawable(d);
 			
 			d = getResources().getDrawable(R.drawable.ic_action_security_open);

@@ -480,14 +480,14 @@ public class KeyInformationFragment extends Fragment {
 			
 			if (trust_level > 67) {
 				Drawable d = getResources().getDrawable(R.drawable.ic_security_closed);
-				d.setColorFilter(getResources().getColor(R.color.light_green), Mode.MULTIPLY);
+				d.setColorFilter(getResources().getColor(R.color.light_green), Mode.SRC_IN);
 				trustLevelImage1.setImageDrawable(d);
 				trustLevelImage2.setImageDrawable(d);
 				trustLevelImage3.setImageDrawable(d);
 			}
 			else if (trust_level > 33) {
 				Drawable d = getResources().getDrawable(R.drawable.ic_security_closed);
-				d.setColorFilter(getResources().getColor(R.color.light_yellow), Mode.MULTIPLY);
+				d.setColorFilter(getResources().getColor(R.color.light_yellow), Mode.SRC_IN);
 				trustLevelImage1.setImageDrawable(d);
 				trustLevelImage2.setImageDrawable(d);
 				
@@ -496,7 +496,7 @@ public class KeyInformationFragment extends Fragment {
 			}
 			else if (trust_level > 0) {
 				Drawable d = getResources().getDrawable(R.drawable.ic_security_closed);
-				d.setColorFilter(getResources().getColor(R.color.light_red), Mode.MULTIPLY);
+				d.setColorFilter(getResources().getColor(R.color.light_red), Mode.SRC_IN);
 				trustLevelImage1.setImageDrawable(d);
 				
 				d = getResources().getDrawable(R.drawable.ic_action_security_open);

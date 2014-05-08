@@ -93,7 +93,7 @@ public class ProtocolListAdapter extends BaseAdapter {
 
 		if (holder.protocol.isUsed()) {
 			holder.imageIcon.setImageResource(R.drawable.ic_action_security_closed);
-			holder.imageIcon.setColorFilter(mContext.getResources().getColor(protocol_color), Mode.MULTIPLY);
+			holder.imageIcon.setColorFilter(mContext.getResources().getColor(protocol_color), Mode.SRC_IN);
 		} else {
 			holder.imageIcon.setImageResource(R.drawable.ic_action_security_open);
 			holder.imageIcon.setColorFilter(null);
