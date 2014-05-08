@@ -150,10 +150,9 @@ namespace io
 		ibrcommon::MD5Stream md5;
 		md5 << _file->lastmodify() << "|" << _file->size() << "|" << _file->getPath() << std::flush;
 
-		std::stringstream ss;
-		md5.extract(ss);
+		const std::string hash = ibrcommon::HashStream::extract(md5);
 
-		return FileHash(_file->getPath(), ss.str());
+		return FileHash(_file->getPath(), hash);
 #else
 		std::stringstream ss;
 		ss << _file->lastmodify() << "|" << _file->size() << "|" << _file->getPath();
