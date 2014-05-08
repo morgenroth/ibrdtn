@@ -82,6 +82,7 @@ add_param $CONFFILE "ibrdtn.tcptuning.chunksize" "tcp_chunksize"
 add_param $CONFFILE "ibrdtn.security.level" "security_level"
 add_param $CONFFILE "ibrdtn.security.bab_key" "security_bab_default_key"
 add_param $CONFFILE "ibrdtn.security.key_path" "security_path"
+add_param $CONFFILE "ibrdtn.security.generate_dh" "generate_dh_params"
 
 add_param $CONFFILE "ibrdtn.tls.certificate" "security_certificate"
 add_param $CONFFILE "ibrdtn.tls.key" "security_key"

@@ -133,6 +133,7 @@ config 'network'
 #	option level		0
 #	option bab_key		/path/to/default-bab-key.mac
 #	option key_path		/path/to/security-keys
+#	option generate_dh	yes
 	
 #config 'daemon' 'tls'
 #	option certificate	/path/to/tls-cert.crt
