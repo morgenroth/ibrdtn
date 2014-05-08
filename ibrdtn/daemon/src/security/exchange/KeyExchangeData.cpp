@@ -78,7 +78,7 @@ namespace dtn
 				break;
 			}
 
-			sstm << "::" << _session_id << "[" << _step << "]";
+			sstm << "::" << _session_id;
 			return sstm.str();
 		}
 
