@@ -159,7 +159,7 @@ config 'network'
 #####################################
 
 config 'daemon' 'dht'
-	option 'enabled'	'yes'
+#	option 'enabled'	'yes'
 #	option 'id'		'<enter your unique id here>'
 	option 'bootstrap'	'yes'
 #	option 'nodesfile'	'/tmp/dht_nodes.dat'
