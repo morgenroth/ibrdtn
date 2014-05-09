@@ -15,6 +15,7 @@
     <string name="password_hint">Passwort</string>
     <string name="hash_commit">Hash-Commit</string>
     <string name="no_match">Keine Übereinstimmung</string>
+    <string name="title_qr_code_scan">Scanne QR-Code</string>
     <string name="menu_qr_code_scan">Scanne QR-Code</string>
     <string name="menu_delete_key">Lösche Schlüssel</string>
     <string name="menu_untrusted_exchange">Unsicherer Schlüsselaustausch</string>

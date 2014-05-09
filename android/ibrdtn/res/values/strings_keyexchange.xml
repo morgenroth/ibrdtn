@@ -15,7 +15,8 @@
     <string name="password_hint">Password</string>
     <string name="hash_commit">Hash-Commit</string>
     <string name="no_match">No match</string>
-    <string name="qr_code_scan">Scan QR-Code</string>
+    <string name="title_qr_code_scan">Scan QR-Code</string>
+    <string name="menu_qr_code_scan">Scan QR-Code</string>
     <string name="menu_delete_key">Delete Key</string>
     <string name="menu_untrusted_exchange">Untrusted key-exchange</string>
     <string name="select_hash">Please select the same word combination as your partner.</string>
