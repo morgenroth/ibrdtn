@@ -193,7 +193,25 @@ public class KeyInformationFragment extends Fragment {
 			if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
 				NfcAdapter nfc = NfcAdapter.getDefaultAdapter(getActivity());
 				if (nfc != null) {
-					nfc.setNdefPushMessageCallback(mNfcMessageCallback, getActivity());
+					nfc.setNdefPushMessageCallback(new CreateNdefMessageCallback() {
+						@Override
+						public NdefMessage createNdefMessage(NfcEvent event) {
+							// abort if no key data is available, stop here
+							if (mKeyInfo == null) return null;
+							
+							String text = "dtn:none";
+
+							text = mEndpoint.toString();
+							text += "_NFC_SEPERATOR_";
+							text += mKeyInfo.getString(KeyExchangeService.EXTRA_DATA);
+							
+							NdefMessage msg = new NdefMessage(
+									new NdefRecord[] { NdefRecord.createMime(
+											"text/plain", text.getBytes())
+							});
+							return msg;
+						}
+					}, getActivity());
 				}
 			}
 		} else {
@@ -240,27 +258,6 @@ public class KeyInformationFragment extends Fragment {
 			}
 		} 
 
-	};
-	
-	@SuppressLint("NewApi")
-	private CreateNdefMessageCallback mNfcMessageCallback = new CreateNdefMessageCallback() {
-		@Override
-		public NdefMessage createNdefMessage(NfcEvent event) {
-			// abort if no key data is available, stop here
-			if (mKeyInfo == null) return null;
-			
-			String text = "dtn:none";
-
-			text = mEndpoint.toString();
-			text += "_NFC_SEPERATOR_";
-			text += mKeyInfo.getString(KeyExchangeService.EXTRA_DATA);
-			
-			NdefMessage msg = new NdefMessage(
-					new NdefRecord[] { NdefRecord.createMime(
-							"text/plain", text.getBytes())
-			});
-			return msg;
-		}
 	};
 	
 	private void startProtocol(EnumProtocol protocol) {
