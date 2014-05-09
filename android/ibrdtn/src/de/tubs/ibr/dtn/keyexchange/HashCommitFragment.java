@@ -86,7 +86,8 @@ public class HashCommitFragment extends Fragment {
 			}
 		});
 		
-		final Button buttonNoMatch = (Button) v.findViewById(R.id.buttonNoMatch);
+		final Button buttonNoMatch = (Button) v.findViewById(R.id.buttonOk);
+		buttonNoMatch.setText(getString(R.string.no_match));
 		buttonNoMatch.setOnClickListener(new OnClickListener() {
 			
 			@Override

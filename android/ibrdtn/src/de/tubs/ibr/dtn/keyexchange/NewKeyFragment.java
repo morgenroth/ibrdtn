@@ -75,7 +75,8 @@ public class NewKeyFragment extends Fragment {
 		mNewKeyFingerprint = getArguments().getString(KeyExchangeService.EXTRA_DATA);
 		
 		// BUTTON
-		Button abortButton = (Button) v.findViewById(R.id.buttonAbort);
+		Button abortButton = (Button) v.findViewById(R.id.buttonOk);
+		abortButton.setText(getString(android.R.string.cancel));
 		abortButton.setOnClickListener(mAbortClick);
 		
 		// OLD KEY VIEW

@@ -7,7 +7,7 @@
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:layout_alignParentTop="true"
-		android:layout_above="@+id/ViewLine" >
+		android:layout_above="@+id/buttonBarPanel" >
 		
 		<LinearLayout
 			android:orientation="vertical"
@@ -203,22 +203,5 @@
 		</LinearLayout>
 	</ScrollView>
 	
-    <Button
-        android:id="@+id/buttonAbort"
-        android:background="@drawable/button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentRight="true"
-        android:text="@android:string/cancel" />
-    
-    <View
-        android:id="@id/ViewLine"
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_alignTop="@id/buttonAbort"
-        android:layout_centerHorizontal="true"
-        android:background="@color/dark_gray"/>
-
+	<include layout="@layout/button_bar" android:id="@id/buttonBarPanel" />
 </RelativeLayout>
