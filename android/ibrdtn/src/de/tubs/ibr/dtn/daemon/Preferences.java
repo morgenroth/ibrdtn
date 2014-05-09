@@ -55,6 +55,7 @@ import android.preference.CheckBoxPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceCategory;
 import android.preference.PreferenceManager;
 import android.preference.SwitchPreference;
 import android.provider.Settings.Secure;
@@ -173,7 +174,7 @@ public class Preferences extends PreferenceActivity {
 		MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.main_menu, menu);
 
-		if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
+		if (Preferences.isDebuggable(this)) {
 			menu.findItem(R.id.itemSendDataNow).setVisible(true);
 		} else {
 			menu.findItem(R.id.itemSendDataNow).setVisible(false);
@@ -264,6 +265,14 @@ public class Preferences extends PreferenceActivity {
 
 		e.commit();
 	}
+	
+	public static boolean isDebuggable(Context context) {
+		if (0 != (context.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
+			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+			return (prefs.getBoolean("debugging", false));
+		}
+		return false;
+	}
 
 	@TargetApi(14)
 	@SuppressWarnings("deprecation")
@@ -278,6 +287,16 @@ public class Preferences extends PreferenceActivity {
 		initializeDefaultPreferences(this);
 
 		addPreferencesFromResource(R.xml.preferences);
+		
+		// add debugging preference in debuggable version
+		if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
+			CheckBoxPreference pref_debug = new CheckBoxPreference(this);
+			pref_debug.setKey("debugging");
+			pref_debug.setTitle(R.string.pref_debugging);
+			pref_debug.setSummary(R.string.pref_debugging_desc);
+			pref_debug.setDefaultValue(false);
+			((PreferenceCategory)findPreference("prefcat_logging")).addPreference(pref_debug);
+		}
 
 		mInterfacePreference = (InterfacePreferenceCategory) findPreference("prefcat_interfaces");
 

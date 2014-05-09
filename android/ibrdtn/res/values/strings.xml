@@ -65,6 +65,8 @@
     <string name="pref_log_debug_verbosity_desc">Requires logging level DEBUG</string>
     <string name="pref_log_enable_file">Log to File</string>
     <string name="pref_log_enable_file_desc">Also log into files in ibrdtn/logs/ on your external storage.</string>
+    <string name="pref_debugging">Developer Mode</string>
+    <string name="pref_debugging_desc">Enable debugging options.</string>
     <string name="list_no_log">No logs found.</string>
     <string name="list_no_neighbors">No neighbors found.</string>
     <string name="stats_activity">Statistics</string>

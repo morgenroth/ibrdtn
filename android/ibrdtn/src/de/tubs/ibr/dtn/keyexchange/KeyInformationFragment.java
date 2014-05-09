@@ -14,7 +14,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.content.pm.ApplicationInfo;
 import android.database.DataSetObserver;
 import android.graphics.Bitmap;
 import android.graphics.PorterDuff.Mode;
@@ -436,7 +435,7 @@ public class KeyInformationFragment extends Fragment {
 				protocols.add(new ProtocolContainer(EnumProtocol.HASH, false));
 				
 				// enable only in development mode
-				if (0 != (getActivity().getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
+				if (Preferences.isDebuggable(getActivity())) {
 					protocols.add(new ProtocolContainer(EnumProtocol.JPAKE, false));
 					//protocols.add(new ProtocolContainer(EnumProtocol.DH, false));
 				}
@@ -459,7 +458,7 @@ public class KeyInformationFragment extends Fragment {
 				protocols.add(new ProtocolContainer(EnumProtocol.HASH, pHash));
 				
 				// enable only in development mode
-				if (0 != (getActivity().getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
+				if (Preferences.isDebuggable(getActivity())) {
 					protocols.add(new ProtocolContainer(EnumProtocol.JPAKE, pJpake));
 					//protocols.add(new ProtocolContainer(EnumProtocol.DH, pDh));
 				}
