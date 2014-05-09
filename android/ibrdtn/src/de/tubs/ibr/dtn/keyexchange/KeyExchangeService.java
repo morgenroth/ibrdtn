@@ -5,6 +5,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Parcelable;
 import android.support.v4.app.NotificationCompat;
@@ -58,7 +59,11 @@ public class KeyExchangeService extends IntentService {
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 
 		// set default small icon
-		builder.setSmallIcon(R.drawable.ic_action_security_closed);
+		builder.setSmallIcon(R.drawable.ic_stat_security);
+		
+		// set identicon as large icon
+		Bitmap identicon = Utils.createIdenticon(endpoint.toString());
+		builder.setLargeIcon(Bitmap.createScaledBitmap(identicon, 500, 500, false));
 		
 		// enable auto-cancel feature
 		builder.setAutoCancel(true);

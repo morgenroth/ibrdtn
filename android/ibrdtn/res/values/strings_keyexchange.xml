@@ -47,18 +47,18 @@
     <string name="jpake_password_prompt">Your partner wants to exchange a key using JPAKE. Please enter a password.</string>
     <string name="error_hint">An error occurred. The key-exchange has been aborted.</string>
     
-	<string name="notification_password_request">Password requested</string>
-    <string name="notification_password_request_text">Please enter a password for the key-exchange.</string>
-    <string name="notification_password_wrong">Wrong password</string>
-    <string name="notification_password_wrong_text">You have entered a wrong password.</string>
-    <string name="notification_hash_compare">Hash commit</string>
-    <string name="notification_hash_compare_text">Please compare the word orders.</string>
-    <string name="notification_not_equal">No correlation</string>
-    <string name="notification_not_equal_text">The new key does not match the existing one.</string>
-    <string name="notification_error">Error</string>
-    <string name="notification_error_text">An error occurred.</string>
+	<string name="notification_password_request">Key-exchange</string>
+    <string name="notification_password_request_text">Please enter a password.</string>
+    <string name="notification_password_wrong">Key-exchange failed</string>
+    <string name="notification_password_wrong_text">Entered password was wrong.</string>
+    <string name="notification_hash_compare">Key-exchange</string>
+    <string name="notification_hash_compare_text">Please select a word-list.</string>
+    <string name="notification_not_equal">Key-exchange</string>
+    <string name="notification_not_equal_text">Please select the valid key.</string>
+    <string name="notification_error">Key-exchange failed</string>
+    <string name="notification_error_text">The keys could not be exchanged.</string>
     <string name="notification_success">Key-exchange</string>
-    <string name="notification_success_text">The key-exchange was successful.</string>
+    <string name="notification_success_text">The keys were successfully exchanged.</string>
     
     <string name="key_selection_request">The received key is different to the existing one. Which key should be stored?</string>
     <string name="key_dropped">The new key has been discarded.</string>

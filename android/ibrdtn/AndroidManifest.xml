@@ -137,7 +137,7 @@
 			android:icon="@drawable/ic_action_key" android:label="@string/key_information" />
 
 		<activity android:name="de.tubs.ibr.dtn.keyexchange.CaptureActivity"
-			android:icon="@drawable/ic_action_security_closed" android:label="@string/qr_code_scan"
+			android:icon="@drawable/ic_activity_qrscan" android:label="@string/qr_code_scan"
 			android:screenOrientation="landscape" />
 
 		<activity android:name="de.tubs.ibr.dtn.keyexchange.NFCReceiver">
