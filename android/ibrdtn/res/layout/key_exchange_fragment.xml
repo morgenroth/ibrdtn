@@ -42,6 +42,6 @@
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:text="@string/text_show_password" />
     
-    <include layout="@layout/button_bar" />
+    <include layout="@layout/button_bar" android:id="@+id/buttonPanel" />
 
 </RelativeLayout>
