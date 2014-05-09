@@ -63,7 +63,8 @@ public class KeyExchangeService extends IntentService {
 		
 		// set identicon as large icon
 		Bitmap identicon = Utils.createIdenticon(endpoint.toString());
-		builder.setLargeIcon(Bitmap.createScaledBitmap(identicon, 500, 500, false));
+		int icon_size = getResources().getDimensionPixelSize(R.dimen.notification_large_icon_size);
+		builder.setLargeIcon(Bitmap.createScaledBitmap(identicon, icon_size, icon_size, false));
 		
 		// enable auto-cancel feature
 		builder.setAutoCancel(true);
