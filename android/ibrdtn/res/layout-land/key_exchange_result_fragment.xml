@@ -3,28 +3,10 @@
 	android:layout_width="match_parent"
 	android:layout_height="match_parent">
 
-	<Button
-		android:id="@+id/buttonOk"
-		android:background="@drawable/button"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:layout_alignParentBottom="true"
-		android:layout_alignParentLeft="true"
-		android:layout_alignParentRight="true"
-		android:text="@android:string/ok" />
-	
-	<View
-		android:id="@+id/buttonLine"
-		android:layout_width="match_parent"
-		android:layout_height="1dp"
-		android:layout_centerHorizontal="true"
-		android:layout_above="@id/buttonOk"
-		android:background="@color/dark_gray"/>
-
 	<LinearLayout
 	    android:layout_width="match_parent"
 	    android:layout_height="match_parent"
-	    android:layout_above="@id/buttonOk"
+	    android:layout_alignParentTop="true"
 	    android:orientation="vertical">
 	
 		<ImageView
@@ -90,5 +72,7 @@
 		    android:layout_marginBottom="12dp" />
 		
 	</LinearLayout>
+	
+	<include layout="@layout/button_bar" />
 	
 </RelativeLayout>

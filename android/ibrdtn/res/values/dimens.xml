@@ -10,4 +10,8 @@
     
     <!-- QR Code Size -->
     <dimen name="qrcode_rect_size">256dp</dimen>
+    
+    <!-- Button bar height -->
+    <dimen name="button_bar_height">48dip</dimen>
+
 </resources>
