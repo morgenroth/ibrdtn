@@ -35,31 +35,31 @@
     <string name="protocol_nfc_title">NFC</string>
     
     <string name="qr_scan_aborted">Scan abgebrochen.</string>
-    <string name="qr_hint">Bitte platzieren Sie den QR-Code innerhalb des Fensters, um ihn zu scannen.</string>
+    <string name="qr_hint">Platzieren Sie den QR-Code innerhalb des Fensters, um ihn zu scannen.</string>
     <string name="hash_wrong_combination">Sie haben die falsche Kombination gewählt.</string>
     <string name="none_pending">Der Schlüsselaustausch wird ohne Protokoll ausgeführt. Dieser Vorgang kann je nach Netzwerk etwas länger dauern. Sie werden benachrichtigt.</string>
     <string name="dh_pending">Der Schlüsselaustausch wird mit Diffie-Helmann ausgeführt. Dieser Vorgang kann je nach Netzwerk etwas länger dauern. Sie werden benachrichtigt.</string>
-    <string name="jpake_pending">Der Schlüsselaustausch wird mit JPAKE ausgeführt. Bitte geben Sie ein Passwort ein und drücken Sie "Ok".</string>
+    <string name="jpake_pending">Der Schlüsselaustausch wird mit JPAKE ausgeführt. Geben Sie ein Passwort ein um fortzufahren.</string>
     <string name="hash_pending">Der Schlüsselaustausch wird mit einem Hash-Commitment ausgeführt. Dieser Vorgang kann je nach Netzwerk etwas länger dauern und erfordert bei Gelegenheit weitere Eingaben. Sie werden benachrichtigt.</string>
     <string name="qr_nokey">Es wurde noch kein Schlüssel ausgetauscht. Der Austausch findet nun ohne Authentifizierung statt. Danach können Sie den QR-Code ihres Partners scannen.</string>
-    <string name="qr_scan_hint">Sie können den Schlüssel ihres Partners mit seinem QR-Code verifizieren. Bitte scannen Sie dazu den QR-Code Ihres Partners.</string>
+    <string name="qr_scan_hint">Sie können den Schlüssel ihres Partners mit seinem QR-Code verifizieren. Scannen Sie dazu den QR-Code Ihres Partners.</string>
     <string name="qr_scan_action">Scannen</string>
-    <string name="nfc_hint">Der Schlüsselaustausch wird mit NFC ausgeführt. Bitte halten Sie ihr Gerät an das Ihres Partners und tippen Sie dann bei Aufforderung auf das Display.</string>
-    <string name="jpake_password_prompt">Ihr Partner möchte den Schlüsselaustausch mit JPAKE ausgeführen. Bitte geben Sie ein Passwort ein und drücken Sie "Ok".</string>
-    <string name="error_hint">Ein Fehler ist aufgetreten. Es wird kein Schlüsselaustausch durchgeführt.</string>
+    <string name="nfc_hint">Der Schlüsselaustausch wird mit NFC ausgeführt. Halten Sie ihr Gerät an das Ihres Partners und tippen Sie dann auf den Bildschirm.</string>
+    <string name="jpake_password_prompt">Ihr Partner möchte den Schlüsselaustausch mit JPAKE ausgeführen. Geben Sie das gemeinsame Passwort ein umfortzufahren.</string>
+    <string name="error_hint">Ein Fehler ist aufgetreten. Der Schlüsselaustausch wurde abgebrochen.</string>
     
     <string name="notification_password_request">Schlüsselaustausch</string>
-    <string name="notification_password_request_text">Bitte geben Sie das Passwort ein.</string>
+    <string name="notification_password_request_text">Geben Sie das Passwort ein.</string>
     <string name="notification_password_wrong">Schlüsselaustausch fehlgeschlagen</string>
     <string name="notification_password_wrong_text">Das eingegebene Passwort ist falsch.</string>
     <string name="notification_hash_compare">Schlüsselaustausch</string>
-    <string name="notification_hash_compare_text">Bitte wählen Sie eine Wortfolge.</string>
+    <string name="notification_hash_compare_text">Wählen Sie eine Wortfolge.</string>
     <string name="notification_not_equal">Schlüsselaustausch</string>
-    <string name="notification_not_equal_text">Bitte wählen Sie einen Schlüssel aus.</string>
+    <string name="notification_not_equal_text">Wählen Sie einen Schlüssel aus.</string>
     <string name="notification_error">Schlüsselaustausch fehlgeschlagen</string>
-    <string name="notification_error_text">Schlüssel konnten nicht ausgetauscht werden.</string>
+    <string name="notification_error_text">Der Vorgang wurde abgebrochen.</string>
     <string name="notification_success">Schlüsselaustausch</string>
-    <string name="notification_success_text">Schlüssel wurden erfolgreich ausgetauscht.</string>
+    <string name="notification_success_text">Der Vorgang war erfolgreich.</string>
     
     <string name="key_selection_request">Der übertragene Schlüssel unterscheidet sich von dem vorhandenen. Welchen Schlüssel möchten Sie verwenden?</string>
     <string name="key_dropped">Der neue Schlüssel wurde verworfen.</string>
@@ -76,7 +76,7 @@
     <string name="showcase_qr_code_title">QR-Code verifizieren</string>
     <string name="showcase_qr_code_text">Verwende die Kamera um den empfangenen öffentlichen Schlüssel mit Hilfe eines QR-Codes zu verfizieren.</string>
     <string name="showcase_nfc_title">NFC Schlüsselaustausch</string>
-    <string name="showcase_nfc_text">Um den öffentlichen Schlüssel mit Hilfe von NFC auf ein anderes Gerät zu übertragen, bringen Sie die Geräte zusammen und berühren Sie anschließend den Bildschirm.</string>
+    <string name="showcase_nfc_text">Um den öffentlichen Schlüssel mit Hilfe von NFC auf ein anderes Gerät zu übertragen, bringen Sie die Geräte zusammen und tippen Sie dann auf den Bildschirm.</string>
     
     <string name="text_show_password">Sichtbares Passwort</string>
 </resources>
