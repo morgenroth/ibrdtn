@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
+import android.net.Uri;
 import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
 
 public class Services {
@@ -62,6 +63,9 @@ public class Services {
 			bindIntent.putExtra(EXTRA_NAME, mClassName);
 			bindIntent.putExtra(EXTRA_VERSION, mVersion);
 			bindIntent.setClassName(serviceInfo.packageName, serviceInfo.name);
+			
+			// set class-name and version as data URI to prevent caching conflicts
+			bindIntent.setData(Uri.fromParts("service", mClassName, mVersion.toString()));
 			
 			// bind to the service
 			context.bindService(bindIntent, conn, flags);
