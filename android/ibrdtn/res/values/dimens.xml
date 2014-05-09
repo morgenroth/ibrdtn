@@ -15,5 +15,5 @@
     <dimen name="button_bar_height">48dip</dimen>
 
     <!-- Notification Large Icon Size -->
-    <dimen name="notification_large_icon_size">48dip</dimen>
+    <dimen name="notification_large_icon_size">64dip</dimen>
 </resources>
