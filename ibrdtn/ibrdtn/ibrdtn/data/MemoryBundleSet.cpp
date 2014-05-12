@@ -61,9 +61,15 @@ namespace dtn
 			set->_bf = _bf;
 			set->_consistent = _consistent;
 
-			// copy bundles and expiration set
+			// copy bundles
 			set->_bundles.insert(_bundles.begin(), _bundles.end());
-			set->_expire.insert(_expire.begin(), _expire.end());
+
+			// create a new expiration set
+			for (bundle_set::const_iterator it = set->_bundles.begin(); it != set->_bundles.end(); ++it)
+			{
+				BundleSetImpl::ExpiringBundle exb(*it);
+				set->_expire.insert(exb);
+			}
 
 			return refcnt_ptr<BundleSetImpl>(set);
 		}
@@ -82,13 +88,19 @@ namespace dtn
 				_bf = set._bf;
 				_consistent = set._consistent;
 
-				// copy bundles
+				// clear bundles and expiration set
 				_bundles.clear();
+				_expire.clear();
+
+				// copy bundles
 				_bundles.insert(set._bundles.begin(), set._bundles.end());
 
-				// copy expiration set
-				_expire.clear();
-				_expire.insert(set._expire.begin(), set._expire.end());
+				// create a new expiration set
+				for (bundle_set::const_iterator it = _bundles.begin(); it != _bundles.end(); ++it)
+				{
+					BundleSetImpl::ExpiringBundle exb(*it);
+					_expire.insert(exb);
+				}
 			} catch (const std::bad_cast&) {
 				// incompatible bundle-set implementation - abort here
 			}
@@ -264,17 +276,17 @@ namespace dtn
 			if (!__store_path__.exists())
 			ibrcommon::File::createDirectory(__store_path__);
 
-			//delete file for bundles, if it exists
+			// delete file for bundles, if it exists
 			std::stringstream ss; ss << __store_path__.getPath() << "/" << _name;
 			ibrcommon::File path_bundles(ss.str().c_str());
 			if(path_bundles.exists())
 			path_bundles.remove();
 
-			//open file
+			// open file
 			ofstream output_file;
 			output_file.open(path_bundles.getPath().c_str());
 
-			//write number of bundles
+			// write number of bundles
 			output_file << _bundles.size();
 
 			bundle_set::iterator iter = _bundles.begin();
@@ -294,14 +306,13 @@ namespace dtn
 			std::stringstream ss; ss << __store_path__.getPath() << "/" << _name;
 			ibrcommon::File path_bundles(ss.str().c_str());
 
-			//abort if storage files does not exist
-			if(!path_bundles.exists())
-			return;
+			// abort if storage files does not exist
+			if (!path_bundles.exists()) return;
 
 			ifstream input_file;
 			input_file.open(ss.str().c_str());
 
-			//read number of bundles
+			// read number of bundles
 			size_t num_bundles;
 			input_file >> num_bundles;
 			size_t i = 0;
@@ -309,7 +320,7 @@ namespace dtn
 			{
 				MetaBundle b;
 				input_file >> b;
-				_bundles.insert(b);
+				add(b);
 				i++;
 			}
 
