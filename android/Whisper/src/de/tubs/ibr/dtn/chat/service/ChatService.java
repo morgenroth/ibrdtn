@@ -553,6 +553,12 @@ public class ChatService extends IntentService {
 			b.set(ProcFlags.REQUEST_REPORT_OF_BUNDLE_DELIVERY, true);
 			b.setReportto(SingletonEndpoint.ME);
 			
+			// request encryption for this message
+			b.set(ProcFlags.DTNSEC_REQUEST_ENCRYPT, true);
+			
+			// request signing of the message
+			b.set(ProcFlags.DTNSEC_REQUEST_SIGN, true);
+			
 			synchronized(this.roster) {
 				// send out the message
 				BundleID ret = s.send(b, text.getBytes());
@@ -595,7 +601,19 @@ public class ChatService extends IntentService {
     			}
 			} catch (RemoteException e) { }
 			
-			BundleID ret = s.send(ChatService.PRESENCE_GROUP_EID, 3600, presence_message.getBytes());
+			// create a new bundle
+			Bundle b = new Bundle();
+			
+			// set destination to group endpoint
+			b.setDestination(ChatService.PRESENCE_GROUP_EID);
+			
+			// set lifetime to one hour
+			b.setLifetime(3600L);
+			
+			// request signing of the message
+			b.set(ProcFlags.DTNSEC_REQUEST_SIGN, true);
+			
+			BundleID ret = s.send(b, presence_message.getBytes());
 			
 			if (ret == null)
 			{
