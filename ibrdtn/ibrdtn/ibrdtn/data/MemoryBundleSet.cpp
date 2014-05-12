@@ -61,9 +61,9 @@ namespace dtn
 			set->_bf = _bf;
 			set->_consistent = _consistent;
 
-			// copy bundles
-			set->_bundles = _bundles;
-			set->_expire = _expire;
+			// copy bundles and expiration set
+			set->_bundles.insert(_bundles.begin(), _bundles.end());
+			set->_expire.insert(_expire.begin(), _expire.end());
 
 			return refcnt_ptr<BundleSetImpl>(set);
 		}
@@ -83,8 +83,12 @@ namespace dtn
 				_consistent = set._consistent;
 
 				// copy bundles
-				_bundles = set._bundles;
-				_expire = set._expire;
+				_bundles.clear();
+				_bundles.insert(set._bundles.begin(), set._bundles.end());
+
+				// copy expiration set
+				_expire.clear();
+				_expire.insert(set._expire.begin(), set._expire.end());
 			} catch (const std::bad_cast&) {
 				// incompatible bundle-set implementation - abort here
 			}
