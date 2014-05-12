@@ -140,11 +140,17 @@ public class HashCommitFragment extends Fragment {
 				((KeyInformationFragment) f).refresh();
 			}
 			
+			// get the session ID
+			int session = Integer.valueOf(intent.hasExtra(KeyExchangeService.EXTRA_SESSION) ? intent.getStringExtra(KeyExchangeService.EXTRA_SESSION) : "-1");
+			
 			// get the protocol ID
 			int protocol = Integer.valueOf(intent.hasExtra(KeyExchangeService.EXTRA_PROTOCOL) ? intent.getStringExtra(KeyExchangeService.EXTRA_PROTOCOL) : "-1");
 	
 			// stop here if the currently viewed protocol does not match the event
 			if (protocol != EnumProtocol.HASH.getValue()) return;
+			
+			// stop here if the session does not match the current session
+			if (mSession != session) return;
 			
 			// abort any further broadcasts of this intent
 			abortBroadcast();

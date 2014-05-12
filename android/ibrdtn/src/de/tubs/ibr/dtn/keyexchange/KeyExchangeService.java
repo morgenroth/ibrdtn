@@ -9,6 +9,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Parcelable;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
@@ -72,111 +73,101 @@ public class KeyExchangeService extends IntentService {
 		// get notification manager
 		NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		
+		// create a stack builder
+		TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+		
+		// prepare content intent
+		Intent i = new Intent(this, KeyInformationActivity.class);
+		i.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Parcelable)endpoint);
+		i.putExtra(EXTRA_SESSION, session);
+		i.setData(Uri.parse(endpoint.toString()));
+		
 		Log.d(TAG, "Handle intent " + action + " for session " + session + "[" + endpoint + "]");
-
+		
 		if (ACTION_COMPLETE.equals(action))
 		{
 			builder.setContentTitle(getString(R.string.notification_success));
 			builder.setContentText(getString(R.string.notification_success_text));
 			
-			Intent i = new Intent(this, KeyInformationActivity.class);
+			// set action for notification intent
 			i.setAction(intent.getAction());
 			
-			i.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Parcelable)endpoint);
-			i.putExtra(EXTRA_SESSION, session);
+			// assign protocol
 			i.putExtra(EXTRA_PROTOCOL, protocol);
-			
-			i.setData(Uri.parse(endpoint.toString()));
-			builder.setContentIntent(PendingIntent.getActivity(this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT));
-			
-			notificationManager.notify(session, builder.build());
 		}
 		else if (ACTION_PASSWORD_REQUEST.equals(action))
 		{
 			builder.setContentTitle(getString(R.string.notification_password_request));
 			builder.setContentText(getString(R.string.notification_password_request_text));
 
-			Intent i = new Intent(this, KeyInformationActivity.class);
+			// set action for notification intent
 			i.setAction(action);
-			
-			i.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Parcelable)endpoint);
-			i.putExtra(EXTRA_SESSION, session);
+
+			// assign protocol
 			i.putExtra(EXTRA_PROTOCOL, EnumProtocol.JPAKE.getValue());
-			
-			i.setData(Uri.parse(endpoint.toString()));
-			builder.setContentIntent(PendingIntent.getActivity(this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT));
-			
-			notificationManager.notify(session, builder.build());
 		}
 		else if (ACTION_PASSWORD_WRONG.equals(action))
 		{
 			builder.setContentTitle(getString(R.string.notification_password_wrong));
 			builder.setContentText(getString(R.string.notification_password_wrong_text));
 
-			Intent i = new Intent(this, KeyInformationActivity.class);
+			// set action for notification intent
 			i.setAction(action);
-			
-			i.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Parcelable)endpoint);
-			i.putExtra(EXTRA_SESSION, session);
+
+			// assign protocol
 			i.putExtra(EXTRA_PROTOCOL, EnumProtocol.JPAKE.getValue());
-			
-			i.setData(Uri.parse(endpoint.toString()));
-			builder.setContentIntent(PendingIntent.getActivity(this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT));
-			
-			notificationManager.notify(session, builder.build());
 		}
 		else if (ACTION_HASH_COMMIT.equals(action))
 		{
 			builder.setContentTitle(getString(R.string.notification_hash_compare));
 			builder.setContentText(getString(R.string.notification_hash_compare_text));
 
-			Intent i = new Intent(this, KeyInformationActivity.class);
+			// set action for notification intent
 			i.setAction(action);
-			
-			i.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Parcelable)endpoint);
-			i.putExtra(EXTRA_SESSION, session);
+
+			// assign protocol
 			i.putExtra(EXTRA_PROTOCOL, EnumProtocol.HASH.getValue());
+			
+			// assign data
 			i.putExtra(EXTRA_DATA, intent.getStringExtra(EXTRA_DATA));
-			
-			i.setData(Uri.parse(endpoint.toString()));
-			builder.setContentIntent(PendingIntent.getActivity(this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT));
-			
-			notificationManager.notify(session, builder.build());
 		}
 		else if (ACTION_NEW_KEY.equals(action))
 		{
 			builder.setContentTitle(getString(R.string.notification_not_equal));
 			builder.setContentText(getString(R.string.notification_not_equal_text));
 
-			Intent i = new Intent(this, KeyInformationActivity.class);
+			// set action for notification intent
 			i.setAction(action);
 			
-			i.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Parcelable)endpoint);
-			i.putExtra(EXTRA_SESSION, session);
+			// assign protocol
 			i.putExtra(EXTRA_PROTOCOL, protocol);
+			
+			// assign data
 			i.putExtra(EXTRA_DATA, intent.getStringExtra(EXTRA_DATA));
-			
-			i.setData(Uri.parse(endpoint.toString()));
-			builder.setContentIntent(PendingIntent.getActivity(this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT));
-			
-			notificationManager.notify(session, builder.build());
 		}
 		else if (ACTION_ERROR.equals(action))
 		{
 			builder.setContentTitle(getString(R.string.notification_error));
 			builder.setContentText(getString(R.string.notification_error_text));
 
-			Intent i = new Intent(this, KeyInformationActivity.class);
+			// set action for notification intent
 			i.setAction(action);
 			
-			i.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Parcelable)endpoint);
-			i.putExtra(EXTRA_SESSION, session);
+			// assign protocol
 			i.putExtra(EXTRA_PROTOCOL, protocol);
-			
-			i.setData(Uri.parse(endpoint.toString()));
-			builder.setContentIntent(PendingIntent.getActivity(this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT));
-			
-			notificationManager.notify(session, builder.build());
 		}
+		else {
+			// abort - nothing to do
+			return;
+		}
+		
+		// set next intent
+		stackBuilder.addNextIntent(i);
+		
+		// create pending intent
+		builder.setContentIntent(stackBuilder.getPendingIntent(session, PendingIntent.FLAG_UPDATE_CURRENT));
+		
+		// invoke notification
+		notificationManager.notify(session, builder.build());
 	}
 }

@@ -260,6 +260,9 @@ public class KeyExchangeFragment extends Fragment {
 			// stop here if the currently viewed protocol does not match the event
 			if (protocol == -1 || protocol != newProtocol) return;
 			
+			// stop here if the currently viewed session does not match the event
+			if (mSession != -1 && mSession != session) return;
+			
 			// assign the session to this view
 			getActivity().getIntent().putExtra(KeyExchangeService.EXTRA_SESSION, session);
 			
