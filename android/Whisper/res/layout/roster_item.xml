@@ -37,7 +37,7 @@
 			android:paddingLeft="2dip"
 			android:layout_alignLeft="@+id/label"
 			android:layout_below="@+id/label"
-			android:src="@drawable/ic_delivered"
+			android:src="@drawable/ic_signed"
 			android:visibility="gone" />
 	
 		<TextView

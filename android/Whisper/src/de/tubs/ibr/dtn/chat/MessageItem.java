@@ -22,6 +22,7 @@ public class MessageItem extends RelativeLayout {
 	ImageView mDelivered = null;
 	ImageView mDetails = null;
 	ImageView mSigned = null;
+	ImageView mEncrypted = null;
 	LinearLayout mMessageBlock = null;
 
     public MessageItem(Context context) {
@@ -42,6 +43,7 @@ public class MessageItem extends RelativeLayout {
 		mDelivered = (ImageView) findViewById(R.id.delivered_indicator);
 		mSigned = (ImageView) findViewById(R.id.signed_indicator);
 		mDetails = (ImageView) findViewById(R.id.details_indicator);
+		mEncrypted = (ImageView) findViewById(R.id.encrypted_indicator);
 		mMessageBlock = (LinearLayout) findViewById(R.id.chat_block);
     }
     
@@ -85,9 +87,9 @@ public class MessageItem extends RelativeLayout {
 			}
 			
 			if (mMessage.hasFlag(Message.FLAG_ENCRYPTED)) {
-				mText.setTextColor(getResources().getColor(R.color.text_encrypted));
+				mEncrypted.setVisibility(View.VISIBLE);
 			} else {
-				mText.setTextColor(getResources().getColor(android.R.color.primary_text_light));
+				mEncrypted.setVisibility(View.GONE);
 			}
 		}
 		
