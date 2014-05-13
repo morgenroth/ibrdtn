@@ -39,7 +39,6 @@ import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import de.tubs.ibr.dtn.DTNService;
-import de.tubs.ibr.dtn.SecurityService;
 import de.tubs.ibr.dtn.Services;
 
 public final class DTNClient {
@@ -50,9 +49,6 @@ public final class DTNClient {
 
 	// DTN service provided by IBR-DTN
 	private DTNService mService = null;
-	
-	// Security API provided by IBR-DTN
-	private SecurityService mSecurityService = null;
 	
 	// session object
 	private Session mSession = null;
@@ -124,16 +120,6 @@ public final class DTNClient {
 		public void onServiceDisconnected(ComponentName name) {
 			mSessionHandler.onSessionDisconnected();
 			mService = null;
-		}
-	};
-	
-	private ServiceConnection mSecurityConnection = new ServiceConnection() {
-		public void onServiceConnected(ComponentName name, IBinder service) {
-			mSecurityService = SecurityService.Stub.asInterface(service);
-		}
-
-		public void onServiceDisconnected(ComponentName name) {
-			mSecurityService = null;
 		}
 	};
 	
@@ -465,13 +451,6 @@ public final class DTNClient {
   		
 		// Establish a connection with the service.
 		Services.SERVICE_APPLICATION.bind(mContext, mConnection, Context.BIND_AUTO_CREATE);
-		
-		// Establish a connection with the security service
-		try {
-			Services.SERVICE_SECURITY.bind(mContext, mSecurityConnection, Context.BIND_AUTO_CREATE);
-		} catch (ServiceNotAvailableException e) {
-			// Security API not available
-		}
 	}
 	
 	/**
@@ -500,9 +479,5 @@ public final class DTNClient {
 	
 	public DTNService getDTNService() {
 		return mService;
-	}
-	
-	public SecurityService getSecurityService() {
-		return mSecurityService;
 	}
 }

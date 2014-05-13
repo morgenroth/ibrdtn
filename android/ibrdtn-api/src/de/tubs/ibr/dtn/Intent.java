@@ -22,8 +22,8 @@
 package de.tubs.ibr.dtn;
 
 public class Intent {
-    public static final String CATEGORY_SERVICES = "de.tubs.ibr.dtn.intent.category.SERVICES";
-    
+	public static final String CATEGORY_SERVICES = "de.tubs.ibr.dtn.intent.category.SERVICES";
+
 	public static final String DTNAPP = "de.tubs.ibr.dtn.intent.DTNAPP";
 	
 	/**
@@ -48,8 +48,8 @@ public class Intent {
 	public static final String NEIGHBOR = "de.tubs.ibr.dtn.intent.NEIGHBOR";
 	public static final String NEIGHBOR_SELECTED = "de.tubs.ibr.dtn.intent.NEIGHBOR_SELECTED";
 
-    public static final String EXTRA_ENDPOINT = "de.tubs.ibr.dtn.ENDPOINT";
-    public static final String EXTRA_NODE = "de.tubs.ibr.dtn.NODE";
-    public static final String EXTRA_INTENT = "de.tubs.ibr.dtn.intent.INTENT";
-    public static final String EXTRA_PENDING_INTENT = "de.tubs.ibr.dtn.intent.PENDING_INTENT";
+	public static final String EXTRA_ENDPOINT = "de.tubs.ibr.dtn.ENDPOINT";
+	public static final String EXTRA_NODE = "de.tubs.ibr.dtn.NODE";
+	public static final String EXTRA_INTENT = "de.tubs.ibr.dtn.intent.INTENT";
+	public static final String EXTRA_PENDING_INTENT = "de.tubs.ibr.dtn.intent.PENDING_INTENT";
 }

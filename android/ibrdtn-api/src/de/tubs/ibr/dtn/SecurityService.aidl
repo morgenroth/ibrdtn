@@ -25,14 +25,7 @@ import de.tubs.ibr.dtn.api.SingletonEndpoint;
 
 interface SecurityService {
 	/**
-	 * Returns a pending intent to launch the key exchange
-	 * activity for the given endpoint.
+	 * Executes a security related action.
 	 */
-	Bundle getKeyExchangeIntent(in SingletonEndpoint endpoint);
-	
-	/**
-	 * Returns a pending intent to launch the security info
-	 * activity.
-	 */
-	Bundle getSecurityInfoIntent();
+	Bundle execute(in Intent intent);
 }
