@@ -98,13 +98,13 @@ public class ChatService extends IntentService {
 	private Registration _registration = null;
 	private ServiceError _service_error = ServiceError.NO_ERROR;
 
-    // This is the object that receives interactions from clients.  See
-    // RemoteService for a more complete example.
-    private final IBinder mBinder = new LocalBinder();
-    
-    // local roster with the connection to the database
-    private Roster roster = null;
-    
+	// This is the object that receives interactions from clients.  See
+	// RemoteService for a more complete example.
+	private final IBinder mBinder = new LocalBinder();
+	
+	// local roster with the connection to the database
+	private Roster roster = null;
+	
 	// DTN client to talk with the DTN service
 	private DTNClient _client = null;
 	
@@ -112,13 +112,23 @@ public class ChatService extends IntentService {
 		super(TAG);
 	}
 	
-    private DataHandler _data_handler = new DataHandler()
-    {
-        ByteArrayOutputStream stream = null;
-    	Bundle current;
+	private DataHandler _data_handler = new DataHandler()
+	{
+		ByteArrayOutputStream stream = null;
+		Bundle current;
+		Long flags = 0L;
 
 		public void startBundle(Bundle bundle) {
 			this.current = bundle;
+			this.flags = 0L;
+			
+			if (bundle.get(Bundle.ProcFlags.DTNSEC_STATUS_CONFIDENTIAL)) {
+				this.flags |= Message.FLAG_ENCRYPTED;
+			}
+			
+			if (bundle.get(Bundle.ProcFlags.DTNSEC_STATUS_VERIFIED)) {
+				this.flags |= Message.FLAG_SIGNED;
+			}
 		}
 
 		public void endBundle() {
@@ -144,29 +154,29 @@ public class ChatService extends IntentService {
 		}
 
 		public void endBlock() {
-		    if (stream != null) {
-                String msg = new String(stream.toByteArray());
-                stream = null;
-                
-                if (current.getDestination().equals(PRESENCE_GROUP_EID))
-                {
-                    eventNewPresence(current.getSource(), current.getTimestamp().getDate(), msg);
-                }
-                else
-                {
-                    eventNewMessage(current.getSource(), current.getTimestamp().getDate(), msg);
-                }
-		    }
+			if (stream != null) {
+				String msg = new String(stream.toByteArray());
+				stream = null;
+				
+				if (current.getDestination().equals(PRESENCE_GROUP_EID))
+				{
+					eventNewPresence(current.getSource(), current.getTimestamp().getDate(), msg, flags);
+				}
+				else
+				{
+					eventNewMessage(current.getSource(), current.getTimestamp().getDate(), msg, flags);
+				}
+			}
 		}
 
 		public void payload(byte[] data) {
-		    if (stream == null) return;
-		    // write data to the stream
-		    try {
-                stream.write(data);
-            } catch (IOException e) {
-                Log.e(TAG, "error on writing payload", e);
-            }
+			if (stream == null) return;
+			// write data to the stream
+			try {
+				stream.write(data);
+			} catch (IOException e) {
+				Log.e(TAG, "error on writing payload", e);
+			}
 		}
 
 		public ParcelFileDescriptor fd() {
@@ -175,8 +185,8 @@ public class ChatService extends IntentService {
 
 		public void progress(long current, long length) {
 		}
-    
-		private void eventNewPresence(SingletonEndpoint source, Date created, String payload)
+	
+		private void eventNewPresence(SingletonEndpoint source, Date created, String payload, Long flags)
 		{
 			Log.i(TAG, "Presence received from " + source);
 			
@@ -215,27 +225,27 @@ public class ChatService extends IntentService {
 				{
 					status = value;
 				}
-                else if (keyword.equalsIgnoreCase("Voice"))
-                {
-                    voiceeid = value;
-                }
-                else if (keyword.equalsIgnoreCase("Language"))
-                {
-                    language = value;
-                }
-                else if (keyword.equalsIgnoreCase("Country"))
-                {
-                    country = value;
-                }
+				else if (keyword.equalsIgnoreCase("Voice"))
+				{
+					voiceeid = value;
+				}
+				else if (keyword.equalsIgnoreCase("Language"))
+				{
+					language = value;
+				}
+				else if (keyword.equalsIgnoreCase("Country"))
+				{
+					country = value;
+				}
 			}
 			
 			if (nickname != null)
 			{
-				getRoster().updatePresence(source.toString(), created, presence, nickname, status, voiceeid, language, country);
+				getRoster().updatePresence(source.toString(), created, presence, nickname, status, voiceeid, language, country, flags);
 			}
 		}
 		
-		private void eventNewMessage(SingletonEndpoint source, Date created, String payload)
+		private void eventNewMessage(SingletonEndpoint source, Date created, String payload, Long flags)
 		{
 			if (source == null)
 			{
@@ -243,7 +253,7 @@ public class ChatService extends IntentService {
 			}
 			
 			// create a new message
-			Long msgId = getRoster().createMessage(source.toString(), created, new Date(), true, payload, 0L);
+			Long msgId = getRoster().createMessage(source.toString(), created, new Date(), true, payload, flags);
 			
 			// retrieve message object
 			Message msg = getRoster().getMessage(msgId);
@@ -257,18 +267,18 @@ public class ChatService extends IntentService {
 			// create a status bar notification
 			Log.i(TAG, "New message received!");
 		}
-    };
-    
-    /**
-     * Class for clients to access.  Because we know this service always
-     * runs in the same process as its clients, we don't need to deal with
-     * IPC.
-     */
-    public class LocalBinder extends Binder {
-    	public ChatService getService() {
-            return ChatService.this;
-        }
-    }
+	};
+	
+	/**
+	 * Class for clients to access.  Because we know this service always
+	 * runs in the same process as its clients, we don't need to deal with
+	 * IPC.
+	 */
+	public class LocalBinder extends Binder {
+		public ChatService getService() {
+			return ChatService.this;
+		}
+	}
 
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -283,22 +293,22 @@ public class ChatService extends IntentService {
 		
 		// create a new client object
 		_client = new DTNClient(new SessionConnection() {
-            @Override
-            public void onSessionConnected(Session session) {
-                // respect user settings
-                if (PreferenceManager.getDefaultSharedPreferences(ChatService.this).getBoolean("checkBroadcastPresence", false))
-                {
-                    // register scheduled presence update
-                    PresenceGenerator.activate(ChatService.this);
-                }
-                
-                // register own data handler for incoming bundles
-                session.setDataHandler(_data_handler);
-            }
+			@Override
+			public void onSessionConnected(Session session) {
+				// respect user settings
+				if (PreferenceManager.getDefaultSharedPreferences(ChatService.this).getBoolean("checkBroadcastPresence", false))
+				{
+					// register scheduled presence update
+					PresenceGenerator.activate(ChatService.this);
+				}
+				
+				// register own data handler for incoming bundles
+				session.setDataHandler(_data_handler);
+			}
 
-            @Override
-            public void onSessionDisconnected() {
-            }
+			@Override
+			public void onSessionDisconnected() {
+			}
 		});
 
 		// create a roster object
@@ -306,8 +316,8 @@ public class ChatService extends IntentService {
 		this.roster.open(this);
 		
 		// create registration
-    	_registration = new Registration("chat");
-    	_registration.add(PRESENCE_GROUP_EID);
+		_registration = new Registration("chat");
+		_registration.add(PRESENCE_GROUP_EID);
 		
 		try {
 			_client.initialize(this, _registration);
@@ -347,7 +357,7 @@ public class ChatService extends IntentService {
 	{
 		return this.roster;
 	}
-	
+
 	@SuppressWarnings("deprecation")
 	private void showNotification(Intent intent)
 	{
@@ -429,30 +439,30 @@ public class ChatService extends IntentService {
 	protected void onHandleIntent(Intent intent) {
 		String action = intent.getAction();
 		
-        // create a task to process concurrently
-        if (ACTION_PRESENCE_ALARM.equals(action))
-        {
+		// create a task to process concurrently
+		if (ACTION_PRESENCE_ALARM.equals(action))
+		{
 			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(ChatService.this);
 			
 			// check if the screen is active
 			PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-		    Boolean screenOn = pm.isScreenOn();
+			Boolean screenOn = pm.isScreenOn();
 			
-		    String presence_tag = preferences.getString("presencetag", "auto");
-		    String presence_nick = preferences.getString("editNickname", "Nobody");
-		    String presence_text = preferences.getString("statustext", "");
-		    
-		    if (presence_tag.equals("auto"))
-		    {
-			    if (screenOn)
-			    {
-			    	presence_tag = "chat";
-			    }
-			    else
-			    {
-			    	presence_tag = "away";
-			    }
-		    }
+			String presence_tag = preferences.getString("presencetag", "auto");
+			String presence_nick = preferences.getString("editNickname", "Nobody");
+			String presence_text = preferences.getString("statustext", "");
+			
+			if (presence_tag.equals("auto"))
+			{
+				if (screenOn)
+				{
+					presence_tag = "chat";
+				}
+				else
+				{
+					presence_tag = "away";
+				}
+			}
 			
 			Log.i(TAG, "push out presence; " + presence_tag);
 			actionRefreshPresence(presence_tag, presence_nick, presence_text);
@@ -460,56 +470,56 @@ public class ChatService extends IntentService {
 			Editor edit = preferences.edit();
 			edit.putLong("lastpresenceupdate", (new Date().getTime()));
 			edit.commit();
-        }
-        // create a task to check for messages
-        else if (de.tubs.ibr.dtn.Intent.RECEIVE.equals(action))
-        {
-        	try {
+		}
+		// create a task to check for messages
+		else if (de.tubs.ibr.dtn.Intent.RECEIVE.equals(action))
+		{
+			try {
 				while (_client.getSession().queryNext());
 			} catch (SessionDestroyedException e) {
 				Log.e(TAG, "Can not query for bundle", e);
 			} catch (InterruptedException e) {
 				Log.e(TAG, "Can not query for bundle", e);
 			}
-        }
-        else if (MARK_DELIVERED_INTENT.equals(action))
-        {
-        	actionMarkDelivered(intent);
-        }
-        else if (REPORT_DELIVERED_INTENT.equals(action))
-        {
-        	actionReportDelivered(intent);
-        }
-        else if (ACTION_SEND_MESSAGE.equals(action))
-        {
-        	Long buddyId = intent.getLongExtra(ChatService.EXTRA_BUDDY_ID, -1);
-        	String text = intent.getStringExtra(ChatService.EXTRA_TEXT_BODY);
-        	
-        	// abort if there is no buddyId
-        	if (buddyId < 0) return;
-        	
-        	actionSendMessage(buddyId, text);
-        }
-        else if (ACTION_REFRESH_PRESENCE.equals(action))
-        {
-    		String presence = intent.getStringExtra(ChatService.EXTRA_PRESENCE);
-    		String nickname = intent.getStringExtra(ChatService.EXTRA_DISPLAY_NAME);
-    		String status = intent.getStringExtra(ChatService.EXTRA_STATUS);
-    		
-        	actionRefreshPresence(presence, nickname, status);
-        }
-        else if (ACTION_NEW_MESSAGE.equals(action)) {
+		}
+		else if (MARK_DELIVERED_INTENT.equals(action))
+		{
+			actionMarkDelivered(intent);
+		}
+		else if (REPORT_DELIVERED_INTENT.equals(action))
+		{
+			actionReportDelivered(intent);
+		}
+		else if (ACTION_SEND_MESSAGE.equals(action))
+		{
+			Long buddyId = intent.getLongExtra(ChatService.EXTRA_BUDDY_ID, -1);
+			String text = intent.getStringExtra(ChatService.EXTRA_TEXT_BODY);
+			
+			// abort if there is no buddyId
+			if (buddyId < 0) return;
+			
+			actionSendMessage(buddyId, text);
+		}
+		else if (ACTION_REFRESH_PRESENCE.equals(action))
+		{
+			String presence = intent.getStringExtra(ChatService.EXTRA_PRESENCE);
+			String nickname = intent.getStringExtra(ChatService.EXTRA_DISPLAY_NAME);
+			String status = intent.getStringExtra(ChatService.EXTRA_STATUS);
+			
+			actionRefreshPresence(presence, nickname, status);
+		}
+		else if (ACTION_NEW_MESSAGE.equals(action)) {
 			showNotification(intent);
 		}
 	}
 	
 	private void actionMarkDelivered(Intent intent) {
-    	BundleID bundleid = intent.getParcelableExtra("bundleid");
-    	if (bundleid == null) {
-    		Log.e(TAG, "Intent to mark a bundle as delivered, but no bundle ID given");
-    		return;
-    	}
-    	
+		BundleID bundleid = intent.getParcelableExtra("bundleid");
+		if (bundleid == null) {
+			Log.e(TAG, "Intent to mark a bundle as delivered, but no bundle ID given");
+			return;
+		}
+		
 		try {
 			_client.getSession().delivered(bundleid);
 		} catch (Exception e) {
@@ -521,15 +531,15 @@ public class ChatService extends IntentService {
 		SingletonEndpoint source = intent.getParcelableExtra("source");
 		BundleID bundleid = intent.getParcelableExtra("bundleid");
 		
-    	if (bundleid == null) {
-    		Log.e(TAG, "Intent to mark a bundle as delivered, but no bundle ID given");
-    		return;
-    	}
-    	
-    	synchronized(this.roster) {
-	    	// report delivery to the roster
-	    	getRoster().reportDelivery(source, bundleid);
-    	}
+		if (bundleid == null) {
+			Log.e(TAG, "Intent to mark a bundle as delivered, but no bundle ID given");
+			return;
+		}
+		
+		synchronized(this.roster) {
+			// report delivery to the roster
+			getRoster().reportDelivery(source, bundleid);
+		}
 	}
 	
 	private void actionSendMessage(Long buddyId, String text) {
@@ -569,7 +579,7 @@ public class ChatService extends IntentService {
 				}
 				else
 				{
-				    Log.d(TAG, "Bundle sent, BundleID: " + ret.toString());
+					Log.d(TAG, "Bundle sent, BundleID: " + ret.toString());
 				}
 				
 				// update message into the database
@@ -593,12 +603,12 @@ public class ChatService extends IntentService {
 					"Country: " + Locale.getDefault().getCountry();
 			
 			try {
-    			if (Utils.isVoiceRecordingSupported(this)) {
-    			    DTNService dtns = _client.getDTNService();
-    			    if (dtns != null) {
-    			        presence_message += "\n" + "Voice: " + dtns.getEndpoint() + "/dtalkie";
-    			    }
-    			}
+				if (Utils.isVoiceRecordingSupported(this)) {
+					DTNService dtns = _client.getDTNService();
+					if (dtns != null) {
+						presence_message += "\n" + "Voice: " + dtns.getEndpoint() + "/dtalkie";
+					}
+				}
 			} catch (RemoteException e) { }
 			
 			// create a new bundle
@@ -621,7 +631,7 @@ public class ChatService extends IntentService {
 			}
 			else
 			{
-			    Log.d(TAG, "Presence sent, BundleID: " + ret.toString());
+				Log.d(TAG, "Presence sent, BundleID: " + ret.toString());
 			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
@@ -648,15 +658,15 @@ public class ChatService extends IntentService {
 			createNotification(b, msg);
 			break;
 		case BUDDY_ADD:
-			getRoster().updatePresence(debug_source + "/" + String.valueOf((new Date()).getTime()), new Date(), "online", "Debug Buddy", "Hello World", "dtn://test/dtalkie", "en", "gb");
+			getRoster().updatePresence(debug_source + "/" + String.valueOf((new Date()).getTime()), new Date(), "online", "Debug Buddy", "Hello World", "dtn://test/dtalkie", "en", "gb", 0L);
 			break;
 			
 		case SEND_PRESENCE:
-	        // wake-up the chat service and queue a send presence task
-	        Intent i = new Intent(this, ChatService.class);
-	        i.setAction(ACTION_PRESENCE_ALARM);
-	        startService(i);
-		    break;
+			// wake-up the chat service and queue a send presence task
+			Intent i = new Intent(this, ChatService.class);
+			i.setAction(ACTION_PRESENCE_ALARM);
+			startService(i);
+			break;
 		}
 	}
 }

@@ -3,6 +3,7 @@
     <string name="app_name">Whisper</string>
     <string name="desc_buddy_icon">Buddy icon</string>
     <string name="desc_send_button">Send button</string>
+    <string name="desc_security_button">Security Info</string>
     <string name="list_messages">Messages</string>
     <string name="empty"></string>
     <string name="close">Close</string>
@@ -42,4 +43,6 @@
     <string name="debug_send_presence">Send presence</string>
     <string name="image_contact_symbol">Contact symbol</string>
     <string name="type_to_compose_text_enter_to_send">Type message</string>
+    <string name="action_keyinfo">Key information</string>
+    <string name="action_trustinfo">Trust information</string>
 </resources>

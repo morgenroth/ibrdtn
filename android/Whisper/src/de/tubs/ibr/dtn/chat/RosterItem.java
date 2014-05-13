@@ -22,6 +22,7 @@ public class RosterItem extends LinearLayout {
 	TextView mLabel = null;
 	TextView mBottomtext = null;
 	ImageView mHint = null;
+	ImageView mSigned = null;
 
     public RosterItem(Context context) {
         super(context);
@@ -43,6 +44,7 @@ public class RosterItem extends LinearLayout {
 		mLabel = (TextView)findViewById(R.id.label);
 		mBottomtext = (TextView)findViewById(R.id.bottomtext);
 		mHint = (ImageView)findViewById(R.id.hinticon);
+		mSigned = (ImageView)findViewById(R.id.signed_indicator);
     }
 	
 	public void bind(Buddy b, int position) {
@@ -132,6 +134,12 @@ public class RosterItem extends LinearLayout {
 				mHint.setVisibility(View.VISIBLE);
 				mHint.setImageResource(R.drawable.ic_selected);
 			}
+		}
+		
+		if (mBuddy.hasFlag(Buddy.FLAG_SIGNED)) {
+			mSigned.setVisibility(View.VISIBLE);
+		} else {
+			mSigned.setVisibility(View.GONE);
 		}
 	}
 }

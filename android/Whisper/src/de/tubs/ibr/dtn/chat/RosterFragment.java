@@ -172,7 +172,7 @@ public class RosterFragment extends ListFragment implements LoaderManager.Loader
             // Check what fragment is currently shown, replace if needed.
             MessageFragment messages = (MessageFragment)
                     getFragmentManager().findFragmentById(R.id.messages);
-            if (messages == null || messages.getShownBuddy() != buddyId) {
+            if (messages == null || messages.getBuddyId() != buddyId) {
                 // Make new fragment to show this selection.
             	messages = MessageFragment.newInstance(buddyId);
 

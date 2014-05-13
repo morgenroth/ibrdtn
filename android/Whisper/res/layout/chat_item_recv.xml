@@ -23,7 +23,7 @@
            android:layout_height="wrap_content"
            android:layout_toRightOf="@id/imageAvatar"
            android:layout_alignParentRight="true"
-           android:background="@drawable/hairline_right"
+           android:background="@android:color/white"
            android:orientation="vertical" >
 
 	    <TextView
@@ -48,7 +48,6 @@
             android:orientation="horizontal" >
 
             <TextView android:id="@+id/label"
-                android:background="@drawable/listitem_background"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingRight="3dip"
@@ -65,6 +64,14 @@
             
             <ImageView
                 android:id="@+id/delivered_indicator"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingRight="3dip"
+                android:src="@drawable/ic_delivered"
+                android:visibility="gone" />
+            
+            <ImageView
+                android:id="@+id/signed_indicator"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingRight="3dip"

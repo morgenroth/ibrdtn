@@ -45,6 +45,11 @@ public class Message {
 	public static final String SENTID = "sentid";
 	public static final String FLAGS = "flags";
 	
+	public static final int FLAG_SENT = 1;
+	public static final int FLAG_DELIVERED = 2;
+	public static final int FLAG_SIGNED = 4;
+	public static final int FLAG_ENCRYPTED = 8;
+	
 	private Long msgid = null;
 	private Boolean incoming = null;
 	private Long buddyid = null;
@@ -128,5 +133,17 @@ public class Message {
 
 	public void setFlags(Long flags) {
 		this.flags = flags;
+	}
+	
+	public boolean hasFlag(int flag) {
+		return (this.flags & flag) > 0;
+	}
+	
+	public void setFlag(int flag, boolean value) {
+		if (value) {
+			this.flags |= flag;
+		} else {
+			this.flags &= ~flag;
+		}
 	}
 }

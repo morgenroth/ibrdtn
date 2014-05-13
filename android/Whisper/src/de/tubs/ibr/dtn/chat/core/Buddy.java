@@ -47,6 +47,9 @@ public class Buddy implements Comparable<Buddy> {
 	public static final String VOICEEID = "voiceeid";
 	public static final String LANGUAGE = "language";
 	public static final String COUNTRY = "country";
+	public static final String FLAGS = "flags";
+	
+	public static final int FLAG_SIGNED = 4;
 	
 	private Long id = null;
 	private String nickname = null;
@@ -58,6 +61,7 @@ public class Buddy implements Comparable<Buddy> {
 	private String voiceeid = null;
 	private String language = null;
 	private String country = null;
+	private Long flags = 0L;
 
 	public Buddy(Context context, Cursor cursor, RosterAdapter.ColumnsMap cmap)
 	{
@@ -73,6 +77,7 @@ public class Buddy implements Comparable<Buddy> {
 		this.voiceeid = cursor.getString(cmap.mColumnVoiceEndpoint);
 		this.language = cursor.getString(cmap.mColumnLanguage);
 		this.country = cursor.getString(cmap.mColumnCountry);
+		this.flags = cursor.getLong(cmap.mColumnFlags);
 		
 		// set the last seen parameter
 		if (!cursor.isNull(cmap.mColumnLastseen))
@@ -211,4 +216,24 @@ public class Buddy implements Comparable<Buddy> {
     public void setCountry(String country) {
         this.country = country;
     }
+    
+	public Long getFlags() {
+		return (flags == null) ? 0 : flags;
+	}
+
+	public void setFlags(Long flags) {
+		this.flags = flags;
+	}
+	
+	public boolean hasFlag(int flag) {
+		return (this.flags & flag) > 0;
+	}
+	
+	public void setFlag(int flag, boolean value) {
+		if (value) {
+			this.flags |= flag;
+		} else {
+			this.flags &= ~flag;
+		}
+	}
 }

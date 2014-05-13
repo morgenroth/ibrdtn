@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+	<item android:id="@+id/itemKeyInfo" android:icon="@drawable/ic_action_keyinfo" android:title="@string/action_keyinfo" android:showAsAction="ifRoom"></item>
+</menu>

@@ -65,7 +65,8 @@ public class Roster {
 				Buddy.DRAFTMSG + " TEXT, " +
 				Buddy.VOICEEID + " TEXT, " +
 				Buddy.LANGUAGE + " TEXT, " +
-				Buddy.COUNTRY + " TEXT" +
+				Buddy.COUNTRY + " TEXT, " +
+				Buddy.FLAGS + " INTEGER NOT NULL" +
 			");";
 	
 	private static final String DATABASE_CREATE_MESSAGES = 
@@ -83,7 +84,7 @@ public class Roster {
 	private class DBOpenHelper extends SQLiteOpenHelper {
 		
 		private static final String DATABASE_NAME = "dtnchat_user";
-		private static final int DATABASE_VERSION = 12;
+		private static final int DATABASE_VERSION = 13;
 		
 		public DBOpenHelper(Context context) {
 			super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -100,9 +101,13 @@ public class Roster {
 			Log.w(DBOpenHelper.class.getName(),
 					"Upgrading database from version " + oldVersion + " to "
 							+ newVersion + ", which will destroy all old data");
-			db.execSQL("DROP TABLE IF EXISTS roster");
-			db.execSQL("DROP TABLE IF EXISTS messages");
-			onCreate(db);
+			if ((oldVersion == 12) && (newVersion == 13)) {
+				db.execSQL("ALTER TABLE " + TABLE_NAME_ROSTER + " ADD COLUMN " + Buddy.FLAGS + " INTEGER NOT NULL DEFAULT 0");
+			} else {
+				db.execSQL("DROP TABLE IF EXISTS roster");
+				db.execSQL("DROP TABLE IF EXISTS messages");
+				onCreate(db);
+			}
 		}
 	};
 	
@@ -258,7 +263,7 @@ public class Roster {
 		return null;
 	}
 	
-	public void updatePresence(String buddyId, Date created, String presence, String nickname, String status, String voiceeid, String language, String country)
+	public void updatePresence(String buddyId, Date created, String presence, String nickname, String status, String voiceeid, String language, String country, Long flags)
 	{
 		Long bid = getBuddyId(buddyId);
 		
@@ -275,6 +280,7 @@ public class Roster {
 		values.put(Buddy.PRESENCE, presence);
 		values.put(Buddy.NICKNAME, nickname);
 		values.put(Buddy.STATUS, status);
+		values.put(Buddy.FLAGS, flags);
 		
 		if (voiceeid != null) {
 		    values.put(Buddy.VOICEEID, voiceeid);
@@ -316,7 +322,7 @@ public class Roster {
 		}
 		
 		// set flags to sent
-		msg.setFlags(msg.getFlags() | 1);
+		msg.setFlag(Message.FLAG_SENT, true);
 		
 		// updates this message
 		values.put(Message.FLAGS, msg.getFlags());
@@ -342,7 +348,7 @@ public class Roster {
 		if (msg == null) return;
 		
 		// set flags to delivered
-		msg.setFlags(msg.getFlags() | 2);
+		msg.setFlag(Message.FLAG_DELIVERED, true);
 		
 		// updates this message
 		values.put(Message.FLAGS, msg.getFlags());

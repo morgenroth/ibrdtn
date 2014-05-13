@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import de.tubs.ibr.dtn.chat.core.Message;
@@ -20,6 +21,8 @@ public class MessageItem extends RelativeLayout {
 	ImageView mPending = null;
 	ImageView mDelivered = null;
 	ImageView mDetails = null;
+	ImageView mSigned = null;
+	LinearLayout mMessageBlock = null;
 
     public MessageItem(Context context) {
         super(context);
@@ -37,7 +40,9 @@ public class MessageItem extends RelativeLayout {
 		mText = (TextView) findViewById(R.id.text);
 		mPending = (ImageView) findViewById(R.id.pending_indicator);
 		mDelivered = (ImageView) findViewById(R.id.delivered_indicator);
+		mSigned = (ImageView) findViewById(R.id.signed_indicator);
 		mDetails = (ImageView) findViewById(R.id.details_indicator);
+		mMessageBlock = (LinearLayout) findViewById(R.id.chat_block);
     }
     
 	public void bind(Message m, int position) {
@@ -59,15 +64,30 @@ public class MessageItem extends RelativeLayout {
 		
 		if (!mMessage.isIncoming())
 		{
-			if (mMessage.getFlags() == 0) {
-				mPending.setVisibility(View.VISIBLE);
-				mDelivered.setVisibility(View.GONE);
-			} else if ((mMessage.getFlags() & 2) > 0) {
-				mPending.setVisibility(View.GONE);
+			if (mMessage.hasFlag(Message.FLAG_DELIVERED)) {
 				mDelivered.setVisibility(View.VISIBLE);
 			} else {
-				mPending.setVisibility(View.GONE);
 				mDelivered.setVisibility(View.GONE);
+			}
+			
+			if (mMessage.hasFlag(Message.FLAG_SENT)) {
+				mPending.setVisibility(View.GONE);
+			} else {
+				mPending.setVisibility(View.VISIBLE);
+			}
+		}
+		else
+		{
+			if (mMessage.hasFlag(Message.FLAG_SIGNED)) {
+				mSigned.setVisibility(View.VISIBLE);
+			} else {
+				mSigned.setVisibility(View.GONE);
+			}
+			
+			if (mMessage.hasFlag(Message.FLAG_ENCRYPTED)) {
+				mText.setTextColor(getResources().getColor(R.color.text_encrypted));
+			} else {
+				mText.setTextColor(getResources().getColor(android.R.color.primary_text_light));
 			}
 		}
 		
