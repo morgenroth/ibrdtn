@@ -58,6 +58,7 @@
                 android:id="@+id/pending_indicator"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:paddingTop="2dip"
                 android:paddingRight="3dip"
                 android:src="@drawable/ic_pending"
                 android:visibility="gone" />
@@ -66,6 +67,7 @@
                 android:id="@+id/delivered_indicator"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:paddingTop="2dip"
                 android:paddingRight="3dip"
                 android:src="@drawable/ic_delivered"
                 android:visibility="gone" />
@@ -74,6 +76,7 @@
                 android:id="@+id/signed_indicator"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:paddingTop="2dip"
                 android:paddingRight="3dip"
                 android:src="@drawable/ic_signed"
                 android:visibility="gone" />
@@ -82,6 +85,7 @@
                 android:id="@+id/encrypted_indicator"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:paddingTop="2dip"
                 android:paddingRight="3dip"
                 android:src="@drawable/ic_secure"
                 android:visibility="gone" />
@@ -90,6 +94,7 @@
                 android:id="@+id/details_indicator"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:paddingTop="2dip"
                 android:src="@drawable/ic_details"
                 android:visibility="gone" />
         </LinearLayout>
