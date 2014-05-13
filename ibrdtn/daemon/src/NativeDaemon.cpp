@@ -694,6 +694,7 @@ namespace dtn
 				dtn::security::SecurityKey key = dtn::security::SecurityKeyManager::getInstance().get(endpoint, dtn::security::SecurityKey::KEY_PUBLIC);
 
 				NativeKeyInfo info;
+				info.endpoint = key.reference.getString();
 				info.data = key.getData();
 				info.fingerprint = key.getFingerprint();
 				info.trustlevel = key.trustlevel;

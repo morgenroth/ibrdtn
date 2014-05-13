@@ -83,6 +83,7 @@ namespace dtn
 
 		class NativeKeyInfo {
 		public:
+			std::string endpoint;
 			std::string fingerprint;
 			std::string data;
 			int trustlevel;
