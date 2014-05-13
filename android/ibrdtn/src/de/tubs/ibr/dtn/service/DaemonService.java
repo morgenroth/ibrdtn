@@ -55,6 +55,7 @@ import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.SecurityService;
+import de.tubs.ibr.dtn.SecurityUtils;
 import de.tubs.ibr.dtn.Services;
 import de.tubs.ibr.dtn.api.DTNSession;
 import de.tubs.ibr.dtn.api.Node;
@@ -70,7 +71,6 @@ import de.tubs.ibr.dtn.stats.ConvergenceLayerStatsEntry;
 import de.tubs.ibr.dtn.stats.StatsDatabase;
 import de.tubs.ibr.dtn.stats.StatsEntry;
 import de.tubs.ibr.dtn.swig.DaemonRunLevel;
-import de.tubs.ibr.dtn.swig.EID;
 import de.tubs.ibr.dtn.swig.NativeStats;
 import de.tubs.ibr.dtn.swig.StringVec;
 
@@ -200,37 +200,60 @@ public class DaemonService extends Service {
     
     private final SecurityService.Stub mSecurityBinder = new SecurityService.Stub() {
 		@Override
-		public Bundle getSecurityInfoIntent() throws RemoteException {
+		public Bundle execute(Intent intent) throws RemoteException {
 			Bundle ret = new Bundle();
-			Intent intent = new Intent(DaemonService.this, KeyInformationActivity.class);
 			
-			// create local singleton endpoint
-			SingletonEndpoint node = new SingletonEndpoint(Preferences.getEndpoint(DaemonService.this));
-			
-			intent.putExtra(KeyInformationActivity.EXTRA_IS_LOCAL, true);
-			intent.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Parcelable)node);
-			
-			PendingIntent pi = PendingIntent.getActivity(DaemonService.this, 0, intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_UPDATE_CURRENT);
-			ret.putParcelable(de.tubs.ibr.dtn.Intent.EXTRA_PENDING_INTENT, pi);
-			return ret;
-		}
+			if (SecurityUtils.ACTION_INFO_ACTIVITY.equals(intent.getAction())) {
+				Intent infoIntent = new Intent(DaemonService.this, KeyInformationActivity.class);
+				
+				// extract endpoint from extras
+				String endpoint = intent.getStringExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT);
+				SingletonEndpoint node = null;
+				
+				// set default node, if not set
+				if (endpoint == null) {
+					// create local singleton endpoint
+					node = new SingletonEndpoint(Preferences.getEndpoint(DaemonService.this));
+					
+					// mark the endpoint as local
+					infoIntent.putExtra(KeyInformationActivity.EXTRA_IS_LOCAL, true);
+				} else {
+					// create singleton endpoint
+					node = new SingletonEndpoint(endpoint);
+				}
+				
+				// put endpoint into extras of info intent
+				infoIntent.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Parcelable)node);
+				
+				PendingIntent pi = PendingIntent.getActivity(DaemonService.this, 0, infoIntent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_UPDATE_CURRENT);
+				ret.putParcelable(de.tubs.ibr.dtn.Intent.EXTRA_PENDING_INTENT, pi);
+			}
+			else if (SecurityUtils.ACTION_INFO_DATA.equals(intent.getAction())) {
+				// extract endpoint from extras
+				String endpoint = intent.getStringExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT);
+				SingletonEndpoint node = null;
+				
+				// set default node, if not set
+				if (endpoint == null) {
+					// create local singleton endpoint
+					node = new SingletonEndpoint(Preferences.getEndpoint(DaemonService.this));
+				} else {
+					// create singleton endpoint
+					node = new SingletonEndpoint(endpoint);
+				}
+				
+				// get key data
+				Bundle keydata = mDaemonProcess.getKeyInfo(node);
+				
+				// put all data into the bundle				
+				if (keydata != null) {
+					ret.putAll(keydata);
+				}
+			}
 
-		@Override
-		public Bundle getKeyExchangeIntent(SingletonEndpoint endpoint) throws RemoteException {
-			Bundle ret = new Bundle();
-			Intent intent = new Intent(DaemonService.this, KeyInformationActivity.class);
-			
-			// reduce endpoint to node address
-			EID node = new EID(endpoint.toString()).getNode();
-			SingletonEndpoint node_endpoint = new SingletonEndpoint(node.getString());
-			
-			intent.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Parcelable)node_endpoint);
-			
-			PendingIntent pi = PendingIntent.getActivity(DaemonService.this, 0, intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_UPDATE_CURRENT);
-			ret.putParcelable(de.tubs.ibr.dtn.Intent.EXTRA_PENDING_INTENT, pi);
 			return ret;
 		}
-    };
+	};
 
 	public boolean isP2pActive() {
 		if (mP2pManager == null)
