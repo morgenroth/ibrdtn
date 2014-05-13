@@ -26,6 +26,7 @@ public class KeyExchangeService extends IntentService {
 	public static final String EXTRA_PROTOCOL = "protocol";
 	public static final String EXTRA_NAME = "name";
 	public static final String EXTRA_ENDPOINT = "EID";
+	public static final String EXTRA_FINGERPRINT = "fingerprint";
 	public static final String EXTRA_DATA = "data";
 	public static final String EXTRA_PASSWORD = "password";
 	public static final String EXTRA_FLAGS = "flags";

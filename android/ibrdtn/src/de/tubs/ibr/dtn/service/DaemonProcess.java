@@ -213,7 +213,8 @@ public class DaemonProcess {
 		try {
 			NativeKeyInfo info = mDaemon.getKeyInfo(endpoint.toString());
 			Bundle ret = new Bundle();
-			ret.putString("fingerprint", info.getFingerprint());
+			ret.putString(KeyExchangeService.EXTRA_ENDPOINT, info.getEndpoint());
+			ret.putString(KeyExchangeService.EXTRA_FINGERPRINT, info.getFingerprint());
 			ret.putString(KeyExchangeService.EXTRA_DATA, info.getData());
 			ret.putLong(KeyExchangeService.EXTRA_FLAGS, info.getFlags());
 			
