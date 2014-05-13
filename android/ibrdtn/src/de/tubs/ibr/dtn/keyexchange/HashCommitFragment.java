@@ -167,6 +167,13 @@ public class HashCommitFragment extends Fragment {
 				ft.replace(R.id.keyExchange, KeyExchangeResultFragment.create(action, mEndpoint)).addToBackStack(null);
 				ft.commit();
 			}
+			else if (KeyExchangeService.ACTION_NEW_KEY.equals(action)) {
+				String data = intent.getStringExtra(KeyExchangeService.EXTRA_DATA);
+				FragmentTransaction ft = getActivity().getSupportFragmentManager().beginTransaction();
+				ft.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_right, R.anim.slide_in_right, R.anim.slide_out_left);
+				ft.replace(R.id.keyExchange, NewKeyFragment.create(mEndpoint, protocol, session, data)).addToBackStack(null);
+				ft.commit();
+			}
 		}
 	};
 }
