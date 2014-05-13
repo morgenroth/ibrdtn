@@ -208,22 +208,25 @@ public class DaemonService extends Service {
 				
 				// extract endpoint from extras
 				String endpoint = intent.getStringExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT);
-				SingletonEndpoint node = null;
+				de.tubs.ibr.dtn.swig.EID node = null;
 				
 				// set default node, if not set
 				if (endpoint == null) {
 					// create local singleton endpoint
-					node = new SingletonEndpoint(Preferences.getEndpoint(DaemonService.this));
+					node = new de.tubs.ibr.dtn.swig.EID(Preferences.getEndpoint(DaemonService.this));
 					
 					// mark the endpoint as local
 					infoIntent.putExtra(KeyInformationActivity.EXTRA_IS_LOCAL, true);
 				} else {
 					// create singleton endpoint
-					node = new SingletonEndpoint(endpoint);
+					node = new de.tubs.ibr.dtn.swig.EID(endpoint);
 				}
 				
+				// create new endpoint object using the return value from key-data
+				SingletonEndpoint host = new SingletonEndpoint(node.getNode().getString());
+				
 				// put endpoint into extras of info intent
-				infoIntent.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Parcelable)node);
+				infoIntent.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Parcelable)host);
 				
 				PendingIntent pi = PendingIntent.getActivity(DaemonService.this, 0, infoIntent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_UPDATE_CURRENT);
 				ret.putParcelable(de.tubs.ibr.dtn.Intent.EXTRA_PENDING_INTENT, pi);
