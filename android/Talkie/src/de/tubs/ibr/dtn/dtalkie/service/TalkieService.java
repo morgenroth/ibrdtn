@@ -48,13 +48,16 @@ import android.util.Log;
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.BundleID;
 import de.tubs.ibr.dtn.api.DTNClient;
+import de.tubs.ibr.dtn.api.Bundle.ProcFlags;
 import de.tubs.ibr.dtn.api.DTNClient.Session;
+import de.tubs.ibr.dtn.api.Bundle;
 import de.tubs.ibr.dtn.api.DataHandler;
 import de.tubs.ibr.dtn.api.EID;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
 import de.tubs.ibr.dtn.api.SessionConnection;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
+import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.api.TransferMode;
 import de.tubs.ibr.dtn.dtalkie.R;
 import de.tubs.ibr.dtn.dtalkie.TalkieActivity;
@@ -452,11 +455,22 @@ public class TalkieService extends IntentService {
         }
         else if (ACTION_RECORDED.equals(action)) {
             File recfile = (File)intent.getSerializableExtra("recfile");
-            EID destination = (EID)intent.getSerializableExtra("destination");
+            
+            // create a new bundle
+            Bundle b = new Bundle();
+            
+            // set destination
+            b.setDestination((EID) intent.getSerializableExtra("destination"));
+            
+            // assign lifetime
+            b.setLifetime(1800L);
+            
+            // request signing of the message
+            b.set(ProcFlags.DTNSEC_REQUEST_SIGN, true);
             
             try {
                 ParcelFileDescriptor fd = ParcelFileDescriptor.open(recfile, ParcelFileDescriptor.MODE_READ_ONLY);
-                BundleID ret = mClient.getSession().send(destination, 1800, fd);
+                BundleID ret = mClient.getSession().send(b, fd);
                 
                 if (ret == null)
                 {
