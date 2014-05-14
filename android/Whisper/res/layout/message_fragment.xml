@@ -76,7 +76,7 @@
 		android:layout_height="wrap_content"
 		android:background="@color/inputbox_background"
 		android:id="@+id/message_composer"
-		android:layout_marginLeft="8dp">
+		android:paddingLeft="8dp">
 		
 		<ImageButton
 			android:id="@+id/buttonSecurity"
