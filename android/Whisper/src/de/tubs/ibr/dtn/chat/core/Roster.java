@@ -66,7 +66,7 @@ public class Roster {
 				Buddy.VOICEEID + " TEXT, " +
 				Buddy.LANGUAGE + " TEXT, " +
 				Buddy.COUNTRY + " TEXT, " +
-				Buddy.FLAGS + " INTEGER NOT NULL" +
+				Buddy.FLAGS + " INTEGER NOT NULL DEFAULT 0" +
 			");";
 	
 	private static final String DATABASE_CREATE_MESSAGES = 
@@ -78,7 +78,7 @@ public class Roster {
 				Message.RECEIVED + " TEXT NOT NULL, " +
 				Message.PAYLOAD + " TEXT NOT NULL, " +
 				Message.SENTID + " TEXT, " +
-				Message.FLAGS + " INTEGER NOT NULL" +
+				Message.FLAGS + " INTEGER NOT NULL DEFAULT 0" +
 			");";
 
 	private class DBOpenHelper extends SQLiteOpenHelper {
