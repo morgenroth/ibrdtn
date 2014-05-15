@@ -93,6 +93,8 @@ public class NewKeyFragment extends Fragment {
 	}
 
 	public void refresh() {
+		if (getView() == null) return;
+		
 		TextView textInfo = (TextView) getView().findViewById(R.id.textViewInfo);
 		textInfo.setText(getString(R.string.key_selection_request));
 		
