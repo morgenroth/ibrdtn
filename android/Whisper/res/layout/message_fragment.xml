@@ -75,8 +75,7 @@
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:background="@color/inputbox_background"
-		android:id="@+id/message_composer"
-		android:paddingLeft="8dp">
+		android:id="@+id/message_composer">
 		
 		<ImageButton
 			android:id="@+id/buttonSecurity"
@@ -84,10 +83,14 @@
 			android:layout_height="match_parent"
 			android:layout_gravity="bottom"
 			android:layout_weight="0"
-			android:background="@android:color/transparent"
+			android:background="@drawable/button_transparent"
 			android:contentDescription="@string/desc_security_button"
 			android:onClick="securityInfo"
 			android:src="@drawable/ic_action_keylock_open"
+			android:paddingLeft="4dp"
+			android:paddingTop="8dp"
+			android:paddingBottom="8dp"
+			android:layout_marginRight="-8dp"
 			android:visibility="gone" />
 		
 		<EditText
@@ -95,9 +98,7 @@
 			android:layout_width="0dp"
 			android:layout_height="wrap_content"
 			android:layout_weight="1"
-			android:layout_marginRight="8dp"
-			android:layout_marginTop="8dp"
-			android:layout_marginBottom="8dp"
+			android:layout_margin="8dp"
 			android:ems="10"
 			android:textSize="16sp"
 			android:nextFocusRight="@+id/buttonSend"
