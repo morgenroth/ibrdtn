@@ -269,7 +269,7 @@ namespace dtn
 			// abort if the store path is not set
 			if (!MemoryBundleSet::__store_path_set__) return;
 
-			// abort it the name is not set
+			// abort if the name is not set
 			if (_name.length() == 0) return;
 
 			// create directory, if it does not existt
