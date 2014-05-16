@@ -24,11 +24,11 @@ DAEMON_ARGS="-D -p ${PIDFILE}"	 	# Arguments to run the daemon with
 # Exit if the package is not installed
 [ -x $DAEMON ] || exit 0
 
-# Exit if explicitly told to
-[ "$ENABLED" != "0" ] || exit 0
-
 # Read configuration variable file if it is present
 [ -r /etc/default/$NAME ] && . /etc/default/$NAME
+
+# Exit if explicitly told to
+[ "$ENABLED" != "0" ] || exit 0
 
 # set quiet option if requested
 [ -n "${DAEMON_OPTS}" ] && DAEMON_ARGS="${DAEMON_ARGS} ${DAEMON_OPTS}"
