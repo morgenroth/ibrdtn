@@ -76,6 +76,8 @@ namespace io
 
 		size_t _stable_counter;
 		io::FileHash _last_hash;
+
+		const static std::string TAG;
 	};
 }
 

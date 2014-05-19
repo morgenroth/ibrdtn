@@ -29,6 +29,7 @@
 #include <limits>
 
 #include <ibrcommon/ibrcommon.h>
+#include <ibrcommon/Logger.h>
 #ifdef IBRCOMMON_SUPPORT_SSL
 #include <ibrcommon/ssl/MD5Stream.h>
 #endif
@@ -39,6 +40,8 @@
 
 namespace io
 {
+	const std::string ObservedFile::TAG = "ObservedFile";
+
 	ObservedFile::ObservedFile(const ibrcommon::File &file)
 	 : _file(__copy(file))
 	{
@@ -99,6 +102,7 @@ namespace io
 				}
 			}
 
+			IBRCOMMON_LOGGER_TAG(TAG,notice) << "findFiles returning " << files.size() << " files" << IBRCOMMON_LOGGER_ENDL;
 			return;
 		} catch (const std::bad_cast&) { };
 #endif
@@ -118,6 +122,7 @@ namespace io
 				else files.insert(of);
 			}
 		}
+		IBRCOMMON_LOGGER_TAG(TAG,notice) << "findFiles returning " << files.size() << " files" << IBRCOMMON_LOGGER_ENDL;
 	}
 
 	void ObservedFile::update()
@@ -146,6 +151,11 @@ namespace io
 	io::FileHash ObservedFile::__hash() const
 	{
 #ifdef IBRCOMMON_SUPPORT_SSL
+		IBRCOMMON_LOGGER_TAG(TAG,notice) << "using MD5-algorithm from SSL, inputs:" << "\n"
+										 << "\t" << "timestamp: " << _file->lastmodify() << "\n"
+										 << "\t" << "filesize : " << _file->size() << "\n"
+										 << "\t" << "filepath : " << _file->getPath() << "\n"
+										 << IBRCOMMON_LOGGER_ENDL;
 		// update hash
 		ibrcommon::MD5Stream md5;
 		md5 << _file->lastmodify() << "|" << _file->size() << "|" << _file->getPath() << std::flush;
@@ -156,6 +166,11 @@ namespace io
 #else
 		std::stringstream ss;
 		ss << _file->lastmodify() << "|" << _file->size() << "|" << _file->getPath();
+		IBRCOMMON_LOGGER_TAG(TAG,notice) << "not using MD5-algorithm from SSL, inputs:" << "\n"
+										 << "\t" << "timestamp: " << _file->lastmodify() << "\n"
+										 << "\t" << "filesize : " << _file->size() << "\n"
+										 << "\t" << "filepath : " << _file->getPath() << "\n"
+										 << IBRCOMMON_LOGGER_ENDL;
 		return FileHash(_file->getPath(), ss.str());
 #endif
 
