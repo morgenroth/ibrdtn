@@ -61,7 +61,7 @@ namespace dtn
 				// default constructor
 				Parameter()
 				: flowcontrol(FLOW_NONE), max_seq_numbers(2), max_msg_length(1024),
-				  initial_timeout(50), seq_check(true), retry_limit(5) { }
+				  initial_timeout(50), retry_limit(5) { }
 
 				// destructor
 				virtual ~Parameter() { }
@@ -70,7 +70,6 @@ namespace dtn
 				unsigned int max_seq_numbers;
 				size_t max_msg_length;
 				size_t initial_timeout;
-				bool seq_check;
 				size_t retry_limit;
 			};
 

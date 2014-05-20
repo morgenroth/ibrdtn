@@ -166,18 +166,14 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 25) << "frame received, flags: " << (int)flags << ", seqno: " << seqno << ", len: " << len << IBRCOMMON_LOGGER_ENDL;
 
 			try {
-				// sequence number checks
-				if (_params.seq_check)
+				// we will accept every sequence number on first segments
+				// if this is not the first segment
+				if (!(flags & DatagramService::SEGMENT_FIRST))
 				{
-					// we will accept every sequence number on first segments
-					// if this is not the first segment
-					if (!(flags & DatagramService::SEGMENT_FIRST))
-					{
-						// if the sequence number is not expected
-						if (_next_seqno != seqno)
-							// then drop it and send an ack
-							throw WrongSeqNoException(_next_seqno);
-					}
+					// if the sequence number is not expected
+					if (_next_seqno != seqno)
+						// then drop it and send an ack
+						throw WrongSeqNoException(_next_seqno);
 				}
 
 				// if this is the last segment then...

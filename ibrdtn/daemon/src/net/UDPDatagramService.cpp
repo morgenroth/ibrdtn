@@ -44,7 +44,6 @@ namespace dtn
 			_params.max_seq_numbers = 8;		// seqno 0..7
 			_params.flowcontrol = DatagramService::FLOW_SLIDING_WINDOW;
 			_params.initial_timeout = 50;		// initial timeout 50ms
-			_params.seq_check = true;
 			_params.retry_limit = 5;
 		}
 
