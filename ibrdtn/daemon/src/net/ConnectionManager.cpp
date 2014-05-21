@@ -232,7 +232,7 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 56) << "New node available: " << db << IBRCOMMON_LOGGER_ENDL;
 			}
 
-			if (db.isAvailable() && !db.isAnnounced()) {
+			if (db.isAvailable() && !db.isAnnounced() && isReachable(db)) {
 				db.setAnnounced(true);
 
 				// announce the new node
@@ -313,6 +313,18 @@ namespace dtn
 			add(node);
 		}
 
+		bool ConnectionManager::isReachable(const dtn::core::Node &node)
+		{
+			ibrcommon::MutexLock l(_cl_lock);
+			for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
+			{
+				ConvergenceLayer &cl = (**iter);
+				if (node.has(cl.getDiscoveryProtocol())) return true;
+			}
+
+			return false;
+		}
+
 		void ConnectionManager::check_available()
 		{
 			ibrcommon::MutexLock l(_node_lock);
@@ -323,7 +335,7 @@ namespace dtn
 				dtn::core::Node &n = (*iter).second;
 				if (n.isAnnounced()) continue;
 
-				if (n.isAvailable()) {
+				if (n.isAvailable() && isReachable(n)) {
 					n.setAnnounced(true);
 
 					// announce the unavailable event
@@ -346,7 +358,7 @@ namespace dtn
 					continue;
 				}
 
-				if ( !n.isAvailable() ) {
+				if ( !n.isAvailable() ||  !isReachable(n) ) {
 					n.setAnnounced(false);
 
 					// announce the unavailable event
@@ -386,7 +398,7 @@ namespace dtn
 					const Node &n = (*iter).second;
 					std::list<Node::URI> ul = n.get(Node::NODE_CONNECTED, Node::CONN_TCPIP);
 
-					if (ul.empty() && n.isAvailable())
+					if (ul.empty() && n.isAvailable()  && isReachable(n))
 					{
 						connect_nodes.push(n);
 					}
@@ -541,7 +553,7 @@ namespace dtn
 			for (nodemap::const_iterator iter = _nodes.begin(); iter != _nodes.end(); ++iter)
 			{
 				const Node &n = (*iter).second;
-				if (n.isAvailable()) ret.insert( n );
+				if (n.isAvailable() && isReachable(n)) ret.insert( n );
 			}
 
 			return ret;
@@ -551,7 +563,7 @@ namespace dtn
 		{
 			ibrcommon::MutexLock l(_node_lock);
 			const Node &n = getNode(eid);
-			if (n.isAvailable()) return n;
+			if (n.isAvailable() && isReachable(n)) return n;
 
 			throw dtn::net::NeighborNotAvailableException();
 		}
@@ -561,7 +573,7 @@ namespace dtn
 			try {
 				ibrcommon::MutexLock l(_node_lock);
 				const Node &n = getNode(node.getEID());
-				if (n.isAvailable()) return true;
+				if (n.isAvailable() && isReachable(n)) return true;
 			} catch (const NeighborNotAvailableException&) { }
 
 			return false;

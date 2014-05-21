@@ -177,6 +177,11 @@ namespace dtn
 			void check_autoconnect();
 
 			/**
+			 * check if the node is reachable by any convergence-layer
+			 */
+			bool isReachable(const dtn::core::Node &node);
+
+			/**
 			 * get node
 			 */
 			dtn::core::Node& getNode(const dtn::data::EID &eid) throw (NeighborNotAvailableException);
