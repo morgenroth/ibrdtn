@@ -115,9 +115,30 @@ void BaseRouterTest::testTransferTo()
 		}
 	};
 
+	class ConvergenceLayerTest : public dtn::net::ConvergenceLayer
+	{
+	public:
+		ConvergenceLayerTest() {};
+		~ConvergenceLayerTest() {};
+
+		dtn::core::Node::Protocol getDiscoveryProtocol() const
+		{
+			return dtn::core::Node::CONN_TCPIP;
+		}
+
+		void queue(const dtn::core::Node &n, const dtn::net::BundleTransfer &job)
+		{
+		}
+	};
+
 	/* test signature (const dtn::data::EID &destination, const dtn::data::BundleID &id) */
 	dtn::data::Bundle b;
 	dtn::routing::BaseRouter router;
+
+	// create a convergence layer
+	ConvergenceLayerTest cl;
+
+	dtn::core::BundleCore::getInstance().getConnectionManager().add(&cl);
 
 	// EID of the neighbor to test
 	dtn::data::EID neighbor("dtn://no-neighbor");
@@ -149,6 +170,7 @@ void BaseRouterTest::testTransferTo()
 	}
 
 	dtn::core::BundleCore::getInstance().getConnectionManager().remove(n);
+	dtn::core::BundleCore::getInstance().getConnectionManager().remove(&cl);
 }
 
 void BaseRouterTest::testRaiseEvent()

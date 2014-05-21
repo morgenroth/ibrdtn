@@ -56,6 +56,9 @@ void DatagramClTest::setUp() {
 	_fake_service = new FakeDatagramService();
 	_fake_cl = new DatagramConvergenceLayer( _fake_service );
 
+	// add convergence layer to bundle core
+	dtn::core::BundleCore::getInstance().getConnectionManager().add(_fake_cl);
+
 	// initialize BundleCore
 	dtn::core::BundleCore::getInstance().initialize();
 
@@ -95,6 +98,9 @@ void DatagramClTest::tearDown() {
 
 	// shutdown BundleCore
 	dtn::core::BundleCore::getInstance().terminate();
+
+	// add convergence layer to bundle core
+	dtn::core::BundleCore::getInstance().getConnectionManager().remove(_fake_cl);
 
 	delete _fake_cl;
 	_fake_cl = NULL;
