@@ -19,8 +19,6 @@ core_SOURCES = \
 	CustodyEvent.cpp \
 	CustodyEvent.h \
 	Event.cpp \
-	EventDebugger.cpp \
-	EventDebugger.h \
 	Event.h \
 	EventReceiver.cpp \
 	EventReceiver.h \

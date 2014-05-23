@@ -123,7 +123,6 @@
 #endif
 
 #include "Debugger.h"
-#include "core/EventDebugger.h"
 
 /** events **/
 #include "core/NodeEvent.h"
@@ -1207,9 +1206,6 @@ namespace dtn
 		void NativeDaemon::init_api() throw (NativeDaemonException)
 		{
 			dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-
-			// create event debugger
-			_components[RUNLEVEL_API].push_back( new dtn::core::EventDebugger() );
 
 			// Debugger
 			_apps.push_back( new dtn::daemon::Debugger() );
