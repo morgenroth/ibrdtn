@@ -31,7 +31,9 @@ namespace ibrcommon
 {
 	TimeMeasurement::TimeMeasurement()
 	{
-		start(); stop();
+		start();
+		_end.tv_sec = _start.tv_sec;
+		_end.tv_nsec = _start.tv_nsec;
 	}
 
 	TimeMeasurement::~TimeMeasurement()
