@@ -196,6 +196,7 @@ namespace dtn
 				bool _enabled;
 				bool _quiet;
 				int _level;
+				bool _profiling;
 
 			public:
 				/**
@@ -213,6 +214,12 @@ namespace dtn
 				 * @return True, if the daemon should be quiet.
 				 */
 				bool quiet() const;
+
+				/**
+				 * Returns true if the daemon should execute profiling code.
+				 * @return True, if profiling is activated
+				 */
+				bool profiling() const;
 			};
 
 			class Logger : public Configuration::Extension

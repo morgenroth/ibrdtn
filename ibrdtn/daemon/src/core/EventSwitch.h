@@ -27,7 +27,9 @@
 #include <ibrcommon/Exceptions.h>
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/Conditional.h>
+#include <ibrcommon/TimeMeasurement.h>
 
+#include <list>
 #include <queue>
 #include <map>
 
@@ -64,8 +66,10 @@ namespace dtn
 			class Worker : public ibrcommon::JoinableThread
 			{
 			public:
-				Worker(EventSwitch &sw);
+				Worker(EventSwitch &sw, bool profiling);
 				~Worker();
+
+				bool isStalled();
 
 			protected:
 				void run() throw ();
@@ -74,6 +78,30 @@ namespace dtn
 			private:
 				EventSwitch &_switch;
 				bool _running;
+				ibrcommon::TimeMeasurement _tm;
+				bool _inprogress;
+				bool _profiling;
+			};
+
+			class WatchDog : public ibrcommon::JoinableThread
+			{
+			public:
+				WatchDog(EventSwitch &sw, std::list<Worker*> &workers);
+				~WatchDog();
+
+				void up();
+				void down();
+
+			protected:
+				void run() throw ();
+				virtual void __cancellation() throw ();
+
+			private:
+				EventSwitch &_switch;
+				std::list<Worker*> &_workers;
+
+				bool _running;
+				ibrcommon::Conditional _cond;
 			};
 
 			ibrcommon::Conditional _queue_cond;
@@ -81,15 +109,23 @@ namespace dtn
 			std::queue<Task*> _prio_queue;
 			std::queue<Task*> _low_queue;
 
-			void process();
+			WatchDog _wd;
+			std::list<Worker*> _wlist;
+
+			ibrcommon::TimeMeasurement _tm;
+			bool _inprogress;
+
+			void process(ibrcommon::TimeMeasurement &tm, bool &inprogress, bool profiling);
 
 		protected:
 			virtual void componentUp() throw ();
 			virtual void componentDown() throw ();
 
+			bool isStalled();
+
 		public:
 			static EventSwitch& getInstance();
-			void loop(size_t threads = 0);
+			void loop(size_t threads, bool profiling = false);
 
 			/**
 			 * checks if all the queues are empty

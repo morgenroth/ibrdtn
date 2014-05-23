@@ -87,7 +87,7 @@ namespace dtn
 		 : _enabled(true), _timeout(5), _crosslayer(false) {}
 
 		Configuration::Debug::Debug()
-		 : _enabled(false), _quiet(false), _level(0) {}
+		 : _enabled(false), _quiet(false), _level(0), _profiling(false) {}
 
 		Configuration::Logger::Logger()
 		 : _quiet(false), _options(0), _timestamps(false), _verbose(false) {}
@@ -416,8 +416,11 @@ namespace dtn
 			}
 		}
 
-		void Configuration::Debug::load(const ibrcommon::ConfigFile&)
+		void Configuration::Debug::load(const ibrcommon::ConfigFile &conf)
 		{
+			try {
+				_profiling = (conf.read<std::string>("profiling") == "yes");
+			} catch (const ibrcommon::ConfigFile::key_not_found&) { };
 		}
 
 		void Configuration::Daemon::load(const ibrcommon::ConfigFile&)
@@ -518,6 +521,11 @@ namespace dtn
 		bool Configuration::Debug::quiet() const
 		{
 			return _quiet;
+		}
+
+		bool Configuration::Debug::profiling() const
+		{
+			return _profiling;
 		}
 
 		bool Configuration::Debug::enabled() const

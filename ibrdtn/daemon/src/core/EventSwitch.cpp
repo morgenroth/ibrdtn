@@ -29,13 +29,14 @@
 #include <stdexcept>
 #include <iostream>
 #include <typeinfo>
+#include <signal.h>
 
 namespace dtn
 {
 	namespace core
 	{
 		EventSwitch::EventSwitch()
-		 : _running(true), _shutdown(false)
+		 : _running(true), _shutdown(false), _wd(*this, _wlist), _inprogress(false)
 		{
 		}
 
@@ -84,7 +85,7 @@ namespace dtn
 			return (_low_queue.empty() && _queue.empty() && _prio_queue.empty());
 		}
 
-		void EventSwitch::process()
+		void EventSwitch::process(ibrcommon::TimeMeasurement &tm, bool &inprogress, bool profiling)
 		{
 			EventSwitch::Task *t = NULL;
 
@@ -130,40 +131,73 @@ namespace dtn
 
 			if (t != NULL)
 			{
+				if (profiling) {
+					inprogress = true;
+					tm.start();
+				}
 				// execute the event
 				t->processor.process(t->event);
+
+				if (profiling) {
+					tm.stop();
+					inprogress = false;
+				}
+
+				// log the event
+				if (t->event->isLoggable())
+				{
+					if (profiling) {
+						IBRCOMMON_LOGGER_TAG(t->event->getName(), notice) << t->event->getMessage() << " (" << tm.getMilliseconds() << " ms)" << IBRCOMMON_LOGGER_ENDL;
+					} else {
+						IBRCOMMON_LOGGER_TAG(t->event->getName(), notice) << t->event->getMessage() << IBRCOMMON_LOGGER_ENDL;
+					}
+				}
 
 				// delete the Task
 				delete t;
 			}
 		}
 
-		void EventSwitch::loop(size_t threads)
+		bool EventSwitch::isStalled()
 		{
-			// create worker threads
-			std::list<Worker*> wlist;
+			if (!_inprogress) return false;
+			_tm.stop();
+			return (_tm.getMilliseconds() > 5000);
+		}
+
+		void EventSwitch::loop(size_t threads, bool profiling)
+		{
+			IBRCOMMON_LOGGER_TAG("EventSwitch", warning) << "Profiling and stalled event detection enabled" << IBRCOMMON_LOGGER_ENDL;
 
 			for (size_t i = 0; i < threads; ++i)
 			{
-				Worker *w = new Worker(*this);
+				Worker *w = new Worker(*this, profiling);
 				w->start();
-				wlist.push_back(w);
+				_wlist.push_back(w);
 			}
+
+			// bring up watchdog
+			if (profiling) _wd.up();
 
 			try {
 				while (_running)
 				{
-					process();
+					process(_tm, _inprogress, profiling);
 				}
 			} catch (const ibrcommon::Conditional::ConditionalAbortException&) { };
 
-			for (std::list<Worker*>::iterator iter = wlist.begin(); iter != wlist.end(); ++iter)
+			// shut down watchdog
+			if (profiling) _wd.down();
+
+			for (std::list<Worker*>::iterator iter = _wlist.begin(); iter != _wlist.end(); ++iter)
 			{
 				Worker *w = (*iter);
 				w->stop();
 				w->join();
 				delete w;
 			}
+
+			_wlist.clear();
 		}
 
 		void EventSwitch::queue(EventProcessor &proc, Event *evt)
@@ -233,24 +267,94 @@ namespace dtn
 			}
 		}
 
-		EventSwitch::Worker::Worker(EventSwitch &sw)
-		 : _switch(sw), _running(true)
+		EventSwitch::Worker::Worker(EventSwitch &sw, bool profiling)
+		 : _switch(sw), _running(true), _inprogress(false), _profiling(profiling)
 		{}
 
 		EventSwitch::Worker::~Worker()
 		{}
 
+		bool EventSwitch::Worker::isStalled()
+		{
+			if (!_inprogress) return false;
+			_tm.stop();
+			return (_tm.getMilliseconds() > 5000);
+		}
+
 		void EventSwitch::Worker::run() throw ()
 		{
 			try {
 				while (_running)
-					_switch.process();
+					_switch.process(_tm, _inprogress, _profiling);
 			} catch (const ibrcommon::Conditional::ConditionalAbortException&) { };
 		}
 
 		void EventSwitch::Worker::__cancellation() throw ()
 		{
 			_running = false;
+		}
+
+		EventSwitch::WatchDog::WatchDog(EventSwitch &sw, std::list<Worker*> &workers)
+		 : _switch(sw), _workers(workers), _running(true)
+		{}
+
+		EventSwitch::WatchDog::~WatchDog()
+		{}
+
+		void EventSwitch::WatchDog::up()
+		{
+			// reset thread if necessary
+			if (JoinableThread::isFinalized())
+			{
+				JoinableThread::reset();
+				_running = true;
+			}
+
+			JoinableThread::start();
+		}
+
+		void EventSwitch::WatchDog::down()
+		{
+			JoinableThread::stop();
+			JoinableThread::join();
+		}
+
+		void EventSwitch::WatchDog::run() throw ()
+		{
+			try {
+				ibrcommon::MutexLock l(_cond);
+				while (_running) {
+					try {
+						// wait a period
+						_cond.wait(10000);
+					} catch (const ibrcommon::Conditional::ConditionalAbortException &ex) {
+						if (ex.reason == ibrcommon::Conditional::ConditionalAbortException::COND_TIMEOUT) {
+							if (_switch.isStalled()) {
+								IBRCOMMON_LOGGER_TAG("EventSwitch", critical) << "stalled event detected" << IBRCOMMON_LOGGER_ENDL;
+								raise (SIGABRT);
+							}
+
+							for (std::list<Worker*>::iterator iter = _workers.begin(); iter != _workers.end(); ++iter)
+							{
+								Worker *w = (*iter);
+
+								if (w->isStalled()) {
+									IBRCOMMON_LOGGER_TAG("EventSwitch", critical) << "stalled event detected" << IBRCOMMON_LOGGER_ENDL;
+									raise (SIGABRT);
+								}
+							}
+
+						} else throw;
+					}
+				}
+			} catch (const ibrcommon::Conditional::ConditionalAbortException&) { };
+		}
+
+		void EventSwitch::WatchDog::__cancellation() throw ()
+		{
+			ibrcommon::MutexLock l(_cond);
+			_running = false;
+			_cond.abort();
 		}
 	}
 }

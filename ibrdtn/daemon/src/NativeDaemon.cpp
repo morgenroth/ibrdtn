@@ -1694,11 +1694,11 @@ namespace dtn
 			// run the event switch loop forever
 			if (conf.getDaemon().getThreads() > 1)
 			{
-				esw.loop( conf.getDaemon().getThreads() );
+				esw.loop( conf.getDaemon().getThreads(), conf.getDebug().profiling() );
 			}
 			else
 			{
-				esw.loop();
+				esw.loop(0, conf.getDebug().profiling());
 			}
 
 			// terminate event switch component
