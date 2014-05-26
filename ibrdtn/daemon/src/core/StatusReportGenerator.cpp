@@ -93,6 +93,10 @@ namespace dtn
 			// set lifetime to the origin bundle lifetime
 			bundle.lifetime = b.lifetime;
 
+			// sign the report if the reference was signed too
+			if (b.get(dtn::data::PrimaryBlock::DTNSEC_STATUS_VERIFIED))
+				bundle.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, true);
+
 			// set bundle parameter
 			report.bundleid = b;
 
