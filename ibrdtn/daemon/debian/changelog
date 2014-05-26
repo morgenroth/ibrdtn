@@ -1,3 +1,13 @@
+ibrdtnd (0.12.1) stable; urgency=medium
+
+  * Load init script defaults before checking if the start-up is disabled
+  * Trigger all routing modules to react to initial topology
+  * Fix copy operator of SQLiteBundleSet
+  * Add early duplicate check
+  * Create a spool directory with write permissions for 'dtnd' in debian install script
+
+ -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Mon, 26 May 2014 15:00:08 +0200
+
 ibrdtnd (0.12.0) stable; urgency=low
 
   * Windows support with NTService (win32)

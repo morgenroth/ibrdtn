@@ -1,3 +1,14 @@
+ibrcommon (0.12.1) stable; urgency=medium
+
+  * Fix: absolute path of File if the path begins with a "."
+  * Fix: Workaround for missing support of AI_NUMERICSERV on win32
+  * Fix: vaddress::isLocal fails without DNS
+  * Fix: build with libnl2
+  * Fix: buffer size of HMacStream
+  * Improved netlink support for versions below 3.2
+
+ -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Mon, 26 May 2014 15:00:06 +0200
+
 ibrcommon (0.12.0) stable; urgency=low
 
   * Windows supported (win32)

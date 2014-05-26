@@ -1,3 +1,12 @@
+ibrdtn (0.12.1) stable; urgency=medium
+
+  * Add zlib flags and libs to fix unittests on recent ubuntu
+  * Fix expiring bundles references in MemoryBundleSet
+  * Fix copy operator of MemoryBundleSet
+  * Add unittest to detect copy issues of BundleSet
+
+ -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Mon, 26 May 2014 15:00:07 +0200
+
 ibrdtn (0.12.0) stable; urgency=low
 
   * Windows support (win32)

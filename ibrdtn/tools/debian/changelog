@@ -1,3 +1,9 @@
+ibrdtn-tools (0.12.1) stable; urgency=medium
+
+  * Make libarchive >= 3.0 mandatory to build dtninbox / dtnoutbox
+
+ -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Mon, 26 May 2014 15:00:09 +0200
+
 ibrdtn-tools (0.12.0) stable; urgency=low
 
   * Add destination is group option to dtntracepath
