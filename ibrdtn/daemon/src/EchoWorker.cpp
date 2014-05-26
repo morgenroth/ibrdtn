@@ -59,6 +59,14 @@ namespace dtn
 				// set the lifetime to the same value as the received bundle
 				echo.lifetime = b.lifetime;
 
+				// sign the reply if the echo-request was signed too
+				if (b.get(dtn::data::PrimaryBlock::DTNSEC_STATUS_VERIFIED))
+					echo.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, true);
+
+				// encrypt the reply if the echo-request was encrypt too
+				if (b.get(dtn::data::PrimaryBlock::DTNSEC_STATUS_CONFIDENTIAL))
+					echo.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT, true);
+
 				try {
 					const dtn::data::TrackingBlock &tracking = b.find<dtn::data::TrackingBlock>();
 					dtn::data::TrackingBlock &target = echo.push_back<dtn::data::TrackingBlock>();
