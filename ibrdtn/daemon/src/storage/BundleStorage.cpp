@@ -79,6 +79,9 @@ namespace dtn
 			custody_bundle.destination = meta.custodian;
 			custody_bundle.source = dtn::core::BundleCore::local;
 
+			// always sign custody signals
+			custody_bundle.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, true);
+
 			// send the custody accepted bundle
 			dtn::core::BundleGeneratedEvent::raise(custody_bundle);
 
@@ -115,6 +118,9 @@ namespace dtn
 			b.set(dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD, true);
 			b.destination = meta.custodian;
 			b.source = dtn::core::BundleCore::local;
+
+			// always sign custody signals
+			b.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, true);
 
 			// send the custody rejected bundle
 			dtn::core::BundleGeneratedEvent::raise(b);
