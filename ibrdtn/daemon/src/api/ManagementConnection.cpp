@@ -493,11 +493,15 @@ namespace dtn
 					{
 						dtn::security::KeyExchangeData kedata(dtn::security::KeyExchangeData::START, 0);
 						dtn::security::KeyExchangeEvent::raise(peer, kedata);
+
+						_stream << ClientHandler::API_STATUS_OK << " KEY-EXCHANGE INITIATED" << std::endl;
 					}
 					else if (cmd[1] == "dh")
 					{
 						dtn::security::KeyExchangeData kedata(dtn::security::KeyExchangeData::START, 1);
 						dtn::security::KeyExchangeEvent::raise(peer, kedata);
+
+						_stream << ClientHandler::API_STATUS_OK << " KEY-EXCHANGE INITIATED" << std::endl;
 					}
 					else if (cmd[1] == "jpake")
 					{
@@ -509,11 +513,15 @@ namespace dtn
 						kedata.str(cmd[3]);
 
 						dtn::security::KeyExchangeEvent::raise(peer, kedata);
+
+						_stream << ClientHandler::API_STATUS_OK << " KEY-EXCHANGE INITIATED" << std::endl;
 					}
 					else if (cmd[1] == "hash")
 					{
 						dtn::security::KeyExchangeData kedata(dtn::security::KeyExchangeData::START, 3);
 						dtn::security::KeyExchangeEvent::raise(peer, kedata);
+
+						_stream << ClientHandler::API_STATUS_OK << " KEY-EXCHANGE INITIATED" << std::endl;
 					}
 					else if (cmd[1] == "password")
 					{
@@ -528,6 +536,8 @@ namespace dtn
 						kedata.str(cmd[4]);
 
 						dtn::security::KeyExchangeEvent::raise(peer, kedata);
+
+						_stream << ClientHandler::API_STATUS_OK << " KEY-EXCHANGE INITIATED" << std::endl;
 					}
 					else if (cmd[1] == "hashcompare")
 					{
@@ -543,6 +553,8 @@ namespace dtn
 						kedata.setStep(atoi(cmd[4].c_str()));
 
 						dtn::security::KeyExchangeEvent::raise(peer, kedata);
+
+						_stream << ClientHandler::API_STATUS_OK << " KEY-EXCHANGE INITIATED" << std::endl;
 					}
 					else if (cmd[1] == "newkey")
 					{
@@ -558,6 +570,12 @@ namespace dtn
 						kedata.setStep(atoi(cmd[4].c_str()));
 
 						dtn::security::KeyExchangeEvent::raise(peer, kedata);
+
+						if (kedata.getStep() == 0) {
+							_stream << ClientHandler::API_STATUS_OK << " NEW KEY DISCARDED" << std::endl;
+						} else {
+							_stream << ClientHandler::API_STATUS_OK << " NEW KEY ACCEPTED" << std::endl;
+						}
 					}
 					else
 					{
