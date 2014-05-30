@@ -167,7 +167,9 @@ namespace dtn
 
 		void EventSwitch::loop(size_t threads, bool profiling)
 		{
-			IBRCOMMON_LOGGER_TAG("EventSwitch", warning) << "Profiling and stalled event detection enabled" << IBRCOMMON_LOGGER_ENDL;
+			if (profiling) {
+				IBRCOMMON_LOGGER_TAG("EventSwitch", warning) << "Profiling and stalled event detection enabled" << IBRCOMMON_LOGGER_ENDL;
+			}
 
 			for (size_t i = 0; i < threads; ++i)
 			{
