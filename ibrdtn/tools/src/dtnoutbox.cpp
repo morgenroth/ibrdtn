@@ -173,13 +173,6 @@ void print_help()
 
 void read_configuration(int argc, char** argv, config_t &conf)
 {
-	// print help if not enough parameters are set
-	if (argc < 3)
-	{
-		print_help();
-		exit(EXIT_FAILURE);
-	}
-
 	while(1)
 	{
 		/* getopt_long stores the option index here. */
@@ -239,6 +232,13 @@ void read_configuration(int argc, char** argv, config_t &conf)
 			abort();
 			break;
 		}
+	}
+
+	// print help if not enough parameters are set
+	if ((argc - optind) < 3)
+	{
+		print_help();
+		exit(EXIT_FAILURE);
 	}
 
 	conf.name = std::string(argv[optind]);
