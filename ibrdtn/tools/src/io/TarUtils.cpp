@@ -50,6 +50,8 @@ namespace io
 	{
 	}
 
+	char readbuf[BUFF_SIZE];
+
 	int __tar_utils_open_callback( struct archive *, void * )
 	{
 		//blob does not need to be opened, do nothing
@@ -70,12 +72,10 @@ namespace io
 
 	ssize_t __tar_utils_read_callback( struct archive *, void *istream_ptr, const void **buffer )
 	{
-		char *cbuff = new char[BUFF_SIZE];
-
 		std::istream &is = *(std::istream*)istream_ptr;
-		is.read(cbuff,BUFF_SIZE);
+		is.read((char*)&readbuf, BUFF_SIZE);
 
-		*buffer = cbuff;
+		*buffer = &readbuf;
 		return BUFF_SIZE;
 	}
 
