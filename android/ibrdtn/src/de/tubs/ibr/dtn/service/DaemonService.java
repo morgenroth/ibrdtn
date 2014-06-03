@@ -676,7 +676,7 @@ public class DaemonService extends Service {
 		
 		Editor e = dtnd_prefs.edit();
 		
-		e.putBoolean(Preferences.KEY_ENABLED, prefs.getBoolean(Preferences.KEY_ENABLED, false));
+		e.putBoolean(Preferences.KEY_ENABLED, prefs.getBoolean(Preferences.KEY_ENABLED, true));
 		e.putBoolean(Preferences.KEY_P2P_ENABLED, prefs.getBoolean(Preferences.KEY_P2P_ENABLED, false));
 		e.putString(Preferences.KEY_DISCOVERY_MODE, prefs.getString(Preferences.KEY_DISCOVERY_MODE, "smart"));
 		
