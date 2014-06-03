@@ -239,9 +239,6 @@ public class DaemonProcess {
     	// lower the thread priority
     	android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
     	
-    	// initialize configuration
-    	Preferences.initializeDefaultPreferences(mContext);
-    	
     	// get daemon preferences
         SharedPreferences prefs = mContext.getSharedPreferences("dtnd", Context.MODE_PRIVATE);
         

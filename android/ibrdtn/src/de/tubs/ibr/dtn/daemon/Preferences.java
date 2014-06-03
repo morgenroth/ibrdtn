@@ -289,31 +289,8 @@ public class Preferences extends PreferenceActivity {
 		// commit changes
 		e.commit();
 		
-		// initialize dtnd configuration
-		initializeDtndPreferences(context, prefs);
-		
 		// create initial configuration
 		createConfig(context);
-	}
-	
-	private static void initializeDtndPreferences(Context context, SharedPreferences prefs) {
-		// initialize private preferences for dtnd
-		SharedPreferences dtnd_prefs = context.getSharedPreferences("dtnd", Context.MODE_PRIVATE);
-		Editor e = dtnd_prefs.edit();
-		
-		e.putBoolean(Preferences.KEY_ENABLED, prefs.getBoolean(Preferences.KEY_ENABLED, false));
-		e.putBoolean(Preferences.KEY_P2P_ENABLED, prefs.getBoolean(Preferences.KEY_P2P_ENABLED, false));
-		e.putString(Preferences.KEY_DISCOVERY_MODE, prefs.getString(Preferences.KEY_DISCOVERY_MODE, "smart"));
-		
-		int log_options = Integer.valueOf(prefs.getString(Preferences.KEY_LOG_OPTIONS, "0"));
-		e.putInt(Preferences.KEY_LOG_OPTIONS, log_options);
-		
-		int debug_verbosity = Integer.valueOf(prefs.getString(Preferences.KEY_LOG_DEBUG_VERBOSITY, "0"));
-		e.putInt(Preferences.KEY_LOG_DEBUG_VERBOSITY, debug_verbosity);
-
-		e.putBoolean(Preferences.KEY_LOG_ENABLE_FILE, prefs.getBoolean(Preferences.KEY_LOG_ENABLE_FILE, false));
-		
-		e.commit();
 	}
 	
 	public static boolean isDebuggable(Context context) {
@@ -684,6 +661,33 @@ public class Preferences extends PreferenceActivity {
 			}
 			
 			/**
+			 * Forward preference change to the DTN service
+			 */
+			final Intent prefChangedIntent = new Intent(Preferences.this, DaemonService.class);
+			prefChangedIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_PREFERENCE_CHANGED);
+			prefChangedIntent.putExtra("prefkey", key);
+			
+			if (Preferences.KEY_ENABLED.equals(key))
+				prefChangedIntent.putExtra(key, prefs.getBoolean(key, false));
+			
+			if (Preferences.KEY_P2P_ENABLED.equals(key))
+				prefChangedIntent.putExtra(key, prefs.getBoolean(key, false));
+			
+			if (Preferences.KEY_DISCOVERY_MODE.equals(key))
+				prefChangedIntent.putExtra(key, prefs.getString(key, "smart"));
+			
+			if (Preferences.KEY_LOG_OPTIONS.equals(key))
+				prefChangedIntent.putExtra(key, prefs.getString(key, "0"));
+			
+			if (Preferences.KEY_LOG_DEBUG_VERBOSITY.equals(key))
+				prefChangedIntent.putExtra(key, prefs.getString(key, "0"));
+
+			if (Preferences.KEY_LOG_ENABLE_FILE.equals(key))
+				prefChangedIntent.putExtra(key, prefs.getBoolean(key, false));
+			
+			Preferences.this.startService(prefChangedIntent);
+			
+			/**
 			 * Alter DTN service according to configuration changes
 			 */
 			if (key.equals(Preferences.KEY_ENABLED))
@@ -829,33 +833,6 @@ public class Preferences extends PreferenceActivity {
 				// create configuration file
 				createConfig(Preferences.this);
 			}
-			
-			/**
-			 * Forward preference change to the DTN service
-			 */
-			final Intent prefChangedIntent = new Intent(Preferences.this, DaemonService.class);
-			prefChangedIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_PREFERENCE_CHANGED);
-			prefChangedIntent.putExtra("prefkey", key);
-			
-			if (Preferences.KEY_ENABLED.equals(key))
-				prefChangedIntent.putExtra(key, prefs.getBoolean(key, false));
-			
-			if (Preferences.KEY_P2P_ENABLED.equals(key))
-				prefChangedIntent.putExtra(key, prefs.getBoolean(key, false));
-			
-			if (Preferences.KEY_DISCOVERY_MODE.equals(key))
-				prefChangedIntent.putExtra(key, prefs.getString(key, "smart"));
-			
-			if (Preferences.KEY_LOG_OPTIONS.equals(key))
-				prefChangedIntent.putExtra(key, prefs.getString(key, "0"));
-			
-			if (Preferences.KEY_LOG_DEBUG_VERBOSITY.equals(key))
-				prefChangedIntent.putExtra(key, prefs.getString(key, "0"));
-
-			if (Preferences.KEY_LOG_ENABLE_FILE.equals(key))
-				prefChangedIntent.putExtra(key, prefs.getBoolean(key, false));
-			
-			Preferences.this.startService(prefChangedIntent);
 		}
 	};
 	
@@ -884,9 +861,6 @@ public class Preferences extends PreferenceActivity {
 
 		try {
 			FileOutputStream writer = context.openFileOutput("config", Context.MODE_PRIVATE);
-
-			// initialize default values if configured set already
-			de.tubs.ibr.dtn.daemon.Preferences.initializeDefaultPreferences(context);
 
 			// set EID
 			PrintStream p = new PrintStream(writer);

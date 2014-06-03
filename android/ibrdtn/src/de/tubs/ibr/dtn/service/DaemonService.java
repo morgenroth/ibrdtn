@@ -35,6 +35,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.os.Binder;
 import android.os.Build;
 import android.os.Bundle;
@@ -45,6 +46,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.Parcelable;
 import android.os.RemoteException;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 import de.tubs.ibr.dtn.DTNService;
@@ -495,6 +497,10 @@ public class DaemonService extends Service {
 			msg.obj = new Intent(ACTION_STORE_STATS);
 			mServiceHandler.sendMessageDelayed(msg, 900000);
 		} else if (ACTION_INITIALIZE.equals(action)) {
+			// initialize configuration
+			Preferences.initializeDefaultPreferences(DaemonService.this);
+			DaemonService.initializeDtndPreferences(DaemonService.this);
+
 			// initialize the daemon service
 			initialize();
 		} else if (ACTION_START_DISCOVERY.equals(action)) {
@@ -657,6 +663,35 @@ public class DaemonService extends Service {
 
 	public DaemonService() {
 		super();
+	}
+	
+	private static void initializeDtndPreferences(Context context) {
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+		
+		// initialize private preferences for dtnd
+		SharedPreferences dtnd_prefs = context.getSharedPreferences("dtnd", Context.MODE_PRIVATE);
+		
+		// stop here, if these settings are already initialized
+		if (dtnd_prefs.getBoolean("initialized", false)) return;
+		
+		Editor e = dtnd_prefs.edit();
+		
+		e.putBoolean(Preferences.KEY_ENABLED, prefs.getBoolean(Preferences.KEY_ENABLED, false));
+		e.putBoolean(Preferences.KEY_P2P_ENABLED, prefs.getBoolean(Preferences.KEY_P2P_ENABLED, false));
+		e.putString(Preferences.KEY_DISCOVERY_MODE, prefs.getString(Preferences.KEY_DISCOVERY_MODE, "smart"));
+		
+		int log_options = Integer.valueOf(prefs.getString(Preferences.KEY_LOG_OPTIONS, "0"));
+		e.putInt(Preferences.KEY_LOG_OPTIONS, log_options);
+		
+		int debug_verbosity = Integer.valueOf(prefs.getString(Preferences.KEY_LOG_DEBUG_VERBOSITY, "0"));
+		e.putInt(Preferences.KEY_LOG_DEBUG_VERBOSITY, debug_verbosity);
+
+		e.putBoolean(Preferences.KEY_LOG_ENABLE_FILE, prefs.getBoolean(Preferences.KEY_LOG_ENABLE_FILE, false));
+		
+		// set preferences to initialized
+		e.putBoolean("initialized", true);
+		
+		e.commit();
 	}
 
 	@Override
