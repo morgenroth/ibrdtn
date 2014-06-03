@@ -8,12 +8,14 @@ import java.util.Date;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.provider.BaseColumns;
 import android.util.Log;
 import de.tubs.ibr.dtn.api.Timestamp;
 import de.tubs.ibr.dtn.swig.NativeStats;
 
-public class StatsEntry {
+public class StatsEntry implements Parcelable {
     
     private final static String TAG = "StatsEntry";
     
@@ -317,4 +319,56 @@ public class StatsEntry {
             }
         }
     }
+    
+    public static final Parcelable.Creator<StatsEntry> CREATOR = new Parcelable.Creator<StatsEntry>() {
+        public StatsEntry createFromParcel(Parcel in) {
+            return new StatsEntry(in);
+        }
+
+        public StatsEntry[] newArray(int size) {
+            return new StatsEntry[size];
+        }
+    };
+    
+    public StatsEntry(Parcel in) {
+        mTimestamp = new Date(in.readLong());
+        mNeighbors = in.readLong();
+        mUptime = in.readLong();
+        mStorageSize = in.readLong();
+        mClockOffset = in.readDouble();
+        mClockRating = in.readDouble();
+        mClockAdjustments = in.readLong();
+        mBundleAborted = in.readLong();
+        mBundleExpired = in.readLong();
+        mBundleGenerated = in.readLong();
+        mBundleQueued = in.readLong();
+        mBundleReceived = in.readLong();
+        mBundleRequeued = in.readLong();
+        mBundleStored = in.readLong();
+        mBundleTransmitted = in.readLong();
+    }
+
+	@Override
+	public int describeContents() {
+		return 0;
+	}
+
+	@Override
+	public void writeToParcel(Parcel dest, int flags) {
+        dest.writeLong( mTimestamp.getTime() );
+        dest.writeLong( mNeighbors );
+        dest.writeLong( mUptime );
+        dest.writeLong( mStorageSize );
+        dest.writeDouble( mClockOffset );
+        dest.writeDouble( mClockRating );
+        dest.writeLong( mClockAdjustments );
+        dest.writeLong( mBundleAborted );
+        dest.writeLong( mBundleExpired );
+        dest.writeLong( mBundleGenerated );
+        dest.writeLong( mBundleQueued );
+        dest.writeLong( mBundleReceived );
+        dest.writeLong( mBundleRequeued );
+        dest.writeLong( mBundleStored );
+        dest.writeLong( mBundleTransmitted );
+	}
 }

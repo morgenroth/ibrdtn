@@ -8,12 +8,14 @@ import java.util.Date;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.provider.BaseColumns;
 import android.util.Log;
 import de.tubs.ibr.dtn.api.Timestamp;
 import de.tubs.ibr.dtn.swig.NativeStats;
 
-public class ConvergenceLayerStatsEntry {
+public class ConvergenceLayerStatsEntry implements Parcelable {
     
     private final static String TAG = "ConvergenceLayerStatsEntry";
     
@@ -141,4 +143,34 @@ public class ConvergenceLayerStatsEntry {
             }
         }
     }
+    
+    public static final Parcelable.Creator<ConvergenceLayerStatsEntry> CREATOR = new Parcelable.Creator<ConvergenceLayerStatsEntry>() {
+        public ConvergenceLayerStatsEntry createFromParcel(Parcel in) {
+            return new ConvergenceLayerStatsEntry(in);
+        }
+
+        public ConvergenceLayerStatsEntry[] newArray(int size) {
+            return new ConvergenceLayerStatsEntry[size];
+        }
+    };
+    
+    public ConvergenceLayerStatsEntry(Parcel in) {
+        mTimestamp = new Date(in.readLong());
+        mConvergenceLayer = in.readString();
+        mDataTag = in.readString();
+        mDataValue = in.readDouble();
+    }
+
+	@Override
+	public int describeContents() {
+		return 0;
+	}
+
+	@Override
+	public void writeToParcel(Parcel dest, int flags) {
+		dest.writeLong( mTimestamp.getTime() );
+		dest.writeString( mConvergenceLayer );
+		dest.writeString( mDataTag );
+		dest.writeDouble( mDataValue );
+	}
 }
