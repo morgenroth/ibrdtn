@@ -41,7 +41,7 @@ public class NewKeyFragment extends Fragment {
 	
 	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName name, IBinder s) {
-			mManager = (KeyExchangeManager)s;
+			mManager = KeyExchangeManager.Stub.asInterface(s);
 			
 			refresh();
 			if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "service connected");
