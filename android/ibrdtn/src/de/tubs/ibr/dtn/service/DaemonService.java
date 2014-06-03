@@ -88,12 +88,12 @@ public class DaemonService extends Service {
 	public static final String ACTION_STOP_DISCOVERY = "de.tubs.ibr.dtn.action.STOP_DISCOVERY";
 	public static final String EXTRA_DISCOVERY_DURATION = "de.tubs.ibr.dtn.intent.DISCOVERY_DURATION";
 	
-	public static final String ACTION_START_KEY_EXCHANGE = "de.tubs.ibr.dtn.action.ACTION_START_KEY_EXCHANGE";
-	public static final String ACTION_GIVE_PASSWORD_RESPONSE = "de.tubs.ibr.dtn.action.ACTION_GIVE_PASSWORD_RESPONSE";
-	public static final String ACTION_GIVE_HASH_RESPONSE = "de.tubs.ibr.dtn.action.ACTION_GIVE_HASH_RESPONSE";
-	public static final String ACTION_GIVE_NEW_KEY_RESPONSE = "de.tubs.ibr.dtn.action.ACTION_GIVE_NEW_KEY_RESPONSE";
-	public static final String ACTION_GIVE_QR_RESPONSE = "de.tubs.ibr.dtn.action.ACTION_GIVE_QR_RESPONSE";
-	public static final String ACTION_GIVE_NFC_RESPONSE = "de.tubs.ibr.dtn.action.ACTION_GIVE_NFC_RESPONSE";
+	public static final String ACTION_START_KEY_EXCHANGE = "de.tubs.ibr.dtn.action.START_KEY_EXCHANGE";
+	public static final String ACTION_GIVE_PASSWORD_RESPONSE = "de.tubs.ibr.dtn.action.GIVE_PASSWORD_RESPONSE";
+	public static final String ACTION_GIVE_HASH_RESPONSE = "de.tubs.ibr.dtn.action.GIVE_HASH_RESPONSE";
+	public static final String ACTION_GIVE_NEW_KEY_RESPONSE = "de.tubs.ibr.dtn.action.GIVE_NEW_KEY_RESPONSE";
+	public static final String ACTION_GIVE_QR_RESPONSE = "de.tubs.ibr.dtn.action.GIVE_QR_RESPONSE";
+	public static final String ACTION_GIVE_NFC_RESPONSE = "de.tubs.ibr.dtn.action.GIVE_NFC_RESPONSE";
 	
 	public static final String ACTION_LOGGING_CHANGED = "de.tubs.ibr.dtn.action.LOGGING_CHANGED";
 	public static final String ACTION_CONFIGURATION_CHANGED = "de.tubs.ibr.dtn.action.CONFIGURATION_CHANGED";
