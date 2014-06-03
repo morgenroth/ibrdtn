@@ -34,8 +34,8 @@ import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.daemon.data.ConvergenceLayerStatsListAdapter;
 import de.tubs.ibr.dtn.daemon.data.ConvergenceLayerStatsLoader;
 import de.tubs.ibr.dtn.daemon.data.CurrentConvergenceLayerStatsLoader;
+import de.tubs.ibr.dtn.service.ControlService;
 import de.tubs.ibr.dtn.service.DaemonService;
-import de.tubs.ibr.dtn.service.DaemonService.LocalDTNService;
 import de.tubs.ibr.dtn.stats.ConvergenceLayerStatsEntry;
 import de.tubs.ibr.dtn.stats.StatsUtils;
 
@@ -43,12 +43,12 @@ public class ConvergenceLayerStatsChartFragment extends Fragment implements Cust
     
     // The loader's unique id. Loader ids are specific to the Activity or
     // Fragment in which they reside.
-    private static final int DB_LOADER_ID = 1;
+    private static final int GRAPH_LOADER_ID = 1;
     private static final int STATS_LOADER_ID = 2;
 
     private static final String TAG = "ClStatsChartFragment";
     
-    private DaemonService mService = null;
+    private ControlService mService = null;
     
     private LinearLayout mChartView = null;
     private GraphView mGraphView = null;
@@ -60,16 +60,16 @@ public class ConvergenceLayerStatsChartFragment extends Fragment implements Cust
     
     private ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName name, IBinder s) {
-            mService = ((LocalDTNService)s).getLocal();
+            mService = ControlService.Stub.asInterface(s);
             if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "service connected");
 
             // initialize the loader
-            getLoaderManager().initLoader(DB_LOADER_ID, null, mDbLoader);
+            getLoaderManager().initLoader(GRAPH_LOADER_ID, null, mGraphLoader);
             getLoaderManager().initLoader(STATS_LOADER_ID, null, mStatsLoader);
         }
 
         public void onServiceDisconnected(ComponentName name) {
-            getLoaderManager().destroyLoader(DB_LOADER_ID);
+            getLoaderManager().destroyLoader(GRAPH_LOADER_ID);
             getLoaderManager().destroyLoader(STATS_LOADER_ID);
 
             mService = null;
@@ -77,10 +77,10 @@ public class ConvergenceLayerStatsChartFragment extends Fragment implements Cust
         }
     };
     
-    private LoaderManager.LoaderCallbacks<Cursor> mDbLoader = new LoaderManager.LoaderCallbacks<Cursor>() {
+    private LoaderManager.LoaderCallbacks<Cursor> mGraphLoader = new LoaderManager.LoaderCallbacks<Cursor>() {
         @Override
         public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-            return new ConvergenceLayerStatsLoader(getActivity(), mService, null);
+            return new ConvergenceLayerStatsLoader(getActivity(), null);
         }
 
         @Override
@@ -134,23 +134,24 @@ public class ConvergenceLayerStatsChartFragment extends Fragment implements Cust
         }
     }
     
-    private LoaderManager.LoaderCallbacks<List<ConvergenceLayerStatsEntry>> mStatsLoader = new LoaderManager.LoaderCallbacks<List<ConvergenceLayerStatsEntry>>() {
-        @Override
-        public Loader<List<ConvergenceLayerStatsEntry>> onCreateLoader(int id, Bundle args) {
-            return new CurrentConvergenceLayerStatsLoader(getActivity(), mService, null);
-        }
+	private LoaderManager.LoaderCallbacks<List<ConvergenceLayerStatsEntry>> mStatsLoader = new LoaderManager.LoaderCallbacks<List<ConvergenceLayerStatsEntry>>() {
+		@Override
+		public Loader<List<ConvergenceLayerStatsEntry>> onCreateLoader(int id, Bundle args) {
+			return new CurrentConvergenceLayerStatsLoader(getActivity(), mService, null);
+		}
 
-        @Override
-        public void onLoadFinished(Loader<List<ConvergenceLayerStatsEntry>> loader, List<ConvergenceLayerStatsEntry> stats) {
-            synchronized (mAdapter) {
-                mAdapter.swapList(stats);
-            }
-        }
+		@Override
+		public void onLoadFinished(Loader<List<ConvergenceLayerStatsEntry>> loader,
+				List<ConvergenceLayerStatsEntry> stats) {
+			synchronized (mAdapter) {
+				mAdapter.swapList(stats);
+			}
+		}
 
-        @Override
-        public void onLoaderReset(Loader<List<ConvergenceLayerStatsEntry>> loader) {
-        }
-    };
+		@Override
+		public void onLoaderReset(Loader<List<ConvergenceLayerStatsEntry>> loader) {
+		}
+	};
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -192,11 +193,7 @@ public class ConvergenceLayerStatsChartFragment extends Fragment implements Cust
     public void onResume() {
         super.onResume();
 
-        // Establish a connection with the service. We use an explicit
-        // class name because we want a specific service implementation that
-        // we know will be running in our own process (and thus won't be
-        // supporting component replacement by other applications).
-        Intent bindIntent = DaemonService.createDtnServiceIntent(getActivity());
+        Intent bindIntent = DaemonService.createControlServiceIntent(getActivity());
         getActivity().bindService(bindIntent, mConnection, Context.BIND_AUTO_CREATE);
     }
     

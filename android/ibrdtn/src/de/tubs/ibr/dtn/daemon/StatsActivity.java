@@ -24,7 +24,7 @@ public class StatsActivity extends FragmentActivity {
         PagerTitleStrip pts = (PagerTitleStrip)findViewById(R.id.pager_title_strip);
         pts.setNonPrimaryAlpha(0.5f);
 
-        Boolean show_clock = PreferenceManager.getDefaultSharedPreferences(this).getString("timesync_mode", "disabled").equals("slave");
+        Boolean show_clock = PreferenceManager.getDefaultSharedPreferences(this).getString(Preferences.KEY_TIMESYNC_MODE, "disabled").equals("slave");
         mAdapter = new Pages(getSupportFragmentManager(), show_clock);
 
         mViewPager = (ViewPager)findViewById(R.id.pager);

@@ -23,14 +23,13 @@
 
 package de.tubs.ibr.dtn.service;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
-import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
@@ -46,9 +45,6 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.Parcelable;
 import android.os.RemoteException;
-import android.preference.PreferenceManager;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 import android.widget.Toast;
 import de.tubs.ibr.dtn.DTNService;
@@ -61,14 +57,13 @@ import de.tubs.ibr.dtn.api.DTNSession;
 import de.tubs.ibr.dtn.api.Node;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
-import de.tubs.ibr.dtn.daemon.NeighborActivity;
 import de.tubs.ibr.dtn.daemon.Preferences;
 import de.tubs.ibr.dtn.daemon.api.SelectNeighborActivity;
 import de.tubs.ibr.dtn.keyexchange.KeyExchangeManager;
 import de.tubs.ibr.dtn.keyexchange.KeyExchangeService;
 import de.tubs.ibr.dtn.keyexchange.KeyInformationActivity;
 import de.tubs.ibr.dtn.stats.ConvergenceLayerStatsEntry;
-import de.tubs.ibr.dtn.stats.StatsDatabase;
+import de.tubs.ibr.dtn.stats.StatsContentProvider;
 import de.tubs.ibr.dtn.stats.StatsEntry;
 import de.tubs.ibr.dtn.swig.DaemonRunLevel;
 import de.tubs.ibr.dtn.swig.NativeStats;
@@ -79,7 +74,7 @@ public class DaemonService extends Service {
 
 	public static final String ACTION_STARTUP = "de.tubs.ibr.dtn.action.STARTUP";
 	public static final String ACTION_SHUTDOWN = "de.tubs.ibr.dtn.action.SHUTDOWN";
-	public static final String ACTION_RESTART = "de.tubs.ibr.dtn.action.RESTART";
+	public static final String ACTION_PREFERENCE_CHANGED = "de.tubs.ibr.dtn.action.PREFERENCE_CHANGED";
 
 	public static final String ACTION_NETWORK_CHANGED = "de.tubs.ibr.dtn.action.NETWORK_CHANGED";
 
@@ -99,6 +94,9 @@ public class DaemonService extends Service {
 	public static final String ACTION_GIVE_NEW_KEY_RESPONSE = "de.tubs.ibr.dtn.action.ACTION_GIVE_NEW_KEY_RESPONSE";
 	public static final String ACTION_GIVE_QR_RESPONSE = "de.tubs.ibr.dtn.action.ACTION_GIVE_QR_RESPONSE";
 	public static final String ACTION_GIVE_NFC_RESPONSE = "de.tubs.ibr.dtn.action.ACTION_GIVE_NFC_RESPONSE";
+	
+	public static final String ACTION_LOGGING_CHANGED = "de.tubs.ibr.dtn.action.LOGGING_CHANGED";
+	public static final String ACTION_CONFIGURATION_CHANGED = "de.tubs.ibr.dtn.action.CONFIGURATION_CHANGED";
 
 	public static final String PREFERENCE_NAME = "de.tubs.ibr.dtn.service_prefs";
 	
@@ -110,6 +108,7 @@ public class DaemonService extends Service {
 	private volatile ServiceHandler mServiceHandler;
 	
 	private int MSG_WHAT_STOP_DISCOVERY = 1;
+	private int MSG_WHAT_COLLECT_STATS = 2;
 
 	// session manager for all active sessions
 	private SessionManager mSessionManager = null;
@@ -120,11 +119,7 @@ public class DaemonService extends Service {
 	// the daemon process
 	private DaemonProcess mDaemonProcess = null;
 
-	// indicates if a notification is visible
-	private Boolean mShowNotification = false;
-
-	// statistic database
-	private StatsDatabase mStatsDatabase = null;
+	// time-stamp of the last stats action
 	private Date mStatsLastAction = null;
 	
 	// global discovery state
@@ -134,7 +129,7 @@ public class DaemonService extends Service {
 	// RemoteService for a more complete example.
 	private final DTNService.Stub mBinder = new LocalDTNService();
 
-	public class LocalDTNService extends DTNService.Stub {
+	private class LocalDTNService extends DTNService.Stub {
 		@Override
 		public DaemonState getState() throws RemoteException {
 			return DaemonService.this.mDaemonProcess.getState();
@@ -167,10 +162,6 @@ public class DaemonService extends Service {
 			return Preferences.getEndpoint(DaemonService.this);
 		}
 
-		public DaemonService getLocal() {
-			return DaemonService.this;
-		}
-
 		@Override
 		public Bundle getSelectNeighborIntent() throws RemoteException {
 			Bundle ret = new Bundle();
@@ -178,6 +169,34 @@ public class DaemonService extends Service {
 			PendingIntent pi = PendingIntent.getActivity(DaemonService.this, 0, intent, PendingIntent.FLAG_ONE_SHOT);
 			ret.putParcelable(de.tubs.ibr.dtn.Intent.EXTRA_PENDING_INTENT, pi);
 			return ret;
+		}
+	};
+	
+	private final ControlService.Stub mControlBinder = new ControlService.Stub() {
+		@Override
+		public boolean isP2pActive() throws RemoteException {
+			return mP2pManager.isActive();
+		}
+
+		@Override
+		public String[] getVersion() throws RemoteException {
+			return DaemonService.this.mDaemonProcess.getVersion();
+		}
+
+		@Override
+		public Bundle getStats() throws RemoteException {
+			return DaemonService.this.getStats();
+		}
+
+		@Override
+		public void setP2pEnabled(boolean val) throws RemoteException {
+			if (val && mDaemonProcess.getState().equals(DaemonState.ONLINE)) {
+				if (mP2pManager != null)
+					mP2pManager.setEnabled(true);
+			} else {
+				if (mP2pManager != null)
+					mP2pManager.setEnabled(false);
+			}
 		}
 	};
 	
@@ -258,29 +277,6 @@ public class DaemonService extends Service {
 		}
 	};
 
-	public boolean isP2pActive() {
-		if (mP2pManager == null)
-			return false;
-		return mP2pManager.isActive();
-	}
-
-	public NativeStats getStats() {
-		return mDaemonProcess.getStats();
-	}
-
-	public StatsDatabase getStatsDatabase() {
-		return mStatsDatabase;
-	}
-
-	private Runnable mCollectStats = new Runnable() {
-		@Override
-		public void run() {
-			final Intent storeStatsIntent = new Intent(DaemonService.this, DaemonService.class);
-			storeStatsIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STORE_STATS);
-			startService(storeStatsIntent);
-		}
-	};
-
 	@Override
 	public IBinder onBind(Intent intent) {
 		// the requested service name
@@ -288,6 +284,8 @@ public class DaemonService extends Service {
 		
 		if (KeyExchangeManager.class.getName().equals(name)) {
 			return mKeyExchangeBinder;
+		} else if (ControlService.class.getName().equals(name)) {
+			return mControlBinder;
 		} else if (Services.SERVICE_SECURITY.match(intent)) {
 			return mSecurityBinder;
 		} else if (Services.SERVICE_APPLICATION.match(intent)) {
@@ -323,6 +321,18 @@ public class DaemonService extends Service {
         
 		return i;
 	}
+	
+	public static Intent createControlServiceIntent(Context context) {
+        Intent i = new Intent(context, DaemonService.class);
+        
+        // set action to make the intent unique
+        i.setAction(ControlService.class.getName());
+        
+        // add Service name
+        i.putExtra(Services.EXTRA_NAME, ControlService.class.getName());
+        
+		return i;
+	}
 
 	@SuppressLint("HandlerLeak")
 	private final class ServiceHandler extends Handler {
@@ -347,7 +357,7 @@ public class DaemonService extends Service {
 		String action = intent.getAction();
 
 		if (ACTION_STARTUP.equals(action)) {
-			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+			SharedPreferences prefs = getSharedPreferences("dtnd", Context.MODE_PRIVATE);
 
 			// only start if the daemon is offline or in error state
 			// and if the daemon switch is on
@@ -365,11 +375,42 @@ public class DaemonService extends Service {
 		} else if (ACTION_SHUTDOWN.equals(action)) {
 			// stop main loop
 			mDaemonProcess.stop();
-		} else if (ACTION_RESTART.equals(action)) {
-			Integer level = intent.getIntExtra("runlevel", 0);
+		} else if (ACTION_PREFERENCE_CHANGED.equals(action)) {
+			// get preference key to determine the restart level
+			String prefkey = intent.getStringExtra("prefkey");
+			
+			// store preference values locally
+			SharedPreferences prefs = getSharedPreferences("dtnd", Context.MODE_PRIVATE);
+			
+			if (intent.hasExtra(Preferences.KEY_ENABLED)) {
+				boolean value = intent.getBooleanExtra(Preferences.KEY_ENABLED, false);
+				prefs.edit().putBoolean(Preferences.KEY_ENABLED, value).commit();
+			}
+			if (intent.hasExtra(Preferences.KEY_P2P_ENABLED)) {
+				boolean value = intent.getBooleanExtra(Preferences.KEY_P2P_ENABLED, false);
+				prefs.edit().putBoolean(Preferences.KEY_P2P_ENABLED, value).commit();
+			}
+			if (intent.hasExtra(Preferences.KEY_DISCOVERY_MODE)) {
+				String value = intent.getStringExtra(Preferences.KEY_DISCOVERY_MODE);
+				prefs.edit().putString(Preferences.KEY_DISCOVERY_MODE, value).commit();
+			}
+			if (intent.hasExtra(Preferences.KEY_LOG_OPTIONS)) {
+				String value_s = intent.getStringExtra(Preferences.KEY_LOG_OPTIONS);
+				int value = Integer.valueOf(value_s != null ? value_s : "0");
+				prefs.edit().putInt(Preferences.KEY_LOG_OPTIONS, value).commit();
+			}
+			if (intent.hasExtra(Preferences.KEY_LOG_DEBUG_VERBOSITY)) {
+				String value_s = intent.getStringExtra(Preferences.KEY_LOG_DEBUG_VERBOSITY);
+				int value = Integer.valueOf(value_s != null ? value_s : "0");
+				prefs.edit().putInt(Preferences.KEY_LOG_DEBUG_VERBOSITY, value).commit();
+			}
+			if (intent.hasExtra(Preferences.KEY_LOG_ENABLE_FILE)) {
+				boolean value = intent.getBooleanExtra(Preferences.KEY_LOG_ENABLE_FILE, false);
+				prefs.edit().putBoolean(Preferences.KEY_LOG_ENABLE_FILE, value).commit();
+			}
 
-			// restart the daemon into the given runlevel
-			mDaemonProcess.restart(level, new DaemonProcess.OnRestartListener() {
+			// restart the daemon into the given run-level
+			mDaemonProcess.onPreferenceChanged(prefkey, new DaemonProcess.OnRestartListener() {
 				@Override
 				public void OnStop(DaemonRunLevel previous, DaemonRunLevel next) {
 					if (next.swigValue() < DaemonRunLevel.RUNLEVEL_API.swigValue() && previous.swigValue() >= DaemonRunLevel.RUNLEVEL_API.swigValue()) {
@@ -394,14 +435,6 @@ public class DaemonService extends Service {
 			final Intent storeStatsIntent = new Intent(this, DaemonService.class);
 			storeStatsIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STORE_STATS);
 			startService(storeStatsIntent);
-		} else if (ACTION_UPDATE_NOTIFICATION.equals(action)) {
-			if (intent.hasExtra("text")) {
-				// update state text in the notification
-				updateNotification(intent.getStringExtra("text"));
-			} else {
-				// update state text in the notification
-				updateNotification(null);
-			}
 		} else if (de.tubs.ibr.dtn.Intent.REGISTER.equals(action)) {
 			final Registration reg = (Registration) intent.getParcelableExtra("registration");
 			final PendingIntent pi = (PendingIntent) intent.getParcelableExtra("app");
@@ -429,7 +462,7 @@ public class DaemonService extends Service {
 			storeStatsIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STORE_STATS);
 			startService(storeStatsIntent);
 
-			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+			SharedPreferences prefs = getSharedPreferences("dtnd", Context.MODE_PRIVATE);
 
 			// if discovery is configured as "smart"
 			if ("smart".equals(prefs.getString(Preferences.KEY_DISCOVERY_MODE, "smart"))) {
@@ -441,25 +474,31 @@ public class DaemonService extends Service {
 			}
 		} else if (ACTION_STORE_STATS.equals(action)) {
 			// cancel the next scheduled collection
-			mServiceHandler.removeCallbacks(mCollectStats);
+			mServiceHandler.removeMessages(MSG_WHAT_COLLECT_STATS);
+			
+			Calendar now = Calendar.getInstance();
+			now.roll(Calendar.MINUTE, -1);
 
-			if (mStatsLastAction != null) {
-				Calendar now = Calendar.getInstance();
-				now.roll(Calendar.MINUTE, -1);
-				if (mStatsLastAction.before(now.getTime())) {
-					refreshStats();
-				}
-			} else {
-				refreshStats();
+			if (mStatsLastAction == null || mStatsLastAction.before(now.getTime())) {
+				// store new stats in database
+				Bundle stats = getStats();
+				StatsContentProvider.store(DaemonService.this, stats);
+				
+				// store last stats action
+				mStatsLastAction = new Date();
 			}
 
 			// schedule next collection in 15 minutes
-			mServiceHandler.postDelayed(mCollectStats, 900000);
+			Message msg = mServiceHandler.obtainMessage();
+			msg.what = MSG_WHAT_COLLECT_STATS;
+			msg.arg1 = startId;
+			msg.obj = new Intent(ACTION_STORE_STATS);
+			mServiceHandler.sendMessageDelayed(msg, 900000);
 		} else if (ACTION_INITIALIZE.equals(action)) {
 			// initialize the daemon service
 			initialize();
 		} else if (ACTION_START_DISCOVERY.equals(action)) {
-			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+			SharedPreferences prefs = getSharedPreferences("dtnd", Context.MODE_PRIVATE);
 			String discoMode = prefs.getString(Preferences.KEY_DISCOVERY_MODE, "smart");
 			boolean stayOn = "on".equals(discoMode) && mDiscoveryState;
 			
@@ -494,9 +533,6 @@ public class DaemonService extends Service {
 				
 				// set global discovery state
 				mDiscoveryState = true;
-				
-				// request notification update
-				requestNotificationUpdate(getResources().getString(R.string.ticker_discovery_started));
 			}
 		} else if (ACTION_STOP_DISCOVERY.equals(action)) {
 			// only stop discovery if active
@@ -510,9 +546,6 @@ public class DaemonService extends Service {
 				
 				// set global discovery state
 				mDiscoveryState = false;
-				
-				// request notification update
-				requestNotificationUpdate(getResources().getString(R.string.ticker_discovery_stopped));
 			}
 			
 			// remove all stop discovery messages
@@ -569,26 +602,57 @@ public class DaemonService extends Service {
 			broadcastIntent.putExtra(KeyExchangeService.EXTRA_ACTION, KeyExchangeService.ACTION_KEY_UPDATED);
 			broadcastIntent.putExtra(KeyExchangeService.EXTRA_ENDPOINT, endpoint.toString());
 			sendOrderedBroadcast(broadcastIntent, null);
+		} else if (ACTION_CONFIGURATION_CHANGED.equals(action)) {
+			// signal a changed configuration to the daemon process
+			mDaemonProcess.onConfigurationChanged();
+		} else if (ACTION_LOGGING_CHANGED.equals(action)) {
+			if (intent.hasExtra("filelogging")) {
+				String logFilePath = intent.getStringExtra("logfile");
+				int logLevel = intent.getIntExtra("loglevel", 0);
+				
+				// alter file logging
+				mDaemonProcess.setLogFile(logFilePath == null ? null : logFilePath, logLevel);
+			} else {
+				if (intent.hasExtra("loglevel")) {
+					int logLevel = intent.getIntExtra("loglevel", 0);
+					mDaemonProcess.setLogging("Core", logLevel);
+				}
+				
+				if (intent.hasExtra("debug")) {
+					int debugVerbosity = intent.getIntExtra("debug", 0);
+					mDaemonProcess.setDebug(debugVerbosity);
+				}
+			}
 		}
 
 		// stop the daemon if it should be offline
 		if (mDaemonProcess.getState().equals(DaemonState.OFFLINE) && (startId != -1))
 			stopSelf(startId);
 	}
-
-	private void refreshStats() {
+	
+	public Bundle getStats() {
+		// retrieve stats of the native daemon
 		NativeStats nstats = mDaemonProcess.getStats();
-
-		// query the daemon stats and store them in the database
-		mStatsDatabase.put(new StatsEntry(nstats));
+		
+		// create a new bundle for statistics
+		Bundle stats_bundle = new Bundle();
+		
+		// create parcable stats object
+		stats_bundle.putParcelable("stats", new StatsEntry(nstats));
+		
+		// create an array for CL stats
+		ArrayList<ConvergenceLayerStatsEntry> cl_stats = new ArrayList<ConvergenceLayerStatsEntry>();
 
 		StringVec tags = nstats.getTags();
 		for (int i = 0; i < tags.size(); i++) {
 			ConvergenceLayerStatsEntry e = new ConvergenceLayerStatsEntry(nstats, tags.get(i), i);
-			mStatsDatabase.put(e);
+			cl_stats.add(e);
 		}
-
-		mStatsLastAction = new Date();
+		
+		// add CL stats to bundle
+		stats_bundle.putParcelableArrayList("clstats", cl_stats);
+		
+		return stats_bundle;
 	}
 
 	public DaemonService() {
@@ -599,8 +663,7 @@ public class DaemonService extends Service {
 	public void onCreate() {
 		super.onCreate();
 
-		// open statistic database
-		mStatsDatabase = new StatsDatabase(this);
+		// reset statistic action marker
 		mStatsLastAction = null;
 
 		// create daemon main thread
@@ -651,10 +714,7 @@ public class DaemonService extends Service {
 			Log.d(TAG, "DaemonService created");
 
 		// start daemon if enabled
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-
-		// listen to preference changes
-		prefs.registerOnSharedPreferenceChangeListener(_pref_listener);
+		SharedPreferences prefs = getSharedPreferences("dtnd", Context.MODE_PRIVATE);
 
 		if (prefs.getBoolean(Preferences.KEY_ENABLED, true)) {
 			// startup the daemon process
@@ -669,10 +729,6 @@ public class DaemonService extends Service {
 	 */
 	@Override
 	public void onDestroy() {
-		// unlisten to preference changes
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-		prefs.unregisterOnSharedPreferenceChangeListener(_pref_listener);
-
 		// disable P2P manager
 		if (mP2pManager != null)
 			mP2pManager.destroy();
@@ -689,13 +745,6 @@ public class DaemonService extends Service {
 
 		// dereference P2P Manager
 		mP2pManager = null;
-
-		// remove notification
-		NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-		nm.cancel(1);
-
-		// close statistic database
-		mStatsDatabase.close();
 
 		// call super method
 		super.onDestroy();
@@ -746,11 +795,7 @@ public class DaemonService extends Service {
 			broadcastIntent.putExtra("state", state.name());
 			broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
 
-			// request notification update
-			requestNotificationUpdate(null);
-
-			SharedPreferences prefs = PreferenceManager
-					.getDefaultSharedPreferences(DaemonService.this);
+			SharedPreferences prefs = getSharedPreferences("dtnd", Context.MODE_PRIVATE);
 
 			switch (state) {
 				case ERROR:
@@ -765,12 +810,6 @@ public class DaemonService extends Service {
 					// disable foreground service only if the daemon has been
 					// switched off
 					if (!prefs.getBoolean(Preferences.KEY_ENABLED, true)) {
-						// mark the notification as invisible
-						mShowNotification = false;
-
-						// stop foreground service
-						stopForeground(true);
-
 						// stop service
 						stopSelf();
 					}
@@ -788,15 +827,6 @@ public class DaemonService extends Service {
 					break;
 
 				case ONLINE:
-					// mark the notification as visible
-					mShowNotification = true;
-
-					// create initial notification
-					Notification n = buildNotification(null);
-
-					// turn this to a foreground service (kill-proof)
-					startForeground(1, n);
-
 					if (prefs.getBoolean(Preferences.KEY_P2P_ENABLED, false)) {
 						if (mP2pManager != null)
 							mP2pManager.setEnabled(true);
@@ -843,7 +873,7 @@ public class DaemonService extends Service {
 
 		@Override
 		public void onNeighborhoodChanged() {
-			requestNotificationUpdate(null);
+			// nothing to do.
 		}
 
 		@Override
@@ -853,128 +883,6 @@ public class DaemonService extends Service {
 			}
 			else {
 				sendBroadcast(intent);
-			}
-		}
-
-	};
-
-	private void requestNotificationUpdate(String text) {
-		// request notification update
-		final Intent i = new Intent(DaemonService.this, DaemonService.class);
-		i.setAction(ACTION_UPDATE_NOTIFICATION);
-		
-		if (text != null) {
-			i.putExtra("text", text);
-		}
-		
-		startService(i);
-	}
-
-	private void updateNotification(String stateText) {
-		NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-
-		// update the notification only if it is visible
-		if (mShowNotification) {
-			nm.notify(1, buildNotification(stateText));
-		}
-	}
-
-	@SuppressWarnings("deprecation")
-	private Notification buildNotification(String stateText) {
-		String content = Preferences.getEndpoint(DaemonService.this);
-
-		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-
-		builder.setContentTitle(getResources().getString(R.string.service_name));
-		builder.setContentText(content);
-
-		builder.setSmallIcon(R.drawable.ic_notification);
-		builder.setOngoing(true);
-		builder.setOnlyAlertOnce(true);
-		builder.setWhen(0);
-		if (stateText != null) builder.setTicker(stateText);
-
-		List<Node> neighbors = mDaemonProcess.getNeighbors();
-		builder.setNumber(neighbors.size());
-
-		// create intent for the neighbor list
-		Intent showNeighborsIntent = new Intent(this, NeighborActivity.class);
-		showNeighborsIntent.setAction("android.intent.action.MAIN");
-		showNeighborsIntent.addCategory("android.intent.category.LAUNCHER");
-		
-		if (mDiscoveryState) {
-			// create intent to stop discovery
-			Intent stopDiscoveryIntent = new Intent(this, DaemonService.class);
-			stopDiscoveryIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STOP_DISCOVERY);
-			PendingIntent piDisco = PendingIntent.getService(this, 0, stopDiscoveryIntent, 0);
-			builder.addAction(R.drawable.ic_action_discovery_stop, getString(R.string.stop_discovery), piDisco);
-		} else {
-			// create intent to start discovery
-			Intent startDiscoveryIntent = new Intent(this, DaemonService.class);
-			startDiscoveryIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_START_DISCOVERY);
-			
-			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-			if ("smart".equals(prefs.getString(Preferences.KEY_DISCOVERY_MODE, "smart"))) {
-				startDiscoveryIntent.putExtra(DaemonService.EXTRA_DISCOVERY_DURATION, 120L);
-			}
-			
-			PendingIntent piDisco = PendingIntent.getService(this, 0, startDiscoveryIntent, 0);
-			builder.addAction(R.drawable.ic_action_discovery, getString(R.string.start_discovery), piDisco);
-		}
-		
-		TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-		stackBuilder.addParentStack(NeighborActivity.class);
-		stackBuilder.addNextIntent(showNeighborsIntent);
-		PendingIntent contentIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT); // PendingIntent.getActivity(this, 0, showNeighborsIntent, 0);
-		builder.setContentIntent(contentIntent);
-		
-
-		return builder.getNotification();
-	}
-
-	private SharedPreferences.OnSharedPreferenceChangeListener _pref_listener = new SharedPreferences.OnSharedPreferenceChangeListener() {
-
-		@Override
-		public void onSharedPreferenceChanged(
-				SharedPreferences sharedPreferences, String key) {
-
-			if (Preferences.KEY_P2P_ENABLED.equals(key)) {
-				if (sharedPreferences.getBoolean(key, false)
-						&& mDaemonProcess.getState().equals(DaemonState.ONLINE)) {
-					if (mP2pManager != null)
-						mP2pManager.setEnabled(true);
-				} else {
-					if (mP2pManager != null)
-						mP2pManager.setEnabled(false);
-				}
-			} else if (Preferences.KEY_DISCOVERY_MODE.equals(key)) {
-				final String disco_mode = sharedPreferences.getString(key, "smart");
-
-				// if discovery is configured as "on"
-				if ("on".equals(disco_mode)) {
-					// enable discovery
-					final Intent discoIntent = new Intent(DaemonService.this, DaemonService.class);
-					discoIntent
-							.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_START_DISCOVERY);
-					startService(discoIntent);
-				}
-				// if discovery is configured as "off"
-				else if ("off".equals(disco_mode)) {
-					// disable discovery
-					final Intent discoIntent = new Intent(DaemonService.this, DaemonService.class);
-					discoIntent
-							.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STOP_DISCOVERY);
-					startService(discoIntent);
-				}
-				// if discovery is configured as "smart"
-				else if ("smart".equals(disco_mode)) {
-					// enable discovery for 2 minutes
-					final Intent discoIntent = new Intent(DaemonService.this, DaemonService.class);
-					discoIntent
-							.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_START_DISCOVERY);
-					discoIntent.putExtra(EXTRA_DISCOVERY_DURATION, 120L);
-					startService(discoIntent);
-				}
 			}
 		}
 

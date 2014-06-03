@@ -22,10 +22,16 @@
 
 package de.tubs.ibr.dtn.daemon;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
+import java.util.HashSet;
+import java.util.Map;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
@@ -67,12 +73,12 @@ import android.view.MenuItem;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.Switch;
-import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.keyexchange.KeyInformationActivity;
+import de.tubs.ibr.dtn.service.ControlService;
 import de.tubs.ibr.dtn.service.DaemonService;
-import de.tubs.ibr.dtn.service.DaemonService.LocalDTNService;
+import de.tubs.ibr.dtn.service.DaemonStorageUtils;
 import de.tubs.ibr.dtn.service.P2pManager;
 import de.tubs.ibr.dtn.stats.CollectorService;
 
@@ -84,16 +90,32 @@ public class Preferences extends PreferenceActivity {
 	public static final String KEY_ENDPOINT_ID = "endpoint_id";
 	public static final String KEY_DISCOVERY_MODE = "discovery_mode";
 	public static final String KEY_P2P_ENABLED = "p2p_enabled";
+	
+	public static final String KEY_LOG_OPTIONS = "log_options";
+	public static final String KEY_LOG_DEBUG_VERBOSITY = "log_debug_verbosity";
+	public static final String KEY_LOG_ENABLE_FILE = "log_enable_file";
+	
+	public static final String KEY_SECURITY_BAB_KEY = "security_bab_key";
+	public static final String KEY_ROUTING = "routing";
+	public static final String KEY_SECURITY_MODE = "security_mode";
+	public static final String KEY_TIMESYNC_MODE = "timesync_mode";
+	public static final String KEY_STORAGE_MODE = "storage_mode";
+	public static final String KEY_UPLINK_MODE = "uplink_mode";
+	
+	// CloudUplink Parameter
+	private static final SingletonEndpoint __CLOUD_EID__ = new SingletonEndpoint("dtn://cloud.dtnbone.dtn");
+	private static final String __CLOUD_PROTOCOL__ = "tcp";
+	private static final String __CLOUD_ADDRESS__ = "134.169.35.130"; // quorra.ibr.cs.tu-bs.de";
+	private static final String __CLOUD_PORT__ = "4559";
 
 	// These preferences show their value as summary
 	private final static String[] mSummaryPrefs = {
-		KEY_ENDPOINT_ID, "routing", "security_mode", "log_options", "log_debug_verbosity",
-			"timesync_mode", "storage_mode", "uplink_mode", KEY_DISCOVERY_MODE
+		KEY_ENDPOINT_ID, KEY_ROUTING, KEY_SECURITY_MODE, KEY_LOG_OPTIONS, KEY_LOG_DEBUG_VERBOSITY,
+		KEY_TIMESYNC_MODE, KEY_STORAGE_MODE, KEY_UPLINK_MODE, KEY_DISCOVERY_MODE
 	};
 
 	private Boolean mBound = false;
-	private DTNService mService = null;
-	private DaemonService mDaemon = null;
+	private ControlService mService = null;
 
 	private Switch actionBarSwitch = null;
 	private CheckBoxPreference checkBoxPreference = null;
@@ -103,10 +125,7 @@ public class Preferences extends PreferenceActivity {
 	private ServiceConnection mConnection = new ServiceConnection() {
 		@SuppressLint("NewApi")
 		public void onServiceConnected(ComponentName name, IBinder service) {
-			Preferences.this.mService = DTNService.Stub.asInterface(service);
-			
-			// get direct access to the daemon
-			mDaemon = ((LocalDTNService)service).getLocal();
+			Preferences.this.mService = ControlService.Stub.asInterface(service);
 			
 			if (Log.isLoggable(TAG, Log.DEBUG))
 				Log.d(TAG, "service connected");
@@ -121,7 +140,11 @@ public class Preferences extends PreferenceActivity {
 			
 			// enable / disable P2P switch
 			if (mP2pSwitch != null) {
-				mP2pSwitch.setEnabled(mDaemon.isP2pActive());
+				try {
+					mP2pSwitch.setEnabled(Preferences.this.mService.isP2pActive());
+				} catch (RemoteException e) {
+					mP2pSwitch.setEnabled(false);
+				}
 			}
 		}
 
@@ -259,10 +282,37 @@ public class Preferences extends PreferenceActivity {
 
 		Editor e = prefs.edit();
 		e.putString(KEY_ENDPOINT_ID, Preferences.getEndpoint(context).toString());
-
+		
 		// set preferences to initialized
 		e.putBoolean("initialized", true);
 
+		// commit changes
+		e.commit();
+		
+		// initialize dtnd configuration
+		initializeDtndPreferences(context, prefs);
+		
+		// create initial configuration
+		createConfig(context);
+	}
+	
+	private static void initializeDtndPreferences(Context context, SharedPreferences prefs) {
+		// initialize private preferences for dtnd
+		SharedPreferences dtnd_prefs = context.getSharedPreferences("dtnd", Context.MODE_PRIVATE);
+		Editor e = dtnd_prefs.edit();
+		
+		e.putBoolean(Preferences.KEY_ENABLED, prefs.getBoolean(Preferences.KEY_ENABLED, false));
+		e.putBoolean(Preferences.KEY_P2P_ENABLED, prefs.getBoolean(Preferences.KEY_P2P_ENABLED, false));
+		e.putString(Preferences.KEY_DISCOVERY_MODE, prefs.getString(Preferences.KEY_DISCOVERY_MODE, "smart"));
+		
+		int log_options = Integer.valueOf(prefs.getString(Preferences.KEY_LOG_OPTIONS, "0"));
+		e.putInt(Preferences.KEY_LOG_OPTIONS, log_options);
+		
+		int debug_verbosity = Integer.valueOf(prefs.getString(Preferences.KEY_LOG_DEBUG_VERBOSITY, "0"));
+		e.putInt(Preferences.KEY_LOG_DEBUG_VERBOSITY, debug_verbosity);
+
+		e.putBoolean(Preferences.KEY_LOG_ENABLE_FILE, prefs.getBoolean(Preferences.KEY_LOG_ENABLE_FILE, false));
+		
 		e.commit();
 	}
 	
@@ -359,13 +409,16 @@ public class Preferences extends PreferenceActivity {
 		}
 		
 		// register to preference changes
-		PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(mOnOffSwitchListener);
+		PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(mPrefListener);
 	}
 
 	@Override
 	public void onDestroy() {
-		// unregister to preference changes
-		PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(mOnOffSwitchListener);
+		// get daemon preferences
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+		// un-listen to preference changes
+		preferences.unregisterOnSharedPreferenceChangeListener(mPrefListener);
 		
 		if (mBound) {
 			// Detach our existing connection.
@@ -408,7 +461,7 @@ public class Preferences extends PreferenceActivity {
 			// class name because we want a specific service implementation that
 			// we know will be running in our own process (and thus won't be
 			// supporting component replacement by other applications).
-	        Intent bindIntent = DaemonService.createDtnServiceIntent(this);
+	        Intent bindIntent = DaemonService.createControlServiceIntent(this);
 	        bindService(bindIntent, mConnection, Context.BIND_AUTO_CREATE);
 			mBound = true;
 		}
@@ -429,8 +482,12 @@ public class Preferences extends PreferenceActivity {
 		registerReceiver(mP2pConditionListener, p2p_filter);
 		
 		// enable / disable P2P switch
-		if ((mP2pSwitch != null) && (mDaemon != null)) {
-			mP2pSwitch.setEnabled(mDaemon.isP2pActive());
+		if ((mP2pSwitch != null) && (mService != null)) {
+			try {
+				mP2pSwitch.setEnabled(mService.isP2pActive());
+			} catch (RemoteException e) {
+				mP2pSwitch.setEnabled(false);
+			}
 		}
 
 		mInterfacePreference.updateInterfaceList();
@@ -457,21 +514,6 @@ public class Preferences extends PreferenceActivity {
 			
 			// enable / disable P2P switch
 			mP2pSwitch.setEnabled(intent.getBooleanExtra(P2pManager.EXTRA_P2P_STATE, false));
-		}
-	};
-	
-	private SharedPreferences.OnSharedPreferenceChangeListener mOnOffSwitchListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
-		@TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
-		@Override
-		public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-			if (KEY_ENABLED.equals(key)) {
-				// update switch state
-				if (checkBoxPreference == null) {
-					actionBarSwitch.setChecked(sharedPreferences.getBoolean(KEY_ENABLED, true));
-				} else {
-					checkBoxPreference.setChecked(sharedPreferences.getBoolean(KEY_ENABLED, true));
-				}
-			}
 		}
 	};
 
@@ -609,5 +651,391 @@ public class Preferences extends PreferenceActivity {
 		for (int i = 0; i < data.length; i++)
 			hexString.append(Integer.toHexString(0xFF & data[i]));
 		return hexString.toString();
+	}
+	
+	private final static HashSet<String> mConfigurationSet = initializeConfigurationSet();
+
+	private final static HashSet<String> initializeConfigurationSet() {
+		HashSet<String> ret = new HashSet<String>();
+
+		ret.add(KEY_SECURITY_MODE);
+		ret.add(KEY_SECURITY_BAB_KEY);
+		ret.add(KEY_LOG_OPTIONS);
+		ret.add(KEY_LOG_DEBUG_VERBOSITY);
+		ret.add(KEY_LOG_ENABLE_FILE);
+
+		return ret;
+	}
+	
+	private SharedPreferences.OnSharedPreferenceChangeListener mPrefListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+		@TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+		@Override
+		public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
+			/**
+			 * Update ON/OFF switch if changed any-where else
+			 */
+			if (KEY_ENABLED.equals(key)) {
+				// update switch state
+				if (checkBoxPreference == null) {
+					actionBarSwitch.setChecked(prefs.getBoolean(KEY_ENABLED, true));
+				} else {
+					checkBoxPreference.setChecked(prefs.getBoolean(KEY_ENABLED, true));
+				}
+			}
+			
+			/**
+			 * Alter DTN service according to configuration changes
+			 */
+			if (key.equals(Preferences.KEY_ENABLED))
+			{
+				Log.d(TAG, "Preference " + key + " has changed to " + String.valueOf(prefs.getBoolean(key, false)));
+
+				if (prefs.getBoolean(key, false)) {
+					// startup the daemon process
+					final Intent intent = new Intent(Preferences.this, DaemonService.class);
+					intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STARTUP);
+					Preferences.this.startService(intent);
+				} else {
+					// shutdown the daemon
+					final Intent intent = new Intent(Preferences.this, DaemonService.class);
+					intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_SHUTDOWN);
+					Preferences.this.startService(intent);
+				}
+			}
+			else if (key.startsWith(KEY_LOG_OPTIONS))
+			{
+				Log.d(TAG, "Preference " + key + " has changed to " + prefs.getString(key, "<not set>"));
+
+				int logLevel = Integer.valueOf(prefs.getString(KEY_LOG_OPTIONS, "0"));
+				int debugVerbosity = Integer.valueOf(prefs.getString(KEY_LOG_DEBUG_VERBOSITY, "0"));
+
+				// disable debugging if the log level is lower than 3
+				if (logLevel < 3)
+					debugVerbosity = 0;
+				
+				// send configuration change to DTN service
+				final Intent intent = new Intent(Preferences.this, DaemonService.class);
+				intent.setAction(DaemonService.ACTION_LOGGING_CHANGED);
+				intent.putExtra("loglevel", logLevel);
+				intent.putExtra("debug", debugVerbosity);
+				Preferences.this.startService(intent);
+			}
+			else if (key.startsWith(KEY_LOG_DEBUG_VERBOSITY))
+			{
+				Log.d(TAG,
+						"Preference " + key + " has changed to "
+								+ prefs.getString(key, "<not set>"));
+
+				int logLevel = Integer.valueOf(prefs.getString(KEY_LOG_OPTIONS, "0"));
+				int debugVerbosity = Integer.valueOf(prefs.getString(KEY_LOG_DEBUG_VERBOSITY, "0"));
+
+				// disable debugging if the log level is lower than 3
+				if (logLevel < 3)
+					debugVerbosity = 0;
+				
+				// send configuration change to DTN service
+				final Intent intent = new Intent(Preferences.this, DaemonService.class);
+				intent.setAction(DaemonService.ACTION_LOGGING_CHANGED);
+				intent.putExtra("debug", debugVerbosity);
+				Preferences.this.startService(intent);
+			}
+			else if (key.startsWith(KEY_LOG_ENABLE_FILE))
+			{
+				Log.d(TAG, "Preference " + key + " has changed to " + prefs.getBoolean(key, false));
+
+				// set logfile options
+				String logFilePath = null;
+
+				if (prefs.getBoolean(KEY_LOG_ENABLE_FILE, false)) {
+					File logPath = DaemonStorageUtils.getStoragePath("logs");
+					if (logPath != null) {
+						logPath.mkdirs();
+						Calendar cal = Calendar.getInstance();
+						String time = "" + cal.get(Calendar.YEAR) + cal.get(Calendar.MONTH)
+								+ cal.get(Calendar.DAY_OF_MONTH) + cal.get(Calendar.DAY_OF_MONTH)
+								+ cal.get(Calendar.HOUR) + cal.get(Calendar.MINUTE)
+								+ cal.get(Calendar.SECOND);
+
+						logFilePath = logPath.getPath() + File.separatorChar + "ibrdtn_" + time
+								+ ".log";
+					}
+				}
+				
+				// send configuration change to DTN service
+				final Intent intent = new Intent(Preferences.this, DaemonService.class);
+				intent.setAction(DaemonService.ACTION_LOGGING_CHANGED);
+				
+				intent.putExtra("filelogging", logFilePath != null);
+				
+				if (logFilePath != null) {
+					int logLevel = Integer.valueOf(prefs.getString(KEY_LOG_OPTIONS, "0"));
+					intent.putExtra("loglevel", logLevel);
+					intent.putExtra("logfile", logFilePath);
+				}
+				
+				Preferences.this.startService(intent);
+			}
+			else if (Preferences.KEY_P2P_ENABLED.equals(key))
+			{
+				if (mService != null) {
+					try {
+						mService.setP2pEnabled(prefs.getBoolean(key, false));
+					} catch (RemoteException e) {
+						// error
+					}
+				}
+			}
+			else if (Preferences.KEY_DISCOVERY_MODE.equals(key))
+			{
+				final String disco_mode = prefs.getString(key, "smart");
+
+				// if discovery is configured as "on"
+				if ("on".equals(disco_mode)) {
+					// enable discovery
+					final Intent discoIntent = new Intent(Preferences.this, DaemonService.class);
+					discoIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_START_DISCOVERY);
+					startService(discoIntent);
+				}
+				// if discovery is configured as "off"
+				else if ("off".equals(disco_mode)) {
+					// disable discovery
+					final Intent discoIntent = new Intent(Preferences.this, DaemonService.class);
+					discoIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STOP_DISCOVERY);
+					startService(discoIntent);
+				}
+				// if discovery is configured as "smart"
+				else if ("smart".equals(disco_mode)) {
+					// enable discovery for 2 minutes
+					final Intent discoIntent = new Intent(Preferences.this, DaemonService.class);
+					discoIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_START_DISCOVERY);
+					discoIntent.putExtra(DaemonService.EXTRA_DISCOVERY_DURATION, 120L);
+					startService(discoIntent);
+				}
+			}
+			else if (mConfigurationSet.contains(key))
+			{
+				Log.d(TAG, "Preference " + key + " has changed");
+				
+				// create configuration file
+				createConfig(Preferences.this);
+				
+				// send configuration change to DTN service
+				final Intent intent = new Intent(Preferences.this, DaemonService.class);
+				intent.setAction(DaemonService.ACTION_CONFIGURATION_CHANGED);
+				Preferences.this.startService(intent);
+			}
+			else
+			{
+				// create configuration file
+				createConfig(Preferences.this);
+			}
+			
+			/**
+			 * Forward preference change to the DTN service
+			 */
+			final Intent prefChangedIntent = new Intent(Preferences.this, DaemonService.class);
+			prefChangedIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_PREFERENCE_CHANGED);
+			prefChangedIntent.putExtra("prefkey", key);
+			
+			if (Preferences.KEY_ENABLED.equals(key))
+				prefChangedIntent.putExtra(key, prefs.getBoolean(key, false));
+			
+			if (Preferences.KEY_P2P_ENABLED.equals(key))
+				prefChangedIntent.putExtra(key, prefs.getBoolean(key, false));
+			
+			if (Preferences.KEY_DISCOVERY_MODE.equals(key))
+				prefChangedIntent.putExtra(key, prefs.getString(key, "smart"));
+			
+			if (Preferences.KEY_LOG_OPTIONS.equals(key))
+				prefChangedIntent.putExtra(key, prefs.getString(key, "0"));
+			
+			if (Preferences.KEY_LOG_DEBUG_VERBOSITY.equals(key))
+				prefChangedIntent.putExtra(key, prefs.getString(key, "0"));
+
+			if (Preferences.KEY_LOG_ENABLE_FILE.equals(key))
+				prefChangedIntent.putExtra(key, prefs.getBoolean(key, false));
+			
+			Preferences.this.startService(prefChangedIntent);
+		}
+	};
+	
+	public static String getConfigurationFile(Context context) {
+		return context.getFilesDir().getPath() + "/" + "config";
+	}
+	
+	/**
+	 * Creates config for dtnd in specified path
+	 * 
+	 * @param context
+	 */
+	private static void createConfig(Context context)
+	{
+		// determine path for the configuration file
+		String configPath = getConfigurationFile(context);
+		
+		// load preferences
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+		File config = new File(configPath);
+
+		// remove old config file
+		if (config.exists()) {
+			config.delete();
+		}
+
+		try {
+			FileOutputStream writer = context.openFileOutput("config", Context.MODE_PRIVATE);
+
+			// initialize default values if configured set already
+			de.tubs.ibr.dtn.daemon.Preferences.initializeDefaultPreferences(context);
+
+			// set EID
+			PrintStream p = new PrintStream(writer);
+			p.println("local_uri = " + Preferences.getEndpoint(context));
+			p.println("routing = " + preferences.getString(KEY_ROUTING, "default"));
+
+			// enable traffic stats
+			p.println("stats_traffic = yes");
+
+			// limit max. bundle lifetime to 30 days
+			p.println("limit_lifetime = 2592000");
+
+			// limit pre-dated timestamp to 2 weeks
+			p.println("limit_predated_timestamp = 1209600");
+
+			// limit block size to 50 MB
+			p.println("limit_blocksize = 250M");
+			p.println("limit_foreign_blocksize = 50M");
+
+			// specify a security path for keys
+			File sec_folder = new File(context.getFilesDir().getPath() + "/bpsec");
+			if (!sec_folder.exists() || sec_folder.isDirectory()) {
+				p.println("security_path = " + sec_folder.getPath());
+			}
+
+			String secmode = preferences.getString(KEY_SECURITY_MODE, "disabled");
+
+			if (secmode.equals("bab")) {
+				// write default BAB key to file
+				String bab_key = preferences.getString(KEY_SECURITY_BAB_KEY, "");
+				File bab_file = new File(context.getFilesDir().getPath() + "/default-bab-key.mac");
+
+				// remove old key file
+				if (bab_file.exists())
+					bab_file.delete();
+
+				FileOutputStream bab_output = context.openFileOutput("default-bab-key.mac",
+						Context.MODE_PRIVATE);
+				PrintStream bab_writer = new PrintStream(bab_output);
+				bab_writer.print(bab_key);
+				bab_writer.flush();
+				bab_writer.close();
+
+				if (bab_key.length() > 0) {
+					// enable security extension: BAB
+					p.println("security_level = 1");
+
+					// add BAB key to the configuration
+					p.println("security_bab_default_key = " + bab_file.getPath());
+				}
+			}
+
+			String timesyncmode = preferences.getString(KEY_TIMESYNC_MODE, "disabled");
+
+			if (timesyncmode.equals("master")) {
+				p.println("time_reference = yes");
+				p.println("time_discovery_announcements = yes");
+				p.println("time_synchronize = no");
+				p.println("time_set_clock = no");
+			} else if (timesyncmode.equals("slave")) {
+				p.println("time_reference = no");
+				p.println("time_discovery_announcements = yes");
+				p.println("time_synchronize = yes");
+				p.println("time_set_clock = no");
+				p.println("#time_sigma = 1.001");
+				p.println("#time_psi = 0.9");
+				p.println("#time_sync_level = 0.15");
+			}
+
+			// enable fragmentation support
+			p.println("fragmentation = yes");
+
+			// set multicast address for discovery
+			p.println("discovery_address = ff02::142 224.0.0.142");
+
+			String internet_ifaces = "";
+			String ifaces = "";
+
+			Map<String, ?> prefs = preferences.getAll();
+			for (Map.Entry<String, ?> entry : prefs.entrySet()) {
+				String key = entry.getKey();
+				if (key.startsWith("interface_")) {
+					if (entry.getValue() instanceof Boolean) {
+						if ((Boolean) entry.getValue()) {
+							String iface = key.substring(10, key.length());
+							ifaces = ifaces + " " + iface;
+
+							p.println("net_" + iface + "_type = tcp");
+							p.println("net_" + iface + "_interface = " + iface);
+							p.println("net_" + iface + "_port = 4556");
+							internet_ifaces += iface + " ";
+						}
+					}
+				}
+			}
+
+			p.println("net_interfaces = " + ifaces);
+
+			if (!"off".equals(preferences.getString(KEY_UPLINK_MODE, "off"))) {
+				// add option to detect interface connections
+				if ("wifi".equals(preferences.getString(KEY_UPLINK_MODE, "off"))) {
+					p.println("net_internet = " + internet_ifaces);
+
+				}
+
+				// add static host
+				p.println("static1_address = " + __CLOUD_ADDRESS__);
+				p.println("static1_port = " + __CLOUD_PORT__);
+				p.println("static1_uri = " + __CLOUD_EID__);
+				p.println("static1_proto = " + __CLOUD_PROTOCOL__);
+				p.println("static1_immediately = yes");
+				p.println("static1_global = yes");
+			}
+
+			String storage_mode = preferences.getString(KEY_STORAGE_MODE, "disk-persistent");
+			if ("disk".equals(storage_mode) || "disk-persistent".equals(storage_mode)) {
+				// storage path
+				File blobPath = DaemonStorageUtils.getStoragePath("blob");
+				if (blobPath != null) {
+					p.println("blob_path = " + blobPath.getPath());
+
+					// flush storage path
+					File[] files = blobPath.listFiles();
+					if (files != null) {
+						for (File f : files) {
+							f.delete();
+						}
+					}
+				}
+			}
+
+			if ("disk-persistent".equals(storage_mode)) {
+				File bundlePath = DaemonStorageUtils.getStoragePath("bundles");
+				if (bundlePath != null) {
+					p.println("storage_path = " + bundlePath.getPath());
+					p.println("use_persistent_bundlesets = yes");
+				}
+			}
+
+			// enable interface rebind
+			p.println("net_rebind = yes");
+
+			// flush the write buffer
+			p.flush();
+
+			// close the filehandle
+			writer.close();
+		} catch (IOException e) {
+			Log.e(TAG, "Problem writing config", e);
+		}
 	}
 }

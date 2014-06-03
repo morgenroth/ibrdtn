@@ -1,5 +1,6 @@
 package de.tubs.ibr.dtn.daemon.data;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -7,22 +8,22 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Bundle;
 import android.os.Handler;
+import android.os.RemoteException;
 import android.support.v4.content.AsyncTaskLoader;
-import de.tubs.ibr.dtn.service.DaemonService;
+import de.tubs.ibr.dtn.service.ControlService;
 import de.tubs.ibr.dtn.stats.ConvergenceLayerStatsEntry;
-import de.tubs.ibr.dtn.swig.NativeStats;
-import de.tubs.ibr.dtn.swig.StringVec;
 
 public class CurrentConvergenceLayerStatsLoader extends AsyncTaskLoader<List<ConvergenceLayerStatsEntry>> {
     
-    private DaemonService mService = null;
+    private ControlService mService = null;
     private Boolean mStarted = false;
     private List<ConvergenceLayerStatsEntry> mData = null;
     private Handler mHandler = null;
     private String mConvergenceLayer = null;
 
-    public CurrentConvergenceLayerStatsLoader(Context context, DaemonService service, String convergencelayer) {
+    public CurrentConvergenceLayerStatsLoader(Context context, ControlService service, String convergencelayer) {
         super(context);
         mService = service;
         mConvergenceLayer = convergencelayer;
@@ -84,14 +85,19 @@ public class CurrentConvergenceLayerStatsLoader extends AsyncTaskLoader<List<Con
     public List<ConvergenceLayerStatsEntry> loadInBackground() {
         LinkedList<ConvergenceLayerStatsEntry> ret = new LinkedList<ConvergenceLayerStatsEntry>();
         
-        NativeStats s = mService.getStats();
-        StringVec tags = s.getTags();
-        for (int i = 0; i < tags.size(); i++) {
-            ConvergenceLayerStatsEntry e = new ConvergenceLayerStatsEntry(s, tags.get(i), i);
-            
-            if ((mConvergenceLayer == null) || (e.getConvergenceLayer().equals(mConvergenceLayer))) {
-                ret.push(e);
-            }
+        try {
+	        Bundle data = mService.getStats();
+	        data.setClassLoader(getContext().getClassLoader());
+	        
+	        ArrayList<ConvergenceLayerStatsEntry> cl_stats = data.getParcelableArrayList("clstats");
+	        
+	        for (ConvergenceLayerStatsEntry e : cl_stats) {
+	            if ((mConvergenceLayer == null) || (e.getConvergenceLayer().equals(mConvergenceLayer))) {
+	                ret.push(e);
+	            }
+	        }
+        } catch (RemoteException e) {
+        	// error
         }
         
         return ret;

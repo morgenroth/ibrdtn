@@ -10,26 +10,22 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.support.v4.content.AsyncTaskLoader;
 import android.util.Log;
-import de.tubs.ibr.dtn.service.DaemonService;
 import de.tubs.ibr.dtn.stats.ConvergenceLayerStatsEntry;
-import de.tubs.ibr.dtn.stats.StatsDatabase;
+import de.tubs.ibr.dtn.stats.StatsContentProvider;
 
 @SuppressLint("SimpleDateFormat")
 public class ConvergenceLayerStatsLoader extends AsyncTaskLoader<Cursor> {
     
     private static final String TAG = "ConvergenceLayerStatsLoader";
     
-    private DaemonService mService = null;
     private Boolean mStarted = false;
     private Cursor mData = null;
     private String mConvergenceLayer = null;
 
-    public ConvergenceLayerStatsLoader(Context context, DaemonService service, String convergencecayer) {
+    public ConvergenceLayerStatsLoader(Context context, String convergencecayer) {
         super(context);
-        mService = service;
         mConvergenceLayer = convergencecayer;
         setUpdateThrottle(250);
     }
@@ -37,20 +33,39 @@ public class ConvergenceLayerStatsLoader extends AsyncTaskLoader<Cursor> {
     @Override
     public void deliverResult(Cursor data) {
         if (isReset()) {
-            mData = null;
-            return;
+        	if (data != null) {
+        		onReleaseResources(data);
+        	}
         }
         
+        Cursor oldData = mData;
         mData = data;
         
         if (isStarted()) {
             super.deliverResult(data);
         }
+        
+        if (oldData != null && oldData != data) {
+        	onReleaseResources(oldData);
+        }
     }
+    
+    @Override
+	public void onCanceled(Cursor data) {
+		super.onCanceled(data);
+		onReleaseResources(data);
+	}
 
     @Override
     protected void onReset() {
+    	super.onReset();
+    	
         onStopLoading();
+        
+        if (mData != null) {
+        	onReleaseResources(mData);
+        	mData = null;
+        }
         
         if (mStarted) {
             // unregister from intent receiver
@@ -65,7 +80,7 @@ public class ConvergenceLayerStatsLoader extends AsyncTaskLoader<Cursor> {
             this.deliverResult(mData);
         }
         
-        IntentFilter filter = new IntentFilter(StatsDatabase.NOTIFY_DATABASE_UPDATED);
+        IntentFilter filter = new IntentFilter(StatsContentProvider.NOTIFY_DATABASE_UPDATED);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         getContext().registerReceiver(_receiver, filter);
         mStarted = true;
@@ -82,8 +97,6 @@ public class ConvergenceLayerStatsLoader extends AsyncTaskLoader<Cursor> {
 
     @Override
     public Cursor loadInBackground() {
-        SQLiteDatabase db = mService.getStatsDatabase().getDB();
-        
         final DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         
         // generate a time limit (24 hours)
@@ -94,26 +107,38 @@ public class ConvergenceLayerStatsLoader extends AsyncTaskLoader<Cursor> {
         try {
             if (mConvergenceLayer == null) {
                 // limit to specific download
-                return db.query(
-                        StatsDatabase.TABLE_NAMES[1],
+            	
+                // limit to specific download
+            	return getContext().getContentResolver().query(
+            			StatsContentProvider.CL_STATS_URI,
                         ConvergenceLayerStatsEntry.PROJECTION,
                         ConvergenceLayerStatsEntry.TIMESTAMP + " >= ?",
                         new String[] { timestamp_limit },
-                        null, null, ConvergenceLayerStatsEntry.TIMESTAMP + " ASC");
+                        ConvergenceLayerStatsEntry.TIMESTAMP + " ASC");
             } else {
                 // limit to specific download
-                return db.query(
-                        StatsDatabase.TABLE_NAMES[1],
+            	return getContext().getContentResolver().query(
+            			StatsContentProvider.CL_STATS_URI,
                         ConvergenceLayerStatsEntry.PROJECTION,
                         ConvergenceLayerStatsEntry.TIMESTAMP + " >= ? AND " + ConvergenceLayerStatsEntry.CONVERGENCE_LAYER + " = ?",
                         new String[] { timestamp_limit, mConvergenceLayer },
-                        null, null, ConvergenceLayerStatsEntry.TIMESTAMP + " ASC");
+                        ConvergenceLayerStatsEntry.TIMESTAMP + " ASC");
             }
         } catch (Exception e) {
             Log.e(TAG, "loadInBackground() failed", e);
         }
         
         return null;
+    }
+    
+    /**
+     * Helper function to take care of releasing resources associated
+     * with an actively loaded data set.
+     */
+    protected void onReleaseResources(Cursor data) {
+        // For a simple List<> there is nothing to do.  For something
+        // like a Cursor, we would close it here.
+    	data.close();
     }
 
     private BroadcastReceiver _receiver = new BroadcastReceiver() {

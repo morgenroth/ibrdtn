@@ -4,19 +4,21 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Bundle;
 import android.os.Handler;
+import android.os.RemoteException;
 import android.support.v4.content.AsyncTaskLoader;
-import de.tubs.ibr.dtn.service.DaemonService;
+import de.tubs.ibr.dtn.service.ControlService;
 import de.tubs.ibr.dtn.stats.StatsEntry;
 
 public class CurrentStatsLoader extends AsyncTaskLoader<StatsEntry> {
     
-    private DaemonService mService = null;
+    private ControlService mService = null;
     private Boolean mStarted = false;
     private StatsEntry mData = null;
     private Handler mHandler = null;
 
-    public CurrentStatsLoader(Context context, DaemonService service) {
+    public CurrentStatsLoader(Context context, ControlService service) {
         super(context);
         mService = service;
         setUpdateThrottle(250);
@@ -75,7 +77,15 @@ public class CurrentStatsLoader extends AsyncTaskLoader<StatsEntry> {
 
     @Override
     public StatsEntry loadInBackground() {
-        return new StatsEntry(mService.getStats());
+    	try {
+	    	Bundle data = mService.getStats();
+	    	data.setClassLoader(getContext().getClassLoader());
+	    	
+	        return data.getParcelable("stats");
+        } catch (RemoteException e) {
+        	// error
+        	return null;
+        }
     }
     
     private Runnable _update = new Runnable() {

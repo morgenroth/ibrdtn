@@ -10,11 +10,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.support.v4.content.AsyncTaskLoader;
 import android.util.Log;
-import de.tubs.ibr.dtn.service.DaemonService;
-import de.tubs.ibr.dtn.stats.StatsDatabase;
+import de.tubs.ibr.dtn.stats.StatsContentProvider;
 import de.tubs.ibr.dtn.stats.StatsEntry;
 
 @SuppressLint("SimpleDateFormat")
@@ -22,33 +20,51 @@ public class StatsLoader extends AsyncTaskLoader<Cursor> {
     
     private static final String TAG = "StatsLoader";
     
-    private DaemonService mService = null;
     private Boolean mStarted = false;
     private Cursor mData = null;
 
-    public StatsLoader(Context context, DaemonService service) {
+    public StatsLoader(Context context) {
         super(context);
-        mService = service;
         setUpdateThrottle(250);
     }
     
     @Override
     public void deliverResult(Cursor data) {
         if (isReset()) {
-            mData = null;
-            return;
+        	if (data != null) {
+        		onReleaseResources(data);
+        		data = null;
+        	}
         }
         
+        Cursor oldData = mData;
         mData = data;
         
         if (isStarted()) {
             super.deliverResult(data);
         }
+        
+        if (oldData != null && oldData != data) {
+        	onReleaseResources(oldData);
+        }
     }
-
+    
     @Override
+	public void onCanceled(Cursor data) {
+		super.onCanceled(data);
+		onReleaseResources(data);
+	}
+
+	@Override
     protected void onReset() {
+    	super.onReset();
+    	
         onStopLoading();
+        
+        if (mData != null) {
+        	onReleaseResources(mData);
+        	mData = null;
+        }
         
         if (mStarted) {
             // unregister from intent receiver
@@ -63,7 +79,7 @@ public class StatsLoader extends AsyncTaskLoader<Cursor> {
             this.deliverResult(mData);
         }
         
-        IntentFilter filter = new IntentFilter(StatsDatabase.NOTIFY_DATABASE_UPDATED);
+        IntentFilter filter = new IntentFilter(StatsContentProvider.NOTIFY_DATABASE_UPDATED);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         getContext().registerReceiver(_receiver, filter);
         mStarted = true;
@@ -80,8 +96,6 @@ public class StatsLoader extends AsyncTaskLoader<Cursor> {
 
     @Override
     public Cursor loadInBackground() {
-        SQLiteDatabase db = mService.getStatsDatabase().getDB();
-        
         final DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         
         // generate a time limit (24 hours)
@@ -91,17 +105,27 @@ public class StatsLoader extends AsyncTaskLoader<Cursor> {
 
         try {
             // limit to specific download
-            return db.query(
-                    StatsDatabase.TABLE_NAMES[0],
+        	return getContext().getContentResolver().query(
+        			StatsContentProvider.STATS_URI,
                     StatsEntry.PROJECTION,
                     StatsEntry.TIMESTAMP + " >= ?",
                     new String[] { timestamp_limit },
-                    null, null, StatsEntry.TIMESTAMP + " ASC");
+                    StatsEntry.TIMESTAMP + " ASC");
         } catch (Exception e) {
             Log.e(TAG, "loadInBackground() failed", e);
         }
         
         return null;
+    }
+    
+    /**
+     * Helper function to take care of releasing resources associated
+     * with an actively loaded data set.
+     */
+    protected void onReleaseResources(Cursor data) {
+        // For a simple List<> there is nothing to do.  For something
+        // like a Cursor, we would close it here.
+    	data.close();
     }
 
     private BroadcastReceiver _receiver = new BroadcastReceiver() {
