@@ -24,17 +24,58 @@ package de.tubs.ibr.dtn.service;
 
 import java.io.File;
 
+import android.content.Context;
 import android.os.Environment;
 
 public class DaemonStorageUtils {
-	public static File getStoragePath(String subdir)
+	public static void clearBlobPath(Context context) {
+		// storage path
+		File blobPath = DaemonStorageUtils.getBlobPath(context);
+		if (blobPath == null) return;
+		
+		// flush storage path
+		File[] files = blobPath.listFiles();
+		if (files != null) {
+			for (File f : files) {
+				f.delete();
+			}
+		}
+	}
+	
+	public static File getBlobPath(Context context) {
+		File cachedir = context.getCacheDir();
+		if (cachedir == null) return null;
+		return new File(cachedir.getPath() + File.separatorChar + "blob");
+	}
+	
+	public static File getStoragePath(Context context)
 	{
 		if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED))
 		{
 			File externalStorage = Environment.getExternalStorageDirectory();
-			return new File(externalStorage.getPath() + File.separatorChar + "ibrdtn" + File.separatorChar + subdir);
+			return new File(externalStorage.getPath() + File.separatorChar + "ibrdtn" + File.separatorChar + "storage");
 		}
 
 		return null;
+	}
+	
+	public static File getLogPath(Context context)
+	{
+		if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED))
+		{
+			File externalStorage = Environment.getExternalStorageDirectory();
+			return new File(externalStorage.getPath() + File.separatorChar + "ibrdtn" + File.separatorChar + "logs");
+		}
+
+		return null;
+	}
+	
+	public static File getSecurityPath(Context context)
+	{
+		return new File(context.getFilesDir().getPath() + File.separatorChar + "bpsec");
+	}
+	
+	public static String getConfigurationFile(Context context) {
+		return context.getFilesDir().getPath() + "/" + "config";
 	}
 }

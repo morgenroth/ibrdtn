@@ -312,6 +312,9 @@ public class Preferences extends PreferenceActivity {
 
 		// initialize default values if configured set already
 		initializeDefaultPreferences(this);
+		
+		// create configuration file
+		createConfig(Preferences.this);
 
 		addPreferencesFromResource(R.xml.preferences);
 		
@@ -751,7 +754,7 @@ public class Preferences extends PreferenceActivity {
 				String logFilePath = null;
 
 				if (prefs.getBoolean(KEY_LOG_ENABLE_FILE, false)) {
-					File logPath = DaemonStorageUtils.getStoragePath("logs");
+					File logPath = DaemonStorageUtils.getLogPath(Preferences.this);
 					if (logPath != null) {
 						logPath.mkdirs();
 						Calendar cal = Calendar.getInstance();
@@ -836,10 +839,6 @@ public class Preferences extends PreferenceActivity {
 		}
 	};
 	
-	public static String getConfigurationFile(Context context) {
-		return context.getFilesDir().getPath() + "/" + "config";
-	}
-	
 	/**
 	 * Creates config for dtnd in specified path
 	 * 
@@ -848,7 +847,7 @@ public class Preferences extends PreferenceActivity {
 	private static void createConfig(Context context)
 	{
 		// determine path for the configuration file
-		String configPath = getConfigurationFile(context);
+		String configPath = DaemonStorageUtils.getConfigurationFile(context);
 		
 		// load preferences
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
@@ -881,7 +880,7 @@ public class Preferences extends PreferenceActivity {
 			p.println("limit_foreign_blocksize = 50M");
 
 			// specify a security path for keys
-			File sec_folder = new File(context.getFilesDir().getPath() + "/bpsec");
+			File sec_folder = DaemonStorageUtils.getSecurityPath(context);
 			if (!sec_folder.exists() || sec_folder.isDirectory()) {
 				p.println("security_path = " + sec_folder.getPath());
 			}
@@ -891,7 +890,7 @@ public class Preferences extends PreferenceActivity {
 			if (secmode.equals("bab")) {
 				// write default BAB key to file
 				String bab_key = preferences.getString(KEY_SECURITY_BAB_KEY, "");
-				File bab_file = new File(context.getFilesDir().getPath() + "/default-bab-key.mac");
+				File bab_file = new File(DaemonStorageUtils.getSecurityPath(context).getPath() + "/default-bab-key.mac");
 
 				// remove old key file
 				if (bab_file.exists())
@@ -978,22 +977,14 @@ public class Preferences extends PreferenceActivity {
 			String storage_mode = preferences.getString(KEY_STORAGE_MODE, "disk-persistent");
 			if ("disk".equals(storage_mode) || "disk-persistent".equals(storage_mode)) {
 				// storage path
-				File blobPath = DaemonStorageUtils.getStoragePath("blob");
+				File blobPath = DaemonStorageUtils.getBlobPath(context);
 				if (blobPath != null) {
 					p.println("blob_path = " + blobPath.getPath());
-
-					// flush storage path
-					File[] files = blobPath.listFiles();
-					if (files != null) {
-						for (File f : files) {
-							f.delete();
-						}
-					}
 				}
 			}
 
 			if ("disk-persistent".equals(storage_mode)) {
-				File bundlePath = DaemonStorageUtils.getStoragePath("bundles");
+				File bundlePath = DaemonStorageUtils.getStoragePath(context);
 				if (bundlePath != null) {
 					p.println("storage_path = " + bundlePath.getPath());
 					p.println("use_persistent_bundlesets = yes");

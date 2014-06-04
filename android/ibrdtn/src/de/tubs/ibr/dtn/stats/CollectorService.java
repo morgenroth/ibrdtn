@@ -122,7 +122,7 @@ public class CollectorService extends IntentService {
 				
 				if (calendar.getTimeInMillis() < prefs.getLong("stats_timestamp", 0)) return;
 							
-				File ef = new File(getFilesDir().getPath() + File.separatorChar + "events.dat");
+				File ef = new File(getCacheDir().getPath() + File.separatorChar + "events.dat");
 				//if (ef.exists()) Log.d(TAG, "File size: " + Long.toString( ef.length() ));
 				
 				// compress and send the log file if the size is too large
@@ -176,8 +176,8 @@ public class CollectorService extends IntentService {
 					zos.close();
 				}
 				
-				File ef = new File(getFilesDir().getPath() + File.separatorChar + "events.dat");
-				File efz = new File(getFilesDir().getPath() + File.separatorChar + "events.dat.gz");
+				File ef = new File(getCacheDir().getPath() + File.separatorChar + "events.dat");
+				File efz = new File(getCacheDir().getPath() + File.separatorChar + "events.dat.gz");
 				
 				// send and delete zipped file
 				Log.d(TAG, "Compressed log file: " + Long.toString( efz.length() ));
