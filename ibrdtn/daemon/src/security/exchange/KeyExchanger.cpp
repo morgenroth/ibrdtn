@@ -239,10 +239,6 @@ namespace dtn
 				// set the lifetime of the bundle to 60 seconds
 				b.lifetime = 300;
 
-				// add a schl block
-				dtn::data::ScopeControlHopLimitBlock &schl = b.push_front<dtn::data::ScopeControlHopLimitBlock>();
-				schl.setLimit(1);
-
 				transmit(b);
 
 				// prevent expiration of the session
