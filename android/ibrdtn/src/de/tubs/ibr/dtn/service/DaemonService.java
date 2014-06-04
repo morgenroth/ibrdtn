@@ -617,7 +617,7 @@ public class DaemonService extends Service {
 				int logLevel = intent.getIntExtra("loglevel", 0);
 				
 				// alter file logging
-				mDaemonProcess.setLogFile(logFilePath == null ? null : logFilePath, logLevel);
+				mDaemonProcess.setLogFile(logFilePath == null ? "" : logFilePath, logLevel);
 			} else {
 				if (intent.hasExtra("loglevel")) {
 					int logLevel = intent.getIntExtra("loglevel", 0);
