@@ -68,11 +68,5 @@ public class EventReceiver extends BroadcastReceiver {
 			i.putExtra("bundleid", intent.getParcelableExtra("bundleid"));
 			context.startService(i);
 		}
-		else if (ChatService.ACTION_NEW_MESSAGE.equals(action))
-		{
-			// forward intent to the chat service
-			intent.setClass(context, ChatService.class);
-			context.startService(intent);
-		}
 	}
 }

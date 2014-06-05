@@ -58,8 +58,12 @@
 	            <action android:name="de.tubs.ibr.dtn.intent.STATUS_REPORT" />
 	            <category android:name="de.tubs.ibr.dtn.chat" />
 	        </intent-filter>
+	    </receiver>
+	    
+	    <receiver android:enabled="true" android:name=".service.NotificationReceiver" android:exported="false">
 	        <intent-filter>
 	            <action android:name="de.tubs.ibr.dtn.chat.ACTION_NEW_MESSAGE" />
+	            <category android:name="android.intent.category.DEFAULT" />
 	        </intent-filter>
 	    </receiver>
     </application>
