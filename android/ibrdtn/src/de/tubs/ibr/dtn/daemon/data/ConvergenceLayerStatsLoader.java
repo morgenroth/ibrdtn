@@ -33,9 +33,8 @@ public class ConvergenceLayerStatsLoader extends AsyncTaskLoader<Cursor> {
     @Override
     public void deliverResult(Cursor data) {
         if (isReset()) {
-        	if (data != null) {
-        		onReleaseResources(data);
-        	}
+        	onReleaseResources(data);
+        	data = null;
         }
         
         Cursor oldData = mData;
@@ -62,10 +61,8 @@ public class ConvergenceLayerStatsLoader extends AsyncTaskLoader<Cursor> {
     	
         onStopLoading();
         
-        if (mData != null) {
-        	onReleaseResources(mData);
-        	mData = null;
-        }
+        onReleaseResources(mData);
+        mData = null;
         
         if (mStarted) {
             // unregister from intent receiver
@@ -136,6 +133,8 @@ public class ConvergenceLayerStatsLoader extends AsyncTaskLoader<Cursor> {
      * with an actively loaded data set.
      */
     protected void onReleaseResources(Cursor data) {
+    	if (data == null) return;
+    	
         // For a simple List<> there is nothing to do.  For something
         // like a Cursor, we would close it here.
     	data.close();
