@@ -37,7 +37,7 @@ APP_CFLAGS:=
 # ibrcommon
 # openssl headers
 # include openssl headers for ibrcommon/ibrcommon/ssl/gcm/gcm_aes.c, APP_CFLAGS are also used for c++
-APP_CFLAGS+=-I$(abspath $(LOCAL_PATH))/openssl/include -DOPENSSL_EXPERIMENTAL_JPAKE
+APP_CFLAGS+=-I$(abspath $(LOCAL_PATH))/openssl/include
 
 # ibrdtn
 # include ibrcommon headers
