@@ -32,8 +32,8 @@ exchange_SOURCES += \
 endif
 endif
 
-AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS)
-AM_LDFLAGS = $(ibrdtn_LIBS)
+AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS) $(OPENSSL_CFLAGS)
+AM_LDFLAGS = $(ibrdtn_LIBS) $(OPENSSL_LIBS)
 
 if ANDROID
 noinst_DATA = Android.mk
