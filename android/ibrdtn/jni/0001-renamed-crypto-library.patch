@@ -1,0 +1,83 @@
+From 3e49a5c7b53554e61ef7de4aa6d6b1f1606bd3f3 Mon Sep 17 00:00:00 2001
+From: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
+Date: Fri, 13 Jun 2014 15:55:20 +0200
+Subject: [PATCH] renamed crypto library
+
+---
+ Crypto.mk | 8 ++++----
+ Ssl.mk    | 6 +++---
+ 2 files changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/Crypto.mk b/Crypto.mk
+index 1615ba8..1fb27f2 100644
+--- a/Crypto.mk
++++ b/Crypto.mk
+@@ -21,7 +21,7 @@ LOCAL_SRC_FILES += $(target_src_files)
+ LOCAL_CFLAGS += $(target_c_flags)
+ LOCAL_C_INCLUDES += $(target_c_includes)
+ LOCAL_MODULE_TAGS := optional
+-LOCAL_MODULE:= libcrypto_static
++LOCAL_MODULE:= libcryptox_static
+ LOCAL_ADDITIONAL_DEPENDENCIES := $(local_additional_dependencies)
+ include $(BUILD_STATIC_LIBRARY)
+ 
+@@ -41,7 +41,7 @@ LOCAL_SRC_FILES += $(target_src_files)
+ LOCAL_CFLAGS += $(target_c_flags)
+ LOCAL_C_INCLUDES += $(target_c_includes)
+ LOCAL_MODULE_TAGS := optional
+-LOCAL_MODULE:= libcrypto
++LOCAL_MODULE:= libcryptox
+ LOCAL_ADDITIONAL_DEPENDENCIES := $(local_additional_dependencies)
+ include $(BUILD_SHARED_LIBRARY)
+ 
+@@ -55,7 +55,7 @@ include $(BUILD_SHARED_LIBRARY)
+ #LOCAL_C_INCLUDES += $(host_c_includes)
+ #LOCAL_LDLIBS += -ldl
+ #LOCAL_MODULE_TAGS := optional
+-#LOCAL_MODULE:= libcrypto-host
++#LOCAL_MODULE:= libcryptox-host
+ #LOCAL_ADDITIONAL_DEPENDENCIES := $(local_additional_dependencies)
+ #include $(BUILD_HOST_SHARED_LIBRARY)
+ 
+@@ -69,6 +69,6 @@ include $(BUILD_SHARED_LIBRARY)
+ #LOCAL_C_INCLUDES += $(host_c_includes)
+ #LOCAL_LDLIBS += -ldl
+ #LOCAL_MODULE_TAGS := optional
+-#LOCAL_MODULE:= libcrypto_static
++#LOCAL_MODULE:= libcryptox_static
+ #LOCAL_ADDITIONAL_DEPENDENCIES := $(local_additional_dependencies)
+ #include $(BUILD_HOST_STATIC_LIBRARY)
+diff --git a/Ssl.mk b/Ssl.mk
+index 6a3335c..f12dd38 100644
+--- a/Ssl.mk
++++ b/Ssl.mk
+@@ -36,7 +36,7 @@ endif
+ LOCAL_SRC_FILES += $(target_src_files)
+ LOCAL_CFLAGS += $(target_c_flags)
+ LOCAL_C_INCLUDES += $(target_c_includes)
+-LOCAL_SHARED_LIBRARIES += libcrypto $(log_shared_libraries)
++LOCAL_SHARED_LIBRARIES += libcryptox $(log_shared_libraries)
+ LOCAL_MODULE_TAGS := optional
+ LOCAL_MODULE:= libssl
+ LOCAL_ADDITIONAL_DEPENDENCIES := $(local_additional_dependencies)
+@@ -49,7 +49,7 @@ include $(LOCAL_PATH)/android-config.mk
+ LOCAL_SRC_FILES += $(host_src_files)
+ LOCAL_CFLAGS += $(host_c_flags)
+ LOCAL_C_INCLUDES += $(host_c_includes)
+-LOCAL_SHARED_LIBRARIES += libcrypto-host $(log_shared_libraries)
++LOCAL_SHARED_LIBRARIES += libcryptox-host $(log_shared_libraries)
+ LOCAL_MODULE_TAGS := optional
+ LOCAL_MODULE:= libssl-host
+ LOCAL_ADDITIONAL_DEPENDENCIES := $(local_additional_dependencies)
+@@ -61,7 +61,7 @@ include $(CLEAR_VARS)
+ include $(LOCAL_PATH)/android-config.mk
+ LOCAL_SRC_FILES:= ssl/ssltest.c
+ LOCAL_C_INCLUDES += $(host_c_includes)
+-LOCAL_SHARED_LIBRARIES := libssl libcrypto $(log_shared_libraries)
++LOCAL_SHARED_LIBRARIES := libssl libcryptox $(log_shared_libraries)
+ LOCAL_MODULE:= ssltest
+ LOCAL_MODULE_TAGS := optional
+ LOCAL_ADDITIONAL_DEPENDENCIES := $(local_additional_dependencies)
+-- 
+1.9.1
+

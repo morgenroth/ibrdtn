@@ -1,6 +1,9 @@
 #!/bin/sh
 #
 
+OPENSSL_COMMIT="59254098a1ebe67b1d8faee1c8f87400974367de"
+LIBNL_COMMIT="7e32da396adfe6b58b23641dacb1887f5855ff9c"
+
 set -e
 
 echo "Generating symlinks to IBR-DTN sources..."
@@ -16,30 +19,28 @@ echo "-------------------------------------------------------------------"
 # check if the existing directory has the right revision
 if [ -e nl-3 ]; then
   cd nl-3; REV=$(git rev-parse HEAD|tr -d '\n'); cd ..
-  if [ ${REV} != "7e32da396adfe6b58b23641dacb1887f5855ff9c" ]; then
+  if [ ${REV} != "${LIBNL_COMMIT}" ]; then
     rm -rf nl-3
   fi
 fi
 [ ! -e nl-3 ] && git clone git://github.com/ibrdtn/libnl-3-android.git nl-3
 cd nl-3
 git fetch --tags
-git checkout 7e32da396adfe6b58b23641dacb1887f5855ff9c
+git checkout ${LIBNL_COMMIT}
 cd ..
 
 # check if the existing directory has the right revision
 if [ -e openssl ]; then
   cd openssl; REV=$(git rev-parse HEAD|tr -d '\n'); cd ..
-  if [ "${REV}" != "8c6a9abf76767407afd652ed65fba32620c38e04" ]; then
+  if [ "${REV}" != "${OPENSSL_COMMIT}" ]; then
     rm -rf openssl
   fi
 fi
 [ ! -e openssl ] && git clone git://github.com/ibrdtn/openssl-android.git openssl
 cd openssl
 git fetch --tags
-git checkout 8c6a9abf76767407afd652ed65fba32620c38e04
-git am < ../0001-jpake.h-added.patch
-git am < ../0002-enabled-jpake.patch
-git am < ../0003-renamed-crypto-library.patch
+git checkout ${OPENSSL_COMMIT}
+git am < ../0001-renamed-crypto-library.patch
 cd ..
 
 echo ""
