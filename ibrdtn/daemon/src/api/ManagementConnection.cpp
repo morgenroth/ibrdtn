@@ -272,13 +272,13 @@ namespace dtn
 				}
 				else if(cmd[0] == "logstream")
 				{
-				    ibrcommon::Logger::addStream(_stream, ibrcommon::Logger::LOGGER_ALL, ibrcommon::Logger::LOG_TIMESTAMP | ibrcommon::Logger::LOG_TAG | ibrcommon::Logger::LOG_LEVEL);
+					ibrcommon::Logger::addStream(_stream, ibrcommon::Logger::LOGGER_ALL, ibrcommon::Logger::LOG_TIMESTAMP | ibrcommon::Logger::LOG_TAG | ibrcommon::Logger::LOG_LEVEL);
 
-				    std::string buffer = "";
-				    getline(_stream, buffer);
+					std::string buffer = "";
+					getline(_stream, buffer);
 
-				    ibrcommon::Logger::removeStream(_stream);
-				    _stream << ClientHandler::API_STATUS_OK << " STOPPED STREAMING" << std::endl;
+					ibrcommon::Logger::removeStream(_stream);
+					_stream << ClientHandler::API_STATUS_OK << " STOPPED STREAMING" << std::endl;
 				}
 				else if (cmd[0] == "core")
 				{

@@ -192,10 +192,10 @@ namespace ibrcommon
 		 */
 		static void addStream(std::ostream &stream, const unsigned char logmask = LOGGER_INFO, const unsigned char options = LOG_NONE);
 
-        /**
-         * Add a standard output stream to the logging framework.
-         * @param stream Standard output stream
-         */
+		/**
+		 * Add a standard output stream to the logging framework.
+		 * @param stream Standard output stream
+		 */
 		static void removeStream(std::ostream &stream);
 
 		/**
@@ -321,10 +321,10 @@ namespace ibrcommon
 		 */
 		void addStream(std::ostream &stream, const unsigned char logmask = Logger::LOGGER_INFO, const unsigned char options = Logger::LOG_NONE);
 
-        /**
-         * Remove a standard output stream to the logging framework.
-         * @param stream Standard output stream
-         */
+		/**
+		 * Remove a standard output stream to the logging framework.
+		 * @param stream Standard output stream
+		 */
 		void removeStream(std::ostream &stream);
 
 		/**
