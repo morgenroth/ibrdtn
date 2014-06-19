@@ -192,6 +192,12 @@ namespace ibrcommon
 		 */
 		static void addStream(std::ostream &stream, const unsigned char logmask = LOGGER_INFO, const unsigned char options = LOG_NONE);
 
+        /**
+         * Add a standard output stream to the logging framework.
+         * @param stream Standard output stream
+         */
+		static void removeStream(std::ostream &stream);
+
 		/**
 		 * Set the logfile for the logging framework.
 		 * @param logfile The file to log into.
@@ -314,6 +320,12 @@ namespace ibrcommon
 		 * @param options This mask specify what will be added to each log message. You can combine options with the or function.
 		 */
 		void addStream(std::ostream &stream, const unsigned char logmask = Logger::LOGGER_INFO, const unsigned char options = Logger::LOG_NONE);
+
+        /**
+         * Remove a standard output stream to the logging framework.
+         * @param stream Standard output stream
+         */
+		void removeStream(std::ostream &stream);
 
 		/**
 		 * Set the logfile for the logging framework.
