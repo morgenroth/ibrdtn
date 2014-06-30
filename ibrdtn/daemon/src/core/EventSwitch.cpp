@@ -190,6 +190,7 @@ namespace dtn
 
 			// shut down watchdog
 			if (profiling) _wd.down();
+			_wd.join();
 
 			for (std::list<Worker*>::iterator iter = _wlist.begin(); iter != _wlist.end(); ++iter)
 			{
@@ -318,7 +319,6 @@ namespace dtn
 		void EventSwitch::WatchDog::down()
 		{
 			JoinableThread::stop();
-			JoinableThread::join();
 		}
 
 		void EventSwitch::WatchDog::run() throw ()
