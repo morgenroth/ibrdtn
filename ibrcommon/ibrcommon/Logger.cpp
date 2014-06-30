@@ -162,11 +162,11 @@ namespace ibrcommon
 
 	void LogWriter::removeStream(std::ostream &stream)
 	{
-		for(std::list<LoggerOutput>::iterator iter = _logger.begin(); iter != _logger.end(); ++iter)
+		for (std::list<LoggerOutput>::iterator iter = _logger.begin(); iter != _logger.end(); ++iter)
 		{
 			const LoggerOutput &output = (*iter);
 
-			if((void*)stream == (void*)output._stream)
+			if ((void*)stream == (void*)output._stream)
 			{
 				iter = _logger.erase(iter);
 			}

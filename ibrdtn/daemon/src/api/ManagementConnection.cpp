@@ -270,7 +270,7 @@ namespace dtn
 					ibrcommon::Logger::writeBuffer(_stream);
 					_stream << std::endl;
 				}
-				else if(cmd[0] == "logstream")
+				else if (cmd[0] == "logstream")
 				{
 					ibrcommon::Logger::addStream(_stream, ibrcommon::Logger::LOGGER_ALL, ibrcommon::Logger::LOG_TIMESTAMP | ibrcommon::Logger::LOG_TAG | ibrcommon::Logger::LOG_LEVEL);
 
