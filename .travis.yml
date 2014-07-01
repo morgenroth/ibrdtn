@@ -4,4 +4,4 @@ compiler:
   - clang
 before_install: sudo apt-get update
 install: sudo apt-get install build-essential libssl-dev libz-dev libsqlite3-dev libcurl4-gnutls-dev libdaemon-dev automake autoconf pkg-config libtool libcppunit-dev libnl-3-dev libnl-cli-3-dev libnl-genl-3-dev libnl-nf-3-dev libnl-route-3-dev libarchive-dev
-script: cd ibrdtn; ./autogen.sh && ./configure-dev && make && make check
+script: cd ibrdtn; ./autogen.sh && ./configure-dev --disable-netlink && make && make check
