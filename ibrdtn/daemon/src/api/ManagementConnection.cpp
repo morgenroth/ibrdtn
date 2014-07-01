@@ -270,6 +270,16 @@ namespace dtn
 					ibrcommon::Logger::writeBuffer(_stream);
 					_stream << std::endl;
 				}
+				else if (cmd[0] == "logstream")
+				{
+					ibrcommon::Logger::addStream(_stream, ibrcommon::Logger::LOGGER_ALL, ibrcommon::Logger::LOG_TIMESTAMP | ibrcommon::Logger::LOG_TAG | ibrcommon::Logger::LOG_LEVEL);
+
+					std::string buffer = "";
+					getline(_stream, buffer);
+
+					ibrcommon::Logger::removeStream(_stream);
+					_stream << ClientHandler::API_STATUS_OK << " STOPPED STREAMING" << std::endl;
+				}
 				else if (cmd[0] == "core")
 				{
 					if (cmd[1] == "shutdown")

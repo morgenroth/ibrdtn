@@ -144,6 +144,11 @@ namespace ibrcommon
 		LogWriter::getInstance().addStream(stream, logmask, options);
 	}
 
+	void Logger::removeStream(std::ostream &stream)
+	{
+		LogWriter::getInstance().removeStream(stream);
+	}
+
 	void Logger::setLogfile(const ibrcommon::File &logfile, const unsigned char logmask, const unsigned char options)
 	{
 		LogWriter::getInstance().setLogfile(logfile, logmask, options);
@@ -153,6 +158,19 @@ namespace ibrcommon
 	{
 		_global_logmask |= logmask;
 		_logger.push_back( LogWriter::LoggerOutput(stream, logmask, options) );
+	}
+
+	void LogWriter::removeStream(std::ostream &stream)
+	{
+		for (std::list<LoggerOutput>::iterator iter = _logger.begin(); iter != _logger.end(); ++iter)
+		{
+			const LoggerOutput &output = (*iter);
+
+			if ((void*)stream == (void*)output._stream)
+			{
+				iter = _logger.erase(iter);
+			}
+		}
 	}
 
 	void Logger::enableSyslog(const char *name, int option, int facility, const unsigned char logmask)
