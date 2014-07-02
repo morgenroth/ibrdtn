@@ -34,7 +34,6 @@
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/ssl/HMacStream.h>
 
-#include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <ibrdtn/security/SecurityKey.h>
 #include <ibrdtn/utils/Random.h>
 
