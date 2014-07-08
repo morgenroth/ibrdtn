@@ -69,7 +69,7 @@ namespace dtn
 			return _alignment;
 		}
 
-		dtn::data::Block& BundleBuilder::insert(dtn::data::block_t block_type, const Bitset<dtn::data::Block::ProcFlags> &procflags) throw (dtn::InvalidDataException)
+		dtn::data::Block& BundleBuilder::insert(dtn::data::block_t block_type, const Bitset<dtn::data::Block::ProcFlags> &procflags)
 		{
 			// exit if the block type is zero
 			if (block_type == 0) throw dtn::InvalidDataException("block type is zero");

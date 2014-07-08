@@ -53,7 +53,7 @@ namespace dtn
 			/**
 			 * Add a block to the bundle.
 			 */
-			dtn::data::Block& insert(dtn::data::block_t block_type, const Bitset<Block::ProcFlags> &procflags) throw (dtn::InvalidDataException);
+			dtn::data::Block& insert(dtn::data::block_t block_type, const Bitset<Block::ProcFlags> &procflags);
 
 		private:
 			Bundle *_target;
