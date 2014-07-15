@@ -199,6 +199,8 @@ namespace dtn
 				}
 				else if (cmd[0] == "connection")
 				{
+					if (cmd.size() < 5) throw ibrcommon::Exception("not enough parameters");
+
 					// need to process the connection arguments
 					// the arguments look like:
 					// <eid> [tcp|udp|file] [add|del] <ip> <port> <global|local>
@@ -215,6 +217,8 @@ namespace dtn
 
 					if (cmd[2] == "tcp")
 					{
+						if (cmd.size() < 6) throw ibrcommon::Exception("not enough parameters");
+
 						if (cmd[3] == "add")
 						{
 							std::string uri = "ip=" + cmd[4] + ";port=" + cmd[5] + ";";
@@ -234,6 +238,8 @@ namespace dtn
 					}
 					else if (cmd[2] == "udp")
 					{
+						if (cmd.size() < 6) throw ibrcommon::Exception("not enough parameters");
+
 						if (cmd[3] == "add")
 						{
 							std::string uri = "ip=" + cmd[4] + ";port=" + cmd[5] + ";";
