@@ -154,6 +154,8 @@ namespace dtn
 				}
 				else if (cmd[0] == "interface")
 				{
+					if (cmd.size() < 2) throw ibrcommon::Exception("not enough parameters");
+
 					if (cmd[1] == "address")
 					{
 						try {
@@ -167,6 +169,8 @@ namespace dtn
 
 							// the new address is defined as 5th parameter
 							ibrcommon::vaddress addr(cmd[5], "");
+
+							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
 
 							if (cmd[2] == "add")
 							{
@@ -282,6 +286,8 @@ namespace dtn
 				}
 				else if (cmd[0] == "core")
 				{
+					if (cmd.size() < 2) throw ibrcommon::Exception("not enough parameters");
+
 					if (cmd[1] == "shutdown")
 					{
 						// send shutdown signal
@@ -333,6 +339,8 @@ namespace dtn
 				}
 				else if (cmd[0] == "bundle")
 				{
+					if (cmd.size() < 2) throw ibrcommon::Exception("not enough parameters");
+
 					if (cmd[1] == "list")
 					{
 						// get storage object
