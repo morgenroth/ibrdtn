@@ -90,6 +90,8 @@ namespace dtn
 		{
 			try {
 				if (cmd[0] == "connected") {
+					if (cmd.size() < 4) throw ibrcommon::Exception("not enough parameters");
+
 					const dtn::data::EID eid(cmd[1]);
 					dtn::core::Node::Protocol proto = dtn::core::Node::CONN_TCPIP;
 
@@ -107,6 +109,8 @@ namespace dtn
 					_stream << ClientHandler::API_STATUS_OK << " NODE CONNECTED" << std::endl;
 				}
 				else if (cmd[0] == "disconnected") {
+					if (cmd.size() < 2) throw ibrcommon::Exception("not enough parameters");
+
 					const dtn::data::EID eid(cmd[1]);
 					dtn::core::Node::Protocol proto = dtn::core::Node::CONN_TCPIP;
 
@@ -124,6 +128,8 @@ namespace dtn
 					_stream << ClientHandler::API_STATUS_OK << " NODE DISCONNECTED" << std::endl;
 				}
 				else if (cmd[0] == "discovered") {
+					if (cmd.size() < 2) throw ibrcommon::Exception("not enough parameters");
+
 					const dtn::data::EID eid(cmd[1]);
 					const dtn::core::Node::URI uri(dtn::core::Node::NODE_P2P_DIALUP, this->getProtocol(), cmd[2], 120, 10);
 					fireDiscovered(eid, uri);
@@ -132,6 +138,8 @@ namespace dtn
 					_stream << ClientHandler::API_STATUS_OK << " NODE DISCOVERED" << std::endl;
 				}
 				else if (cmd[0] == "interface") {
+					if (cmd.size() < 2) throw ibrcommon::Exception("not enough parameters");
+
 					if (cmd[1] == "up") {
 						const ibrcommon::vinterface iface(cmd[2]);
 						fireInterfaceUp(iface);
