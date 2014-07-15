@@ -617,7 +617,7 @@ namespace dtn
 					else if (cmd[0] == "payload")
 					{
 						// check if there are more commands/parameters
-						if (cmd.size() < 1) throw ibrcommon::Exception("not enough parameters");
+						if (cmd.size() < 2) throw ibrcommon::Exception("not enough parameters");
 
 						// check if the command is valid
 						// [block-offset] get [[data-offset] [length]]
