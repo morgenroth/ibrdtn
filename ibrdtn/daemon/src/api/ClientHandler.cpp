@@ -114,6 +114,8 @@ namespace dtn
 					try {
 						if (cmd[0] == "protocol")
 						{
+							if (cmd.size() < 2) throw ibrcommon::Exception("not enough parameters");
+
 							if (cmd[1] == "tcpcl")
 							{
 								// switch to binary protocol (old style api)

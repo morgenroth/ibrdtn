@@ -154,6 +154,8 @@ namespace dtn
 				}
 				else if (cmd[0] == "interface")
 				{
+					if (cmd.size() < 2) throw ibrcommon::Exception("not enough parameters");
+
 					if (cmd[1] == "address")
 					{
 						try {
@@ -167,6 +169,8 @@ namespace dtn
 
 							// the new address is defined as 5th parameter
 							ibrcommon::vaddress addr(cmd[5], "");
+
+							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
 
 							if (cmd[2] == "add")
 							{
@@ -195,6 +199,8 @@ namespace dtn
 				}
 				else if (cmd[0] == "connection")
 				{
+					if (cmd.size() < 5) throw ibrcommon::Exception("not enough parameters");
+
 					// need to process the connection arguments
 					// the arguments look like:
 					// <eid> [tcp|udp|file] [add|del] <ip> <port> <global|local>
@@ -211,6 +217,8 @@ namespace dtn
 
 					if (cmd[2] == "tcp")
 					{
+						if (cmd.size() < 6) throw ibrcommon::Exception("not enough parameters");
+
 						if (cmd[3] == "add")
 						{
 							std::string uri = "ip=" + cmd[4] + ";port=" + cmd[5] + ";";
@@ -230,6 +238,8 @@ namespace dtn
 					}
 					else if (cmd[2] == "udp")
 					{
+						if (cmd.size() < 6) throw ibrcommon::Exception("not enough parameters");
+
 						if (cmd[3] == "add")
 						{
 							std::string uri = "ip=" + cmd[4] + ";port=" + cmd[5] + ";";
@@ -282,6 +292,8 @@ namespace dtn
 				}
 				else if (cmd[0] == "core")
 				{
+					if (cmd.size() < 2) throw ibrcommon::Exception("not enough parameters");
+
 					if (cmd[1] == "shutdown")
 					{
 						// send shutdown signal
@@ -333,6 +345,8 @@ namespace dtn
 				}
 				else if (cmd[0] == "bundle")
 				{
+					if (cmd.size() < 2) throw ibrcommon::Exception("not enough parameters");
+
 					if (cmd[1] == "list")
 					{
 						// get storage object
