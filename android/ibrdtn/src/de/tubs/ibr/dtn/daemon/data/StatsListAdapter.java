@@ -160,7 +160,6 @@ public abstract class StatsListAdapter extends BaseAdapter {
         RowType.RELATIVE,
         RowType.RELATIVE,
         RowType.RELATIVE,
-        RowType.RELATIVE,
         RowType.ABSOLUTE,
         RowType.RELATIVE,
         
@@ -178,7 +177,6 @@ public abstract class StatsListAdapter extends BaseAdapter {
       
       R.string.stats_title_transfers_aborted,
       R.string.stats_title_bundles_expired,
-      R.string.stats_title_bundles_generated,
       R.string.stats_title_bundles_queued,
       R.string.stats_title_bundles_received,
       R.string.stats_title_transfers_requeued,
@@ -223,24 +221,21 @@ public abstract class StatsListAdapter extends BaseAdapter {
                 return data.getBundleExpired();
 
             case 8:
-                return data.getBundleGenerated();
-
-            case 9:
                 return data.getBundleQueued();
 
-            case 10:
+            case 9:
                 return data.getBundleReceived();
 
-            case 11:
+            case 10:
                 return data.getBundleRequeued();
 
-            case 12:
+            case 11:
                 return data.getBundleStored();
 
-            case 13:
+            case 12:
                 return data.getBundleTransmitted();
                 
-            case 14:
+            case 13:
                 return data.getStorageSize();
         }
         return null;

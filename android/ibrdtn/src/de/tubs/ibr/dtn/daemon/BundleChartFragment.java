@@ -7,7 +7,7 @@ import de.tubs.ibr.dtn.daemon.data.StatsListAdapter;
 
 public class BundleChartFragment extends StatsChartFragment {
     
-    private Integer[] mChartMap = { 9, 8, 7 };
+    private Integer[] mChartMap = { 8, 7 };
     private int[] mChartColors = { R.color.blue, R.color.yellow, R.color.red };
     
     @Override

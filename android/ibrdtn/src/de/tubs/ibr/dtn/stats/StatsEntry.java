@@ -32,7 +32,6 @@ public class StatsEntry implements Parcelable {
     
     public static final String BUNDLE_ABORTED = "bundle_aborted";
     public static final String BUNDLE_EXPIRED = "bundle_expired";
-    public static final String BUNDLE_GENERATED = "bundle_generated";
     public static final String BUNDLE_QUEUED = "bundle_queued";
     public static final String BUNDLE_RECEIVED = "bundle_received";
     public static final String BUNDLE_REQUEUED = "bundle_requeued";
@@ -49,7 +48,6 @@ public class StatsEntry implements Parcelable {
     private Long mClockAdjustments = null;
     private Long mBundleAborted = null;
     private Long mBundleExpired = null;
-    private Long mBundleGenerated = null;
     private Long mBundleQueued = null;
     private Long mBundleReceived = null;
     private Long mBundleRequeued = null;
@@ -67,7 +65,6 @@ public class StatsEntry implements Parcelable {
         StatsEntry.CLOCK_ADJUSTMENTS,
         StatsEntry.BUNDLE_ABORTED,
         StatsEntry.BUNDLE_EXPIRED,
-        StatsEntry.BUNDLE_GENERATED,
         StatsEntry.BUNDLE_QUEUED,
         StatsEntry.BUNDLE_RECEIVED,
         StatsEntry.BUNDLE_REQUEUED,
@@ -90,12 +87,11 @@ public class StatsEntry implements Parcelable {
     
     static final int COLUMN_STATS_BUNDLE_ABORTED     = 8;
     static final int COLUMN_STATS_BUNDLE_EXPIRED     = 9;
-    static final int COLUMN_STATS_BUNDLE_GENERATED   = 10;
-    static final int COLUMN_STATS_BUNDLE_QUEUED      = 11;
-    static final int COLUMN_STATS_BUNDLE_RECEIVED    = 12;
-    static final int COLUMN_STATS_BUNDLE_REQUEUED    = 13;
-    static final int COLUMN_STATS_BUNDLE_STORED      = 14;
-    static final int COLUMN_STATS_BUNDLE_TRANSMITTED = 15;
+    static final int COLUMN_STATS_BUNDLE_QUEUED      = 10;
+    static final int COLUMN_STATS_BUNDLE_RECEIVED    = 11;
+    static final int COLUMN_STATS_BUNDLE_REQUEUED    = 12;
+    static final int COLUMN_STATS_BUNDLE_STORED      = 13;
+    static final int COLUMN_STATS_BUNDLE_TRANSMITTED = 14;
 
     @SuppressLint("SimpleDateFormat")
     public StatsEntry(Context context, Cursor cursor, ColumnsMap cmap) {
@@ -111,7 +107,6 @@ public class StatsEntry implements Parcelable {
         mClockAdjustments = cursor.getLong(cmap.mColumnClockAdjustments);
         mBundleAborted = cursor.getLong(cmap.mColumnBundleAborted);
         mBundleExpired = cursor.getLong(cmap.mColumnBundleExpired);
-        mBundleGenerated = cursor.getLong(cmap.mColumnBundleGenerated);
         mBundleQueued = cursor.getLong(cmap.mColumnBundleQueued);
         mBundleReceived = cursor.getLong(cmap.mColumnBundleReceived);
         mBundleRequeued = cursor.getLong(cmap.mColumnBundleRequeued);
@@ -135,7 +130,6 @@ public class StatsEntry implements Parcelable {
         mClockAdjustments = stats.getTime_adjustments();
         mBundleAborted = stats.getBundles_aborted();
         mBundleExpired = stats.getBundles_expired();
-        mBundleGenerated = stats.getBundles_generated();
         mBundleQueued = stats.getBundles_queued();
         mBundleReceived = stats.getBundles_received();
         mBundleRequeued = stats.getBundles_requeued();
@@ -201,14 +195,6 @@ public class StatsEntry implements Parcelable {
 
     public void setBundleExpired(Long bundleExpired) {
         mBundleExpired = bundleExpired;
-    }
-
-    public Long getBundleGenerated() {
-        return mBundleGenerated;
-    }
-
-    public void setBundleGenerated(Long bundleGenerated) {
-        mBundleGenerated = bundleGenerated;
     }
 
     public Long getBundleQueued() {
@@ -278,7 +264,6 @@ public class StatsEntry implements Parcelable {
         public int mColumnClockAdjustments;
         public int mColumnBundleAborted;
         public int mColumnBundleExpired;
-        public int mColumnBundleGenerated;
         public int mColumnBundleQueued;
         public int mColumnBundleReceived;
         public int mColumnBundleRequeued;
@@ -295,7 +280,6 @@ public class StatsEntry implements Parcelable {
             mColumnClockAdjustments = COLUMN_STATS_CLOCK_ADJUSTMENTS;
             mColumnBundleAborted = COLUMN_STATS_BUNDLE_ABORTED;
             mColumnBundleExpired = COLUMN_STATS_BUNDLE_EXPIRED;
-            mColumnBundleGenerated = COLUMN_STATS_BUNDLE_GENERATED;
             mColumnBundleQueued = COLUMN_STATS_BUNDLE_QUEUED;
             mColumnBundleReceived = COLUMN_STATS_BUNDLE_RECEIVED;
             mColumnBundleRequeued = COLUMN_STATS_BUNDLE_REQUEUED;
@@ -340,7 +324,6 @@ public class StatsEntry implements Parcelable {
         mClockAdjustments = in.readLong();
         mBundleAborted = in.readLong();
         mBundleExpired = in.readLong();
-        mBundleGenerated = in.readLong();
         mBundleQueued = in.readLong();
         mBundleReceived = in.readLong();
         mBundleRequeued = in.readLong();
@@ -364,7 +347,6 @@ public class StatsEntry implements Parcelable {
         dest.writeLong( mClockAdjustments );
         dest.writeLong( mBundleAborted );
         dest.writeLong( mBundleExpired );
-        dest.writeLong( mBundleGenerated );
         dest.writeLong( mBundleQueued );
         dest.writeLong( mBundleReceived );
         dest.writeLong( mBundleRequeued );
