@@ -37,8 +37,6 @@ namespace dtn
 {
 	namespace core
 	{
-		class EventReceiver;
-
 		class EventSwitch : public dtn::daemon::IntegratedComponent
 		{
 		private:
