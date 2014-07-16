@@ -77,7 +77,7 @@ namespace dtn
 
 			protected:
 				void initialize(const std::string &uri);
-				void transmit(const Bundle &bundle);
+				void transmit(dtn::data::Bundle &bundle);
 
 				dtn::data::EID _eid;
 

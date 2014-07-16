@@ -95,7 +95,7 @@ namespace dtn
 			NativeStats()
 			: uptime(0), timestamp(0), neighbors(0), storage_size(0),
 			  time_offset(0.0), time_rating(0.0), time_adjustments(0),
-			  bundles_stored(0), bundles_expired(0), bundles_generated(0),
+			  bundles_stored(0), bundles_expired(0),
 			  bundles_received(0), bundles_transmitted(0), bundles_aborted(0),
 			  bundles_requeued(0), bundles_queued(0)
 			{ };
@@ -113,7 +113,6 @@ namespace dtn
 
 			size_t bundles_stored;
 			size_t bundles_expired;
-			size_t bundles_generated;
 			size_t bundles_received;
 			size_t bundles_transmitted;
 			size_t bundles_aborted;

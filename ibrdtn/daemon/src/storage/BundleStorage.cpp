@@ -22,7 +22,6 @@
 #include "core/BundleCore.h"
 #include "storage/BundleStorage.h"
 #include "core/CustodyEvent.h"
-#include "core/BundleGeneratedEvent.h"
 #include <ibrdtn/data/PayloadBlock.h>
 #include <ibrdtn/data/BundleID.h>
 #include <ibrcommon/thread/MutexLock.h>
@@ -83,7 +82,7 @@ namespace dtn
 			custody_bundle.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, true);
 
 			// send the custody accepted bundle
-			dtn::core::BundleGeneratedEvent::raise(custody_bundle);
+			dtn::core::BundleCore::inject(dtn::core::BundleCore::local, custody_bundle);
 
 			// raise the custody accepted event
 			dtn::core::CustodyEvent::raise(meta, dtn::core::CUSTODY_ACCEPT);
@@ -123,7 +122,7 @@ namespace dtn
 			b.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, true);
 
 			// send the custody rejected bundle
-			dtn::core::BundleGeneratedEvent::raise(b);
+			dtn::core::BundleCore::inject(dtn::core::BundleCore::local, b);
 
 			// raise the custody rejected event
 			dtn::core::CustodyEvent::raise(dtn::data::MetaBundle::create(b), dtn::core::CUSTODY_REJECT);

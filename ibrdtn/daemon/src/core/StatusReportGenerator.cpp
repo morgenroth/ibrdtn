@@ -22,7 +22,6 @@
 #include "core/EventDispatcher.h"
 #include "core/StatusReportGenerator.h"
 #include "core/BundleEvent.h"
-#include "core/BundleGeneratedEvent.h"
 #include "core/BundleCore.h"
 #include <ibrdtn/data/MetaBundle.h>
 
@@ -103,7 +102,7 @@ namespace dtn
 			dtn::data::PayloadBlock &payload = bundle.push_back<dtn::data::PayloadBlock>();
 			report.write(payload);
 
-			dtn::core::BundleGeneratedEvent::raise(bundle);
+			dtn::core::BundleCore::inject(dtn::core::BundleCore::local, bundle);
 		}
 
 		void StatusReportGenerator::raiseEvent(const dtn::core::Event *evt) throw ()

@@ -33,11 +33,6 @@
 #include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <ibrdtn/utils/Clock.h>
 
-#include <ibrdtn/ibrdtn.h>
-#ifdef IBRDTN_SUPPORT_COMPRESSION
-#include <ibrdtn/data/CompressedPayloadBlock.h>
-#endif
-
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrcommon/thread/RWLock.h>
 #include <ibrcommon/Logger.h>
@@ -228,7 +223,7 @@ namespace dtn
 			_callback.processHandshake(b);
 		}
 
-		void NodeHandshakeExtension::HandshakeEndpoint::send(const dtn::data::Bundle &b)
+		void NodeHandshakeExtension::HandshakeEndpoint::send(dtn::data::Bundle &b)
 		{
 			transmit(b);
 		}
@@ -354,17 +349,8 @@ namespace dtn
 				dtn::data::ScopeControlHopLimitBlock &schl = answer.push_front<dtn::data::ScopeControlHopLimitBlock>();
 				schl.setLimit(1);
 
-#ifdef IBRDTN_SUPPORT_COMPRESSION
-				// compress bundle if requested
-				if (handshake.hasRequest(NodeHandshakeItem::REQUEST_COMPRESSED_ANSWER))
-				{
-					try {
-						dtn::data::CompressedPayloadBlock::compress(answer, dtn::data::CompressedPayloadBlock::COMPRESSION_ZLIB);
-					} catch (const ibrcommon::Exception &ex) {
-						IBRCOMMON_LOGGER_TAG(TAG, warning) << "compression of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-					};
-				}
-#endif
+				// request compression
+				answer.set(dtn::data::PrimaryBlock::IBRDTN_REQUEST_COMPRESSION, true);
 
 				// transfer the bundle to the neighbor
 				_endpoint.send(answer);

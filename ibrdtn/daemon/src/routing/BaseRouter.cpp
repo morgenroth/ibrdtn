@@ -31,7 +31,6 @@
 #include "net/ConnectionEvent.h"
 #include "routing/QueueBundleEvent.h"
 #include "storage/BundleStorage.h"
-#include "core/BundleGeneratedEvent.h"
 #include "core/BundleEvent.h"
 #include "core/NodeEvent.h"
 #include "core/TimeEvent.h"
@@ -228,7 +227,6 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::core::NodeEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
-			dtn::core::EventDispatcher<dtn::core::BundleGeneratedEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::core::BundlePurgeEvent>::add(this);
 		}
@@ -242,7 +240,6 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::core::NodeEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
-			dtn::core::EventDispatcher<dtn::core::BundleGeneratedEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::core::BundlePurgeEvent>::remove(this);
 		}
@@ -365,67 +362,6 @@ namespace dtn
 
 					// raise BundleEvent because we have to drop the bundle
 					dtn::core::BundleEvent::raise(m, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
-				}
-
-				return;
-			} catch (const std::bad_cast&) { };
-
-			try {
-				const dtn::core::BundleGeneratedEvent &event = dynamic_cast<const dtn::core::BundleGeneratedEvent&>(*evt);
-				
-#ifdef IBRDTN_SUPPORT_BSP
-				// copy bundle for security processing
-				dtn::data::Bundle bundle = event.getBundle();
-
-				// if the encrypt bit is set, then try to encrypt the bundle
-				if (bundle.get(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT))
-				{
-					try {
-						dtn::security::SecurityManager::getInstance().encrypt(bundle);
-
-						bundle.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT, false);
-					} catch (const dtn::security::SecurityManager::KeyMissingException&) {
-						// sign requested, but no key is available
-						IBRCOMMON_LOGGER_TAG(TAG, warning) << "No key available for encrypt process." << IBRCOMMON_LOGGER_ENDL;
-					} catch (const dtn::security::EncryptException&) {
-						IBRCOMMON_LOGGER_TAG(TAG, warning) << "Encryption of bundle failed." << IBRCOMMON_LOGGER_ENDL;
-					}
-				}
-
-				// if the sign bit is set, then try to sign the bundle
-				if (bundle.get(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN))
-				{
-					try {
-						dtn::security::SecurityManager::getInstance().sign(bundle);
-
-						bundle.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, false);
-					} catch (const dtn::security::SecurityManager::KeyMissingException&) {
-						// sign requested, but no key is available
-						IBRCOMMON_LOGGER_TAG(TAG, warning) << "No key available for sign process." << IBRCOMMON_LOGGER_ENDL;
-					}
-				}
-#else
-				// create local reference to the bundle
-				const dtn::data::Bundle &bundle = event.getBundle();
-#endif
-
-				// generate a meta bundle object for further processing
-				const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(bundle);
-
-				// set the bundle as known
-				setKnown(meta);
-
-				// Store incoming bundles into the storage
-				try {
-					// store the bundle into a storage module
-					getStorage().store(bundle);
-
-					// raise the queued event to notify all receivers about the new bundle
- 					QueueBundleEvent::raise(meta, dtn::core::BundleCore::local);
-				} catch (const ibrcommon::IOException &ex) {
-					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "Unable to store bundle " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
-				} catch (const dtn::storage::BundleStorage::StorageSizeExeededException &ex) {
-					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "No space left for bundle " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 				}
 
 				return;

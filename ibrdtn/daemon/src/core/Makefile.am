@@ -12,8 +12,6 @@ core_SOURCES = \
 	BundleEvent.h \
 	BundleExpiredEvent.cpp \
 	BundleExpiredEvent.h \
-	BundleGeneratedEvent.cpp \
-	BundleGeneratedEvent.h \
 	WallClock.cpp \
 	WallClock.h \
 	CustodyEvent.cpp \

@@ -56,7 +56,6 @@
 #include "net/BundleReceivedEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
-#include "core/BundleGeneratedEvent.h"
 #include "core/BundleExpiredEvent.h"
 #include "routing/QueueBundleEvent.h"
 #include "routing/RequeueBundleEvent.h"
@@ -508,7 +507,6 @@ namespace dtn
 
 			ret.bundles_stored = dtn::core::BundleCore::getInstance().getStorage().count();
 			ret.bundles_expired = dtn::core::EventDispatcher<dtn::core::BundleExpiredEvent>::getCounter();
-			ret.bundles_generated = dtn::core::EventDispatcher<dtn::core::BundleGeneratedEvent>::getCounter();
 			ret.bundles_received = dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::getCounter();
 			ret.bundles_transmitted = dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::getCounter();
 			ret.bundles_aborted = dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::getCounter();

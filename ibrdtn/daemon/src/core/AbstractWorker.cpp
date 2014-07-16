@@ -24,7 +24,6 @@
 #include "core/AbstractWorker.h"
 #include "core/BundleCore.h"
 #include "routing/QueueBundleEvent.h"
-#include "core/BundleGeneratedEvent.h"
 #include "core/BundleEvent.h"
 #include "core/BundlePurgeEvent.h"
 #include <ibrcommon/thread/MutexLock.h>
@@ -184,9 +183,9 @@ namespace dtn
 			return _eid;
 		}
 
-		void AbstractWorker::transmit(const Bundle &bundle)
+		void AbstractWorker::transmit(dtn::data::Bundle &bundle)
 		{
-			dtn::core::BundleGeneratedEvent::raise(bundle);
+			dtn::core::BundleCore::inject(dtn::core::BundleCore::local, bundle);
 		}
 	}
 }

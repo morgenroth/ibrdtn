@@ -76,7 +76,7 @@ namespace dtn
 				void callbackBundleReceived(const Bundle &b);
 				void query(const dtn::data::EID &eid);
 
-				void send(const dtn::data::Bundle &b);
+				void send(dtn::data::Bundle &b);
 
 				void removeFromBlacklist(const dtn::data::EID &eid);
 

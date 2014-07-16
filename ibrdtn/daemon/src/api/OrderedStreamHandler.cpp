@@ -77,7 +77,7 @@ namespace dtn
 			}
 
 			// raise default bundle received event
-			dtn::net::BundleReceivedEvent::raise(_client.getRegistration().getDefaultEID(), b, true);
+			dtn::core::BundleCore::inject(_client.getRegistration().getDefaultEID(), b);
 		}
 
 		dtn::data::MetaBundle OrderedStreamHandler::get(const dtn::data::Timeout timeout)

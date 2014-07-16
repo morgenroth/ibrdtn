@@ -140,7 +140,7 @@ namespace dtn
 						IBRCOMMON_LOGGER_TAG(FragmentManager::TAG, notice) << "Bundle " << merged.toString() << " merged" << IBRCOMMON_LOGGER_ENDL;
 
 						// raise default bundle received event
-						dtn::net::BundleReceivedEvent::raise(dtn::core::BundleCore::local, merged, true);
+						dtn::core::BundleCore::inject(dtn::core::BundleCore::local, merged);
 
 						// delete all fragments of the merged bundle
 						if (merged.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
