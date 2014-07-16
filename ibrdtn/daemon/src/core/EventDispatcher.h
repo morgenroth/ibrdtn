@@ -38,11 +38,11 @@ namespace dtn
 				void process(const Event *evt)
 				{
 					ibrcommon::MutexLock l(_dispatcher._dispatch_lock);
-					for (std::list<EventReceiver*>::iterator iter = _dispatcher._receivers.begin();
+					for (typename std::list<EventReceiver<E>*>::iterator iter = _dispatcher._receivers.begin();
 							iter != _dispatcher._receivers.end(); ++iter)
 					{
-						EventReceiver &receiver = (**iter);
-						receiver.raiseEvent(evt);
+						EventReceiver<E> &receiver = (**iter);
+						receiver.raiseEvent(static_cast<const E&>(*evt));
 					}
 
 					_dispatcher._stat_count++;
@@ -59,7 +59,7 @@ namespace dtn
 			/**
 			 * Directly deliver this event to all subscribers
 			 */
-			void _raise(Event *evt)
+			void _raise(E *evt)
 			{
 				_processor.process(evt);
 				delete evt;
@@ -68,20 +68,20 @@ namespace dtn
 			/**
 			 * Queue the event for later delivery
 			 */
-			void _queue(Event *evt)
+			void _queue(E *evt)
 			{
 				// raise the new event
 				dtn::core::EventSwitch::queue( _processor, evt );
 			}
 
-			void _add(EventReceiver *receiver) {
+			void _add(EventReceiver<E> *receiver) {
 				ibrcommon::MutexLock l(_dispatch_lock);
 				_receivers.push_back(receiver);
 			}
 
-			void _remove(const EventReceiver *receiver) {
+			void _remove(const EventReceiver<E> *receiver) {
 				ibrcommon::MutexLock l(_dispatch_lock);
-				for (std::list<EventReceiver*>::iterator iter = _receivers.begin(); iter != _receivers.end(); ++iter)
+				for (typename std::list<EventReceiver<E>*>::iterator iter = _receivers.begin(); iter != _receivers.end(); ++iter)
 				{
 					if ((*iter) == receiver)
 					{
@@ -102,22 +102,22 @@ namespace dtn
 			/**
 			 * Directly deliver this event to all subscribers
 			 */
-			static void raise(Event *evt) {
+			static void raise(E *evt) {
 				instance()._raise(evt);
 			}
 
 			/**
 			 * Queue the event for later delivery
 			 */
-			static void queue(Event *evt) {
+			static void queue(E *evt) {
 				instance()._queue(evt);
 			}
 
-			static void add(EventReceiver *receiver) {
+			static void add(EventReceiver<E> *receiver) {
 				instance()._add(receiver);
 			}
 
-			static void remove(const EventReceiver *receiver) {
+			static void remove(const EventReceiver<E> *receiver) {
 				instance()._remove(receiver);
 			}
 
@@ -131,7 +131,7 @@ namespace dtn
 
 		private:
 			ibrcommon::Mutex _dispatch_lock;
-			std::list<EventReceiver*> _receivers;
+			std::list<EventReceiver<E>*> _receivers;
 			EventProcessorImpl _processor;
 			size_t _stat_count;
 		};

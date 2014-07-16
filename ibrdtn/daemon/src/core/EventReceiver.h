@@ -28,11 +28,12 @@ namespace dtn
 {
 	namespace core
 	{
+		template<class E>
 		class EventReceiver
 		{
 		public:
-			virtual ~EventReceiver() = 0;
-			virtual void raiseEvent(const dtn::core::Event *evt) throw () = 0;
+			virtual ~EventReceiver() { };
+			virtual void raiseEvent(const E &evt) throw () = 0;
 		};
 	}
 }

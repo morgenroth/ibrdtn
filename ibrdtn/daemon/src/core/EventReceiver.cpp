@@ -25,7 +25,5 @@ namespace dtn
 {
 	namespace core
 	{
-		EventReceiver::~EventReceiver()
-		{ }
 	}
 }
