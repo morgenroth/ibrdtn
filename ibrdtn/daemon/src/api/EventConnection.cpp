@@ -20,16 +20,7 @@
  */
 
 #include "EventConnection.h"
-
 #include "core/EventDispatcher.h"
-#include "core/NodeEvent.h"
-#include "core/GlobalEvent.h"
-#include "core/CustodyEvent.h"
-#include "routing/QueueBundleEvent.h"
-#include "net/BundleReceivedEvent.h"
-#include "net/TransferAbortedEvent.h"
-#include "net/TransferCompletedEvent.h"
-#include "net/ConnectionEvent.h"
 
 #include <ibrdtn/utils/Utils.h>
 
@@ -46,274 +37,282 @@ namespace dtn
 		{
 		}
 
-		void EventConnection::raiseEvent(const dtn::core::Event *evt) throw ()
+		void EventConnection::raiseEvent(const dtn::core::NodeEvent &node) throw ()
 		{
 			ibrcommon::MutexLock l(_mutex);
 			if (!_running) return;
 
-			try {
-				const dtn::core::NodeEvent &node = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
+			// start with the event tag
+			_stream << "Event: " << node.getName() << std::endl;
+			_stream << "Action: ";
 
-				// start with the event tag
-				_stream << "Event: " << node.getName() << std::endl;
-				_stream << "Action: ";
+			switch (node.getAction())
+			{
+			case dtn::core::NODE_AVAILABLE:
+				_stream << "available";
+				break;
+			case dtn::core::NODE_UNAVAILABLE:
+				_stream << "unavailable";
+				break;
+			case dtn::core::NODE_DATA_ADDED:
+				_stream << "data_added";
+				break;
+			case dtn::core::NODE_DATA_REMOVED:
+				_stream << "data_removed";
+				break;
+			default:
+				break;
+			}
 
-				switch (node.getAction())
-				{
-				case dtn::core::NODE_AVAILABLE:
-					_stream << "available";
-					break;
-				case dtn::core::NODE_UNAVAILABLE:
-					_stream << "unavailable";
-					break;
-				case dtn::core::NODE_DATA_ADDED:
-					_stream << "data_added";
-					break;
-				case dtn::core::NODE_DATA_REMOVED:
-					_stream << "data_removed";
-					break;
-				default:
-					break;
-				}
+			_stream << std::endl;
 
-				_stream << std::endl;
+			// write the node eid
+			_stream << "EID: " << node.getNode().getEID().getString() << std::endl;
 
-				// write the node eid
-				_stream << "EID: " << node.getNode().getEID().getString() << std::endl;
+			// close the event
+			_stream << std::endl;
+		}
 
-				// close the event
-				_stream << std::endl;
-			} catch (const std::bad_cast&) { };
+		void EventConnection::raiseEvent(const dtn::core::GlobalEvent &global) throw ()
+		{
+			ibrcommon::MutexLock l(_mutex);
+			if (!_running) return;
 
-			try {
-				const dtn::core::GlobalEvent &global = dynamic_cast<const dtn::core::GlobalEvent&>(*evt);
+			// start with the event tag
+			_stream << "Event: " << global.getName() << std::endl;
+			_stream << "Action: ";
 
-				// start with the event tag
-				_stream << "Event: " << global.getName() << std::endl;
-				_stream << "Action: ";
+			switch (global.getAction())
+			{
+			case dtn::core::GlobalEvent::GLOBAL_BUSY:
+				_stream << "busy";
+				break;
+			case dtn::core::GlobalEvent::GLOBAL_IDLE:
+				_stream << "idle";
+				break;
+			case dtn::core::GlobalEvent::GLOBAL_RESUME:
+				_stream << "resume";
+				break;
+			case dtn::core::GlobalEvent::GLOBAL_RELOAD:
+				_stream << "reload";
+				break;
+			case dtn::core::GlobalEvent::GLOBAL_SHUTDOWN:
+				_stream << "shutdown";
+				break;
+			case dtn::core::GlobalEvent::GLOBAL_SUSPEND:
+				_stream << "suspend";
+				break;
+			case dtn::core::GlobalEvent::GLOBAL_INTERNET_AVAILABLE:
+				_stream << "internet available";
+				break;
+			case dtn::core::GlobalEvent::GLOBAL_INTERNET_UNAVAILABLE:
+				_stream << "internet unavailable";
+				break;
+			case dtn::core::GlobalEvent::GLOBAL_START_DISCOVERY:
+				_stream << "start discovery";
+				break;
+			case dtn::core::GlobalEvent::GLOBAL_STOP_DISCOVERY:
+				_stream << "stop discovery";
+				break;
+			default:
+				break;
+			}
+			_stream << std::endl;
 
-				switch (global.getAction())
-				{
-				case dtn::core::GlobalEvent::GLOBAL_BUSY:
-					_stream << "busy";
-					break;
-				case dtn::core::GlobalEvent::GLOBAL_IDLE:
-					_stream << "idle";
-					break;
-				case dtn::core::GlobalEvent::GLOBAL_RESUME:
-					_stream << "resume";
-					break;
-				case dtn::core::GlobalEvent::GLOBAL_RELOAD:
-					_stream << "reload";
-					break;
-				case dtn::core::GlobalEvent::GLOBAL_SHUTDOWN:
-					_stream << "shutdown";
-					break;
-				case dtn::core::GlobalEvent::GLOBAL_SUSPEND:
-					_stream << "suspend";
-					break;
-				case dtn::core::GlobalEvent::GLOBAL_INTERNET_AVAILABLE:
-					_stream << "internet available";
-					break;
-				case dtn::core::GlobalEvent::GLOBAL_INTERNET_UNAVAILABLE:
-					_stream << "internet unavailable";
-					break;
-				case dtn::core::GlobalEvent::GLOBAL_START_DISCOVERY:
-					_stream << "start discovery";
-					break;
-				case dtn::core::GlobalEvent::GLOBAL_STOP_DISCOVERY:
-					_stream << "stop discovery";
-					break;
-				default:
-					break;
-				}
-				_stream << std::endl;
+			// close the event
+			_stream << std::endl;
+		}
 
-				// close the event
-				_stream << std::endl;
-			} catch (const std::bad_cast&) { };
+		void EventConnection::raiseEvent(const dtn::net::BundleReceivedEvent &received) throw ()
+		{
+			ibrcommon::MutexLock l(_mutex);
+			if (!_running) return;
 
-			try {
-				const dtn::net::BundleReceivedEvent &received = dynamic_cast<const dtn::net::BundleReceivedEvent&>(*evt);
+			// start with the event tag
+			_stream << "Event: " << received.getName() << std::endl;
+			_stream << "Peer: " << received.peer.getString() << std::endl;
+			_stream << "Local: " << (received.fromlocal ? "true" : "false") << std::endl;
 
-				// start with the event tag
-				_stream << "Event: " << received.getName() << std::endl;
-				_stream << "Peer: " << received.peer.getString() << std::endl;
-				_stream << "Local: " << (received.fromlocal ? "true" : "false") << std::endl;
+			// write the bundle data
+			_stream << "Source: " << received.bundle.source.getString() << std::endl;
+			_stream << "Timestamp: " << received.bundle.timestamp.toString() << std::endl;
+			_stream << "Sequencenumber: " << received.bundle.sequencenumber.toString() << std::endl;
+			_stream << "Lifetime: " << received.bundle.lifetime.toString() << std::endl;
+			_stream << "Procflags: " << received.bundle.procflags.toString() << std::endl;
 
-				// write the bundle data
-				_stream << "Source: " << received.bundle.source.getString() << std::endl;
-				_stream << "Timestamp: " << received.bundle.timestamp.toString() << std::endl;
-				_stream << "Sequencenumber: " << received.bundle.sequencenumber.toString() << std::endl;
-				_stream << "Lifetime: " << received.bundle.lifetime.toString() << std::endl;
-				_stream << "Procflags: " << received.bundle.procflags.toString() << std::endl;
+			// write the destination eid
+			_stream << "Destination: " << received.bundle.destination.getString() << std::endl;
 
-				// write the destination eid
-				_stream << "Destination: " << received.bundle.destination.getString() << std::endl;
+			if (received.bundle.get(dtn::data::PrimaryBlock::FRAGMENT))
+			{
+				// write fragmentation values
+				_stream << "Appdatalength: " << received.bundle.appdatalength.toString() << std::endl;
+				_stream << "Fragmentoffset: " << received.bundle.fragmentoffset.toString() << std::endl;
+			}
 
-				if (received.bundle.get(dtn::data::PrimaryBlock::FRAGMENT))
-				{
-					// write fragmentation values
-					_stream << "Appdatalength: " << received.bundle.appdatalength.toString() << std::endl;
-					_stream << "Fragmentoffset: " << received.bundle.fragmentoffset.toString() << std::endl;
-				}
+			// close the event
+			_stream << std::endl;
+		}
 
-				// close the event
-				_stream << std::endl;
-			} catch (const std::bad_cast&) { };
+		void EventConnection::raiseEvent(const dtn::core::CustodyEvent &custody) throw ()
+		{
+			ibrcommon::MutexLock l(_mutex);
+			if (!_running) return;
 
-			try {
-				const dtn::core::CustodyEvent &custody = dynamic_cast<const dtn::core::CustodyEvent&>(*evt);
+			_stream << "Event: " << custody.getName() << std::endl;
+			_stream << "Action: ";
 
-				_stream << "Event: " << custody.getName() << std::endl;
-				_stream << "Action: ";
+			switch (custody.getAction())
+			{
+			case dtn::core::CUSTODY_ACCEPT:
+				_stream << "accept";
+				break;
+			case dtn::core::CUSTODY_REJECT:
+				_stream << "reject";
+				break;
+			default:
+				break;
+			}
+			_stream << std::endl;
 
-				switch (custody.getAction())
-				{
-				case dtn::core::CUSTODY_ACCEPT:
-					_stream << "accept";
-					break;
-				case dtn::core::CUSTODY_REJECT:
-					_stream << "reject";
-					break;
-				default:
-					break;
-				}
-				_stream << std::endl;
+			// write the bundle data
+			_stream << "Source: " << custody.getBundle().source.getString() << std::endl;
+			_stream << "Timestamp: " << custody.getBundle().timestamp.toString() << std::endl;
+			_stream << "Sequencenumber: " << custody.getBundle().sequencenumber.toString() << std::endl;
+			_stream << "Lifetime: " << custody.getBundle().lifetime.toString() << std::endl;
+			_stream << "Procflags: " << custody.getBundle().procflags.toString() << std::endl;
 
-				// write the bundle data
-				_stream << "Source: " << custody.getBundle().source.getString() << std::endl;
-				_stream << "Timestamp: " << custody.getBundle().timestamp.toString() << std::endl;
-				_stream << "Sequencenumber: " << custody.getBundle().sequencenumber.toString() << std::endl;
-				_stream << "Lifetime: " << custody.getBundle().lifetime.toString() << std::endl;
-				_stream << "Procflags: " << custody.getBundle().procflags.toString() << std::endl;
+			// write the destination eid
+			_stream << "Destination: " << custody.getBundle().destination.getString() << std::endl;
 
-				// write the destination eid
-				_stream << "Destination: " << custody.getBundle().destination.getString() << std::endl;
+			if (custody.getBundle().isFragment())
+			{
+				// write fragmentation values
+				_stream << "Appdatalength: " << custody.getBundle().appdatalength.toString() << std::endl;
+				_stream << "Fragmentoffset: " << custody.getBundle().fragmentoffset.toString() << std::endl;
+			}
 
-				if (custody.getBundle().isFragment())
-				{
-					// write fragmentation values
-					_stream << "Appdatalength: " << custody.getBundle().appdatalength.toString() << std::endl;
-					_stream << "Fragmentoffset: " << custody.getBundle().fragmentoffset.toString() << std::endl;
-				}
+			// close the event
+			_stream << std::endl;
+		}
 
-				// close the event
-				_stream << std::endl;
-			} catch (const std::bad_cast&) { };
+		void EventConnection::raiseEvent(const dtn::net::TransferAbortedEvent &aborted) throw ()
+		{
+			ibrcommon::MutexLock l(_mutex);
+			if (!_running) return;
 
-			try {
-				const dtn::net::TransferAbortedEvent &aborted = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
+			// start with the event tag
+			_stream << "Event: " << aborted.getName() << std::endl;
+			_stream << "Peer: " << aborted.getPeer().getString() << std::endl;
 
-				// start with the event tag
-				_stream << "Event: " << aborted.getName() << std::endl;
-				_stream << "Peer: " << aborted.getPeer().getString() << std::endl;
+			// write the bundle data
+			_stream << "Source: " << aborted.getBundleID().source.getString() << std::endl;
+			_stream << "Timestamp: " << aborted.getBundleID().timestamp.toString() << std::endl;
+			_stream << "Sequencenumber: " << aborted.getBundleID().sequencenumber.toString() << std::endl;
 
-				// write the bundle data
-				_stream << "Source: " << aborted.getBundleID().source.getString() << std::endl;
-				_stream << "Timestamp: " << aborted.getBundleID().timestamp.toString() << std::endl;
-				_stream << "Sequencenumber: " << aborted.getBundleID().sequencenumber.toString() << std::endl;
+			if (aborted.getBundleID().isFragment())
+			{
+				// write fragmentation values
+				_stream << "Fragmentoffset: " << aborted.getBundleID().fragmentoffset.toString() << std::endl;
+				_stream << "Fragmentpayload: " << aborted.getBundleID().getPayloadLength() << std::endl;
+			}
 
-				if (aborted.getBundleID().isFragment())
-				{
-					// write fragmentation values
-					_stream << "Fragmentoffset: " << aborted.getBundleID().fragmentoffset.toString() << std::endl;
-					_stream << "Fragmentpayload: " << aborted.getBundleID().getPayloadLength() << std::endl;
-				}
+			// close the event
+			_stream << std::endl;
+		}
 
-				// close the event
-				_stream << std::endl;
+		void EventConnection::raiseEvent(const dtn::net::TransferCompletedEvent &completed) throw ()
+		{
+			ibrcommon::MutexLock l(_mutex);
+			if (!_running) return;
 
-			} catch (const std::bad_cast&) { };
+			// start with the event tag
+			_stream << "Event: " << completed.getName() << std::endl;
+			_stream << "Peer: " << completed.getPeer().getString() << std::endl;
 
-			try {
-				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
+			// write the bundle data
+			_stream << "Source: " << completed.getBundle().source.getString() << std::endl;
+			_stream << "Timestamp: " << completed.getBundle().timestamp.toString() << std::endl;
+			_stream << "Sequencenumber: " << completed.getBundle().sequencenumber.toString() << std::endl;
+			_stream << "Lifetime: " << completed.getBundle().lifetime.toString() << std::endl;
+			_stream << "Procflags: " << completed.getBundle().procflags.toString() << std::endl;
 
-				// start with the event tag
-				_stream << "Event: " << completed.getName() << std::endl;
-				_stream << "Peer: " << completed.getPeer().getString() << std::endl;
+			// write the destination eid
+			_stream << "Destination: " << completed.getBundle().destination.getString() << std::endl;
 
-				// write the bundle data
-				_stream << "Source: " << completed.getBundle().source.getString() << std::endl;
-				_stream << "Timestamp: " << completed.getBundle().timestamp.toString() << std::endl;
-				_stream << "Sequencenumber: " << completed.getBundle().sequencenumber.toString() << std::endl;
-				_stream << "Lifetime: " << completed.getBundle().lifetime.toString() << std::endl;
-				_stream << "Procflags: " << completed.getBundle().procflags.toString() << std::endl;
+			if (completed.getBundle().isFragment())
+			{
+				// write fragmentation values
+				_stream << "Appdatalength: " << completed.getBundle().appdatalength.toString() << std::endl;
+				_stream << "Fragmentoffset: " << completed.getBundle().fragmentoffset.toString() << std::endl;
+			}
 
-				// write the destination eid
-				_stream << "Destination: " << completed.getBundle().destination.getString() << std::endl;
+			// close the event
+			_stream << std::endl;
+		}
 
-				if (completed.getBundle().isFragment())
-				{
-					// write fragmentation values
-					_stream << "Appdatalength: " << completed.getBundle().appdatalength.toString() << std::endl;
-					_stream << "Fragmentoffset: " << completed.getBundle().fragmentoffset.toString() << std::endl;
-				}
+		void EventConnection::raiseEvent(const dtn::net::ConnectionEvent &connection) throw ()
+		{
+			ibrcommon::MutexLock l(_mutex);
+			if (!_running) return;
 
-				// close the event
-				_stream << std::endl;
+			// start with the event tag
+			_stream << "Event: " << connection.getName() << std::endl;
+			_stream << "Action: ";
 
-			} catch (const std::bad_cast&) { };
+			switch (connection.getState())
+			{
+			case dtn::net::ConnectionEvent::CONNECTION_UP:
+				_stream << "up";
+				break;
+			case dtn::net::ConnectionEvent::CONNECTION_DOWN:
+				_stream << "down";
+				break;
+			case dtn::net::ConnectionEvent::CONNECTION_SETUP:
+				_stream << "setup";
+				break;
+			case dtn::net::ConnectionEvent::CONNECTION_TIMEOUT:
+				_stream << "timeout";
+				break;
+			default:
+				break;
+			}
+			_stream << std::endl;
 
-			try {
-				const dtn::net::ConnectionEvent &connection = dynamic_cast<const dtn::net::ConnectionEvent&>(*evt);
+			// write the peer eid
+			_stream << "Peer: " << connection.getNode().getEID().getString() << std::endl;
 
-				// start with the event tag
-				_stream << "Event: " << connection.getName() << std::endl;
-				_stream << "Action: ";
+			// close the event
+			_stream << std::endl;
+		}
 
-				switch (connection.getState())
-				{
-				case dtn::net::ConnectionEvent::CONNECTION_UP:
-					_stream << "up";
-					break;
-				case dtn::net::ConnectionEvent::CONNECTION_DOWN:
-					_stream << "down";
-					break;
-				case dtn::net::ConnectionEvent::CONNECTION_SETUP:
-					_stream << "setup";
-					break;
-				case dtn::net::ConnectionEvent::CONNECTION_TIMEOUT:
-					_stream << "timeout";
-					break;
-				default:
-					break;
-				}
-				_stream << std::endl;
+		void EventConnection::raiseEvent(const dtn::routing::QueueBundleEvent &queued) throw ()
+		{
+			ibrcommon::MutexLock l(_mutex);
+			if (!_running) return;
 
-				// write the peer eid
-				_stream << "Peer: " << connection.getNode().getEID().getString() << std::endl;
+			// start with the event tag
+			_stream << "Event: " << queued.getName() << std::endl;
 
-				// close the event
-				_stream << std::endl;
-			} catch (const std::bad_cast&) { };
+			// write the bundle data
+			_stream << "Source: " << queued.bundle.source.getString() << std::endl;
+			_stream << "Timestamp: " << queued.bundle.timestamp.toString() << std::endl;
+			_stream << "Sequencenumber: " << queued.bundle.sequencenumber.toString() << std::endl;
+			_stream << "Lifetime: " << queued.bundle.lifetime.toString() << std::endl;
+			_stream << "Procflags: " << queued.bundle.procflags.toString() << std::endl;
 
-			try {
-				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);
+			// write the destination eid
+			_stream << "Destination: " << queued.bundle.destination.getString() << std::endl;
 
-				// start with the event tag
-				_stream << "Event: " << queued.getName() << std::endl;
+			if (queued.bundle.isFragment())
+			{
+				// write fragmentation values
+				_stream << "Appdatalength: " << queued.bundle.appdatalength.toString() << std::endl;
+				_stream << "Fragmentoffset: " << queued.bundle.fragmentoffset.toString() << std::endl;
+			}
 
-				// write the bundle data
-				_stream << "Source: " << queued.bundle.source.getString() << std::endl;
-				_stream << "Timestamp: " << queued.bundle.timestamp.toString() << std::endl;
-				_stream << "Sequencenumber: " << queued.bundle.sequencenumber.toString() << std::endl;
-				_stream << "Lifetime: " << queued.bundle.lifetime.toString() << std::endl;
-				_stream << "Procflags: " << queued.bundle.procflags.toString() << std::endl;
-
-				// write the destination eid
-				_stream << "Destination: " << queued.bundle.destination.getString() << std::endl;
-
-				if (queued.bundle.isFragment())
-				{
-					// write fragmentation values
-					_stream << "Appdatalength: " << queued.bundle.appdatalength.toString() << std::endl;
-					_stream << "Fragmentoffset: " << queued.bundle.fragmentoffset.toString() << std::endl;
-				}
-
-				// close the event
-				_stream << std::endl;
-			} catch (const std::bad_cast&) { };
+			// close the event
+			_stream << std::endl;
 		}
 
 		void EventConnection::run()

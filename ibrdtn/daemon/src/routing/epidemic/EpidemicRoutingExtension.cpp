@@ -22,7 +22,6 @@
 #include "routing/epidemic/EpidemicRoutingExtension.h"
 
 #include "routing/QueueBundleEvent.h"
-#include "routing/NodeHandshakeEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
 #include "core/NodeEvent.h"
@@ -96,23 +95,18 @@ namespace dtn
 			}
 		}
 
-		void EpidemicRoutingExtension::raiseEvent(const dtn::core::Event *evt) throw ()
+		void EpidemicRoutingExtension::raiseEvent(const NodeHandshakeEvent &handshake) throw ()
 		{
-			try {
-				const NodeHandshakeEvent &handshake = dynamic_cast<const NodeHandshakeEvent&>(*evt);
-
-				if (handshake.state == NodeHandshakeEvent::HANDSHAKE_UPDATED)
-				{
-					// transfer the next bundle to this destination
-					_taskqueue.push( new SearchNextBundleTask( handshake.peer ) );
-				}
-				else if (handshake.state == NodeHandshakeEvent::HANDSHAKE_COMPLETED)
-				{
-					// transfer the next bundle to this destination
-					_taskqueue.push( new SearchNextBundleTask( handshake.peer ) );
-				}
-				return;
-			} catch (const std::bad_cast&) { };
+			if (handshake.state == NodeHandshakeEvent::HANDSHAKE_UPDATED)
+			{
+				// transfer the next bundle to this destination
+				_taskqueue.push( new SearchNextBundleTask( handshake.peer ) );
+			}
+			else if (handshake.state == NodeHandshakeEvent::HANDSHAKE_COMPLETED)
+			{
+				// transfer the next bundle to this destination
+				_taskqueue.push( new SearchNextBundleTask( handshake.peer ) );
+			}
 		}
 
 		void EpidemicRoutingExtension::componentUp() throw ()

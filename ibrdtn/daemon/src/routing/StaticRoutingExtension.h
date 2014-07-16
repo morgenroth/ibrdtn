@@ -24,6 +24,8 @@
 
 #include "routing/StaticRoute.h"
 #include "routing/RoutingExtension.h"
+#include "routing/StaticRouteChangeEvent.h"
+#include "core/TimeEvent.h"
 #include "core/EventReceiver.h"
 #include <ibrdtn/data/MetaBundle.h>
 #include <ibrcommon/thread/Queue.h>
@@ -33,7 +35,9 @@ namespace dtn
 {
 	namespace routing
 	{
-		class StaticRoutingExtension : public RoutingExtension, public ibrcommon::JoinableThread, public dtn::core::EventReceiver
+		class StaticRoutingExtension : public RoutingExtension, public ibrcommon::JoinableThread,
+			public dtn::core::EventReceiver<dtn::core::TimeEvent>,
+			public dtn::core::EventReceiver<dtn::routing::StaticRouteChangeEvent>
 		{
 			static const std::string TAG;
 
@@ -52,7 +56,8 @@ namespace dtn
 			 */
 			virtual void eventBundleQueued(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ();
 
-			void raiseEvent(const dtn::core::Event *evt) throw ();
+			void raiseEvent(const dtn::core::TimeEvent &evt) throw ();
+			void raiseEvent(const dtn::routing::StaticRouteChangeEvent &evt) throw ();
 			void componentUp() throw ();
 			void componentDown() throw ();
 

@@ -28,6 +28,9 @@
 
 #include "routing/RoutingExtension.h"
 #include "core/EventReceiver.h"
+#include "routing/NodeHandshakeEvent.h"
+#include "core/TimeEvent.h"
+#include "core/BundlePurgeEvent.h"
 
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/Queue.h>
@@ -50,7 +53,10 @@ namespace dtn
 		 * predictabilityMaps with neighbors.
 		 * For a detailed description of the protocol, see draft-irtf-dtnrg-prophet-09
 		 */
-		class ProphetRoutingExtension : public RoutingExtension, public ibrcommon::JoinableThread, public dtn::core::EventReceiver
+		class ProphetRoutingExtension : public RoutingExtension, public ibrcommon::JoinableThread,
+			public dtn::core::EventReceiver<dtn::routing::NodeHandshakeEvent>,
+			public dtn::core::EventReceiver<dtn::core::TimeEvent>,
+			public dtn::core::EventReceiver<dtn::core::BundlePurgeEvent>
 		{
 			friend class ForwardingStrategy;
 			static const std::string TAG;
@@ -69,7 +75,9 @@ namespace dtn
 			virtual void componentUp() throw ();
 			virtual void componentDown() throw ();
 
-			virtual void raiseEvent(const dtn::core::Event *evt) throw ();
+			virtual void raiseEvent(const dtn::routing::NodeHandshakeEvent &evt) throw ();
+			virtual void raiseEvent(const dtn::core::TimeEvent &evt) throw ();
+			virtual void raiseEvent(const dtn::core::BundlePurgeEvent &evt) throw ();
 
 			virtual void eventDataChanged(const dtn::data::EID &peer) throw ();
 

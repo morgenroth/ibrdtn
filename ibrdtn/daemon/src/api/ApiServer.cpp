@@ -24,8 +24,6 @@
 #include "api/ApiServer.h"
 #include "core/EventDispatcher.h"
 #include "core/BundleCore.h"
-#include "core/NodeEvent.h"
-#include "routing/QueueBundleEvent.h"
 
 #include <ibrcommon/net/vaddress.h>
 #include <ibrcommon/Logger.h>
@@ -352,24 +350,20 @@ namespace dtn
 			}
 		}
 
-		void ApiServer::raiseEvent(const dtn::core::Event *evt) throw ()
+		void ApiServer::raiseEvent(const dtn::routing::QueueBundleEvent &queued) throw ()
 		{
-			try {
-				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);
+			// ignore fragments - we can not deliver them directly to the client
+			if (queued.bundle.isFragment()) return;
 
-				// ignore fragments - we can not deliver them directly to the client
-				if (queued.bundle.isFragment()) return;
-
-				ibrcommon::MutexLock l(_connection_lock);
-				for (client_list::iterator iter = _connections.begin(); iter != _connections.end(); ++iter)
+			ibrcommon::MutexLock l(_connection_lock);
+			for (client_list::iterator iter = _connections.begin(); iter != _connections.end(); ++iter)
+			{
+				ClientHandler &conn = **iter;
+				if (conn.getRegistration().hasSubscribed(queued.bundle.destination))
 				{
-					ClientHandler &conn = **iter;
-					if (conn.getRegistration().hasSubscribed(queued.bundle.destination))
-					{
-						conn.getRegistration().notify(Registration::NOTIFY_BUNDLE_AVAILABLE);
-					}
+					conn.getRegistration().notify(Registration::NOTIFY_BUNDLE_AVAILABLE);
 				}
-			} catch (const std::bad_cast&) { };
+			}
 		}
 
 		void ApiServer::startGarbageCollector()

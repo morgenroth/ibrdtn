@@ -42,12 +42,31 @@
 #include <ibrcommon/thread/RWMutex.h>
 #include <ibrcommon/thread/Conditional.h>
 
+#include "net/TransferAbortedEvent.h"
+#include "net/TransferCompletedEvent.h"
+#include "net/BundleReceivedEvent.h"
+#include "routing/QueueBundleEvent.h"
+#include "core/NodeEvent.h"
+#include "core/TimeEvent.h"
+#include "net/ConnectionEvent.h"
+#include "core/BundlePurgeEvent.h"
+
+
+
 
 namespace dtn
 {
 	namespace routing
 	{
-		class BaseRouter : public dtn::core::EventReceiver, public dtn::daemon::IntegratedComponent
+		class BaseRouter : public dtn::daemon::IntegratedComponent,
+			public dtn::core::EventReceiver<dtn::net::TransferAbortedEvent>,
+			public dtn::core::EventReceiver<dtn::net::TransferCompletedEvent>,
+			public dtn::core::EventReceiver<dtn::net::BundleReceivedEvent>,
+			public dtn::core::EventReceiver<dtn::routing::QueueBundleEvent>,
+			public dtn::core::EventReceiver<dtn::core::NodeEvent>,
+			public dtn::core::EventReceiver<dtn::core::TimeEvent>,
+			public dtn::core::EventReceiver<dtn::net::ConnectionEvent>,
+			public dtn::core::EventReceiver<dtn::core::BundlePurgeEvent>
 		{
 			static const std::string TAG;
 
@@ -117,7 +136,14 @@ namespace dtn
 			/**
 			 * method to receive new events from the EventSwitch
 			 */
-			void raiseEvent(const dtn::core::Event *evt) throw ();
+			void raiseEvent(const dtn::net::TransferAbortedEvent &evt) throw ();
+			void raiseEvent(const dtn::net::TransferCompletedEvent &evt) throw ();
+			void raiseEvent(const dtn::net::BundleReceivedEvent &evt) throw ();
+			void raiseEvent(const dtn::routing::QueueBundleEvent &evt) throw ();
+			void raiseEvent(const dtn::core::NodeEvent &evt) throw ();
+			void raiseEvent(const dtn::core::TimeEvent &evt) throw ();
+			void raiseEvent(const dtn::net::ConnectionEvent &evt) throw ();
+			void raiseEvent(const dtn::core::BundlePurgeEvent &evt) throw ();
 
 			/**
 			 * provides direct access to the bundle storage

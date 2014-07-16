@@ -31,6 +31,11 @@
 #include "core/Node.h"
 #include <ibrcommon/Exceptions.h>
 
+#include "core/NodeEvent.h"
+#include "core/TimeEvent.h"
+#include "core/GlobalEvent.h"
+#include "net/ConnectionEvent.h"
+
 #include <set>
 
 namespace dtn
@@ -53,7 +58,9 @@ namespace dtn
 			};
 		};
 
-		class ConnectionManager : public dtn::core::EventReceiver, public dtn::daemon::IntegratedComponent
+		class ConnectionManager
+		  : public dtn::core::EventReceiver<dtn::core::TimeEvent>, public dtn::daemon::IntegratedComponent,
+			public dtn::core::EventReceiver<dtn::core::GlobalEvent>, public dtn::core::EventReceiver<dtn::core::NodeEvent>, public dtn::core::EventReceiver<dtn::net::ConnectionEvent>
 		{
 		public:
 			ConnectionManager();
@@ -90,7 +97,10 @@ namespace dtn
 			/**
 			 * method to receive new events from the EventSwitch
 			 */
-			void raiseEvent(const dtn::core::Event *evt) throw ();
+			void raiseEvent(const dtn::core::TimeEvent &evt) throw ();
+			void raiseEvent(const dtn::core::NodeEvent &evt) throw ();
+			void raiseEvent(const dtn::net::ConnectionEvent &evt) throw ();
+			void raiseEvent(const dtn::core::GlobalEvent &evt) throw ();
 
 			class ShutdownException : public ibrcommon::Exception
 			{

@@ -24,7 +24,6 @@
 #include "net/TransferAbortedEvent.h"
 #include "core/BundleCore.h"
 #include "core/EventDispatcher.h"
-#include "core/TimeEvent.h"
 
 #include <ibrdtn/utils/Utils.h>
 #include <ibrcommon/Logger.h>
@@ -48,28 +47,24 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
 		}
 
-		void EMailConvergenceLayer::raiseEvent(const dtn::core::Event *event) throw ()
+		void EMailConvergenceLayer::raiseEvent(const dtn::core::TimeEvent &time) throw ()
 		{
-			try {
-				const dtn::core::TimeEvent &time =
-						dynamic_cast<const dtn::core::TimeEvent&>(*event);
-				if (time.getAction() == dtn::core::TIME_SECOND_TICK)
+			if (time.getAction() == dtn::core::TIME_SECOND_TICK)
+			{
+				if(_lastSmtpTaskTime + _config.getSmtpSubmitInterval() < time.getTimestamp().get<size_t>()
+						&& _config.getSmtpSubmitInterval() > 0)
 				{
-					if(_lastSmtpTaskTime + _config.getSmtpSubmitInterval() < time.getTimestamp().get<size_t>()
-							&& _config.getSmtpSubmitInterval() > 0)
-					{
-						_smtp.submitQueue();
-						_lastSmtpTaskTime = time.getTimestamp().get<size_t>();
-					}
-
-					if(_lastImapTaskTime + _config.getImapLookupInterval() < time.getTimestamp().get<size_t>()
-							&& _config.getImapLookupInterval() > 0)
-					{
-						_imap.fetchMails();
-						_lastImapTaskTime = time.getTimestamp().get<size_t>();
-					}
+					_smtp.submitQueue();
+					_lastSmtpTaskTime = time.getTimestamp().get<size_t>();
 				}
-			} catch (const std::bad_cast&) { };
+
+				if(_lastImapTaskTime + _config.getImapLookupInterval() < time.getTimestamp().get<size_t>()
+						&& _config.getImapLookupInterval() > 0)
+				{
+					_imap.fetchMails();
+					_lastImapTaskTime = time.getTimestamp().get<size_t>();
+				}
+			}
 		}
 
 		void EMailConvergenceLayer::onUpdateBeacon(const ibrcommon::vinterface&, DiscoveryBeacon &beacon)

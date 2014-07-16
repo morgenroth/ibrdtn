@@ -26,6 +26,7 @@
 #include "core/AbstractWorker.h"
 #include "core/EventReceiver.h"
 
+#include "routing/NodeHandshakeEvent.h"
 #include "routing/RoutingExtension.h"
 #include "routing/NeighborDatabase.h"
 
@@ -44,7 +45,7 @@ namespace dtn
 {
 	namespace routing
 	{
-		class EpidemicRoutingExtension : public RoutingExtension, public ibrcommon::JoinableThread, public dtn::core::EventReceiver
+		class EpidemicRoutingExtension : public RoutingExtension, public ibrcommon::JoinableThread, public dtn::core::EventReceiver<dtn::routing::NodeHandshakeEvent>
 		{
 			static const std::string TAG;
 
@@ -56,7 +57,7 @@ namespace dtn
 
 			virtual void eventBundleQueued(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ();
 
-			void raiseEvent(const dtn::core::Event *evt) throw ();
+			void raiseEvent(const dtn::routing::NodeHandshakeEvent &evt) throw ();
 			void componentUp() throw ();
 			void componentDown() throw ();
 

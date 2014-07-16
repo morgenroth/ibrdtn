@@ -22,9 +22,7 @@
 #include "config.h"
 #include "DTNTPWorker.h"
 #include "core/EventDispatcher.h"
-#include "core/NodeEvent.h"
 #include "core/BundleCore.h"
-#include "core/TimeEvent.h"
 #include "core/TimeAdjustmentEvent.h"
 #include <ibrdtn/utils/Clock.h>
 #include <ibrdtn/utils/Utils.h>
@@ -187,95 +185,91 @@ namespace dtn
 			return stream;
 		}
 
-		void DTNTPWorker::raiseEvent(const dtn::core::Event *evt) throw ()
+		void DTNTPWorker::raiseEvent(const dtn::core::TimeEvent &t) throw ()
 		{
-			try {
-				const dtn::core::TimeEvent &t = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
+			if (t.getAction() != dtn::core::TIME_SECOND_TICK) return;
 
-				if (t.getAction() != dtn::core::TIME_SECOND_TICK) return;
+			ibrcommon::MutexLock l(_sync_lock);
 
-				ibrcommon::MutexLock l(_sync_lock);
+			// remove outdated blacklist entries
+			{
+				// get current monotonic timestamp
+				const dtn::data::Timestamp mt = dtn::utils::Clock::getMonotonicTimestamp();
 
-				// remove outdated blacklist entries
+				ibrcommon::MutexLock l(_peer_lock);
+				for (peer_map::iterator iter = _peers.begin(); iter != _peers.end();)
 				{
-					// get current monotonic timestamp
-					const dtn::data::Timestamp mt = dtn::utils::Clock::getMonotonicTimestamp();
+					const SyncPeer &peer = (*iter).second;
 
-					ibrcommon::MutexLock l(_peer_lock);
-					for (peer_map::iterator iter = _peers.begin(); iter != _peers.end();)
+					// do not query again if the blacklist entry is valid
+					if (peer.isExpired()) {
+						_peers.erase(iter++);
+					} else {
+						++iter;
+					}
+				}
+			}
+
+			// if we are a reference node, we have to watch on our clock
+			// do some plausibility checks here
+			if (hasReference())
+			{
+				/**
+				 * evaluate the current local time
+				 */
+				if (dtn::utils::Clock::getRating() == 0)
+				{
+					if (t.getTimestamp() > 0)
 					{
-						const SyncPeer &peer = (*iter).second;
+						dtn::utils::Clock::setRating(1.0);
+						IBRCOMMON_LOGGER_TAG(DTNTPWorker::TAG, warning) << "The local clock seems to be okay again." << IBRCOMMON_LOGGER_ENDL;
+					}
+				}
+			}
+			// if we are not a reference then update the local rating if we're not a reference node
+			else
+			{
+				// before we can age our rating we should have been synchronized at least one time
+				if (_sync_state.last_sync_set)
+				{
+					struct timespec ts_now, ts_diff;
+					ibrcommon::MonotonicClock::gettime(ts_now);
+					ibrcommon::MonotonicClock::diff(_sync_state.last_sync_time, ts_now, ts_diff);
 
-						// do not query again if the blacklist entry is valid
-						if (peer.isExpired()) {
-							_peers.erase(iter++);
-						} else {
-							++iter;
-						}
+					double last_sync = TimeSyncState::toDouble(ts_diff);
+
+					// the last sync must be in the past
+					if (last_sync)
+					{
+						// calculate the new clock rating
+						dtn::utils::Clock::setRating(_sync_state.base_rating * (1.0 / (::pow(_sync_state.sigma, last_sync))));
+					}
+				}
+			}
+
+			// if synchronization is enabled
+			if (_sync)
+			{
+				float best_rating = 0.0;
+				dtn::data::EID best_peer;
+
+				// search for other nodes with better credentials
+				const std::set<dtn::core::Node> nodes = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
+
+				// walk through all nodes and find the best peer to sync with
+				for (std::set<dtn::core::Node>::const_iterator iter = nodes.begin(); iter != nodes.end(); ++iter)
+				{
+					float rating = getPeerRating(*iter);
+
+					if (rating > best_rating) {
+						best_peer = (*iter).getEID();
+						best_rating = rating;
 					}
 				}
 
-				// if we are a reference node, we have to watch on our clock
-				// do some plausibility checks here
-				if (hasReference())
-				{
-					/**
-					 * evaluate the current local time
-					 */
-					if (dtn::utils::Clock::getRating() == 0)
-					{
-						if (t.getTimestamp() > 0)
-						{
-							dtn::utils::Clock::setRating(1.0);
-							IBRCOMMON_LOGGER_TAG(DTNTPWorker::TAG, warning) << "The local clock seems to be okay again." << IBRCOMMON_LOGGER_ENDL;
-						}
-					}
-				}
-				// if we are not a reference then update the local rating if we're not a reference node
-				else
-				{
-					// before we can age our rating we should have been synchronized at least one time
-					if (_sync_state.last_sync_set)
-					{
-						struct timespec ts_now, ts_diff;
-						ibrcommon::MonotonicClock::gettime(ts_now);
-						ibrcommon::MonotonicClock::diff(_sync_state.last_sync_time, ts_now, ts_diff);
-
-						double last_sync = TimeSyncState::toDouble(ts_diff);
-
-						// the last sync must be in the past
-						if (last_sync)
-						{
-							// calculate the new clock rating
-							dtn::utils::Clock::setRating(_sync_state.base_rating * (1.0 / (::pow(_sync_state.sigma, last_sync))));
-						}
-					}
-				}
-
-				// if synchronization is enabled
-				if (_sync)
-				{
-					float best_rating = 0.0;
-					dtn::data::EID best_peer;
-
-					// search for other nodes with better credentials
-					const std::set<dtn::core::Node> nodes = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
-
-					// walk through all nodes and find the best peer to sync with
-					for (std::set<dtn::core::Node>::const_iterator iter = nodes.begin(); iter != nodes.end(); ++iter)
-					{
-						float rating = getPeerRating(*iter);
-
-						if (rating > best_rating) {
-							best_peer = (*iter).getEID();
-							best_rating = rating;
-						}
-					}
-
-					// sync with best found peer
-					if (!best_peer.isNone()) syncWith(best_peer);
-				}
-			} catch (const std::bad_cast&) { };
+				// sync with best found peer
+				if (!best_peer.isNone()) syncWith(best_peer);
+			}
 		}
 
 		float DTNTPWorker::getPeerRating(const dtn::core::Node &node) const

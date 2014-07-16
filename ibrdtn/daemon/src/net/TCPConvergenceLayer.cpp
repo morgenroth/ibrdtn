@@ -20,7 +20,7 @@
  */
 
 #include "Configuration.h"
-#include "net/P2PDialupEvent.h"
+
 #include "net/TCPConvergenceLayer.h"
 #include "net/ConnectionEvent.h"
 #include "net/DiscoveryAgent.h"
@@ -262,46 +262,40 @@ namespace dtn
 			return TCPConvergenceLayer::TAG;
 		}
 
-		void TCPConvergenceLayer::raiseEvent(const dtn::core::Event *evt) throw ()
+		void TCPConvergenceLayer::raiseEvent(const dtn::net::P2PDialupEvent &dialup) throw ()
 		{
-			try {
-				const dtn::net::P2PDialupEvent &dialup = dynamic_cast<const dtn::net::P2PDialupEvent&>(*evt);
-
-				switch (dialup.type)
+			switch (dialup.type)
+			{
+				case dtn::net::P2PDialupEvent::INTERFACE_UP:
 				{
-					case dtn::net::P2PDialupEvent::INTERFACE_UP:
-					{
-						// listen to the new interface
-						listen(dialup.iface, 4556);
-						break;
-					}
-
-					case dtn::net::P2PDialupEvent::INTERFACE_DOWN:
-					{
-						// check if the interface is bound by us
-						{
-							ibrcommon::MutexLock l(_interface_lock);
-
-							// only remove the interface if it exists
-							if (_interfaces.find(dialup.iface) == _interfaces.end()) return;
-
-							// remove the interface from the stored set
-							_interfaces.erase(dialup.iface);
-						}
-
-						// un-subscribe to NetLink events on our interfaces
-						ibrcommon::LinkManager::getInstance().removeEventListener(dialup.iface, this);
-
-						// un-register as discovery handler for this interface
-						dtn::core::BundleCore::getInstance().getDiscoveryAgent().unregisterService(dialup.iface, this);
-
-						// remove all sockets on this interface
-						unlisten(dialup.iface);
-						break;
-					}
+					// listen to the new interface
+					listen(dialup.iface, 4556);
+					break;
 				}
-			} catch (std::bad_cast&) {
 
+				case dtn::net::P2PDialupEvent::INTERFACE_DOWN:
+				{
+					// check if the interface is bound by us
+					{
+						ibrcommon::MutexLock l(_interface_lock);
+
+						// only remove the interface if it exists
+						if (_interfaces.find(dialup.iface) == _interfaces.end()) return;
+
+						// remove the interface from the stored set
+						_interfaces.erase(dialup.iface);
+					}
+
+					// un-subscribe to NetLink events on our interfaces
+					ibrcommon::LinkManager::getInstance().removeEventListener(dialup.iface, this);
+
+					// un-register as discovery handler for this interface
+					dtn::core::BundleCore::getInstance().getDiscoveryAgent().unregisterService(dialup.iface, this);
+
+					// remove all sockets on this interface
+					unlisten(dialup.iface);
+					break;
+				}
 			}
 		}
 

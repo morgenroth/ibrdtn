@@ -26,6 +26,8 @@
 #include "Component.h"
 #include "core/EventReceiver.h"
 #include "core/Node.h"
+#include "core/TimeEvent.h"
+#include "core/GlobalEvent.h"
 #include "net/DiscoveryBeacon.h"
 #include "net/DiscoveryBeaconHandler.h"
 #include "net/DiscoveryService.h"
@@ -39,7 +41,7 @@ namespace dtn
 {
 	namespace net
 	{
-		class DiscoveryAgent : public dtn::core::EventReceiver, public dtn::daemon::IntegratedComponent
+		class DiscoveryAgent : public dtn::core::EventReceiver<dtn::core::TimeEvent>, public dtn::core::EventReceiver<dtn::core::GlobalEvent>, public dtn::daemon::IntegratedComponent
 		{
 		public:
 			DiscoveryAgent();
@@ -48,7 +50,8 @@ namespace dtn
 			/**
 			 * method to receive global events
 			 */
-			void raiseEvent(const dtn::core::Event *evt) throw ();
+			void raiseEvent(const dtn::core::TimeEvent &evt) throw ();
+			void raiseEvent(const dtn::core::GlobalEvent &evt) throw ();
 
 			void onBeaconReceived(const DiscoveryBeacon &beacon);
 

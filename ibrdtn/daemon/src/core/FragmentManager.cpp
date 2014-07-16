@@ -25,7 +25,7 @@
 #include "core/BundleCore.h"
 #include "core/BundlePurgeEvent.h"
 #include "net/BundleReceivedEvent.h"
-#include "routing/QueueBundleEvent.h"
+
 #include <ibrdtn/data/BundleMerger.h>
 #include <ibrdtn/utils/Clock.h>
 #include <ibrcommon/Logger.h>
@@ -163,30 +163,23 @@ namespace dtn
 			join();
 		}
 
-		void FragmentManager::raiseEvent(const dtn::core::Event *evt) throw ()
+		void FragmentManager::raiseEvent(const dtn::routing::QueueBundleEvent &queued) throw ()
 		{
-			try {
-				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);
+			// process fragments
+			if (!queued.bundle.isFragment()) return;
 
-				// process fragments
-				if (queued.bundle.isFragment()) signal(queued.bundle);
-			} catch (const std::bad_cast&) {}
-		}
-
-		void FragmentManager::signal(const dtn::data::MetaBundle &meta)
-		{
 			// do not merge a bundle if it is non-local and singleton
 			// we only touch local and group bundles which might be delivered locally
-			if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+			if (queued.bundle.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
 			{
-				if (!meta.destination.sameHost(dtn::core::BundleCore::local))
+				if (!queued.bundle.destination.sameHost(dtn::core::BundleCore::local))
 				{
 					return;
 				}
 			}
 
 			// push the meta bundle into the incoming queue
-			_incoming.push(meta);
+			_incoming.push(queued.bundle);
 		}
 
 		void FragmentManager::search(const dtn::data::MetaBundle &meta, dtn::storage::BundleResult &list)

@@ -23,7 +23,6 @@
 #include "api/NativeSerializer.h"
 #include "core/BundleCore.h"
 #include "core/EventDispatcher.h"
-#include "routing/QueueBundleEvent.h"
 
 #include <ibrdtn/data/PayloadBlock.h>
 #include <ibrcommon/data/BLOB.h>
@@ -405,19 +404,15 @@ namespace dtn
 		{
 		}
 
-		void NativeSession::BundleReceiver::raiseEvent(const dtn::core::Event *evt) throw ()
+		void NativeSession::BundleReceiver::raiseEvent(const dtn::routing::QueueBundleEvent &queued) throw ()
 		{
-			try {
-				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);
+			// ignore fragments - we can not deliver them directly to the client
+			if (queued.bundle.isFragment()) return;
 
-				// ignore fragments - we can not deliver them directly to the client
-				if (queued.bundle.isFragment()) return;
-
-				if (_session._registration.hasSubscribed(queued.bundle.destination))
-				{
-					_session._registration.notify(Registration::NOTIFY_BUNDLE_AVAILABLE);
-				}
-			} catch (const std::bad_cast&) { };
+			if (_session._registration.hasSubscribed(queued.bundle.destination))
+			{
+				_session._registration.notify(Registration::NOTIFY_BUNDLE_AVAILABLE);
+			}
 		}
 
 		void NativeSession::receive() throw (NativeSessionException)

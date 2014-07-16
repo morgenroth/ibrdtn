@@ -24,6 +24,7 @@
 
 #include "core/AbstractWorker.h"
 #include "core/EventReceiver.h"
+#include "core/TimeEvent.h"
 #include "net/DiscoveryBeaconHandler.h"
 #include "Configuration.h"
 #include <time.h>
@@ -32,7 +33,7 @@ namespace dtn
 {
 	namespace daemon
 	{
-		class DTNTPWorker : public dtn::core::AbstractWorker, public dtn::core::EventReceiver, public dtn::net::DiscoveryBeaconHandler
+		class DTNTPWorker : public dtn::core::AbstractWorker, public dtn::core::EventReceiver<dtn::core::TimeEvent>, public dtn::net::DiscoveryBeaconHandler
 		{
 		public:
 			/**
@@ -55,7 +56,7 @@ namespace dtn
 			 * This method is called by the EventSwitch.
 			 * @param evt
 			 */
-			void raiseEvent(const dtn::core::Event *evt) throw ();
+			void raiseEvent(const dtn::core::TimeEvent &evt) throw ();
 
 			/**
 			 * This message is called by the discovery module.

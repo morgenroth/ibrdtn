@@ -23,7 +23,6 @@
 #include "core/EventDispatcher.h"
 #include "core/AbstractWorker.h"
 #include "core/BundleCore.h"
-#include "routing/QueueBundleEvent.h"
 #include "core/BundleEvent.h"
 #include "core/BundlePurgeEvent.h"
 #include <ibrcommon/thread/MutexLock.h>
@@ -46,31 +45,27 @@ namespace dtn
 			shutdown();
 		}
 
-		void AbstractWorker::AbstractWorkerAsync::raiseEvent(const dtn::core::Event *evt) throw ()
+		void AbstractWorker::AbstractWorkerAsync::raiseEvent(const dtn::routing::QueueBundleEvent &queued) throw ()
 		{
-			try {
-				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);
+			// ignore fragments - we can not deliver them directly to the client
+			if (queued.bundle.isFragment()) return;
 
-				// ignore fragments - we can not deliver them directly to the client
-				if (queued.bundle.isFragment()) return;
+			// check for bundle destination
+			if (queued.bundle.destination == _worker._eid)
+			{
+				_receive_bundles.push(queued.bundle);
+				return;
+			}
 
-				// check for bundle destination
-				if (queued.bundle.destination == _worker._eid)
-				{
-					_receive_bundles.push(queued.bundle);
-					return;
-				}
+			// if the bundle is a singleton, stop here
+			if (queued.bundle.procflags & dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON) return;
 
-				// if the bundle is a singleton, stop here
-				if (queued.bundle.procflags & dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON) return;
-
-				// check for subscribed groups
-				if (_worker._groups.find(queued.bundle.destination) != _worker._groups.end())
-				{
-					_receive_bundles.push(queued.bundle);
-					return;
-				}
-			} catch (const std::bad_cast&) { }
+			// check for subscribed groups
+			if (_worker._groups.find(queued.bundle.destination) != _worker._groups.end())
+			{
+				_receive_bundles.push(queued.bundle);
+				return;
+			}
 		}
 
 		void AbstractWorker::AbstractWorkerAsync::initialize()

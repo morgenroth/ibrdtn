@@ -21,6 +21,8 @@
 
 #include "Component.h"
 #include "net/ConvergenceLayer.h"
+#include "core/NodeEvent.h"
+#include "core/TimeEvent.h"
 #include "core/Node.h"
 #include "core/EventReceiver.h"
 #include <ibrdtn/data/BundleList.h>
@@ -35,13 +37,14 @@ namespace dtn
 	namespace net
 	{
 
-		class FileConvergenceLayer : public dtn::net::ConvergenceLayer, public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver
+		class FileConvergenceLayer : public dtn::net::ConvergenceLayer, public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver<dtn::core::NodeEvent>, public dtn::core::EventReceiver<dtn::core::TimeEvent>
 		{
 		public:
 			FileConvergenceLayer();
 			virtual ~FileConvergenceLayer();
 
-			void raiseEvent(const dtn::core::Event *evt) throw ();
+			void raiseEvent(const dtn::core::NodeEvent &evt) throw ();
+			void raiseEvent(const dtn::core::TimeEvent &evt) throw ();
 
 			dtn::core::Node::Protocol getDiscoveryProtocol() const;
 

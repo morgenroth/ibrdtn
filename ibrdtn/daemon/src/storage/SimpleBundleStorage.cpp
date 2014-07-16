@@ -21,8 +21,6 @@
 
 #include "storage/SimpleBundleStorage.h"
 #include "core/EventDispatcher.h"
-#include "core/TimeEvent.h"
-#include "core/GlobalEvent.h"
 #include "core/BundleExpiredEvent.h"
 #include "core/BundleEvent.h"
 
@@ -212,16 +210,13 @@ namespace dtn
 			}
 		}
 
-		void SimpleBundleStorage::raiseEvent(const dtn::core::Event *evt) throw ()
+		void SimpleBundleStorage::raiseEvent(const dtn::core::TimeEvent &time) throw ()
 		{
-			try {
-				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
-				if (time.getAction() == dtn::core::TIME_SECOND_TICK)
-				{
-					ibrcommon::RWLock l(_meta_lock);
-					_metastore.expire(time.getTimestamp());
-				}
-			} catch (const std::bad_cast&) { }
+			if (time.getAction() == dtn::core::TIME_SECOND_TICK)
+			{
+				ibrcommon::RWLock l(_meta_lock);
+				_metastore.expire(time.getTimestamp());
+			}
 		}
 
 		const std::string SimpleBundleStorage::getName() const

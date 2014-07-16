@@ -27,6 +27,7 @@
 #include "Component.h"
 #include "core/AbstractWorker.h"
 #include "core/EventReceiver.h"
+#include "core/TimeEvent.h"
 #include "security/exchange/KeyExchangeEvent.h"
 #include "security/exchange/KeyExchangeSession.h"
 #include "security/exchange/KeyExchangeData.h"
@@ -45,7 +46,9 @@ namespace dtn
 {
 	namespace security
 	{
-		class KeyExchanger : public KeyExchangeManager, public dtn::daemon::IndependentComponent, public dtn::core::AbstractWorker, public dtn::core::EventReceiver
+		class KeyExchanger : public KeyExchangeManager, public dtn::daemon::IndependentComponent, public dtn::core::AbstractWorker,
+			public dtn::core::EventReceiver<dtn::security::KeyExchangeEvent>,
+			public dtn::core::EventReceiver<dtn::core::TimeEvent>
 		{
 			static const std::string TAG;
 
@@ -92,7 +95,8 @@ namespace dtn
 				/**
 				 * Receives incoming events.
 				 */
-				virtual void raiseEvent(const dtn::core::Event *evt) throw ();
+				virtual void raiseEvent(const dtn::security::KeyExchangeEvent &evt) throw ();
+				virtual void raiseEvent(const dtn::core::TimeEvent &evt) throw ();
 
 				/**
 				 * KeyExchangeManager methods

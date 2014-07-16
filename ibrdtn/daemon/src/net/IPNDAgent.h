@@ -27,6 +27,7 @@
 
 #include "Component.h"
 #include "net/DiscoveryBeaconHandler.h"
+#include "net/P2PDialupEvent.h"
 #include "core/EventReceiver.h"
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/net/vsocket.h>
@@ -41,7 +42,7 @@ namespace dtn
 {
 	namespace net
 	{
-		class IPNDAgent : public dtn::core::EventReceiver, public dtn::daemon::IndependentComponent, public ibrcommon::LinkManager::EventCallback, public DiscoveryBeaconHandler
+		class IPNDAgent : public dtn::core::EventReceiver<dtn::net::P2PDialupEvent>, public dtn::daemon::IndependentComponent, public ibrcommon::LinkManager::EventCallback, public DiscoveryBeaconHandler
 		{
 			static const std::string TAG;
 
@@ -62,7 +63,7 @@ namespace dtn
 			/**
 			 * @see EventReceiver::raiseEvent()
 			 */
-			void raiseEvent(const dtn::core::Event *evt) throw ();
+			void raiseEvent(const dtn::net::P2PDialupEvent &evt) throw ();
 
 			/**
 			 * This method is called by the DiscoveryAgent every time a beacon is ready for advertisement

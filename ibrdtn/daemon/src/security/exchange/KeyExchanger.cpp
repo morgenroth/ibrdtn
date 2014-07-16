@@ -22,12 +22,10 @@
 
 #include "config.h"
 #include "security/exchange/KeyExchanger.h"
-#include "security/exchange/KeyExchangeEvent.h"
 #include "security/SecurityKeyManager.h"
 
 #include "core/BundleCore.h"
 #include "core/EventDispatcher.h"
-#include "core/TimeEvent.h"
 #include <ibrdtn/utils/Clock.h>
 
 #include <ibrcommon/data/File.h>
@@ -171,31 +169,24 @@ namespace dtn
 			} catch (const ibrcommon::Exception&) {}
 		}
 
-		void KeyExchanger::raiseEvent(const dtn::core::Event *evt) throw ()
+		void KeyExchanger::raiseEvent(const KeyExchangeEvent &kee) throw ()
 		{
-			try {
-				const KeyExchangeEvent &kee = dynamic_cast<const KeyExchangeEvent&>(*evt);
-				_queue.push(new ExchangeTask(kee.getEID(), kee.getData()));
-				return;
-			} catch (const std::bad_cast&) { };
+			_queue.push(new ExchangeTask(kee.getEID(), kee.getData()));
+		}
 
-			try {
-				dynamic_cast<const dtn::core::TimeEvent&>(*evt);
+		void KeyExchanger::raiseEvent(const dtn::core::TimeEvent&) throw ()
+		{
+			const dtn::data::Timestamp now = dtn::utils::Clock::getMonotonicTimestamp();
 
-				const dtn::data::Timestamp now = dtn::utils::Clock::getMonotonicTimestamp();
+			ibrcommon::MutexLock l(_expiration_lock);
+			if ((_next_expiration > 0) && (_next_expiration <= now))
+			{
+				// set next expiration to zero to prevent further expiration tasks
+				_next_expiration = 0;
 
-				ibrcommon::MutexLock l(_expiration_lock);
-				if ((_next_expiration > 0) && (_next_expiration <= now))
-				{
-					// set next expiration to zero to prevent further expiration tasks
-					_next_expiration = 0;
-
-					// queue task to free expired sessions
-					_queue.push(new ExpireTask(now));
-				}
-
-				return;
-			} catch (const std::bad_cast&) { };
+				// queue task to free expired sessions
+				_queue.push(new ExpireTask(now));
+			}
 		}
 
 		void KeyExchanger::submit(KeyExchangeSession &session, const KeyExchangeData &data)

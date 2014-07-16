@@ -23,8 +23,6 @@
 
 #include "storage/SQLiteBundleStorage.h"
 #include "core/EventDispatcher.h"
-#include "core/TimeEvent.h"
-#include "core/GlobalEvent.h"
 #include "core/BundleCore.h"
 #include "core/BundleEvent.h"
 
@@ -540,36 +538,31 @@ namespace dtn
 			return 0;
 		}
 
-		void SQLiteBundleStorage::raiseEvent(const dtn::core::Event *evt) throw ()
+		void SQLiteBundleStorage::raiseEvent(const dtn::core::TimeEvent &time) throw ()
 		{
-			try {
-				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
+			if (time.getAction() == dtn::core::TIME_SECOND_TICK)
+			{
+				_tasks.push(new TaskExpire(time.getTimestamp()));
+			}
+		}
 
-				if (time.getAction() == dtn::core::TIME_SECOND_TICK)
-				{
-					_tasks.push(new TaskExpire(time.getTimestamp()));
-				}
-			} catch (const std::bad_cast&) { }
-			
-			try {
-				const dtn::core::GlobalEvent &global = dynamic_cast<const dtn::core::GlobalEvent&>(*evt);
+		void SQLiteBundleStorage::raiseEvent(const dtn::core::GlobalEvent &global) throw ()
+		{
+			if (global.getAction() == dtn::core::GlobalEvent::GLOBAL_IDLE)
+			{
+				// switch to idle mode
+				ibrcommon::MutexLock l(TaskIdle::_mutex);
+				TaskIdle::_idle = true;
 
-				if(global.getAction() == dtn::core::GlobalEvent::GLOBAL_IDLE)
-				{
-					// switch to idle mode
-					ibrcommon::MutexLock l(TaskIdle::_mutex);
-					TaskIdle::_idle = true;
-
-					// generate an idle task
-					_tasks.push(new TaskIdle());
-				}
-				else if(global.getAction() == dtn::core::GlobalEvent::GLOBAL_BUSY)
-				{
-					// switch back to non-idle mode
-					ibrcommon::MutexLock l(TaskIdle::_mutex);
-					TaskIdle::_idle = false;
-				}
-			} catch (const std::bad_cast&) { }
+				// generate an idle task
+				_tasks.push(new TaskIdle());
+			}
+			else if (global.getAction() == dtn::core::GlobalEvent::GLOBAL_BUSY)
+			{
+				// switch back to non-idle mode
+				ibrcommon::MutexLock l(TaskIdle::_mutex);
+				TaskIdle::_idle = false;
+			}
 		}
 
 		void SQLiteBundleStorage::TaskExpire::run(SQLiteBundleStorage &storage)

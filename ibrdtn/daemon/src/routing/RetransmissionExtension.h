@@ -23,6 +23,12 @@
 #define RETRANSMISSIONEXTENSION_H_
 
 #include "routing/RoutingExtension.h"
+
+#include "core/BundleExpiredEvent.h"
+#include "net/TransferAbortedEvent.h"
+#include "routing/RequeueBundleEvent.h"
+#include "core/TimeEvent.h"
+
 #include "core/EventReceiver.h"
 #include <ibrdtn/data/BundleID.h>
 #include <ibrdtn/data/EID.h>
@@ -34,7 +40,11 @@ namespace dtn
 {
 	namespace routing
 	{
-		class RetransmissionExtension : public RoutingExtension, public dtn::core::EventReceiver
+		class RetransmissionExtension : public RoutingExtension,
+			public dtn::core::EventReceiver<dtn::net::TransferAbortedEvent>,
+			public dtn::core::EventReceiver<dtn::routing::RequeueBundleEvent>,
+			public dtn::core::EventReceiver<dtn::core::BundleExpiredEvent>,
+			public dtn::core::EventReceiver<dtn::core::TimeEvent>
 		{
 		public:
 			RetransmissionExtension();
@@ -45,7 +55,11 @@ namespace dtn
 			 */
 			virtual void eventTransferCompleted(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ();
 
-			void raiseEvent(const dtn::core::Event *evt) throw ();
+			void raiseEvent(const dtn::net::TransferAbortedEvent &evt) throw ();
+			void raiseEvent(const dtn::routing::RequeueBundleEvent &evt) throw ();
+			void raiseEvent(const dtn::core::BundleExpiredEvent &evt) throw ();
+			void raiseEvent(const dtn::core::TimeEvent &evt) throw ();
+
 			void componentUp() throw ();
 			void componentDown() throw ();
 

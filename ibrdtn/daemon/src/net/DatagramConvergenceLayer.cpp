@@ -60,18 +60,14 @@ namespace dtn
 			delete _service;
 		}
 
-		void DatagramConvergenceLayer::raiseEvent(const dtn::core::Event *evt) throw ()
+		void DatagramConvergenceLayer::raiseEvent(const dtn::core::NodeEvent &event) throw ()
 		{
-			try {
-				const dtn::core::NodeEvent &event = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
-
-				if (event.getAction() == NODE_UNAVAILABLE)
-				{
-					NodeGone *gone = new NodeGone();
-					gone->eid = event.getNode().getEID();
-					_action_queue.push(gone);
-				}
-			} catch (const std::bad_cast&) { };
+			if (event.getAction() == NODE_UNAVAILABLE)
+			{
+				NodeGone *gone = new NodeGone();
+				gone->eid = event.getNode().getEID();
+				_action_queue.push(gone);
+			}
 		}
 
 		void DatagramConvergenceLayer::resetStats()

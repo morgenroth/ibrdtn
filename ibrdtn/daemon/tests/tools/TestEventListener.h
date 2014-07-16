@@ -27,7 +27,7 @@
 #include <ibrcommon/thread/Conditional.h>
 
 template <class EVENT>
-class TestEventListener : public dtn::core::EventReceiver {
+class TestEventListener : public dtn::core::EventReceiver<EVENT> {
 public:
 	TestEventListener() : event_counter(0) {
 		dtn::core::EventDispatcher<EVENT>::add(this);
@@ -37,14 +37,10 @@ public:
 		dtn::core::EventDispatcher<EVENT>::remove(this);
 	}
 
-	void raiseEvent(const dtn::core::Event *evt) throw () {
-		try {
-			dynamic_cast<const EVENT&>(*evt);
-
-			ibrcommon::MutexLock l(event_cond);
-			event_counter++;
-			event_cond.signal(true);
-		} catch (const std::bad_cast&) { }
+	void raiseEvent(const EVENT&) throw () {
+		ibrcommon::MutexLock l(event_cond);
+		event_counter++;
+		event_cond.signal(true);
 	}
 
 	ibrcommon::Conditional event_cond;

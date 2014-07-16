@@ -20,12 +20,9 @@
  */
 
 #include "routing/RetransmissionExtension.h"
-#include "routing/RequeueBundleEvent.h"
-#include "core/TimeEvent.h"
+
 #include "core/BundleCore.h"
 #include "core/EventDispatcher.h"
-#include "core/BundleExpiredEvent.h"
-#include "net/TransferAbortedEvent.h"
 #include "net/TransferCompletedEvent.h"
 
 #include <ibrdtn/utils/Clock.h>
@@ -68,115 +65,101 @@ namespace dtn
 			_set.erase(data);
 		}
 
-		void RetransmissionExtension::raiseEvent(const dtn::core::Event *evt) throw ()
+		void RetransmissionExtension::raiseEvent(const dtn::core::TimeEvent &time) throw ()
 		{
-			try {
-				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
+			ibrcommon::MutexLock l(_mutex);
+			if (!_queue.empty())
+			{
+				const RetransmissionData &data = _queue.front();
 
-				ibrcommon::MutexLock l(_mutex);
-				if (!_queue.empty())
+				if ( data.getTimestamp() <= time.getTimestamp() )
 				{
-					const RetransmissionData &data = _queue.front();
+					try {
+						const dtn::data::MetaBundle meta = dtn::core::BundleCore::getInstance().getStorage().info(data);
 
-					if ( data.getTimestamp() <= time.getTimestamp() )
-					{
 						try {
-							const dtn::data::MetaBundle meta = dtn::core::BundleCore::getInstance().getStorage().info(data);
+							// create a new bundle transfer
+							dtn::net::BundleTransfer transfer(data.destination, meta);
 
-							try {
-								// create a new bundle transfer
-								dtn::net::BundleTransfer transfer(data.destination, meta);
-
-								// re-queue the bundle
-								dtn::core::BundleCore::getInstance().getConnectionManager().queue(transfer);
-							} catch (const ibrcommon::Exception&) {
-								// do nothing here
-							}
+							// re-queue the bundle
+							dtn::core::BundleCore::getInstance().getConnectionManager().queue(transfer);
 						} catch (const ibrcommon::Exception&) {
-							// bundle is not available, abort transmission
-							dtn::net::TransferAbortedEvent::raise(data.destination, data, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
+							// do nothing here
 						}
-
-						// remove the item off the queue
-						_queue.pop();
+					} catch (const ibrcommon::Exception&) {
+						// bundle is not available, abort transmission
+						dtn::net::TransferAbortedEvent::raise(data.destination, data, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 					}
+
+					// remove the item off the queue
+					_queue.pop();
 				}
-				return;
-			} catch (const std::bad_cast&) { };
+			}
+		}
 
-			try {
-				const dtn::net::TransferAbortedEvent &aborted = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
+		void RetransmissionExtension::raiseEvent(const dtn::net::TransferAbortedEvent &aborted) throw ()
+		{
+			// remove the bundleid in our list
+			RetransmissionData data(aborted.getBundleID(), aborted.getPeer());
+			_set.erase(data);
+		}
 
-				// remove the bundleid in our list
-				RetransmissionData data(aborted.getBundleID(), aborted.getPeer());
+		void RetransmissionExtension::raiseEvent(const dtn::routing::RequeueBundleEvent &requeue) throw ()
+		{
+			const RetransmissionData data(requeue.getBundle(), requeue.getPeer());
+
+			ibrcommon::MutexLock l(_mutex);
+			std::set<RetransmissionData>::const_iterator iter = _set.find(data);
+
+			if (iter != _set.end())
+			{
+				// increment the retry counter
+				RetransmissionData data2 = (*iter);
+				data2++;
+
+				// remove the item
 				_set.erase(data);
 
-				return;
-			} catch (const std::bad_cast&) { };
-
-			try {
-				const dtn::routing::RequeueBundleEvent &requeue = dynamic_cast<const dtn::routing::RequeueBundleEvent&>(*evt);
-
-				const RetransmissionData data(requeue.getBundle(), requeue.getPeer());
-
-				ibrcommon::MutexLock l(_mutex);
-				std::set<RetransmissionData>::const_iterator iter = _set.find(data);
-
-				if (iter != _set.end())
+				if (data2.getCount() <= 8)
 				{
-					// increment the retry counter
-					RetransmissionData data2 = (*iter);
-					data2++;
-
-					// remove the item
-					_set.erase(data);
-
-					if (data2.getCount() <= 8)
-					{
-						// requeue the bundle
-						_set.insert(data2);
-						_queue.push(data2);
-					}
-					else
-					{
-						dtn::net::TransferAbortedEvent::raise(requeue.getPeer(), requeue.getBundle(), dtn::net::TransferAbortedEvent::REASON_RETRY_LIMIT_REACHED);
-					}
+					// requeue the bundle
+					_set.insert(data2);
+					_queue.push(data2);
 				}
 				else
 				{
-					// queue the bundle
-					_set.insert(data);
+					dtn::net::TransferAbortedEvent::raise(requeue.getPeer(), requeue.getBundle(), dtn::net::TransferAbortedEvent::REASON_RETRY_LIMIT_REACHED);
+				}
+			}
+			else
+			{
+				// queue the bundle
+				_set.insert(data);
+				_queue.push(data);
+			}
+		}
+
+		void RetransmissionExtension::raiseEvent(const dtn::core::BundleExpiredEvent &expired) throw ()
+		{
+			// delete all matching elements in the queue
+			ibrcommon::MutexLock l(_mutex);
+
+			dtn::data::Size elements = _queue.size();
+			for (dtn::data::Size i = 0; i < elements; ++i)
+			{
+				const RetransmissionData &data = _queue.front();
+
+				if ((dtn::data::BundleID&)data == expired.getBundle())
+				{
+					dtn::net::TransferAbortedEvent::raise(data.destination, data, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
+				}
+				else
+				{
 					_queue.push(data);
 				}
 
-				return;
-			} catch (const std::bad_cast&) { };
-
-			try {
-				const dtn::core::BundleExpiredEvent &expired = dynamic_cast<const dtn::core::BundleExpiredEvent&>(*evt);
-
-				// delete all matching elements in the queue
-				ibrcommon::MutexLock l(_mutex);
-
-				dtn::data::Size elements = _queue.size();
-				for (dtn::data::Size i = 0; i < elements; ++i)
-				{
-					const RetransmissionData &data = _queue.front();
-
-					if ((dtn::data::BundleID&)data == expired.getBundle())
-					{
-						dtn::net::TransferAbortedEvent::raise(data.destination, data, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
-					}
-					else
-					{
-						_queue.push(data);
-					}
-
-					_queue.pop();
-				}
-
-				return;
-			} catch (const std::bad_cast&) { };
+				_queue.pop();
+			}
 		}
 
 		bool RetransmissionExtension::RetransmissionData::operator!=(const RetransmissionData &obj)

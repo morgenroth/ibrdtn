@@ -25,6 +25,21 @@
 #include "storage/BundleSeeker.h"
 #include "storage/BundleIndex.h"
 #include "core/EventReceiver.h"
+
+#include "core/NodeEvent.h"
+#include "core/GlobalEvent.h"
+#include "core/CustodyEvent.h"
+#include "net/BundleReceivedEvent.h"
+#include "net/TransferCompletedEvent.h"
+#include "net/TransferAbortedEvent.h"
+#include "net/ConnectionEvent.h"
+#include "routing/QueueBundleEvent.h"
+
+#include <ibrdtn/ibrdtn.h>
+#ifdef IBRDTN_SUPPORT_BSP
+#include "security/exchange/KeyExchangeEvent.h"
+#endif
+
 #include <ibrcommon/Exceptions.h>
 #include <list>
 #include <set>
@@ -147,7 +162,18 @@ namespace dtn
 
 		class NativeEventLoop;
 
-		class NativeDaemon : public dtn::core::EventReceiver
+		class NativeDaemon :
+			public dtn::core::EventReceiver<dtn::core::NodeEvent>,
+			public dtn::core::EventReceiver<dtn::core::GlobalEvent>,
+			public dtn::core::EventReceiver<dtn::core::CustodyEvent>,
+			public dtn::core::EventReceiver<dtn::net::BundleReceivedEvent>,
+			public dtn::core::EventReceiver<dtn::net::TransferAbortedEvent>,
+			public dtn::core::EventReceiver<dtn::net::TransferCompletedEvent>,
+			public dtn::core::EventReceiver<dtn::net::ConnectionEvent>,
+			public dtn::core::EventReceiver<dtn::routing::QueueBundleEvent>
+#ifdef IBRDTN_SUPPORT_BSP
+			, public dtn::core::EventReceiver<dtn::security::KeyExchangeEvent>
+#endif
 		{
 			static const std::string TAG;
 
@@ -262,7 +288,18 @@ namespace dtn
 			/**
 			 * @see dtn::core::EventReceiver::raiseEvent()
 			 */
-			virtual void raiseEvent(const dtn::core::Event *evt) throw ();
+			virtual void raiseEvent(const dtn::core::NodeEvent &evt) throw ();
+			virtual void raiseEvent(const dtn::core::GlobalEvent &evt) throw ();
+			virtual void raiseEvent(const dtn::core::CustodyEvent &evt) throw ();
+			virtual void raiseEvent(const dtn::net::BundleReceivedEvent &evt) throw ();
+			virtual void raiseEvent(const dtn::net::TransferAbortedEvent &evt) throw ();
+			virtual void raiseEvent(const dtn::net::TransferCompletedEvent &evt) throw ();
+			virtual void raiseEvent(const dtn::net::ConnectionEvent &evt) throw ();
+			virtual void raiseEvent(const dtn::routing::QueueBundleEvent &evt) throw ();
+
+#ifdef IBRDTN_SUPPORT_BSP
+			virtual void raiseEvent(const dtn::security::KeyExchangeEvent &evt) throw ();
+#endif
 
 			/**
 			 * Returns version information about the native daemon

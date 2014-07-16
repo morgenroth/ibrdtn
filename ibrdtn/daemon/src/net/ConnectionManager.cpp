@@ -21,14 +21,9 @@
 
 #include "Configuration.h"
 #include "net/ConnectionManager.h"
-#include "net/ConnectionEvent.h"
 #include "core/EventDispatcher.h"
-#include "core/NodeEvent.h"
 #include "core/BundleEvent.h"
 #include "core/BundleCore.h"
-#include "core/NodeEvent.h"
-#include "core/TimeEvent.h"
-#include "core/GlobalEvent.h"
 
 #include <ibrdtn/utils/Clock.h>
 #include <ibrcommon/Logger.h>
@@ -38,8 +33,6 @@
 #include <algorithm>
 #include <functional>
 #include <typeinfo>
-
-using namespace dtn::core;
 
 namespace dtn
 {
@@ -64,10 +57,10 @@ namespace dtn
 		void ConnectionManager::componentUp() throw ()
 		{
 			// routine checked for throw() on 15.02.2013
-			dtn::core::EventDispatcher<TimeEvent>::add(this);
-			dtn::core::EventDispatcher<NodeEvent>::add(this);
-			dtn::core::EventDispatcher<ConnectionEvent>::add(this);
-			dtn::core::EventDispatcher<GlobalEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::NodeEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::GlobalEvent>::add(this);
 
 			// set next auto connect
 			const dtn::daemon::Configuration::Network &nc = dtn::daemon::Configuration::getInstance().getNetwork();
@@ -99,83 +92,74 @@ namespace dtn
 			dtn::core::EventDispatcher<GlobalEvent>::remove(this);
 		}
 
-		void ConnectionManager::raiseEvent(const dtn::core::Event *evt) throw ()
+		void ConnectionManager::raiseEvent(const dtn::core::NodeEvent &nodeevent) throw ()
 		{
-			try {
-				const NodeEvent &nodeevent = dynamic_cast<const NodeEvent&>(*evt);
+			ibrcommon::MutexLock l(_node_lock);
+			const Node &n = nodeevent.getNode();
 
-				ibrcommon::MutexLock l(_node_lock);
-				const Node &n = nodeevent.getNode();
-
-				switch (nodeevent.getAction())
-				{
-					case NODE_AVAILABLE:
-						if (n.doConnectImmediately())
-						{
-							try {
-								// open the connection immediately
-								open(n);
-							} catch (const ibrcommon::Exception&) {
-								// ignore errors
-							}
+			switch (nodeevent.getAction())
+			{
+				case NODE_AVAILABLE:
+					if (n.doConnectImmediately())
+					{
+						try {
+							// open the connection immediately
+							open(n);
+						} catch (const ibrcommon::Exception&) {
+							// ignore errors
 						}
-						break;
-
-					default:
-						break;
-				}
-				return;
-			} catch (const std::bad_cast&) { }
-
-			try {
-				const TimeEvent &timeevent = dynamic_cast<const TimeEvent&>(*evt);
-
-				if (timeevent.getAction() == TIME_SECOND_TICK)
-				{
-					check_unavailable();
-					check_autoconnect();
-				}
-				return;
-			} catch (const std::bad_cast&) { }
-
-			try {
-				const ConnectionEvent &connection = dynamic_cast<const ConnectionEvent&>(*evt);
-
-				switch (connection.getState())
-				{
-					case ConnectionEvent::CONNECTION_UP:
-					{
-						add(connection.getNode());
-						break;
 					}
-
-					case ConnectionEvent::CONNECTION_DOWN:
-					{
-						remove(connection.getNode());
-						break;
-					}
-
-					default:
-						break;
-				}
-				return;
-			} catch (const std::bad_cast&) { }
-
-			try {
-				const dtn::core::GlobalEvent &global = dynamic_cast<const dtn::core::GlobalEvent&>(*evt);
-				switch (global.getAction()) {
-				case GlobalEvent::GLOBAL_INTERNET_AVAILABLE:
-					check_available();
-					break;
-
-				case GlobalEvent::GLOBAL_INTERNET_UNAVAILABLE:
-					check_unavailable();
 					break;
 
 				default:
 					break;
+			}
+		}
+
+		void ConnectionManager::raiseEvent(const dtn::core::TimeEvent &timeevent) throw ()
+		{
+			if (timeevent.getAction() == TIME_SECOND_TICK)
+			{
+				check_unavailable();
+				check_autoconnect();
+			}
+		}
+
+		void ConnectionManager::raiseEvent(const dtn::net::ConnectionEvent &connection) throw ()
+		{
+			switch (connection.getState())
+			{
+				case ConnectionEvent::CONNECTION_UP:
+				{
+					add(connection.getNode());
+					break;
 				}
-			} catch (const std::bad_cast&) { };
+
+				case ConnectionEvent::CONNECTION_DOWN:
+				{
+					remove(connection.getNode());
+					break;
+				}
+
+				default:
+					break;
+			}
+		}
+
+		void ConnectionManager::raiseEvent(const dtn::core::GlobalEvent &global) throw ()
+		{
+			switch (global.getAction()) {
+			case GlobalEvent::GLOBAL_INTERNET_AVAILABLE:
+				check_available();
+				break;
+
+			case GlobalEvent::GLOBAL_INTERNET_UNAVAILABLE:
+				check_unavailable();
+				break;
+
+			default:
+				break;
+			}
 		}
 
 		void ConnectionManager::add(const dtn::core::Node &n)

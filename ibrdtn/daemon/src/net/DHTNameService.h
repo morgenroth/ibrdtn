@@ -31,6 +31,8 @@
 #include "core/Event.h"
 #include "core/EventReceiver.h"
 #include "net/DiscoveryBeaconHandler.h"
+#include "core/NodeEvent.h"
+#include "routing/QueueBundleEvent.h"
 
 #include <ibrdtn/data/EID.h>
 
@@ -55,7 +57,8 @@ namespace dht {
  * Uses IPND to announce the DHT name service to local neighbour nodes.
  */
 class DHTNameService: public dtn::daemon::IndependentComponent,
-		public dtn::core::EventReceiver,
+		public dtn::core::EventReceiver<dtn::routing::QueueBundleEvent>,
+		public dtn::core::EventReceiver<dtn::core::NodeEvent>,
 		public dtn::net::DiscoveryBeaconHandler {
 private:
 	// All DHT configured sockets and needed setting are saved this structure
@@ -146,7 +149,8 @@ public:
 	 * 	dtn::routing::QueueBundleEvent
 	 * 	dtn::core::NodeEvent
 	 */
-	void raiseEvent(const dtn::core::Event *evt) throw ();
+	void raiseEvent(const dtn::routing::QueueBundleEvent &evt) throw ();
+	void raiseEvent(const dtn::core::NodeEvent &evt) throw ();
 	/**
 	 * this method updates the given values for discovery service
 	 * It publishes the port number of the DHT instance

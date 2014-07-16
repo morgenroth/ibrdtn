@@ -25,6 +25,7 @@
 #include "api/NativeSerializerCallback.h"
 #include "api/Registration.h"
 #include "core/EventReceiver.h"
+#include "routing/QueueBundleEvent.h"
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/StatusReportBlock.h>
 #include <ibrdtn/data/CustodySignalBlock.h>
@@ -249,13 +250,13 @@ namespace dtn
 			// local registration
 			dtn::api::Registration _registration;
 
-			class BundleReceiver : public dtn::core::EventReceiver
+			class BundleReceiver : public dtn::core::EventReceiver<dtn::routing::QueueBundleEvent>
 			{
 			public:
 				BundleReceiver(NativeSession &session);
 				virtual ~BundleReceiver();
 
-				void raiseEvent(const dtn::core::Event *evt) throw ();
+				void raiseEvent(const dtn::routing::QueueBundleEvent &evt) throw ();
 
 			private:
 				NativeSession &_session;

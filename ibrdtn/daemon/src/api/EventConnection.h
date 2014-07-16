@@ -25,11 +25,28 @@
 #include "api/ClientHandler.h"
 #include "core/EventReceiver.h"
 
+#include "core/NodeEvent.h"
+#include "core/GlobalEvent.h"
+#include "core/CustodyEvent.h"
+#include "net/BundleReceivedEvent.h"
+#include "net/TransferAbortedEvent.h"
+#include "net/TransferCompletedEvent.h"
+#include "net/ConnectionEvent.h"
+#include "routing/QueueBundleEvent.h"
+
 namespace dtn
 {
 	namespace api
 	{
-		class EventConnection : public ProtocolHandler, public dtn::core::EventReceiver
+		class EventConnection : public ProtocolHandler,
+			public dtn::core::EventReceiver<dtn::core::NodeEvent>,
+			public dtn::core::EventReceiver<dtn::core::GlobalEvent>,
+			public dtn::core::EventReceiver<dtn::core::CustodyEvent>,
+			public dtn::core::EventReceiver<dtn::net::BundleReceivedEvent>,
+			public dtn::core::EventReceiver<dtn::net::TransferAbortedEvent>,
+			public dtn::core::EventReceiver<dtn::net::TransferCompletedEvent>,
+			public dtn::core::EventReceiver<dtn::net::ConnectionEvent>,
+			public dtn::core::EventReceiver<dtn::routing::QueueBundleEvent>
 		{
 		public:
 			EventConnection(ClientHandler &client, ibrcommon::socketstream &stream);
@@ -40,7 +57,14 @@ namespace dtn
 			void setup();
 			void __cancellation() throw ();
 
-			void raiseEvent(const dtn::core::Event *evt) throw ();
+			void raiseEvent(const dtn::core::NodeEvent &evt) throw ();
+			void raiseEvent(const dtn::core::GlobalEvent &evt) throw ();
+			void raiseEvent(const dtn::core::CustodyEvent &evt) throw ();
+			void raiseEvent(const dtn::net::BundleReceivedEvent &evt) throw ();
+			void raiseEvent(const dtn::net::TransferAbortedEvent &evt) throw ();
+			void raiseEvent(const dtn::net::TransferCompletedEvent &evt) throw ();
+			void raiseEvent(const dtn::net::ConnectionEvent &evt) throw ();
+			void raiseEvent(const dtn::routing::QueueBundleEvent &evt) throw ();
 
 		private:
 			ibrcommon::Mutex _mutex;

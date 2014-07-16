@@ -30,6 +30,7 @@
 #include "net/ConvergenceLayer.h"
 #include "net/TCPConnection.h"
 #include "net/DiscoveryBeaconHandler.h"
+#include "net/P2PDialupEvent.h"
 
 #include <ibrcommon/link/LinkManager.h>
 #include <ibrcommon/net/vsocket.h>
@@ -48,7 +49,7 @@ namespace dtn
 		 * This class implement a ConvergenceLayer for TCP/IP.
 		 * http://tools.ietf.org/html/draft-irtf-dtnrg-tcp-clayer-02
 		 */
-		class TCPConvergenceLayer : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver, public ConvergenceLayer, public DiscoveryBeaconHandler, public ibrcommon::LinkManager::EventCallback
+		class TCPConvergenceLayer : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver<dtn::net::P2PDialupEvent>, public ConvergenceLayer, public DiscoveryBeaconHandler, public ibrcommon::LinkManager::EventCallback
 		{
 			friend class TCPConnection;
 
@@ -107,7 +108,7 @@ namespace dtn
 			/**
 			 * @see EventReceiver::raiseEvent()
 			 */
-			void raiseEvent(const dtn::core::Event *evt) throw ();
+			void raiseEvent(const dtn::net::P2PDialupEvent &evt) throw ();
 
 			virtual void resetStats();
 

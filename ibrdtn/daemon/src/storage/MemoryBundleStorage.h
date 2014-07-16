@@ -24,6 +24,7 @@
 
 #include "Component.h"
 #include "core/BundleCore.h"
+#include "core/TimeEvent.h"
 #include "storage/BundleStorage.h"
 #include "core/Node.h"
 #include "core/EventReceiver.h"
@@ -35,7 +36,7 @@ namespace dtn
 {
 	namespace storage
 	{
-		class MemoryBundleStorage : public BundleStorage, public dtn::core::EventReceiver, public dtn::daemon::IntegratedComponent, public BundleList::Listener
+		class MemoryBundleStorage : public BundleStorage, public dtn::core::EventReceiver<dtn::core::TimeEvent>, public dtn::daemon::IntegratedComponent, public BundleList::Listener
 		{
 			static const std::string TAG;
 
@@ -109,7 +110,7 @@ namespace dtn
 			 * This method is used to receive events.
 			 * @param evt
 			 */
-			void raiseEvent(const dtn::core::Event *evt) throw ();
+			void raiseEvent(const dtn::core::TimeEvent &evt) throw ();
 
 			/**
 			 * @see Component::getName()

@@ -23,14 +23,13 @@
 #include "Configuration.h"
 #include "routing/StaticRoutingExtension.h"
 #include "routing/QueueBundleEvent.h"
-#include "routing/StaticRouteChangeEvent.h"
+
 #include "net/TransferAbortedEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "net/ConnectionEvent.h"
 #include "core/EventDispatcher.h"
 #include "core/NodeEvent.h"
 #include "storage/SimpleBundleStorage.h"
-#include "core/TimeEvent.h"
 
 #ifdef HAVE_REGEX_H
 #include <routing/StaticRegexRoute.h>
@@ -345,64 +344,57 @@ namespace dtn
 			_taskqueue.push( new ProcessBundleTask(meta, peer) );
 		}
 
-		void StaticRoutingExtension::raiseEvent(const dtn::core::Event *evt) throw ()
+		void StaticRoutingExtension::raiseEvent(const dtn::core::TimeEvent&) throw ()
 		{
 			// each second, look for expired routes
-			try {
-				dynamic_cast<const dtn::core::TimeEvent&>(*evt);
-				const dtn::data::Timestamp monotonic = dtn::utils::Clock::getMonotonicTimestamp();
+			const dtn::data::Timestamp monotonic = dtn::utils::Clock::getMonotonicTimestamp();
 
-				ibrcommon::MutexLock l(_expire_lock);
-				if ((next_expire != 0) && (next_expire < monotonic))
-				{
-					_taskqueue.push( new ExpireTask( monotonic ) );
-				}
-				return;
-			} catch (const bad_cast&) { };
+			ibrcommon::MutexLock l(_expire_lock);
+			if ((next_expire != 0) && (next_expire < monotonic))
+			{
+				_taskqueue.push( new ExpireTask( monotonic ) );
+			}
+		}
 
+		void StaticRoutingExtension::raiseEvent(const dtn::routing::StaticRouteChangeEvent &route) throw ()
+		{
 			// on route change, generate a task
-			try {
-				const dtn::routing::StaticRouteChangeEvent &route = dynamic_cast<const dtn::routing::StaticRouteChangeEvent&>(*evt);
-
-				if (route.type == dtn::routing::StaticRouteChangeEvent::ROUTE_CLEAR)
-				{
-					_taskqueue.push( new ClearRoutesTask() );
-					return;
-				}
-
-				StaticRoute *r = NULL;
-
-				if (route.pattern.length() > 0)
-				{
-#ifdef HAVE_REGEX_H
-					r = new StaticRegexRoute(route.pattern, route.nexthop);
-#else
-					dtn::data::Timestamp et = dtn::utils::Clock::getMonotonicTimestamp() + route.timeout;
-					r = new EIDRoute(route.pattern, route.nexthop, et);
-#endif
-				}
-				else
-				{
-					dtn::data::Timestamp et = dtn::utils::Clock::getMonotonicTimestamp() + route.timeout;
-					r = new EIDRoute(route.destination, route.nexthop, et);
-				}
-
-				switch (route.type)
-				{
-				case dtn::routing::StaticRouteChangeEvent::ROUTE_ADD:
-					_taskqueue.push( new RouteChangeTask( RouteChangeTask::ROUTE_ADD, r ) );
-					break;
-
-				case dtn::routing::StaticRouteChangeEvent::ROUTE_DEL:
-					_taskqueue.push( new RouteChangeTask( RouteChangeTask::ROUTE_DEL, r ) );
-					break;
-
-				default:
-					break;
-				}
-
+			if (route.type == dtn::routing::StaticRouteChangeEvent::ROUTE_CLEAR)
+			{
+				_taskqueue.push( new ClearRoutesTask() );
 				return;
-			} catch (const bad_cast&) { };
+			}
+
+			StaticRoute *r = NULL;
+
+			if (route.pattern.length() > 0)
+			{
+#ifdef HAVE_REGEX_H
+				r = new StaticRegexRoute(route.pattern, route.nexthop);
+#else
+				dtn::data::Timestamp et = dtn::utils::Clock::getMonotonicTimestamp() + route.timeout;
+				r = new EIDRoute(route.pattern, route.nexthop, et);
+#endif
+			}
+			else
+			{
+				dtn::data::Timestamp et = dtn::utils::Clock::getMonotonicTimestamp() + route.timeout;
+				r = new EIDRoute(route.destination, route.nexthop, et);
+			}
+
+			switch (route.type)
+			{
+			case dtn::routing::StaticRouteChangeEvent::ROUTE_ADD:
+				_taskqueue.push( new RouteChangeTask( RouteChangeTask::ROUTE_ADD, r ) );
+				break;
+
+			case dtn::routing::StaticRouteChangeEvent::ROUTE_DEL:
+				_taskqueue.push( new RouteChangeTask( RouteChangeTask::ROUTE_DEL, r ) );
+				break;
+
+			default:
+				break;
+			}
 		}
 
 		void StaticRoutingExtension::componentUp() throw ()

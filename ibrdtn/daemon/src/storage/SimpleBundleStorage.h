@@ -27,6 +27,7 @@
 #include "storage/BundleStorage.h"
 #include "core/Node.h"
 #include "core/EventReceiver.h"
+#include "core/TimeEvent.h"
 
 #include "storage/DataStorage.h"
 #include "storage/MetaStorage.h"
@@ -50,7 +51,7 @@ namespace dtn
 		/**
 		 * This storage holds all bundles and fragments in the system memory.
 		 */
-		class SimpleBundleStorage : public DataStorage::Callback, public BundleStorage, public dtn::core::EventReceiver, public dtn::daemon::IntegratedComponent, public dtn::data::BundleList::Listener
+		class SimpleBundleStorage : public DataStorage::Callback, public BundleStorage, public dtn::core::EventReceiver<dtn::core::TimeEvent>, public dtn::daemon::IntegratedComponent, public dtn::data::BundleList::Listener
 		{
 			static const std::string TAG;
 
@@ -131,7 +132,7 @@ namespace dtn
 			 * This method is used to receive events.
 			 * @param evt
 			 */
-			void raiseEvent(const dtn::core::Event *evt) throw ();
+			void raiseEvent(const dtn::core::TimeEvent &evt) throw ();
 
 			/**
 			 * @see Component::getName()

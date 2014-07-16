@@ -30,7 +30,8 @@
 
 #include "Component.h"
 #include "core/EventReceiver.h"
-#include "core/EventReceiver.h"
+#include "core/TimeEvent.h"
+#include "core/GlobalEvent.h"
 #include <ibrdtn/data/MetaBundle.h>
 
 #include <ibrcommon/thread/Thread.h>
@@ -47,7 +48,7 @@ namespace dtn
 {
 	namespace storage
 	{
-		class SQLiteBundleStorage: public BundleStorage, public dtn::core::EventReceiver, public dtn::daemon::IndependentComponent, public ibrcommon::BLOB::Provider, public SQLiteDatabase::DatabaseListener
+		class SQLiteBundleStorage: public BundleStorage, public dtn::core::EventReceiver<dtn::core::GlobalEvent>, public dtn::core::EventReceiver<dtn::core::TimeEvent>, public dtn::daemon::IndependentComponent, public ibrcommon::BLOB::Provider, public SQLiteDatabase::DatabaseListener
 		{
 			static const std::string TAG;
 
@@ -138,7 +139,8 @@ namespace dtn
 			 * This method is used to receive events.
 			 * @param evt
 			 */
-			void raiseEvent(const dtn::core::Event *evt) throw ();
+			void raiseEvent(const dtn::core::TimeEvent &evt) throw ();
+			void raiseEvent(const dtn::core::GlobalEvent &evt) throw ();
 
 			/**
 			 * callbacks for the sqlite database

@@ -21,8 +21,6 @@
 
 #include "storage/MemoryBundleStorage.h"
 #include "core/EventDispatcher.h"
-#include "core/TimeEvent.h"
-#include "core/GlobalEvent.h"
 #include "core/BundleExpiredEvent.h"
 #include "core/BundleEvent.h"
 
@@ -58,17 +56,14 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
 		}
 
-		void MemoryBundleStorage::raiseEvent(const dtn::core::Event *evt) throw ()
+		void MemoryBundleStorage::raiseEvent(const dtn::core::TimeEvent &time) throw ()
 		{
-			try {
-				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
-				if (time.getAction() == dtn::core::TIME_SECOND_TICK)
-				{
-					// do expiration of bundles
-					ibrcommon::MutexLock l(_bundleslock);
-					_list.expire(time.getTimestamp());
-				}
-			} catch (const std::bad_cast&) { }
+			if (time.getAction() == dtn::core::TIME_SECOND_TICK)
+			{
+				// do expiration of bundles
+				ibrcommon::MutexLock l(_bundleslock);
+				_list.expire(time.getTimestamp());
+			}
 		}
 
 		const std::string MemoryBundleStorage::getName() const

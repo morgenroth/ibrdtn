@@ -27,6 +27,7 @@
 #include "api/ClientHandler.h"
 #include "core/EventReceiver.h"
 #include "storage/BundleSeeker.h"
+#include "routing/QueueBundleEvent.h"
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/net/socket.h>
 #include <ibrcommon/thread/Mutex.h>
@@ -39,7 +40,7 @@ namespace dtn
 {
 	namespace api
 	{
-		class ApiServer : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver, public ApiServerInterface, public ibrcommon::TimerCallback
+		class ApiServer : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver<dtn::routing::QueueBundleEvent>, public ApiServerInterface, public ibrcommon::TimerCallback
 		{
 			static const std::string TAG;
 
@@ -55,7 +56,7 @@ namespace dtn
 
 			void freeRegistration(Registration &reg);
 
-			void raiseEvent(const dtn::core::Event *evt) throw ();
+			void raiseEvent(const dtn::routing::QueueBundleEvent &evt) throw ();
 
 			/**
 			 * retrieve a registration for a given handle from the ApiServers registration list

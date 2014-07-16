@@ -26,6 +26,7 @@
 #include "Configuration.h"
 
 #include "core/EventReceiver.h"
+#include "core/TimeEvent.h"
 #include "net/ConvergenceLayer.h"
 #include "net/DiscoveryBeaconHandler.h"
 #include "net/EMailSmtpService.h"
@@ -36,7 +37,7 @@ namespace dtn
 	namespace net
 	{
 		class EMailConvergenceLayer : public dtn::net::ConvergenceLayer,
-			public dtn::core::EventReceiver,
+			public dtn::core::EventReceiver<dtn::core::TimeEvent>,
 			public dtn::net::DiscoveryBeaconHandler,
 			public dtn::daemon::IntegratedComponent
 		{
@@ -57,7 +58,7 @@ namespace dtn
 			 * following events:
 			 *   - dtn::core::TimeEvent
 			 */
-			void raiseEvent(const dtn::core::Event *event) throw ();
+			void raiseEvent(const dtn::core::TimeEvent &event) throw ();
 
 			/**
 			 * This method updates the given values for discovery service.

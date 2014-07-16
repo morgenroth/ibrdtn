@@ -25,6 +25,7 @@
 #include "Component.h"
 #include "core/EventReceiver.h"
 #include "storage/BundleResult.h"
+#include "routing/QueueBundleEvent.h"
 #include <ibrdtn/data/MetaBundle.h>
 #include <ibrcommon/thread/Queue.h>
 #include <ibrcommon/thread/Mutex.h>
@@ -59,7 +60,7 @@ namespace dtn
 			}
 		};
 
-		class FragmentManager : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver
+		class FragmentManager : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver<dtn::routing::QueueBundleEvent>
 		{
 			static const std::string TAG;
 
@@ -67,15 +68,13 @@ namespace dtn
 			FragmentManager();
 			virtual ~FragmentManager();
 
-			void signal(const dtn::data::MetaBundle &meta);
-
 			void __cancellation() throw ();
 
 			void componentUp() throw ();
 			void componentRun() throw ();
 			void componentDown() throw ();
 
-			void raiseEvent(const dtn::core::Event *evt) throw ();
+			void raiseEvent(const dtn::routing::QueueBundleEvent &evt) throw ();
 
 			const std::string getName() const;
 

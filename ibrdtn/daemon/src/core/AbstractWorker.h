@@ -26,6 +26,7 @@
 #include <ibrdtn/data/BundleID.h>
 #include <ibrdtn/data/EID.h>
 #include "core/EventReceiver.h"
+#include "routing/QueueBundleEvent.h"
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/Conditional.h>
 #include <ibrcommon/thread/Thread.h>
@@ -42,7 +43,7 @@ namespace dtn
 	{
 		class AbstractWorker : public ibrcommon::Mutex
 		{
-			class AbstractWorkerAsync : public ibrcommon::JoinableThread, public dtn::core::EventReceiver
+			class AbstractWorkerAsync : public ibrcommon::JoinableThread, public dtn::core::EventReceiver<dtn::routing::QueueBundleEvent>
 			{
 			public:
 				AbstractWorkerAsync(AbstractWorker &worker);
@@ -51,7 +52,7 @@ namespace dtn
 				void initialize();
 				void shutdown();
 
-				virtual void raiseEvent(const dtn::core::Event *evt) throw ();
+				virtual void raiseEvent(const dtn::routing::QueueBundleEvent &evt) throw ();
 
 			protected:
 				void run() throw ();

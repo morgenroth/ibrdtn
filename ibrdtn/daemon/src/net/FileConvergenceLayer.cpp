@@ -26,8 +26,6 @@
 #include "core/EventDispatcher.h"
 #include "core/BundleEvent.h"
 #include "core/BundleCore.h"
-#include "core/NodeEvent.h"
-#include "core/TimeEvent.h"
 #include "routing/BaseRouter.h"
 #include "routing/NodeHandshake.h"
 #include <ibrdtn/data/BundleSet.h>
@@ -199,30 +197,25 @@ namespace dtn
 			} catch (const ibrcommon::QueueUnblockedException &ex) { };
 		}
 
-		void FileConvergenceLayer::raiseEvent(const dtn::core::Event *evt) throw ()
+		void FileConvergenceLayer::raiseEvent(const dtn::core::NodeEvent &node) throw ()
 		{
-			try {
-				const dtn::core::NodeEvent &node = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
-
-				if (node.getAction() == dtn::core::NODE_AVAILABLE)
+			if (node.getAction() == dtn::core::NODE_AVAILABLE)
+			{
+				const dtn::core::Node &n = node.getNode();
+				if ( n.has(dtn::core::Node::CONN_FILE) )
 				{
-					const dtn::core::Node &n = node.getNode();
-					if ( n.has(dtn::core::Node::CONN_FILE) )
-					{
-						_tasks.push(new Task(Task::TASK_LOAD, n));
-					}
+					_tasks.push(new Task(Task::TASK_LOAD, n));
 				}
-			} catch (const std::bad_cast&) { };
+			}
+		}
 
-			try {
-				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
-
-				if (time.getAction() == dtn::core::TIME_SECOND_TICK)
-				{
-					ibrcommon::MutexLock l(_blacklist_mutex);
-					_blacklist.expire(time.getTimestamp());
-				}
-			} catch (const std::bad_cast&) { };
+		void FileConvergenceLayer::raiseEvent(const dtn::core::TimeEvent &time) throw ()
+		{
+			if (time.getAction() == dtn::core::TIME_SECOND_TICK)
+			{
+				ibrcommon::MutexLock l(_blacklist_mutex);
+				_blacklist.expire(time.getTimestamp());
+			}
 		}
 
 		const std::string FileConvergenceLayer::getName() const

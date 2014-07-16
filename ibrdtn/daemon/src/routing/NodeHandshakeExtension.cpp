@@ -23,8 +23,6 @@
 #include "routing/NodeHandshakeExtension.h"
 #include "routing/NodeHandshakeEvent.h"
 
-#include "core/NodeEvent.h"
-#include "net/ConnectionEvent.h"
 #include "core/BundleCore.h"
 #include "core/BundleEvent.h"
 #include "core/EventDispatcher.h"
@@ -190,22 +188,17 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::core::NodeEvent>::remove(this);
 		}
 
-		void NodeHandshakeExtension::raiseEvent(const dtn::core::Event *evt) throw ()
+		void NodeHandshakeExtension::raiseEvent(const dtn::core::NodeEvent &nodeevent) throw ()
 		{
 			// If a new neighbor comes available, send him a request for the summary vector
 			// If a neighbor went away we can free the stored summary vector
-			try {
-				const dtn::core::NodeEvent &nodeevent = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
-				const dtn::core::Node &n = nodeevent.getNode();
+			const dtn::core::Node &n = nodeevent.getNode();
 
-				if (nodeevent.getAction() == NODE_UNAVAILABLE)
-				{
-					// remove the item from the blacklist
-					_endpoint.removeFromBlacklist(n.getEID());
-				}
-
-				return;
-			} catch (const std::bad_cast&) { };
+			if (nodeevent.getAction() == NODE_UNAVAILABLE)
+			{
+				// remove the item from the blacklist
+				_endpoint.removeFromBlacklist(n.getEID());
+			}
 		}
 
 		NodeHandshakeExtension::HandshakeEndpoint::HandshakeEndpoint(NodeHandshakeExtension &callback)

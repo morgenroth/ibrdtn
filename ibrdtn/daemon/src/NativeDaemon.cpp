@@ -52,12 +52,7 @@
 #include "routing/prophet/ProphetRoutingExtension.h"
 #include "routing/flooding/FloodRoutingExtension.h"
 
-#include "core/GlobalEvent.h"
-#include "net/BundleReceivedEvent.h"
-#include "net/TransferCompletedEvent.h"
-#include "net/TransferAbortedEvent.h"
 #include "core/BundleExpiredEvent.h"
-#include "routing/QueueBundleEvent.h"
 #include "routing/RequeueBundleEvent.h"
 #include "core/TimeAdjustmentEvent.h"
 
@@ -275,217 +270,261 @@ namespace dtn
 			}
 		}
 
-		void NativeDaemon::raiseEvent(const dtn::core::Event *evt) throw ()
+		void NativeDaemon::raiseEvent(const dtn::core::NodeEvent &node) throw ()
 		{
-			const std::string event = evt->getName();
+			const std::string event = node.getName();
 			std::string action;
 			std::vector<std::string> data;
 
-			try {
-				const dtn::core::NodeEvent &node = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
+			// set action
+			switch (node.getAction())
+			{
+			case dtn::core::NODE_AVAILABLE:
+				action = "available";
+				break;
+			case dtn::core::NODE_UNAVAILABLE:
+				action = "unavailable";
+				break;
+			case dtn::core::NODE_DATA_ADDED:
+				action = "data_added";
+				break;
+			case dtn::core::NODE_DATA_REMOVED:
+				action = "data_removed";
+				break;
+			default:
+				break;
+			}
 
-				// set action
-				switch (node.getAction())
-				{
-				case dtn::core::NODE_AVAILABLE:
-					action = "available";
-					break;
-				case dtn::core::NODE_UNAVAILABLE:
-					action = "unavailable";
-					break;
-				case dtn::core::NODE_DATA_ADDED:
-					action = "data_added";
-					break;
-				case dtn::core::NODE_DATA_REMOVED:
-					action = "data_removed";
-					break;
-				default:
-					break;
-				}
-
-				// add the node eid
-				data.push_back("EID: " + node.getNode().getEID().getString());
-			} catch (const std::bad_cast&) { };
-
-			try {
-				const dtn::core::GlobalEvent &global = dynamic_cast<const dtn::core::GlobalEvent&>(*evt);
-
-				// set action
-				switch (global.getAction())
-				{
-				case dtn::core::GlobalEvent::GLOBAL_BUSY:
-					action = "busy";
-					break;
-				case dtn::core::GlobalEvent::GLOBAL_IDLE:
-					action = "idle";
-					break;
-				case dtn::core::GlobalEvent::GLOBAL_RESUME:
-					action = "resume";
-					break;
-				case dtn::core::GlobalEvent::GLOBAL_RELOAD:
-					action = "reload";
-					break;
-				case dtn::core::GlobalEvent::GLOBAL_SHUTDOWN:
-					action = "shutdown";
-					break;
-				case dtn::core::GlobalEvent::GLOBAL_SUSPEND:
-					action = "suspend";
-					break;
-				case dtn::core::GlobalEvent::GLOBAL_INTERNET_AVAILABLE:
-					action = "internet available";
-					break;
-				case dtn::core::GlobalEvent::GLOBAL_INTERNET_UNAVAILABLE:
-					action = "internet unavailable";
-					break;
-				case dtn::core::GlobalEvent::GLOBAL_START_DISCOVERY:
-					action = "discovery start";
-					break;
-				case dtn::core::GlobalEvent::GLOBAL_STOP_DISCOVERY:
-					action = "discovery stop";
-					break;
-				default:
-					break;
-				}
-			} catch (const std::bad_cast&) { };
-
-			try {
-				const dtn::net::BundleReceivedEvent &received = dynamic_cast<const dtn::net::BundleReceivedEvent&>(*evt);
-
-				// set action
-				action = "received";
-
-				data.push_back("Peer: " + received.peer.getString());
-				data.push_back("Local: " + (received.fromlocal ? std::string("true") : std::string("false")));
-
-				// add bundle data
-				addEventData(received.bundle, data);
-			} catch (const std::bad_cast&) { };
-
-			try {
-				const dtn::core::CustodyEvent &custody = dynamic_cast<const dtn::core::CustodyEvent&>(*evt);
-
-				// set action
-				switch (custody.getAction())
-				{
-				case dtn::core::CUSTODY_ACCEPT:
-					action = "accept";
-					break;
-				case dtn::core::CUSTODY_REJECT:
-					action = "reject";
-					break;
-				default:
-					break;
-				}
-
-				// add bundle data
-				addEventData(custody.getBundle(), data);
-			} catch (const std::bad_cast&) { };
-
-			try {
-				const dtn::net::TransferAbortedEvent &aborted = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
-
-				// set action
-				action = "aborted";
-
-				data.push_back("Peer: " + aborted.getPeer().getString());
-
-				// add bundle data
-				addEventData(aborted.getBundleID(), data);
-			} catch (const std::bad_cast&) { };
-
-			try {
-				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
-
-				// set action
-				action = "completed";
-
-				data.push_back("Peer: " + completed.getPeer().getString());
-
-				// add bundle data
-				addEventData(completed.getBundle(), data);
-			} catch (const std::bad_cast&) { };
-
-			try {
-				const dtn::net::ConnectionEvent &connection = dynamic_cast<const dtn::net::ConnectionEvent&>(*evt);
-
-				// set action
-				switch (connection.getState())
-				{
-				case dtn::net::ConnectionEvent::CONNECTION_UP:
-					action = "up";
-					break;
-				case dtn::net::ConnectionEvent::CONNECTION_DOWN:
-					action = "down";
-					break;
-				case dtn::net::ConnectionEvent::CONNECTION_SETUP:
-					action = "setup";
-					break;
-				case dtn::net::ConnectionEvent::CONNECTION_TIMEOUT:
-					action = "timeout";
-					break;
-				default:
-					break;
-				}
-
-				// write the peer eid
-				data.push_back("Peer: " + connection.getNode().getEID().getString());
-			} catch (const std::bad_cast&) { };
-
-			try {
-				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);
-
-				// set action
-				action = "queued";
-
-				// add bundle data
-				addEventData(queued.bundle, data);
-			} catch (const std::bad_cast&) { };
-
-#ifdef IBRDTN_SUPPORT_BSP
-			try {
-				const dtn::security::KeyExchangeEvent &keyExchange = dynamic_cast<const dtn::security::KeyExchangeEvent&>(*evt);
-
-				// set action
-				switch (keyExchange.getData().getAction()) {
-					case dtn::security::KeyExchangeData::COMPLETE:
-						action = "COMPLETE";
-						break;
-					case dtn::security::KeyExchangeData::PASSWORD_REQUEST:
-						action = "PASSWORDREQUEST";
-						break;
-					case dtn::security::KeyExchangeData::WRONG_PASSWORD:
-						action = "WRONGPASSWORD";
-						break;
-					case dtn::security::KeyExchangeData::HASH_COMMIT:
-						action = "HASHCOMMIT";
-						data.push_back("data: " + keyExchange.getData().str());
-						break;
-					case dtn::security::KeyExchangeData::NEWKEY_FOUND:
-						data.push_back("data: " + keyExchange.getData().str());
-						action = "NEWKEY";
-						break;
-					case dtn::security::KeyExchangeData::ERROR:
-						action = "ERROR";
-						break;
-					default:
-						return;
-				}
-
-				std::stringstream sstm;
-				data.push_back("EID: " + keyExchange.getEID().getString());
-
-				sstm << "session: " << keyExchange.getData().getSessionId();
-				data.push_back(sstm.str());
-
-				sstm.str("");
-				sstm << "protocol: " << keyExchange.getData().getProtocol();
-				data.push_back(sstm.str());
-			} catch (const std::bad_cast&) { };
-#endif
+			// add the node eid
+			data.push_back("EID: " + node.getNode().getEID().getString());
 
 			// signal event to the callback interface
 			_eventcb->eventRaised(event, action, data);
 		}
+
+		void NativeDaemon::raiseEvent(const dtn::core::GlobalEvent &global) throw ()
+		{
+			const std::string event = global.getName();
+			std::string action;
+			std::vector<std::string> data;
+
+			// set action
+			switch (global.getAction())
+			{
+			case dtn::core::GlobalEvent::GLOBAL_BUSY:
+				action = "busy";
+				break;
+			case dtn::core::GlobalEvent::GLOBAL_IDLE:
+				action = "idle";
+				break;
+			case dtn::core::GlobalEvent::GLOBAL_RESUME:
+				action = "resume";
+				break;
+			case dtn::core::GlobalEvent::GLOBAL_RELOAD:
+				action = "reload";
+				break;
+			case dtn::core::GlobalEvent::GLOBAL_SHUTDOWN:
+				action = "shutdown";
+				break;
+			case dtn::core::GlobalEvent::GLOBAL_SUSPEND:
+				action = "suspend";
+				break;
+			case dtn::core::GlobalEvent::GLOBAL_INTERNET_AVAILABLE:
+				action = "internet available";
+				break;
+			case dtn::core::GlobalEvent::GLOBAL_INTERNET_UNAVAILABLE:
+				action = "internet unavailable";
+				break;
+			case dtn::core::GlobalEvent::GLOBAL_START_DISCOVERY:
+				action = "discovery start";
+				break;
+			case dtn::core::GlobalEvent::GLOBAL_STOP_DISCOVERY:
+				action = "discovery stop";
+				break;
+			default:
+				break;
+			}
+
+			// signal event to the callback interface
+			_eventcb->eventRaised(event, action, data);
+		}
+
+		void NativeDaemon::raiseEvent(const dtn::net::BundleReceivedEvent &received) throw ()
+		{
+			const std::string event = received.getName();
+			std::string action;
+			std::vector<std::string> data;
+
+			// set action
+			action = "received";
+
+			data.push_back("Peer: " + received.peer.getString());
+			data.push_back("Local: " + (received.fromlocal ? std::string("true") : std::string("false")));
+
+			// add bundle data
+			addEventData(received.bundle, data);
+
+			// signal event to the callback interface
+			_eventcb->eventRaised(event, action, data);
+		}
+
+		void NativeDaemon::raiseEvent(const dtn::core::CustodyEvent &custody) throw ()
+		{
+			const std::string event = custody.getName();
+			std::string action;
+			std::vector<std::string> data;
+
+			// set action
+			switch (custody.getAction())
+			{
+			case dtn::core::CUSTODY_ACCEPT:
+				action = "accept";
+				break;
+			case dtn::core::CUSTODY_REJECT:
+				action = "reject";
+				break;
+			default:
+				break;
+			}
+
+			// add bundle data
+			addEventData(custody.getBundle(), data);
+
+			// signal event to the callback interface
+			_eventcb->eventRaised(event, action, data);
+		}
+
+		void NativeDaemon::raiseEvent(const dtn::net::TransferAbortedEvent &aborted) throw ()
+		{
+			const std::string event = aborted.getName();
+			std::string action;
+			std::vector<std::string> data;
+
+			// set action
+			action = "aborted";
+
+			data.push_back("Peer: " + aborted.getPeer().getString());
+
+			// add bundle data
+			addEventData(aborted.getBundleID(), data);
+
+			// signal event to the callback interface
+			_eventcb->eventRaised(event, action, data);
+		}
+
+		void NativeDaemon::raiseEvent(const dtn::net::TransferCompletedEvent &completed) throw ()
+		{
+			const std::string event = completed.getName();
+			std::string action;
+			std::vector<std::string> data;
+
+			// set action
+			action = "completed";
+
+			data.push_back("Peer: " + completed.getPeer().getString());
+
+			// add bundle data
+			addEventData(completed.getBundle(), data);
+
+			// signal event to the callback interface
+			_eventcb->eventRaised(event, action, data);
+		}
+
+		void NativeDaemon::raiseEvent(const dtn::net::ConnectionEvent &connection) throw ()
+		{
+			const std::string event = connection.getName();
+			std::string action;
+			std::vector<std::string> data;
+
+			// set action
+			switch (connection.getState())
+			{
+			case dtn::net::ConnectionEvent::CONNECTION_UP:
+				action = "up";
+				break;
+			case dtn::net::ConnectionEvent::CONNECTION_DOWN:
+				action = "down";
+				break;
+			case dtn::net::ConnectionEvent::CONNECTION_SETUP:
+				action = "setup";
+				break;
+			case dtn::net::ConnectionEvent::CONNECTION_TIMEOUT:
+				action = "timeout";
+				break;
+			default:
+				break;
+			}
+
+			// write the peer eid
+			data.push_back("Peer: " + connection.getNode().getEID().getString());
+
+			// signal event to the callback interface
+			_eventcb->eventRaised(event, action, data);
+		}
+
+		void NativeDaemon::raiseEvent(const dtn::routing::QueueBundleEvent &queued) throw ()
+		{
+			const std::string event = queued.getName();
+			std::string action;
+			std::vector<std::string> data;
+
+			// set action
+			action = "queued";
+
+			// add bundle data
+			addEventData(queued.bundle, data);
+
+			// signal event to the callback interface
+			_eventcb->eventRaised(event, action, data);
+		}
+
+#ifdef IBRDTN_SUPPORT_BSP
+		void NativeDaemon::raiseEvent(const dtn::security::KeyExchangeEvent &keyExchange) throw ()
+		{
+			const std::string event = keyExchange.getName();
+			std::string action;
+			std::vector<std::string> data;
+
+			// set action
+			switch (keyExchange.getData().getAction()) {
+				case dtn::security::KeyExchangeData::COMPLETE:
+					action = "COMPLETE";
+					break;
+				case dtn::security::KeyExchangeData::PASSWORD_REQUEST:
+					action = "PASSWORDREQUEST";
+					break;
+				case dtn::security::KeyExchangeData::WRONG_PASSWORD:
+					action = "WRONGPASSWORD";
+					break;
+				case dtn::security::KeyExchangeData::HASH_COMMIT:
+					action = "HASHCOMMIT";
+					data.push_back("data: " + keyExchange.getData().str());
+					break;
+				case dtn::security::KeyExchangeData::NEWKEY_FOUND:
+					data.push_back("data: " + keyExchange.getData().str());
+					action = "NEWKEY";
+					break;
+				case dtn::security::KeyExchangeData::ERROR:
+					action = "ERROR";
+					break;
+				default:
+					return;
+			}
+
+			std::stringstream sstm;
+			data.push_back("EID: " + keyExchange.getEID().getString());
+
+			sstm << "session: " << keyExchange.getData().getSessionId();
+			data.push_back(sstm.str());
+
+			sstm.str("");
+			sstm << "protocol: " << keyExchange.getData().getProtocol();
+			data.push_back(sstm.str());
+
+			// signal event to the callback interface
+			_eventcb->eventRaised(event, action, data);
+		}
+#endif
 
 		std::string NativeDaemon::getLocalUri() const throw ()
 		{

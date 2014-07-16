@@ -27,6 +27,7 @@
 #include "net/DatagramService.h"
 #include "net/DatagramConnection.h"
 #include "net/ConvergenceLayer.h"
+#include "core/NodeEvent.h"
 #include "core/EventReceiver.h"
 
 #include <list>
@@ -36,7 +37,7 @@ namespace dtn
 	namespace net
 	{
 		class DatagramConvergenceLayer : public dtn::net::ConvergenceLayer, public dtn::daemon::IndependentComponent,
-			public dtn::net::DatagramConnectionCallback, public DiscoveryBeaconHandler, public dtn::core::EventReceiver
+			public dtn::net::DatagramConnectionCallback, public DiscoveryBeaconHandler, public dtn::core::EventReceiver<dtn::core::NodeEvent>
 		{
 			static const std::string TAG;
 
@@ -56,7 +57,7 @@ namespace dtn
 			/**
 			 * method to receive global events
 			 */
-			void raiseEvent(const dtn::core::Event *evt) throw ();
+			void raiseEvent(const dtn::core::NodeEvent &evt) throw ();
 
 			/**
 			 * Returns the protocol identifier

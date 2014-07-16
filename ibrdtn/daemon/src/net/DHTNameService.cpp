@@ -25,8 +25,6 @@
 #include "ibrcommon/net/vsocket.h"
 #include "core/EventDispatcher.h"
 #include "core/BundleCore.h"
-#include "core/NodeEvent.h"
-#include "routing/QueueBundleEvent.h"
 
 #include <ibrdtn/utils/Utils.h>
 
@@ -564,35 +562,30 @@ std::string dtn::dht::DHTNameService::getConvergenceLayerName(
 	return cltype_;
 }
 
-void dtn::dht::DHTNameService::raiseEvent(const dtn::core::Event *evt) throw () {
-	try {
-		const dtn::routing::QueueBundleEvent &event =
-				dynamic_cast<const dtn::routing::QueueBundleEvent&> (*evt);
-		if (!event.bundle.destination.sameHost(dtn::core::BundleCore::local)
-				&& !event.bundle.destination.isNone()) {
-			lookup(event.bundle.destination);
+void dtn::dht::DHTNameService::raiseEvent(const dtn::routing::QueueBundleEvent &event) throw ()
+{
+	if (!event.bundle.destination.sameHost(dtn::core::BundleCore::local)
+			&& !event.bundle.destination.isNone()) {
+		lookup(event.bundle.destination);
+	}
+}
+
+void dtn::dht::DHTNameService::raiseEvent(const dtn::core::NodeEvent &nodeevent) throw ()
+{
+	const dtn::core::Node &n = nodeevent.getNode();
+	if (!n.getEID().sameHost(dtn::core::BundleCore::local)) {
+		switch (nodeevent.getAction()) {
+		case NODE_AVAILABLE:
+			if (isNeighbourAnnouncable(n))
+				announce(n, NEIGHBOUR);
+			pingNode(n);
+			break;
+		case NODE_UNAVAILABLE:
+			deannounce(n);
+		default:
+			break;
 		}
-	} catch (const std::bad_cast&) {
-	};
-	try {
-		const dtn::core::NodeEvent &nodeevent =
-				dynamic_cast<const dtn::core::NodeEvent&> (*evt);
-		const dtn::core::Node &n = nodeevent.getNode();
-		if (!n.getEID().sameHost(dtn::core::BundleCore::local)) {
-			switch (nodeevent.getAction()) {
-			case NODE_AVAILABLE:
-				if (isNeighbourAnnouncable(n))
-					announce(n, NEIGHBOUR);
-				pingNode(n);
-				break;
-			case NODE_UNAVAILABLE:
-				deannounce(n);
-			default:
-				break;
-			}
-		}
-	} catch (const std::bad_cast&) {
-	};
+	}
 }
 
 void dtn::dht::DHTNameService::pingNode(const dtn::core::Node &n) {

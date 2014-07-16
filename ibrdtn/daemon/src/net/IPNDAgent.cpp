@@ -237,63 +237,57 @@ namespace dtn
 			}
 		}
 
-		void IPNDAgent::raiseEvent(const dtn::core::Event *evt) throw ()
+		void IPNDAgent::raiseEvent(const dtn::net::P2PDialupEvent &dialup) throw ()
 		{
-			try {
-				const dtn::net::P2PDialupEvent &dialup = dynamic_cast<const dtn::net::P2PDialupEvent&>(*evt);
-
-				switch (dialup.type)
+			switch (dialup.type)
+			{
+				case dtn::net::P2PDialupEvent::INTERFACE_UP:
 				{
-					case dtn::net::P2PDialupEvent::INTERFACE_UP:
+					// add the interface to the stored set
 					{
-						// add the interface to the stored set
-						{
-							ibrcommon::MutexLock l(_interface_lock);
+						ibrcommon::MutexLock l(_interface_lock);
 
-							// only add the interface once
-							if (_interfaces.find(dialup.iface) != _interfaces.end()) break;
+						// only add the interface once
+						if (_interfaces.find(dialup.iface) != _interfaces.end()) break;
 
-							// store the new interface in the list of interfaces
-							_interfaces.insert(dialup.iface);
-						}
-
-						// subscribe to NetLink events on our interfaces
-						ibrcommon::LinkManager::getInstance().addEventListener(dialup.iface, this);
-
-						// register as discovery handler for this interface
-						dtn::core::BundleCore::getInstance().getDiscoveryAgent().registerService(dialup.iface, this);
-
-						// join to all multicast addresses on this interface
-						join(dialup.iface);
-						break;
+						// store the new interface in the list of interfaces
+						_interfaces.insert(dialup.iface);
 					}
 
-					case dtn::net::P2PDialupEvent::INTERFACE_DOWN:
-					{
-						// check if the interface is bound by us
-						{
-							ibrcommon::MutexLock l(_interface_lock);
+					// subscribe to NetLink events on our interfaces
+					ibrcommon::LinkManager::getInstance().addEventListener(dialup.iface, this);
 
-							// only remove the interface if it exists
-							if (_interfaces.find(dialup.iface) == _interfaces.end()) break;
+					// register as discovery handler for this interface
+					dtn::core::BundleCore::getInstance().getDiscoveryAgent().registerService(dialup.iface, this);
 
-							// remove the interface from the stored set
-							_interfaces.erase(dialup.iface);
-						}
-
-						// subscribe to NetLink events on our interfaces
-						ibrcommon::LinkManager::getInstance().removeEventListener(dialup.iface, this);
-
-						// un-register as discovery handler for this interface
-						dtn::core::BundleCore::getInstance().getDiscoveryAgent().unregisterService(dialup.iface, this);
-
-						// leave the multicast groups on the interface
-						leave(dialup.iface);
-						break;
-					}
+					// join to all multicast addresses on this interface
+					join(dialup.iface);
+					break;
 				}
-			} catch (std::bad_cast&) {
 
+				case dtn::net::P2PDialupEvent::INTERFACE_DOWN:
+				{
+					// check if the interface is bound by us
+					{
+						ibrcommon::MutexLock l(_interface_lock);
+
+						// only remove the interface if it exists
+						if (_interfaces.find(dialup.iface) == _interfaces.end()) break;
+
+						// remove the interface from the stored set
+						_interfaces.erase(dialup.iface);
+					}
+
+					// subscribe to NetLink events on our interfaces
+					ibrcommon::LinkManager::getInstance().removeEventListener(dialup.iface, this);
+
+					// un-register as discovery handler for this interface
+					dtn::core::BundleCore::getInstance().getDiscoveryAgent().unregisterService(dialup.iface, this);
+
+					// leave the multicast groups on the interface
+					leave(dialup.iface);
+					break;
+				}
 			}
 		}
 

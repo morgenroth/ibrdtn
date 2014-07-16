@@ -28,14 +28,6 @@
 #include <algorithm>
 #include <memory>
 
-#include "routing/QueueBundleEvent.h"
-#include "routing/NodeHandshakeEvent.h"
-#include "net/TransferCompletedEvent.h"
-#include "net/TransferAbortedEvent.h"
-#include "net/ConnectionEvent.h"
-#include "core/TimeEvent.h"
-#include "core/NodeEvent.h"
-#include "core/BundlePurgeEvent.h"
 #include "core/BundleEvent.h"
 
 #include <ibrcommon/Logger.h>
@@ -231,59 +223,48 @@ namespace dtn
 			}
 		}
 
-		void ProphetRoutingExtension::raiseEvent(const dtn::core::Event *evt) throw ()
+		void ProphetRoutingExtension::raiseEvent(const dtn::core::TimeEvent &time) throw ()
 		{
-			try {
-				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
+			// expire bundles in the acknowledgement set
+			{
+				ibrcommon::MutexLock l(_acknowledgementSet);
+				_acknowledgementSet.expire(time.getTimestamp());
+			}
 
-				// expire bundles in the acknowledgement set
-				{
-					ibrcommon::MutexLock l(_acknowledgementSet);
-					_acknowledgementSet.expire(time.getTimestamp());
-				}
+			ibrcommon::MutexLock l(_next_exchange_mutex);
+			const dtn::data::Timestamp now = dtn::utils::Clock::getMonotonicTimestamp();
 
-				ibrcommon::MutexLock l(_next_exchange_mutex);
-				const dtn::data::Timestamp now = dtn::utils::Clock::getMonotonicTimestamp();
+			if ((_next_exchange_timestamp > 0) && (_next_exchange_timestamp < now))
+			{
+				_taskqueue.push( new NextExchangeTask() );
 
-				if ((_next_exchange_timestamp > 0) && (_next_exchange_timestamp < now))
-				{
-					_taskqueue.push( new NextExchangeTask() );
+				// define the next exchange timestamp
+				_next_exchange_timestamp = now + _next_exchange_timeout;
+			}
+		}
 
-					// define the next exchange timestamp
-					_next_exchange_timestamp = now + _next_exchange_timeout;
-				}
-				return;
-			} catch (const std::bad_cast&) { };
+		void ProphetRoutingExtension::raiseEvent(const NodeHandshakeEvent &handshake) throw ()
+		{
+			if (handshake.state == NodeHandshakeEvent::HANDSHAKE_UPDATED)
+			{
+				// transfer the next bundle to this destination
+				_taskqueue.push( new SearchNextBundleTask( handshake.peer ) );
+			}
+			else if (handshake.state == NodeHandshakeEvent::HANDSHAKE_COMPLETED)
+			{
+				// transfer the next bundle to this destination
+				_taskqueue.push( new SearchNextBundleTask( handshake.peer ) );
+			}
+		}
 
-			try {
-				const NodeHandshakeEvent &handshake = dynamic_cast<const NodeHandshakeEvent&>(*evt);
-
-				if (handshake.state == NodeHandshakeEvent::HANDSHAKE_UPDATED)
-				{
-					// transfer the next bundle to this destination
-					_taskqueue.push( new SearchNextBundleTask( handshake.peer ) );
-				}
-				else if (handshake.state == NodeHandshakeEvent::HANDSHAKE_COMPLETED)
-				{
-					// transfer the next bundle to this destination
-					_taskqueue.push( new SearchNextBundleTask( handshake.peer ) );
-				}
-				return;
-			} catch (const std::bad_cast&) { };
-
-			try {
-				const dtn::core::BundlePurgeEvent &purge = dynamic_cast<const dtn::core::BundlePurgeEvent&>(*evt);
-
-				if (purge.reason == dtn::core::BundlePurgeEvent::DELIVERED)
-				{
-					/* the bundle was finally delivered, mark it as acknowledged */
-					ibrcommon::MutexLock l(_acknowledgementSet);
-					_acknowledgementSet.add(purge.bundle);
-				}
-
-				// since no routing module is interested in purge events yet - we exit here
-				return;
-			} catch (const std::bad_cast&) { }
+		void ProphetRoutingExtension::raiseEvent(const dtn::core::BundlePurgeEvent &purge) throw ()
+		{
+			if (purge.reason == dtn::core::BundlePurgeEvent::DELIVERED)
+			{
+				/* the bundle was finally delivered, mark it as acknowledged */
+				ibrcommon::MutexLock l(_acknowledgementSet);
+				_acknowledgementSet.add(purge.bundle);
+			}
 		}
 
 		void ProphetRoutingExtension::componentUp() throw ()

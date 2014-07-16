@@ -24,9 +24,7 @@
 #include "net/DiscoveryService.h"
 #include "net/DiscoveryBeacon.h"
 #include "core/BundleCore.h"
-#include "core/TimeEvent.h"
 #include "core/NodeEvent.h"
-#include "core/GlobalEvent.h"
 #include "core/EventDispatcher.h"
 #include <ibrdtn/utils/Utils.h>
 #include <ibrdtn/utils/Clock.h>
@@ -53,35 +51,28 @@ namespace dtn
 			return "DiscoveryAgent";
 		}
 
-		void DiscoveryAgent::raiseEvent(const dtn::core::Event *evt) throw ()
+		void DiscoveryAgent::raiseEvent(const dtn::core::TimeEvent&) throw ()
 		{
-			try {
-				dynamic_cast<const dtn::core::TimeEvent&>(*evt);
-				const dtn::data::Timestamp ts = dtn::utils::Clock::getMonotonicTimestamp();
+			const dtn::data::Timestamp ts = dtn::utils::Clock::getMonotonicTimestamp();
 
-				if (_config.announce() && (_adv_next <= ts)) {
-					// advertise me
-					onAdvertise();
+			if (_config.announce() && (_adv_next <= ts)) {
+				// advertise me
+				onAdvertise();
 
-					// next advertisement in one second
-					_adv_next = ts + 1;
-				}
-			} catch (const std::bad_cast&) {
-
+				// next advertisement in one second
+				_adv_next = ts + 1;
 			}
+		}
 
-			try {
-				const dtn::core::GlobalEvent &global = dynamic_cast<const dtn::core::GlobalEvent&>(*evt);
-				if (global.getAction() == dtn::core::GlobalEvent::GLOBAL_START_DISCOVERY) {
-					// start sending discovery beacons
-					_enabled = true;
-				}
-				else if (global.getAction() == dtn::core::GlobalEvent::GLOBAL_STOP_DISCOVERY) {
-					// suspend discovery beacons
-					_enabled = false;
-				}
-			} catch (const std::bad_cast&) {
-
+		void DiscoveryAgent::raiseEvent(const dtn::core::GlobalEvent &global) throw ()
+		{
+			if (global.getAction() == dtn::core::GlobalEvent::GLOBAL_START_DISCOVERY) {
+				// start sending discovery beacons
+				_enabled = true;
+			}
+			else if (global.getAction() == dtn::core::GlobalEvent::GLOBAL_STOP_DISCOVERY) {
+				// suspend discovery beacons
+				_enabled = false;
 			}
 		}
 
