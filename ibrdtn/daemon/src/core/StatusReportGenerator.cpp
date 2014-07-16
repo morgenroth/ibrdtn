@@ -21,7 +21,6 @@
 
 #include "core/EventDispatcher.h"
 #include "core/StatusReportGenerator.h"
-#include "core/BundleEvent.h"
 #include "core/BundleCore.h"
 #include <ibrdtn/data/MetaBundle.h>
 
@@ -105,55 +104,52 @@ namespace dtn
 			dtn::core::BundleCore::inject(dtn::core::BundleCore::local, bundle);
 		}
 
-		void StatusReportGenerator::raiseEvent(const dtn::core::Event *evt) throw ()
+		void StatusReportGenerator::raiseEvent(const dtn::core::BundleEvent &bundleevent) throw ()
 		{
-			try {
-				const BundleEvent &bundleevent = dynamic_cast<const BundleEvent&>(*evt);
-				const dtn::data::MetaBundle &b = bundleevent.getBundle();
+			const dtn::data::MetaBundle &b = bundleevent.getBundle();
 
-				// do not generate status reports for other status reports or custody signals
-				if (b.get(dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD)) return;
+			// do not generate status reports for other status reports or custody signals
+			if (b.get(dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD)) return;
 
-				switch (bundleevent.getAction())
+			switch (bundleevent.getAction())
+			{
+			case BUNDLE_RECEIVED:
+				if ( b.get(Bundle::REQUEST_REPORT_OF_BUNDLE_RECEPTION))
 				{
-				case BUNDLE_RECEIVED:
-					if ( b.get(Bundle::REQUEST_REPORT_OF_BUNDLE_RECEPTION))
-					{
-						createStatusReport(b, StatusReportBlock::RECEIPT_OF_BUNDLE, bundleevent.getReason());
-					}
-					break;
-				case BUNDLE_DELETED:
-					if ( b.get(Bundle::REQUEST_REPORT_OF_BUNDLE_DELETION))
-					{
-						createStatusReport(b, StatusReportBlock::DELETION_OF_BUNDLE, bundleevent.getReason());
-					}
-					break;
-
-				case BUNDLE_FORWARDED:
-					if ( b.get(Bundle::REQUEST_REPORT_OF_BUNDLE_FORWARDING))
-					{
-						createStatusReport(b, StatusReportBlock::FORWARDING_OF_BUNDLE, bundleevent.getReason());
-					}
-					break;
-
-				case BUNDLE_DELIVERED:
-					if ( b.get(Bundle::REQUEST_REPORT_OF_BUNDLE_DELIVERY))
-					{
-						createStatusReport(b, StatusReportBlock::DELIVERY_OF_BUNDLE, bundleevent.getReason());
-					}
-					break;
-
-				case BUNDLE_CUSTODY_ACCEPTED:
-					if ( b.get(Bundle::REQUEST_REPORT_OF_CUSTODY_ACCEPTANCE))
-					{
-						createStatusReport(b, StatusReportBlock::CUSTODY_ACCEPTANCE_OF_BUNDLE, bundleevent.getReason());
-					}
-					break;
-
-				default:
-					break;
+					createStatusReport(b, StatusReportBlock::RECEIPT_OF_BUNDLE, bundleevent.getReason());
 				}
-			} catch (const std::bad_cast&) { };
+				break;
+			case BUNDLE_DELETED:
+				if ( b.get(Bundle::REQUEST_REPORT_OF_BUNDLE_DELETION))
+				{
+					createStatusReport(b, StatusReportBlock::DELETION_OF_BUNDLE, bundleevent.getReason());
+				}
+				break;
+
+			case BUNDLE_FORWARDED:
+				if ( b.get(Bundle::REQUEST_REPORT_OF_BUNDLE_FORWARDING))
+				{
+					createStatusReport(b, StatusReportBlock::FORWARDING_OF_BUNDLE, bundleevent.getReason());
+				}
+				break;
+
+			case BUNDLE_DELIVERED:
+				if ( b.get(Bundle::REQUEST_REPORT_OF_BUNDLE_DELIVERY))
+				{
+					createStatusReport(b, StatusReportBlock::DELIVERY_OF_BUNDLE, bundleevent.getReason());
+				}
+				break;
+
+			case BUNDLE_CUSTODY_ACCEPTED:
+				if ( b.get(Bundle::REQUEST_REPORT_OF_CUSTODY_ACCEPTANCE))
+				{
+					createStatusReport(b, StatusReportBlock::CUSTODY_ACCEPTANCE_OF_BUNDLE, bundleevent.getReason());
+				}
+				break;
+
+			default:
+				break;
+			}
 		}
 	}
 }

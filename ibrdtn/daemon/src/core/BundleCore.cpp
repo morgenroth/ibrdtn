@@ -25,14 +25,9 @@
 #include "core/BundleCore.h"
 #include "core/GlobalEvent.h"
 #include "core/BundleEvent.h"
-#include "core/BundlePurgeEvent.h"
 #include "core/FragmentManager.h"
-
 #include "net/BundleReceivedEvent.h"
-#include "net/TransferCompletedEvent.h"
-#include "net/TransferAbortedEvent.h"
 #include "routing/RequeueBundleEvent.h"
-#include "routing/QueueBundleEvent.h"
 #include "routing/StaticRouteChangeEvent.h"
 
 #include <ibrcommon/data/BLOB.h>
@@ -279,11 +274,9 @@ namespace dtn
 			return _globally_connected;
 		}
 
-		void BundleCore::raiseEvent(const dtn::core::Event *evt) throw ()
+		void BundleCore::raiseEvent(const dtn::routing::QueueBundleEvent &queued) throw ()
 		{
 			try {
-				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);
-
 				// get reference to the meta data of the bundle
 				const dtn::data::MetaBundle &meta = queued.bundle;
 
@@ -336,71 +329,60 @@ namespace dtn
 						dtn::core::BundlePurgeEvent::raise(meta);
 					}
 				}
-
-				return;
 			} catch (const dtn::storage::NoBundleFoundException&) {
-				return;
-			} catch (const std::bad_cast&) {}
+			}
+		}
+
+		void BundleCore::raiseEvent(const dtn::net::TransferCompletedEvent &completed) throw ()
+		{
+			const dtn::data::MetaBundle &meta = completed.getBundle();
+			const dtn::data::EID &peer = completed.getPeer();
+
+			if ((meta.destination.sameHost(peer))
+					&& (meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
+			{
+				// bundle has been delivered to its destination
+				// delete it from our storage
+				dtn::core::BundlePurgeEvent::raise(meta);
+
+				IBRCOMMON_LOGGER_TAG("BundleCore", notice) << "singleton bundle delivered: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+
+				// gen a report
+				dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::NO_ADDITIONAL_INFORMATION);
+			}
+		}
+
+		void BundleCore::raiseEvent(const dtn::net::TransferAbortedEvent &aborted) throw ()
+		{
+			if (aborted.reason != dtn::net::TransferAbortedEvent::REASON_REFUSED) return;
+
+			const dtn::data::EID &peer = aborted.getPeer();
+			const dtn::data::BundleID &id = aborted.getBundleID();
 
 			try {
-				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
-				const dtn::data::MetaBundle &meta = completed.getBundle();
-				const dtn::data::EID &peer = completed.getPeer();
+				// create meta bundle for futher processing
+				const dtn::data::MetaBundle meta = getStorage().info(id);
 
-				if ((meta.destination.sameHost(peer))
-						&& (meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
+				if (!(meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON)) return;
+
+				// if the bundle has been sent by this module delete it
+				if (meta.destination.sameHost(peer))
 				{
-					// bundle has been delivered to its destination
-					// delete it from our storage
-					dtn::core::BundlePurgeEvent::raise(meta);
-
-					IBRCOMMON_LOGGER_TAG("BundleCore", notice) << "singleton bundle delivered: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
-
-					// gen a report
-					dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::NO_ADDITIONAL_INFORMATION);
+					// bundle is not deliverable
+					dtn::core::BundlePurgeEvent::raise(meta, dtn::core::BundlePurgeEvent::NO_ROUTE_KNOWN);
 				}
+			} catch (const dtn::storage::NoBundleFoundException&) { };
+		}
 
-				return;
-			} catch (const std::bad_cast&) { }
-
-			try {
-				const dtn::net::TransferAbortedEvent &aborted = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
-
-				if (aborted.reason != dtn::net::TransferAbortedEvent::REASON_REFUSED) return;
-
-				const dtn::data::EID &peer = aborted.getPeer();
-				const dtn::data::BundleID &id = aborted.getBundleID();
-
-				try {
-					// create meta bundle for futher processing
-					const dtn::data::MetaBundle meta = getStorage().info(id);
-
-					if (!(meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON)) return;
-
-					// if the bundle has been sent by this module delete it
-					if (meta.destination.sameHost(peer))
-					{
-						// bundle is not deliverable
-						dtn::core::BundlePurgeEvent::raise(meta, dtn::core::BundlePurgeEvent::NO_ROUTE_KNOWN);
-					}
-				} catch (const dtn::storage::NoBundleFoundException&) { };
-
-				return;
-			} catch (const std::bad_cast&) { };
+		void BundleCore::raiseEvent(const dtn::core::BundlePurgeEvent &purge) throw ()
+		{
+			// get the global storage
+			dtn::storage::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 
 			try {
-				const dtn::core::BundlePurgeEvent &purge = dynamic_cast<const dtn::core::BundlePurgeEvent&>(*evt);
-
-				// get the global storage
-				dtn::storage::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
-
-				try {
-					// delete the bundle
-					storage.remove(purge.bundle);
-				} catch (const dtn::storage::NoBundleFoundException&) { };
-
-				return;
-			} catch (const std::bad_cast&) { }
+				// delete the bundle
+				storage.remove(purge.bundle);
+			} catch (const dtn::storage::NoBundleFoundException&) { };
 		}
 
 		void BundleCore::validate(const dtn::data::MetaBundle &obj) const throw (dtn::data::Validator::RejectedException)

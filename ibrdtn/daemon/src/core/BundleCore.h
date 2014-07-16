@@ -35,6 +35,11 @@
 #include "net/ConvergenceLayer.h"
 #include "net/DiscoveryAgent.h"
 
+#include "routing/QueueBundleEvent.h"
+#include "core/BundlePurgeEvent.h"
+#include "net/TransferCompletedEvent.h"
+#include "net/TransferAbortedEvent.h"
+
 #include <ibrdtn/data/Serializer.h>
 #include <ibrdtn/data/EID.h>
 
@@ -61,7 +66,9 @@ namespace dtn
 		/**
 		 * The BundleCore manage the Bundle Protocol basics
 		 */
-		class BundleCore : public dtn::daemon::IntegratedComponent, public dtn::core::EventReceiver, public dtn::data::Validator, public ibrcommon::LinkManager::EventCallback, public dtn::daemon::Configuration::OnChangeListener
+		class BundleCore
+		  : public dtn::daemon::IntegratedComponent, public dtn::data::Validator, public ibrcommon::LinkManager::EventCallback, public dtn::daemon::Configuration::OnChangeListener,
+		    public dtn::core::EventReceiver<dtn::routing::QueueBundleEvent>, public dtn::core::EventReceiver<dtn::core::BundlePurgeEvent>, public dtn::core::EventReceiver<dtn::net::TransferCompletedEvent>, public dtn::core::EventReceiver<dtn::net::TransferAbortedEvent>
 		{
 			static const std::string TAG;
 
@@ -115,7 +122,10 @@ namespace dtn
 			 */
 			bool isGloballyConnected() const;
 
-			void raiseEvent(const dtn::core::Event *evt) throw ();
+			void raiseEvent(const dtn::routing::QueueBundleEvent &evt) throw ();
+			void raiseEvent(const dtn::core::BundlePurgeEvent &evt) throw ();
+			void raiseEvent(const dtn::net::TransferCompletedEvent &evt) throw ();
+			void raiseEvent(const dtn::net::TransferAbortedEvent &evt) throw ();
 
 			virtual void validate(const dtn::data::PrimaryBlock &obj) const throw (RejectedException);
 			virtual void validate(const dtn::data::Block &obj, const dtn::data::Number&) const throw (RejectedException);

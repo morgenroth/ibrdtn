@@ -26,17 +26,19 @@
 #include "ibrdtn/data/StatusReportBlock.h"
 #include "ibrdtn/data/MetaBundle.h"
 
+#include "core/BundleEvent.h"
+
 namespace dtn
 {
 	namespace core
 	{
-		class StatusReportGenerator : public EventReceiver
+		class StatusReportGenerator : public EventReceiver<dtn::core::BundleEvent>
 		{
 		public:
 			StatusReportGenerator();
 			virtual ~StatusReportGenerator();
 
-			void raiseEvent(const dtn::core::Event *evt) throw ();
+			void raiseEvent(const dtn::core::BundleEvent &evt) throw ();
 
 		private:
 			/**
