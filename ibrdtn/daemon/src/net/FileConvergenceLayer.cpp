@@ -294,11 +294,11 @@ namespace dtn
 				catch (const dtn::data::Validator::RejectedException &ex)
 				{
 					// display the rejection
-					IBRCOMMON_LOGGER_TAG("FileConvergenceLayer", warning) << "bundle has been rejected: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("FileConvergenceLayer", 2) << "bundle has been rejected: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				}
 				catch (const dtn::InvalidDataException &ex) {
 					// display the rejection
-					IBRCOMMON_LOGGER_TAG("FileConvergenceLayer", warning) << "invalid bundle-data received: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("FileConvergenceLayer", 2) << "invalid bundle-data received: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 		}

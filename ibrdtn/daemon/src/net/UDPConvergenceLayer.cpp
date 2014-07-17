@@ -440,7 +440,7 @@ namespace dtn
 					dtn::net::BundleReceivedEvent::raise(sender, bundle, false);
 
 				} catch (const dtn::InvalidDataException &ex) {
-					IBRCOMMON_LOGGER_TAG("UDPConvergenceLayer", warning) << "Received a invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("UDPConvergenceLayer", 2) << "Received a invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				} catch (const std::exception&) {
 					return;
 				}

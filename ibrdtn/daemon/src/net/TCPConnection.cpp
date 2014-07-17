@@ -553,14 +553,14 @@ namespace dtn
 						rejectTransmission();
 
 						// display the rejection
-						IBRCOMMON_LOGGER_TAG(TCPConnection::TAG, warning) << "bundle has been rejected: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG(TCPConnection::TAG, 2) << "bundle has been rejected: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 					catch (const dtn::InvalidDataException &ex) {
 						// bundle rejected
 						rejectTransmission();
 
 						// display the rejection
-						IBRCOMMON_LOGGER_TAG(TCPConnection::TAG, warning) << "invalid bundle-data received: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG(TCPConnection::TAG, 2) << "invalid bundle-data received: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 
 					yield();
