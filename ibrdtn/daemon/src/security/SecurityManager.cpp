@@ -120,6 +120,9 @@ namespace dtn
 
 					IBRCOMMON_LOGGER_DEBUG_TAG("SecurityManager", 5) << "Bundle " << bundle.toString() << " successfully verified" << IBRCOMMON_LOGGER_ENDL;
 					continue;
+				} catch (const dtn::security::VerificationSkippedException&) {
+					// un-set the verify bit
+					bundle.set(dtn::data::Bundle::DTNSEC_STATUS_VERIFIED, false);
 				} catch (const SecurityKey::KeyNotFoundException&) {
 					// un-set the verify bit
 					bundle.set(dtn::data::Bundle::DTNSEC_STATUS_VERIFIED, false);
