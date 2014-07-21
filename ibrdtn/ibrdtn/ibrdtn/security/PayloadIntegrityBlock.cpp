@@ -124,6 +124,23 @@ namespace dtn
 				// skip this block if the given key isn't the right one
 				if (!sb.isSecuritySource(bundle, key.reference)) continue;
 
+				if (bundle.get(dtn::data::PrimaryBlock::FRAGMENT))
+				{
+					try {
+						// retrieve fragment range from ciphersuite params
+						dtn::data::Number offset;
+						dtn::data::Number length;
+						dtn::security::SecurityBlock::getFragmentRange(sb._ciphersuite_params, offset, length);
+
+						// compare fragment range
+						if (offset != bundle.fragmentoffset) continue;
+						if (length != bundle.getPayloadLength()) continue;
+					} catch (const ElementMissingException&) {
+						// this PIB is not mentioned to verify a fragment
+						continue;
+					}
+				}
+
 				// check the correct algorithm
 				if (sb._ciphersuite_id != SecurityBlock::PIB_RSA_SHA256)
 				{

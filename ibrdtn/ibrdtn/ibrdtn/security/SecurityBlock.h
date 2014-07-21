@@ -459,6 +459,11 @@ namespace dtn
 			*/
 			static void addFragmentRange(TLVList& ciphersuite_params, const dtn::data::Number &fragmentoffset, const dtn::data::Number &payload_length);
 
+			/**
+			 * Read the fragment range from the security block
+			 */
+			static void getFragmentRange(const TLVList& ciphersuite_params, dtn::data::Number &offset, dtn::data::Number &range);
+
 		private:
 			/** not implemented */
 			SecurityBlock(const SecurityBlock&);

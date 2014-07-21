@@ -89,6 +89,11 @@ namespace dtn
 						(c._bundle.sequencenumber != obj.sequencenumber) ||
 						(c._bundle.source != obj.source) )
 					throw ibrcommon::Exception("This fragment does not belongs to the others.");
+
+				// set verification status to 'false' if one fragment was not verified
+				if (c._bundle.get(dtn::data::PrimaryBlock::DTNSEC_STATUS_VERIFIED) && !obj.get(dtn::data::PrimaryBlock::DTNSEC_STATUS_VERIFIED)) {
+					c._bundle.set(dtn::data::PrimaryBlock::DTNSEC_STATUS_VERIFIED, false);
+				}
 			}
 			else
 			{

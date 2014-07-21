@@ -679,6 +679,12 @@ namespace dtn
 			ciphersuite_params.set(SecurityBlock::fragment_range, ss.str());
 		}
 
+		void SecurityBlock::getFragmentRange(const TLVList& ciphersuite_params, dtn::data::Number &offset, dtn::data::Number &range)
+		{
+			std::stringstream ss( ciphersuite_params.get(SecurityBlock::fragment_range) );
+			ss >> offset >> range;
+		}
+
 		bool SecurityBlock::isSecuritySource(const dtn::data::Bundle& bundle, const dtn::data::EID& eid) const
 		{
 			IBRCOMMON_LOGGER_DEBUG_TAG("SecurityBlock", 30) << "check security source: " << getSecuritySource(bundle).getString() << " == " << eid.getNode().getString() << IBRCOMMON_LOGGER_ENDL;
