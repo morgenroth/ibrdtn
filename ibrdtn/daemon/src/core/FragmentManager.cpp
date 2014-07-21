@@ -31,6 +31,11 @@
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/thread/MutexLock.h>
 
+#include <ibrdtn/ibrdtn.h>
+#ifdef IBRDTN_SUPPORT_BSP
+#include "security/SecurityManager.h"
+#endif
+
 namespace dtn
 {
 	namespace core
@@ -139,8 +144,13 @@ namespace dtn
 
 						IBRCOMMON_LOGGER_TAG(FragmentManager::TAG, notice) << "Bundle " << merged.toString() << " merged" << IBRCOMMON_LOGGER_ENDL;
 
+#ifdef IBRDTN_SUPPORT_BSP
+						// lets see if signatures and hashes are correct and remove them if possible
+						dtn::security::SecurityManager::getInstance().verify(merged);
+#endif
+
 						// raise default bundle received event
-						dtn::core::BundleCore::inject(dtn::core::BundleCore::local, merged);
+						dtn::net::BundleReceivedEvent::raise(dtn::core::BundleCore::local, merged, true);
 
 						// delete all fragments of the merged bundle
 						if (merged.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
