@@ -133,11 +133,11 @@ namespace dtn
 						dtn::security::SecurityBlock::getFragmentRange(sb._ciphersuite_params, offset, length);
 
 						// compare fragment range
-						if (offset != bundle.fragmentoffset) continue;
-						if (length != bundle.getPayloadLength()) continue;
-					} catch (const ElementMissingException&) {
+						if (offset != bundle.fragmentoffset) throw dtn::security::VerificationSkippedException();
+						if (length != bundle.getPayloadLength()) throw dtn::security::VerificationSkippedException();
+					} catch (const dtn::security::ElementMissingException&) {
 						// this PIB is not mentioned to verify a fragment
-						continue;
+						throw dtn::security::VerificationSkippedException();
 					}
 				}
 

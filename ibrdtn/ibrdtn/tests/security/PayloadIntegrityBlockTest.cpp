@@ -102,6 +102,30 @@ void PayloadIntegrityBlockTest::verifyTest(void)
 	dtn::security::PayloadIntegrityBlock::verify(recv_b, pubkey);
 }
 
+void PayloadIntegrityBlockTest::verifySkipTest(void)
+{
+	dtn::data::Bundle b;
+	b.source = dtn::data::EID("dtn://test");
+	b.destination = pubkey.reference;
+
+	// add payload block
+	dtn::data::PayloadBlock &p = b.push_back<dtn::data::PayloadBlock>();
+
+	// write some payload
+	(*p.getBLOB().iostream()) << _testdata << std::flush;
+
+	// sign the bundle with PIB
+	dtn::security::PayloadIntegrityBlock::sign(b, pkey, pkey.reference);
+
+	b.set(dtn::data::PrimaryBlock::FRAGMENT, true);
+	b.fragmentoffset = 12;
+	b.appdatalength = p.getLength();
+
+	CPPUNIT_ASSERT_THROW(dtn::security::PayloadIntegrityBlock::verify(b, pubkey), dtn::security::VerificationSkippedException);
+
+	CPPUNIT_ASSERT_EQUAL(false, b.get(dtn::data::PrimaryBlock::DTNSEC_STATUS_VERIFIED));
+}
+
 void PayloadIntegrityBlockTest::verifyCompromisedTest(void)
 {
 	dtn::data::Bundle b;

@@ -67,6 +67,15 @@ namespace dtn
 			virtual ~DecryptException() throw() {};
 		};
 
+		class VerificationSkippedException : public SecurityException
+		{
+		public:
+			VerificationSkippedException(std::string what = "Verification skipped.") : SecurityException(what)
+			{};
+
+			virtual ~VerificationSkippedException() throw() {};
+		};
+
 		class VerificationFailedException : public SecurityException
 		{
 		public:

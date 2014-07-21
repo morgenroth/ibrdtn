@@ -32,6 +32,7 @@ class PayloadIntegrityBlockTest : public CPPUNIT_NS :: TestFixture
 	CPPUNIT_TEST_SUITE (PayloadIntegrityBlockTest);
 	CPPUNIT_TEST (signTest);
 	CPPUNIT_TEST (verifyTest);
+	CPPUNIT_TEST (verifySkipTest);
 	CPPUNIT_TEST (verifyCompromisedTest);
 	CPPUNIT_TEST_SUITE_END ();
 
@@ -42,6 +43,7 @@ public:
 protected:
 	void signTest(void);
 	void verifyTest(void);
+	void verifySkipTest(void);
 	void verifyCompromisedTest(void);
 
 private:
