@@ -20,19 +20,6 @@
 #ifndef CONFIGURATIONTEST_HH
 #define CONFIGURATIONTEST_HH
 class ConfigurationTest : public CppUnit::TestFixture {
-	private:
-		class FakeConfiguration
-		{
-		public:
-			FakeConfiguration();
-			~FakeConfiguration();
-
-		private:
-			ibrcommon::TemporaryFile _tmp;
-		};
-
-		static FakeConfiguration _config;
-
 	public:
 		/*=== BEGIN tests for class 'Configuration' ===*/
 		void testParams();

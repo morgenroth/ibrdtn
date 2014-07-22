@@ -173,21 +173,21 @@ void ConfigurationTest::testDebugLevel()
 {
 	/* test signature () const */
 	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_EQUAL(conf.getDebug().level(), 99);
+	CPPUNIT_ASSERT_EQUAL(0, conf.getDebug().level());
 }
 
 void ConfigurationTest::testDebugEnabled()
 {
 	/* test signature () const */
 	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_EQUAL(conf.getDebug().enabled(), true);
+	CPPUNIT_ASSERT_EQUAL(false, conf.getDebug().enabled());
 }
 
 void ConfigurationTest::testDebugQuiet()
 {
 	/* test signature () const */
 	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_EQUAL(conf.getDebug().quiet(), false);
+	CPPUNIT_ASSERT_EQUAL(false, conf.getDebug().quiet());
 }
 
 /*=== END   tests for class 'Debug' ===*/
@@ -281,7 +281,7 @@ void ConfigurationTest::testGetDebug()
 {
 	/* test signature () const */
 	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_EQUAL(true, conf.getDebug().enabled());
+	CPPUNIT_ASSERT_EQUAL(false, conf.getDebug().enabled());
 }
 
 void ConfigurationTest::testGetLogger()
@@ -302,11 +302,8 @@ void ConfigurationTest::testGetNetwork()
 
 void ConfigurationTest::setUp()
 {
-}
+	ibrcommon::File _tmp("/tmp/dtnd.config");
 
-ConfigurationTest::FakeConfiguration::FakeConfiguration()
- : _tmp(ibrcommon::File("/tmp"))
-{
 	fstream stream(_tmp.getPath().c_str(), ios::out);
 	stream << "local_uri = dtn://node.dtn" << std::endl
 		<< "blob_path = /tmp" << std::endl
@@ -347,18 +344,11 @@ ConfigurationTest::FakeConfiguration::FakeConfiguration()
 		<< "static2_proto = udp" << std::endl;
 	stream.close();
 
-	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance(true);
 	conf.load(_tmp.getPath());
-}
-
-ConfigurationTest::FakeConfiguration::~FakeConfiguration()
-{
-	_tmp.remove();
 }
 
 void ConfigurationTest::tearDown()
 {
+	ibrcommon::File("/tmp/dtnd.config").remove();
 }
-
-ConfigurationTest::FakeConfiguration ConfigurationTest::_config;
-
