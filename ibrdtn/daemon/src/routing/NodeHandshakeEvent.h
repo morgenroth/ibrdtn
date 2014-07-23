@@ -35,8 +35,7 @@ namespace dtn
 			enum HANDSHAKE_STATE
 			{
 				HANDSHAKE_REPLIED = 1,
-				HANDSHAKE_COMPLETED = 2,
-				HANDSHAKE_UPDATED = 3
+				HANDSHAKE_COMPLETED = 2
 			};
 
 			virtual ~NodeHandshakeEvent();

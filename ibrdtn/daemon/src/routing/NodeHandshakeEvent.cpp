@@ -50,9 +50,6 @@ namespace dtn
 			case HANDSHAKE_COMPLETED:
 				return "completed with " + peer.getString();
 				break;
-			case HANDSHAKE_UPDATED:
-				return "updated of " + peer.getString();
-				break;
 			default:
 				return peer.getString();
 			}

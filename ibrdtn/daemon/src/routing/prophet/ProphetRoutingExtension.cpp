@@ -245,12 +245,7 @@ namespace dtn
 
 		void ProphetRoutingExtension::raiseEvent(const NodeHandshakeEvent &handshake) throw ()
 		{
-			if (handshake.state == NodeHandshakeEvent::HANDSHAKE_UPDATED)
-			{
-				// transfer the next bundle to this destination
-				_taskqueue.push( new SearchNextBundleTask( handshake.peer ) );
-			}
-			else if (handshake.state == NodeHandshakeEvent::HANDSHAKE_COMPLETED)
+			if (handshake.state == NodeHandshakeEvent::HANDSHAKE_COMPLETED)
 			{
 				// transfer the next bundle to this destination
 				_taskqueue.push( new SearchNextBundleTask( handshake.peer ) );
