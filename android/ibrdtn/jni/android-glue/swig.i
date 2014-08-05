@@ -49,6 +49,13 @@
     return what();
   }
 %}
+
+/* fix memleak in byte-array handling */
+%typemap(directorargout) (char *STRING, size_t LENGTH) {
+    (jenv)->GetByteArrayRegion($input, 0, $2, (jbyte *)$1);
+    (jenv)->DeleteLocalRef($input);
+}
+
 %include "../ibrcommon/ibrcommon/Exceptions.h"
 
 %{
