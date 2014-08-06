@@ -235,12 +235,6 @@ public class Preferences extends PreferenceActivity {
 				return true;
 			}
 
-			case R.id.itemApps: {
-				Intent i = new Intent(Preferences.this, AppListActivity.class);
-				startActivity(i);
-				return true;
-			}
-
 			case R.id.itemNeighbors: {
 				// open neighbor list activity
 				Intent i = new Intent(Preferences.this, NeighborActivity.class);

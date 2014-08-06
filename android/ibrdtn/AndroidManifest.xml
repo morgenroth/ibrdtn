@@ -120,13 +120,6 @@
 				android:value=".daemon.Preferences" />
 		</activity>
 
-		<activity android:name="de.tubs.ibr.dtn.daemon.AppListActivity"
-			android:label="@string/applist" android:theme="@android:style/Theme.NoTitleBar"
-			android:parentActivityName=".daemon.Preferences">
-			<meta-data android:name="android.support.PARENT_ACTIVITY"
-				android:value=".daemon.Preferences" />
-		</activity>
-
 		<activity android:name="de.tubs.ibr.dtn.daemon.StatsActivity"
 			android:icon="@drawable/ic_action_stats" android:label="@string/stats_activity"
 			android:parentActivityName=".daemon.Preferences">

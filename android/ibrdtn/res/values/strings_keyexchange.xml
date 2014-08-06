@@ -7,18 +7,15 @@
     <string name="key_information">Keyinformation</string>
     <string name="qr_code">QR-Code</string>
     <string name="qr_code_image">QR-Code Image</string>
-    <string name="key_exchange">Key Exchange</string>
     <string name="trust_level">Trust Level</string>
     <string name="trust_level_image">Trust Level Image</string>
     <string name="eid">Endpoint ID</string>
     <string name="fingerprint">Key-Fingerprint</string>
     <string name="password_hint">Password</string>
-    <string name="hash_commit">Hash-Commit</string>
     <string name="no_match">No match</string>
     <string name="title_qr_code_scan">Scan QR-Code</string>
     <string name="menu_qr_code_scan">Scan QR-Code</string>
     <string name="menu_delete_key">Delete Key</string>
-    <string name="menu_untrusted_exchange">Untrusted key-exchange</string>
     <string name="select_hash">Please select the same word combination as your partner.</string>
     <string name="content_hash_icon">Hash icon</string>
     <string name="content_result_icon">Result icon</string>
@@ -34,17 +31,13 @@
     <string name="protocol_qr_title">QR-Code</string>
     <string name="protocol_nfc_title">NFC</string>
     
-    <string name="qr_scan_aborted">Scan aborted.</string>
     <string name="qr_hint">Place the QR code within the window.</string>
-    <string name="hash_wrong_combination">You have chosen the wrong combination.</string>
     <string name="none_pending">The key-exchange is executed without any protocol. Depending on the network, this process may take a while. You get notified if the exchange has been finished.</string>
     <string name="dh_pending">The key-exchange is executed using Diffie-Helmann approach. Depending on the network, this process may take a while. You get notified if the exchange has been finished.</string>
     <string name="jpake_pending">The key-exchange is executed using JPAKE approach. Enter a password to proceed.</string>
     <string name="hash_pending">The key-exchange is executed using a hash commitment approach. Depending on the network, this process may take a while and requires further user input. You get notified if user input is necessary.</string>
-    <string name="qr_nokey">No key has been exchanged before. The exchange proceeds with a non-authenticated key-exchange. If this finishes, you can proceed with the QR code verification.</string>
     <string name="qr_scan_hint">You can verify the security key of you partner. Scan the QR code to proceed.</string>
     <string name="qr_scan_action">Scan</string>
-    <string name="nfc_hint">The key-exchange is executed using NFC. Place your device next to the device of your partner and confirm the action by pushing the display.</string>
     <string name="jpake_password_prompt">Your partner wants to exchange a key using JPAKE. Enter a password to proceed.</string>
     <string name="error_hint">An error occurred. The key-exchange has been aborted.</string>
     
@@ -63,7 +56,6 @@
     
     <string name="key_selection_request">The received key is different to the existing one. Which key should be stored?</string>
     <string name="key_dropped">The new key has been discarded.</string>
-    <string name="key_generation_in_progress">The generation of the key-pair is still in progress.</string>
     <string name="key_deletion_confirm">Key deletion</string>
     <string name="key_deletion_confirm_text">Should the existing key get deleted?</string>
     
@@ -71,8 +63,7 @@
     <string name="protocol_already_used_text">Do you want to re-use this approach again?</string>
     
     <string name="no_key_available">No key available</string>
-    <string name="dummy_endpoint">dtn://android-012345</string>
-    <string name="toast_error">An error occurred.</string>
+    <string name="dummy_endpoint" translatable="false">dtn://android-012345</string>
     
     <string name="showcase_qr_code_title">QR-Code verification</string>
     <string name="showcase_qr_code_text">Use the camera to verify the received public key using a QR code.</string>

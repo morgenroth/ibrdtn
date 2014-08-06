@@ -3,8 +3,6 @@
     <string name="example_item_title">Example Item Title</string>
     <string name="example_item_text">Example Item Text</string>
     <string name="content_colormark">Colormark of the log entry</string>
-    <string name="content_titlebar_icon">Icon of the titlebar</string>
-    <string name="content_app_icon">Application icon</string>
     <string name="content_neighbor_icon">Neighbor icon</string>
     <string name="permlab_dtnCommunication">DTN Communication</string>
     <string name="permdesc_dtnCommunication">Allows the app to register to DTN services and send/receive bundles.</string>
@@ -12,7 +10,6 @@
     <string name="permdesc_dtnCommunicationServer">Allows the app to send notifications to DTN applications.</string>
     <string name="permlab_dtnControl">DTN Control</string>
     <string name="permdesc_dtnControl">Allows the app to control the DTN services and switch it on/off without any warning.</string>
-    <string name="service_name">DTN Service</string>
     <string name="app_name">IBR-DTN</string>
     <string name="app_name_daemon">IBR-DTN Daemon</string>
     <string name="applist">Applications</string>
@@ -20,7 +17,6 @@
     <string name="endpoint_id">Endpoint ID</string>
     <string name="routing">Routing</string>
     <string name="service">Service</string>
-    <string name="launch_description">If checked, the dtn daemon is started.</string>
     <string name="eid_description">The endpoint identifier of this device.</string>
     <string name="routing_description">The routing scheme to use.</string>
     <string name="list_neighbors">Neighbors</string>
@@ -43,15 +39,10 @@
     <string name="pref_collect_stats">Collect statistic data</string>
     <string name="pref_collect_stats_desc">Statistic data is collected in background and transmitted to the DTN research community</string>
     <string name="general">General</string>
-    <string name="autodisconnect">Automatic disconnect</string>
-    <string name="autodisconnect_desc">Shutdown idle links automatically.</string>
     <string name="system_version">Version</string>
-    <string name="apps">Apps</string>
-    <string name="apps_subtitle">Installed DTN aware applications</string>
     <string name="alert_statistic_logger_title">Thank you for using IBR-DTN</string>
     <string name="alert_statistic_logger_dialog">Since this is research related software we ask for your support and the permission to collect statistical data about exchanged bundles of this device. These data is transmitted via DTN to the researchers who made this software. Do you allow the collection and transmission of statistical data?</string>
     <string name="senddatanow">Send collected data</string>
-    <string name="list_apps">Show DTN apps</string>
     <string name="pref_uplink_title">Cloud connect</string>
     <string name="pref_uplink_summary">Enable a static uplink to the DTN bone</string>
     <string name="pref_connection">Connection</string>
@@ -73,8 +64,6 @@
     <string name="showstats">Show statistics</string>
     <string name="pref_storage">Storage</string>
     <string name="pref_storage_description">How to store bundles on the device.</string>
-    <string name="ticker_discovery_started">Discovery started</string>
-    <string name="ticker_discovery_stopped">Discovery stopped</string>
     <string name="pref_discovery_title">Discover Policy</string>
     <string name="menu_neighbor_connect">Connect</string>
     <string name="toast_no_application">No application found to handle this endpoint.</string>
