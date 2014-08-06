@@ -23,8 +23,6 @@ package de.tubs.ibr.dtn;
 
 public class Intent {
 	public static final String CATEGORY_SERVICES = "de.tubs.ibr.dtn.intent.category.SERVICES";
-
-	public static final String DTNAPP = "de.tubs.ibr.dtn.intent.DTNAPP";
 	
 	/**
 	 * An intent with action ENDPOINT_INTERACT is called if the user has selected
