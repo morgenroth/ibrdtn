@@ -45,4 +45,6 @@
 	<string name="pref_ptt_desc">Record the message while the button is pushed.</string>
 	<string name="pref_notification">Enable notification</string>
 	<string name="pref_notification_desc">Show notification if a message is received.</string>
+	
+	<string name="talkie_message_notification_sound_title">Talkie message</string>
 </resources>

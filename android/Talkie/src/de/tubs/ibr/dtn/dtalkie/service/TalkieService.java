@@ -233,6 +233,13 @@ public class TalkieService extends IntentService {
 		// call onCreate of the super-class
 		super.onCreate();
 		
+		// register custom ring-tone
+		try {
+			Utils.registerNotificationSound(this);
+		} catch (IOException e1) {
+			Log.e(TAG, "failed to install notification sound", e1);
+		}
+		
 		mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		
         // get the audio-manager
