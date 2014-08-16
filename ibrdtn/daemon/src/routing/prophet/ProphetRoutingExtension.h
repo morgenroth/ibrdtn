@@ -119,6 +119,16 @@ namespace dtn
 			 */
 			void age();
 
+			/**
+			 * stores all persistent data to a file
+			 */
+			void store(const ibrcommon::File &target);
+
+			/**
+			 * restore all persistent data from a file
+			 */
+			void restore(const ibrcommon::File &source);
+
 			DeliveryPredictabilityMap _deliveryPredictabilityMap;
 			ForwardingStrategy *_forwardingStrategy;
 			AcknowledgementSet _acknowledgementSet;
@@ -140,6 +150,8 @@ namespace dtn
 
 			typedef std::map<dtn::data::EID, dtn::data::Timestamp> age_map;
 			age_map _ageMap; ///< map with time for each neighbor, when the last encounter happened
+
+			ibrcommon::File _persistent_file; ///< This file is used to store persistent routing data
 
 			class Task
 			{

@@ -27,6 +27,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <fstream>
 
 #include "core/BundleEvent.h"
 
@@ -59,6 +60,19 @@ namespace dtn
 
 			// define the first exchange timestamp
 			_next_exchange_timestamp = dtn::utils::Clock::getMonotonicTimestamp() + _next_exchange_timeout;
+
+			try {
+				// set file to store prophet data
+				ibrcommon::File routing_d = dtn::daemon::Configuration::getInstance().getPath("storage").get("routing");
+
+				// create directory if necessary
+				if (!routing_d.isDirectory()) ibrcommon::File::createDirectory(routing_d);
+
+				// assign file within the routing data directory
+				_persistent_file = routing_d.get("prophet.dat");
+			} catch (const dtn::daemon::Configuration::ParameterNotSetException&) {
+				// no path set
+			}
 
 			// write something to the syslog
 			IBRCOMMON_LOGGER_TAG(ProphetRoutingExtension::TAG, info) << "Initializing PRoPHET routing module" << IBRCOMMON_LOGGER_ENDL;
@@ -225,10 +239,16 @@ namespace dtn
 
 		void ProphetRoutingExtension::raiseEvent(const dtn::core::TimeEvent &time) throw ()
 		{
-			// expire bundles in the acknowledgement set
+			// expire bundles in the acknowledgment set
 			{
 				ibrcommon::MutexLock l(_acknowledgementSet);
 				_acknowledgementSet.expire(time.getTimestamp());
+			}
+
+			if ((time.getTimestamp().get<size_t>() % 60) == 0)
+			{
+				// store persistent data to disk
+				if (_persistent_file.isValid()) store(_persistent_file);
 			}
 
 			ibrcommon::MutexLock l(_next_exchange_mutex);
@@ -271,6 +291,9 @@ namespace dtn
 			// reset task queue
 			_taskqueue.reset();
 
+			// restore persistent routing data
+			if (_persistent_file.exists()) restore(_persistent_file);
+
 			// routine checked for throw() on 15.02.2013
 			try {
 				// run the thread
@@ -285,6 +308,9 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::routing::NodeHandshakeEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::core::BundlePurgeEvent>::remove(this);
+
+			// store persistent routing data
+			if (_persistent_file.isValid()) store(_persistent_file);
 
 			try {
 				// stop the thread
@@ -579,6 +605,112 @@ namespace dtn
 		void ProphetRoutingExtension::age()
 		{
 			_deliveryPredictabilityMap.age(_p_first_threshold);
+		}
+
+		/**
+		 * stores all persistent data to a file
+		 */
+		void ProphetRoutingExtension::store(const ibrcommon::File &target)
+		{
+			// open the file
+			std::ofstream output(target.getPath().c_str());
+
+			// silently fail
+			if (!output.good()) return;
+
+			// lock the predictability map
+			ibrcommon::MutexLock l(_deliveryPredictabilityMap);
+
+			// store the predictability map
+			_deliveryPredictabilityMap.store(output);
+
+			// store the ack'set
+			{
+				ibrcommon::MutexLock l(_acknowledgementSet);
+				output << _acknowledgementSet;
+			}
+
+			// store the number of age-map entries
+			output << dtn::data::Number(_ageMap.size());
+
+			// get the current monotonic time-stamp difference
+			const dtn::data::Timestamp monotonic_diff = dtn::utils::Clock::getTime() - dtn::utils::Clock::getMonotonicTimestamp();
+
+			// store the age-map
+			for (age_map::const_iterator it = _ageMap.begin(); it != _ageMap.end(); ++it)
+			{
+				const dtn::data::EID &peer = it->first;
+				const dtn::data::Timestamp &monotonic_ts = it->second;
+
+				// get a absolute time-stamp
+				const dtn::data::Timestamp ts = monotonic_diff + monotonic_ts;
+
+				dtn::data::BundleString peer_entry(peer.getString());
+
+				// write data
+				output << peer_entry << ts;
+			}
+		}
+
+		/**
+		 * restore all persistent data from a file
+		 */
+		void ProphetRoutingExtension::restore(const ibrcommon::File &source)
+		{
+			// open the file
+			std::ifstream input(source.getPath().c_str());
+
+			// silently fail
+			if (!input.good()) return;
+
+			// lock the predictability map
+			ibrcommon::MutexLock l(_deliveryPredictabilityMap);
+
+			// restore the predictability map
+			_deliveryPredictabilityMap.restore(input);
+
+			// restore the ack'set
+			{
+				ibrcommon::MutexLock l(_acknowledgementSet);
+				input >> _acknowledgementSet;
+			}
+
+			// clear the age-map
+			_ageMap.clear();
+
+			// get the number of age-map entries
+			dtn::data::Number num_entries;
+			input >> num_entries;
+
+			// get the current monotonic time-stamp difference
+			const dtn::data::Timestamp monotonic_diff = dtn::utils::Clock::getTime() - dtn::utils::Clock::getMonotonicTimestamp();
+			const dtn::data::Timestamp monotonic_now = dtn::utils::Clock::getMonotonicTimestamp();
+
+			// restore the age-map
+			while (input.good() && num_entries > 0)
+			{
+				dtn::data::BundleString peer_entry;
+				dtn::data::Timestamp ts;
+
+				input >> peer_entry >> ts;
+
+				// eliminate time-stamp which are in the future
+				if (monotonic_now >= (ts - monotonic_diff))
+				{
+					// add entry to the map
+					_ageMap[dtn::data::EID(peer_entry)] = ts - monotonic_diff;
+				}
+				else
+				{
+					// add entry to the map
+					_ageMap[dtn::data::EID(peer_entry)] = monotonic_now;
+				}
+
+				num_entries--;
+			}
+
+			// age the predictability map
+			age();
 		}
 
 		ProphetRoutingExtension::SearchNextBundleTask::SearchNextBundleTask(const dtn::data::EID &eid)

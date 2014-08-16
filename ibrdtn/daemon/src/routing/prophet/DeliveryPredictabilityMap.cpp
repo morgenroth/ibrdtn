@@ -234,5 +234,55 @@ namespace dtn
 			map.toString(stream);
 			return stream;
 		}
+
+		void DeliveryPredictabilityMap::store(std::ostream &output) const
+		{
+			// write last aged time-stamp
+			output << _lastAgingTime;
+
+			// store the number of map entries
+			output << dtn::data::Number(_predictmap.size());
+
+			for (predictmap::const_iterator it = _predictmap.begin(); it != _predictmap.end(); ++it)
+			{
+				const dtn::data::EID &peer = it->first;
+				const float &p_value = it->second;
+
+				dtn::data::BundleString peer_entry(peer.getString());
+
+				// write EID
+				output << peer_entry;
+
+				// write float value
+				output.write(static_cast<const char*>((const char*)&p_value), sizeof(p_value));
+			}
+		}
+
+		void DeliveryPredictabilityMap::restore(std::istream &input)
+		{
+			// clear the map
+			_predictmap.clear();
+
+			// read last aged time-stamp
+			input >> _lastAgingTime;
+
+			dtn::data::Number num_entries;
+			input >> num_entries;
+
+			// silently fail
+			while (input.good() && num_entries > 0)
+			{
+				dtn::data::BundleString peer_entry;
+				float p_value = 0.0;
+
+				input >> peer_entry;
+				input.read(static_cast<char*>((char*)&p_value), sizeof(p_value));
+
+				// add entry to the map
+				_predictmap[dtn::data::EID(peer_entry)] = p_value;
+
+				num_entries--;
+			}
+		}
 	} /* namespace routing */
 } /* namespace dtn */

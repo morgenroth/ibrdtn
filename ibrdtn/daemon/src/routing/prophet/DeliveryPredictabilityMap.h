@@ -70,6 +70,16 @@ namespace dtn
 
 			friend std::ostream& operator<<(std::ostream& stream, const DeliveryPredictabilityMap& map);
 
+			/**
+			 * stores the map and time-stamp of last aging to a stream
+			 */
+			void store(std::ostream &output) const;
+
+			/**
+			 * restore the map and time-stamp of last aging from a stream
+			 */
+			void restore(std::istream &input);
+
 		private:
 			typedef std::map<dtn::data::EID, float> predictmap;
 			predictmap _predictmap;
