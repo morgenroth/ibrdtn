@@ -213,6 +213,11 @@ namespace ibrcommon
 		return false;
 	}
 
+	bool File::isValid() const
+	{
+		return !_path.empty();
+	}
+
 	string File::getPath() const
 	{
 		return _path;

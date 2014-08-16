@@ -96,6 +96,11 @@ namespace ibrcommon
 		bool isDirectory() const;
 
 		/**
+		 * @return True, if the object contains a valid path to a file, existing or not
+		 */
+		bool isValid() const;
+
+		/**
 		 * Returns the full path of the file (as given in the constructor).
 		 * @return The path of the file.
 		 */
