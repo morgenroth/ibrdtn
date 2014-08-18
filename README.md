@@ -1,6 +1,8 @@
 IBR-DTN - A modular and lightweight implementation of the bundle protocol.
 ==========================================================================
 
+[![Coverage Status](https://img.shields.io/coveralls/ibrdtn/ibrdtn.svg)](https://coveralls.io/r/ibrdtn/ibrdtn)
+
 This implementation of the bundle protocol RFC5050 is designed for embedded
 systems like the RouterBoard 532A or Ubiquiti RouterStation Pro and can be
 used as framework for DTN applications.
@@ -9,8 +11,16 @@ The module-based architecture with miscellaneous interfaces, makes it possible
 to change functionalities like routing or storage of bundle just by inheriting
 a specific class.
 
- * Bundle Protocol (RFC5050)
- * Bundle Security Protocol (draft-irtf-dtnrg-bundle-security)
+## Links ##
+
+ * [Trac](http://trac.ibr.cs.tu-bs.de/project-cm-2012-ibrdtn)
+ * [Installation instructions](http://trac.ibr.cs.tu-bs.de/project-cm-2012-ibrdtn/wiki/download)
+ * [Documentation](http://trac.ibr.cs.tu-bs.de/project-cm-2012-ibrdtn/wiki/docs)
+
+## Features ##
+
+ * Bundle Protocol (RFC 5050)
+ * Bundle Security Protocol (RFC 6257)
  * Socket based API
  * AgeBlock support and bundle age tracking (draft-irtf-dtnrg-bundle-age-block-01)
  * Scope Control Hop Limit Block support
@@ -20,7 +30,7 @@ a specific class.
  * Applications: dtnsend, dtnrecv, dtntrigger, dtnping, dtntracepath, dtninbox, dtnoutbox, dtnstream
 
  Convergence Layer
-  * TCP/IP convergence layer - draft-irtf-dtnrg-tcp-clayer-02
+  * TCP/IP convergence layer (RFC 7242)
   * TLS extension for TCP convergence layer by Stephen Röttger
   * UDP/IP convergence layer - draft-irtf-dtnrg-udp-clayer-00
   * IP neighbor discovery based on draft-irtf-dtnrg-ipnd-01
