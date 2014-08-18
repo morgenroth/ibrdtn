@@ -33,18 +33,9 @@ CONF_PARAMS="${CONF_PARAMS} --with-dht"
 # include libtffs
 CONF_PARAMS="${CONF_PARAMS} --with-tffs=/usr"
 
-# configures the project to be verbose and pedantic to coding errors and mistakes.
-DEVFLAGS="-Wall -Wextra -pedantic -Wconversion -D__DEVELOPMENT_ASSERTIONS__"
+# enable debugging options
+CONF_PARAMS="${CONF_PARAMS} --enable-debug"
 
-if [ -e .coverage ]; then
-	# enable debugging symbols and code coverage testing
-	export CXXFLAGS="-g -O0 ${DEVFLAGS} -fprofile-arcs -ftest-coverage"
-	export CFLAGS="-g -O0 ${DEVFLAGS} -fprofile-arcs -ftest-coverage"
-	export LDFLAGS="-fprofile-arcs -ftest-coverage"
-
-	./configure $CONF_PARAMS $@
-else
-	# enable debugging symbols
-	./configure CXXFLAGS="-ggdb -g3 ${DEVFLAGS}" $CONF_PARAMS $@
-fi
+# configure all packages
+./configure ${CONF_PARAMS} $@
 

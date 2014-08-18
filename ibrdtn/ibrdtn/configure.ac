@@ -150,6 +150,40 @@ ANDROID_AC_BUILD([
 	AC_CHECK_HEADERS([machine/endian.h], [has_endian_h=yes])
 
 	dnl -----------------------------------------------
+	dnl Development Options
+	dnl -----------------------------------------------
+
+	AC_MSG_CHECKING([if compiling with clang])
+	AC_COMPILE_IFELSE(
+	[AC_LANG_PROGRAM([], [[
+	#ifndef __clang__
+	       not clang
+	#endif
+	]])],
+	[CLANG=yes], [CLANG=no])
+
+	AC_MSG_RESULT([$CLANG])
+
+	AC_ARG_ENABLE(gcov,
+	AC_HELP_STRING([--enable-gcov], [Turn on gcov coverage testing.]),
+	[
+		if test "x$CLANG" = xyes; then
+			AC_MSG_WARN([Code coverage is only supported in combination with GCC.])
+		else
+			CPPFLAGS="${CPPFLAGS} -fprofile-arcs -ftest-coverage"
+			CFLAGS="${CFLAGS} -fprofile-arcs -ftest-coverage"
+			LIBS="${LIBS} -lgcov"
+		fi
+	])
+
+	AC_ARG_ENABLE(debug,
+	AC_HELP_STRING([--enable-debug], [Turn on debugging symbols.]),
+	[
+		CPPFLAGS="${CPPFLAGS} -ggdb -g3 -Wall -Wextra -pedantic -Wconversion -D__DEVELOPMENT_ASSERTIONS__"
+		CFLAGS="${CFLAGS} -ggdb -g3 -Wall -Wextra -pedantic -Wconversion -D__DEVELOPMENT_ASSERTIONS__"
+	])
+
+	dnl -----------------------------------------------
 	dnl check for glib support
 	dnl -----------------------------------------------
 	PKG_CHECK_MODULES([GLIB], [glib-2.0], [
