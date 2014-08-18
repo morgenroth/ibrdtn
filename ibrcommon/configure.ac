@@ -165,7 +165,7 @@ ANDROID_AC_BUILD([
 	# differ between Mac OSX and Linux
 	AC_CHECK_HEADERS([features.h mach/mach_time.h sys/semaphore.h semaphore.h])
 	AC_CHECK_HEADER([sys/semaphore.h], [
-		CPPFLAGS+=" -DHAVE_SYS_SEMAPHORE_H"
+		CPPFLAGS="${CPPFLAGS=} -DHAVE_SYS_SEMAPHORE_H"
 	])
 	
 	AC_C_INLINE
