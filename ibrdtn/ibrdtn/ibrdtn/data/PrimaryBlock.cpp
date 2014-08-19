@@ -28,9 +28,16 @@ namespace dtn
 {
 	namespace data
 	{
+		// set initial sequence number to zero
 		Number PrimaryBlock::__sequencenumber = 0;
-		Number PrimaryBlock::__sequencenumber_abs = 0;
+
+		// set initial absolute sequence number to a random value
+		Number PrimaryBlock::__sequencenumber_abs = dtn::data::Number().random();
+
+		// set last assigned time-stamp to zero
 		Timestamp PrimaryBlock::__last_timestamp = 0;
+
+		// initialize lock for sequence number assignment
 		ibrcommon::Mutex PrimaryBlock::__sequence_lock;
 
 		PrimaryBlock::PrimaryBlock(bool zero_timestamp)
