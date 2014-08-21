@@ -29,30 +29,41 @@ namespace dtn
 {
 	namespace utils
 	{
+		Random& Random::getInstance()
+		{
+			static Random instance;
+			return instance;
+		}
+
 		Random::Random()
 		{
-			static bool initialized = false;
+			struct timeval time;
+			::gettimeofday(&time, NULL);
 
-			if (!initialized) {
-				struct timeval time;
-				::gettimeofday(&time, NULL);
-
-				// initialize a random seed only once
-				::srand(static_cast<unsigned int>((time.tv_sec * 100) + (time.tv_usec / 100)));
-				initialized = true;
-			}
+			// initialize a random seed only once
+			::srand(static_cast<unsigned int>((time.tv_sec * 100) + (time.tv_usec / 100)));
 		}
 
 		Random::~Random()
 		{
 		}
 
-		int Random::gen_number() const
+		int Random::gen_number()
+		{
+			return getInstance()._gen_number();
+		}
+
+		const std::string Random::gen_chars(const size_t &size)
+		{
+			return getInstance()._gen_chars(size);
+		}
+
+		int Random::_gen_number() const
 		{
 			return ::rand();
 		}
 
-		const std::string Random::gen_chars(const size_t &size) const
+		const std::string Random::_gen_chars(const size_t &size) const
 		{
 			static const char text[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 			std::vector<char> dst(size);

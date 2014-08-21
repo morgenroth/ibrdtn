@@ -31,15 +31,28 @@ namespace dtn
 		class Random
 		{
 		public:
-			Random();
 			virtual ~Random();
 
 			/**
-			 * generates a 32-bit random number
+			 * Generates a 32-bit random number
 			 */
-			int gen_number() const;
+			static int gen_number();
 
-			const std::string gen_chars(const size_t &length) const;
+			/**
+			 * Generate a random string using alphabetic chars
+			 */
+			static const std::string gen_chars(const size_t &length);
+
+		private:
+			Random();
+
+			static Random& getInstance();
+
+			// internal method to generate a number
+			int _gen_number() const;
+
+			// internal method to generate a random char
+			const std::string _gen_chars(const size_t &length) const;
 		};
 	}
 }

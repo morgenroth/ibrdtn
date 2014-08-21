@@ -399,8 +399,7 @@ namespace dtn
 			SDNV<E>& random()
 			{
 				// for compatibility use 32-bit here
-				dtn::utils::Random r;
-				uint32_t val = (uint32_t)r.gen_number();
+				uint32_t val = (uint32_t)dtn::utils::Random::gen_number();
 				(*this) = static_cast<E>(val);
 				return (*this);
 			}
