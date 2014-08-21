@@ -507,9 +507,7 @@ namespace dtn
 
 		KeyExchangeSession& KeyExchanger::createSession(KeyExchangeProtocol &p, const dtn::data::EID &peer)
 		{
-			dtn::utils::Random rand;
-
-			KeyExchangeSession* session = p.createSession(peer, (unsigned int)rand.gen_number());
+			KeyExchangeSession* session = p.createSession(peer, (unsigned int)dtn::utils::Random::gen_number());
 			_sessionmap[session->getSessionKey()] = session;
 
 			IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 20) << "key-exchange session created for " << peer.getString() << ", ID: " << session->getUniqueId() << IBRCOMMON_LOGGER_ENDL;
