@@ -63,9 +63,8 @@ namespace dtn
 			ibrcommon::MutexLock l(_create_lock);
 
 			std::string name;
-			dtn::utils::Random rand;
 			do {
-				name = rand.gen_chars(32);
+				name = dtn::utils::Random::gen_chars(32);
 			} while (__exists(db, name, false));
 
 			return __create(db, name, false);

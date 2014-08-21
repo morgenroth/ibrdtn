@@ -62,8 +62,7 @@ namespace dtn
 
 		const std::string Registration::gen_handle()
 		{
-			static dtn::utils::Random rand;
-			std::string new_handle = rand.gen_chars(16);
+			std::string new_handle = dtn::utils::Random::gen_chars(16);
 
 			// if the local host is configured with an IPN address
 			if (dtn::core::BundleCore::local.isCompressable())
