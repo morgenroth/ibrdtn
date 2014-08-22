@@ -154,6 +154,9 @@ namespace dtn
 				ibrcommon::MutexLock l(__sequence_lock);
 				sequencenumber = __sequencenumber_abs;
 				__sequencenumber_abs++;
+
+				// limit sequence-number to 32-bit for compatibility reasons
+				__sequencenumber_abs &= ((uint32_t)-1);
 			}
 		}
 	}
