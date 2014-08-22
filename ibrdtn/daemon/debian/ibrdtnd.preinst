@@ -63,21 +63,21 @@ fi
 if [ ! -d "${LOG_DIR}" -a ! -L "${LOG_DIR}" ]; then
 	mkdir -p ${LOG_DIR}
 	chown dtnd:adm ${LOG_DIR}
-	chmod 775 ${LOG_DIR}
+	chmod 750 ${LOG_DIR}
 fi
 
 # create a spool directory for the daemon process
 if [ ! -d "${SPOOL_DIR}" -a ! -L "${SPOOL_DIR}" ]; then
 	mkdir -p ${SPOOL_DIR}
 	chown dtnd:adm ${SPOOL_DIR}
-	chmod 770 ${SPOOL_DIR}
+	chmod 750 ${SPOOL_DIR}
 fi
 
 # create a pid directory for the daemon process
 if [ ! -d "${PID_DIR}" -a ! -L "${PID_DIR}" ]; then
 	mkdir -p ${PID_DIR}
-	chown dtnd:adm ${PID_DIR}
-	chmod 775 ${PID_DIR}
+	chown dtnd:root ${PID_DIR}
+	chmod 755 ${PID_DIR}
 fi
 
 #DEBHELPER#
