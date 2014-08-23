@@ -90,7 +90,7 @@ namespace dtn
 				DTNSEC_STATUS_VERIFIED = 1 << 0x1C,
 				DTNSEC_STATUS_CONFIDENTIAL = 1 << 0x1D,
 				DTNSEC_STATUS_AUTHENTICATED = 1 << 0x1E,
-				IBRDTN_REQUEST_COMPRESSION = 1 << 0x1F
+				IBRDTN_REQUEST_COMPRESSION = (size_t)1 << 0x1F
 			};
 
 			PrimaryBlock(bool zero_timestamp = false);

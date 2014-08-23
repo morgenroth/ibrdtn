@@ -619,6 +619,8 @@ namespace dtn
 			{
 				try {
 					dtn::data::CompressedPayloadBlock::compress(bundle, dtn::data::CompressedPayloadBlock::COMPRESSION_ZLIB);
+
+					bundle.set(dtn::data::PrimaryBlock::IBRDTN_REQUEST_COMPRESSION, false);
 				} catch (const ibrcommon::Exception &ex) {
 					IBRCOMMON_LOGGER_TAG(TAG, warning) << "compression of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				};

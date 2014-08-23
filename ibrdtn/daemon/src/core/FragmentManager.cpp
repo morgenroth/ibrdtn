@@ -342,7 +342,7 @@ namespace dtn
 				fragment.clear();
 
 				// set bundle is fragment flag
-				fragment.set(dtn::data::Bundle::FRAGMENT, true);
+				fragment.set(dtn::data::PrimaryBlock::FRAGMENT, true);
 
 				// set application data length
 				fragment.appdatalength = payloadLength;

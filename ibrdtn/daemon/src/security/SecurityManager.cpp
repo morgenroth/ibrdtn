@@ -116,16 +116,16 @@ namespace dtn
 					}
 
 					// set the verify bit, after verification
-					bundle.set(dtn::data::Bundle::DTNSEC_STATUS_VERIFIED, true);
+					bundle.set(dtn::data::PrimaryBlock::DTNSEC_STATUS_VERIFIED, true);
 
 					IBRCOMMON_LOGGER_DEBUG_TAG("SecurityManager", 5) << "Bundle " << bundle.toString() << " successfully verified" << IBRCOMMON_LOGGER_ENDL;
 					continue;
 				} catch (const dtn::security::VerificationSkippedException&) {
 					// un-set the verify bit
-					bundle.set(dtn::data::Bundle::DTNSEC_STATUS_VERIFIED, false);
+					bundle.set(dtn::data::PrimaryBlock::DTNSEC_STATUS_VERIFIED, false);
 				} catch (const SecurityKey::KeyNotFoundException&) {
 					// un-set the verify bit
-					bundle.set(dtn::data::Bundle::DTNSEC_STATUS_VERIFIED, false);
+					bundle.set(dtn::data::PrimaryBlock::DTNSEC_STATUS_VERIFIED, false);
 				} catch (const std::bad_cast&) {
 					// current block is not a PIB
 				}
@@ -158,7 +158,7 @@ namespace dtn
 					dtn::security::BundleAuthenticationBlock::strip(bundle);
 
 					// set the verify bit, after verification
-					bundle.set(dtn::data::Bundle::DTNSEC_STATUS_AUTHENTICATED, true);
+					bundle.set(dtn::data::PrimaryBlock::DTNSEC_STATUS_AUTHENTICATED, true);
 
 					// at least one BAB has been authenticated, we're done!
 					break;
@@ -219,7 +219,7 @@ namespace dtn
 				// encrypt the payload of the bundle
 				dtn::security::PayloadConfidentialBlock::decrypt(bundle, key);
 
-				bundle.set(dtn::data::Bundle::DTNSEC_STATUS_CONFIDENTIAL, true);
+				bundle.set(dtn::data::PrimaryBlock::DTNSEC_STATUS_CONFIDENTIAL, true);
 			} catch (const ibrcommon::Exception &ex) {
 				throw DecryptException(ex.what());
 			}

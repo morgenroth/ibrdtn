@@ -118,3 +118,21 @@ void TestSDNV::testOutOfRange(void)
 	ss.clear();
 	CPPUNIT_ASSERT_THROW( ss >> dst, dtn::data::ValueOutOfRangeException );
 }
+
+enum FLAGS {
+	HIGHBIT = (size_t)1 << 0x1F
+};
+
+void TestSDNV::testBitset(void)
+{
+	dtn::data::Bitset<FLAGS> bs;
+
+	bs.setBit(HIGHBIT, true);
+
+	size_t value = 0x80000000;
+	CPPUNIT_ASSERT_EQUAL(value, bs.get<size_t>());
+
+	std::stringstream ss;
+	dtn::data::SDNV<uint32_t> dst;
+	CPPUNIT_ASSERT_NO_THROW( ss >> dst );
+}
