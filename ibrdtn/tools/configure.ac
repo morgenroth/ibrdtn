@@ -95,25 +95,40 @@ AC_HELP_STRING([--enable-debug], [Turn on debugging symbols.]),
 	CFLAGS="${CFLAGS} -ggdb -g3 -Wall -Wextra -pedantic -Wconversion -D__DEVELOPMENT_ASSERTIONS__"
 ])
 
-PKG_CHECK_MODULES(DAEMON, libdaemon >= 0.12, [
-	AC_SUBST(DAEMON_CFLAGS)
-	AC_SUBST(DAEMON_LIBS)
-	AC_DEFINE(HAVE_LIBDAEMON, [1], ["daemon library is available"])
-	AC_CHECK_LIB(daemon, daemon_reset_sigs, [
-		AC_DEFINE(HAVE_DAEMON_RESET_SIGS, [1], ["daemon library has daemon_reset_sigs() and daemon_unblock_sigs() functions"])
-	])
-], [
-	AC_MSG_WARN([daemon library not found, daemonize features disabled])
-])
+AC_ARG_WITH([libdaemon],
+	AS_HELP_STRING([--without-libdaemon], [Build without daemonize support]),
+	[
+		AC_MSG_NOTICE([daemonize support disabled])
+	], [
+		PKG_CHECK_MODULES(DAEMON, libdaemon >= 0.12, [
+			AC_SUBST(DAEMON_CFLAGS)
+			AC_SUBST(DAEMON_LIBS)
+			AC_DEFINE(HAVE_LIBDAEMON, [1], ["daemon library is available"])
+			AC_CHECK_LIB(daemon, daemon_reset_sigs, [
+				AC_DEFINE(HAVE_DAEMON_RESET_SIGS, [1], ["daemon library has daemon_reset_sigs() and daemon_unblock_sigs() functions"])
+			])
+		], [
+			AC_MSG_WARN([daemon library not found, daemonize features disabled])
+		])
+	]
+)
 
-PKG_CHECK_MODULES(ARCHIVE, libarchive >= 3.0, [
-	AC_SUBST(ARCHIVE_CFLAGS)
-	AC_SUBST(ARCHIVE_LIBS)
-	AC_DEFINE(HAVE_LIBARCHIVE, [1], ["libarchive is available"])
-		has_libarchive="yes"
-], [
-	AC_MSG_WARN([libarchive not found, dtninbox and dtnoutbox will not be compiled])
-])
+AC_ARG_WITH([libarchive],
+	AS_HELP_STRING([--without-libarchive], [Build without archive support]),
+	[
+		has_libarchive="no"
+		AC_MSG_NOTICE([archive support disabled, dtninbox and dtnoutbox will not be compiled])
+	], [
+		PKG_CHECK_MODULES(ARCHIVE, libarchive >= 3.0, [
+			AC_SUBST(ARCHIVE_CFLAGS)
+			AC_SUBST(ARCHIVE_LIBS)
+			AC_DEFINE(HAVE_LIBARCHIVE, [1], ["libarchive is available"])
+				has_libarchive="yes"
+		], [
+			AC_MSG_WARN([libarchive not found, dtninbox and dtnoutbox will not be compiled])
+		])
+	]
+)
 
 AC_ARG_WITH([tffs],
 AS_HELP_STRING([--with-tffs=PATH], [set the tffs path for fat-image support in dtnoutbox]), [
