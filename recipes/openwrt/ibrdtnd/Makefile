@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006 OpenWrt.org
+# Copyright (C) 2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -11,13 +11,15 @@ PKG_NAME:=ibrdtnd
 PKG_VERSION_MAJOR:=0
 PKG_VERSION_MINOR:=13
 PKG_VERSION_MICRO:=0
-
 PKG_VERSION:=$(PKG_VERSION_MAJOR).$(PKG_VERSION_MINOR).$(PKG_VERSION_MICRO)
+PKG_RELEASE:=1
+
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/releases
+PKG_MAINTAINER:=Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
+PKG_LICENSE:=Apache-2.0
 
 PKG_INSTALL:=1
-PKG_BUILD_DEPENDS:=dtndht ibrdtn libsqlite3
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -37,7 +39,7 @@ define Package/ibrdtnd/description
 endef
 
 CONFIGURE_ARGS += \
-        --with-tls --with-sqlite --with-dht
+        --with-tls --with-sqlite --with-dht --without-wifip2p --without-vmime
 
 define Package/ibrdtnd/install
 	$(INSTALL_DIR) $(1)/usr/sbin/
