@@ -166,7 +166,7 @@ namespace ibrcommon
 		{
 			const LoggerOutput &output = (*iter);
 
-			if ((void*)stream == (void*)output._stream)
+			if ((void*)&stream == (void*)(&(output._stream)))
 			{
 				iter = _logger.erase(iter);
 			}
