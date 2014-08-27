@@ -44,6 +44,11 @@ namespace ibrcommon
 		case EBUSY:
 			throw MutexException("The mutex could not be acquired because it was already locked.");
 			break;
+		case EDEADLK:
+			throw MutexException("The mutex could not be acquired because the current thread already locked it.");
+			break;
+		default:
+			throw MutexException("The mutex could not be acquired. Reason unknown.");
 		}
 	}
 
@@ -67,6 +72,11 @@ namespace ibrcommon
 		case EBUSY:
 			throw MutexException("The mutex could not be acquired because it was already locked.");
 			break;
+		case EDEADLK:
+			throw MutexException("The mutex could not be acquired because the current thread already locked it.");
+			break;
+		default:
+			throw MutexException("The mutex could not be acquired. Reason unknown.");
 		}
 	}
 
