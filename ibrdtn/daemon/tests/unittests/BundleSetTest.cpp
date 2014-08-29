@@ -49,6 +49,8 @@ void BundleSetTest::setUp()
 		_storage = new dtn::storage::MemoryBundleStorage();
 
 		ibrcommon::File path("/tmp/memory-bundleset-test");
+		if (path.exists()) path.remove(true);
+
 		MemoryBundleSet::setPath(path);
 		break;
 	}
@@ -178,6 +180,9 @@ void BundleSetTest::namingTest()
 #ifdef HAVE_SQLITE
 	if (dynamic_cast<dtn::storage::SQLiteBundleStorage*>(_storage) == NULL)
 		return;
+#else
+	// do not run the test without sqlite support
+	return;
 #endif
 
 	const std::string name1 = "test1BundleSet1";
