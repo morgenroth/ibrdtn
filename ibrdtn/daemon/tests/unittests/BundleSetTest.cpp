@@ -49,6 +49,8 @@ void BundleSetTest::setUp()
 		_storage = new dtn::storage::MemoryBundleStorage();
 
 		ibrcommon::File path("/tmp/memory-bundleset-test");
+		if (path.exists()) path.remove(true);
+
 		MemoryBundleSet::setPath(path);
 		break;
 	}
