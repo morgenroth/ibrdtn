@@ -81,6 +81,16 @@ namespace dtn
 				// bind to any interface
 				_vsocket.add(new ibrcommon::tcpserversocket(port));
 				_any_port = port;
+			} else if (net.isLoopback()) {
+				// bind to v6 loopback address if supported
+				if (ibrcommon::basesocket::hasSupport(AF_INET6)) {
+					ibrcommon::vaddress addr6(ibrcommon::vaddress::VADDR_LOCALHOST, port, AF_INET6);
+					_vsocket.add(new ibrcommon::tcpserversocket(addr6));
+				}
+
+				// bind to v4 loopback address
+				ibrcommon::vaddress addr4(ibrcommon::vaddress::VADDR_LOCALHOST, port, AF_INET);
+				_vsocket.add(new ibrcommon::tcpserversocket(addr4));
 			} else {
 				listen(net, port);
 			}
