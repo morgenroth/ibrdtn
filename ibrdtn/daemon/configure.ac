@@ -129,11 +129,17 @@ ANDROID_AC_BUILD([
 	# Checks for library functions.
 	AC_CHECK_FUNCS([gethostname socket])
 
-	# Check for presence of pdfLaTeX
-	AC_CHECK_PROG(PDFLATEX, pdflatex, pdflatex)
-	if test -z "$PDFLATEX"; then
-	AC_MSG_WARN([Unable to create PDF version of the documentation.])
-	fi
+	AC_ARG_ENABLE([docs],
+		AS_HELP_STRING([--enable-docs], [Build documentation using PDFLaTeX]),
+	[
+		# Check for presence of pdfLaTeX
+		AC_CHECK_PROG(PDFLATEX, pdflatex, pdflatex)
+		if test -z "$PDFLATEX"; then
+			AC_MSG_WARN([Unable to create PDF version of the documentation.])
+		fi
+	], [
+		PDFLATEX="no"
+	])
 
 	dnl -----------------------------------------------
 	dnl Development Options

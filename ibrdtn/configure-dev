@@ -36,6 +36,9 @@ CONF_PARAMS="${CONF_PARAMS} --with-tffs=/usr"
 # enable debugging options
 CONF_PARAMS="${CONF_PARAMS} --enable-debug"
 
+# enable building of documentation
+CONF_PARAMS="${CONF_PARAMS} --enable-docs"
+
 # configure all packages
 ./configure ${CONF_PARAMS} $@
 
