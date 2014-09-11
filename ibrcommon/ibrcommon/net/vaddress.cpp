@@ -40,6 +40,7 @@ namespace ibrcommon
 	const std::string vaddress::SCOPE_GLOBAL = "universe";
 #endif
 	const std::string vaddress::SCOPE_LINKLOCAL = "link";
+	const std::string vaddress::SCOPE_LOCAL = "local";
 
 	const std::string vaddress::VADDR_LOCALHOST = "localhost";
 	const std::string vaddress::VADDR_ANY = "any";
@@ -105,6 +106,7 @@ namespace ibrcommon
 	{
 		const std::string localhost(VADDR_LOCALHOST);
 
+		if (_scope == SCOPE_LOCAL) return true;
 		if (_address == localhost) return true;
 
 		struct addrinfo hints;

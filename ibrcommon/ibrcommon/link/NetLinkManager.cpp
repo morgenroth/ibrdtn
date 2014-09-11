@@ -130,14 +130,14 @@ namespace ibrcommon
 			addrname += "%" + iface.toString();
 		}
 
-		// set loop-back address to scope link-local
+		// set loop-back address to scope local
 		if (sa_addr.ss_family == AF_INET6) {
 			// get ipv6 specific address
 			sockaddr_in6 *addr6 = (sockaddr_in6*)&sa_addr;
 
 			if (IN6_IS_ADDR_LOOPBACK(&(addr6->sin6_addr))) {
 				// loop-back address
-				scopename = ibrcommon::vaddress::SCOPE_LINKLOCAL;
+				scopename = ibrcommon::vaddress::SCOPE_LOCAL;
 			}
 		}
 		else if (sa_addr.ss_family == AF_INET) {
@@ -146,7 +146,7 @@ namespace ibrcommon
 
 			if ((addr->sin_addr.s_addr & htonl(0xff000000)) == htonl(0x7F000000)) {
 				// loop-back address
-				scopename = ibrcommon::vaddress::SCOPE_LINKLOCAL;
+				scopename = ibrcommon::vaddress::SCOPE_LOCAL;
 			}
 		}
 
