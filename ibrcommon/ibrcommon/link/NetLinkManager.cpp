@@ -130,6 +130,26 @@ namespace ibrcommon
 			addrname += "%" + iface.toString();
 		}
 
+		// set loop-back address to scope link-local
+		if (sa_addr.ss_family == AF_INET6) {
+			// get ipv6 specific address
+			sockaddr_in6 *addr6 = (sockaddr_in6*)&sa_addr;
+
+			if (IN6_IS_ADDR_LOOPBACK(&(addr6->sin6_addr))) {
+				// loop-back address
+				scopename = ibrcommon::vaddress::SCOPE_LINKLOCAL;
+			}
+		}
+		else if (sa_addr.ss_family == AF_INET) {
+			// get ipv6 specific address
+			sockaddr_in *addr = (sockaddr_in*)&sa_addr;
+
+			if ((addr->sin_addr.s_addr & htonl(0xff000000)) == htonl(0x7F000000)) {
+				// loop-back address
+				scopename = ibrcommon::vaddress::SCOPE_LINKLOCAL;
+			}
+		}
+
 		return vaddress(addrname, "", scopename, sa_addr.ss_family);
 	}
 
