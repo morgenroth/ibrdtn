@@ -111,7 +111,7 @@ namespace ibrcommon
 						if (scope != vaddress::SCOPE_LINKLOCAL) continue;
 					}
 					else if (IN6_IS_ADDR_LOOPBACK(&(addr6->sin6_addr))) {
-						if (scope != vaddress::SCOPE_LINKLOCAL) continue;
+						if (scope != vaddress::SCOPE_LOCAL) continue;
 					}
 					else {
 						if (scope != vaddress::SCOPE_GLOBAL) continue;
@@ -127,7 +127,7 @@ namespace ibrcommon
 					}
 					else if ((addr->sin_addr.s_addr & htonl(0xff000000)) == htonl(0x7F000000)) {
 						// loop-back address
-						if (scope != vaddress::SCOPE_LINKLOCAL) continue;
+						if (scope != vaddress::SCOPE_LOCAL) continue;
 					}
 					else {
 						// global address
@@ -149,6 +149,7 @@ namespace ibrcommon
 					}
 					else if (IN6_IS_ADDR_LOOPBACK(&(addr6->sin6_addr))) {
 						// loop-back address
+						addr_scope = ibrcommon::vaddress::SCOPE_LOCAL;
 					}
 					else {
 						addr_scope = ibrcommon::vaddress::SCOPE_GLOBAL;
@@ -163,6 +164,7 @@ namespace ibrcommon
 					}
 					else if ((addr->sin_addr.s_addr & htonl(0xff000000)) == htonl(0x7F000000)) {
 						// loop-back address
+						addr_scope = ibrcommon::vaddress::SCOPE_LOCAL;
 					}
 					else {
 						addr_scope = ibrcommon::vaddress::SCOPE_GLOBAL;

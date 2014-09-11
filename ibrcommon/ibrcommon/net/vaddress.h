@@ -67,6 +67,7 @@ namespace ibrcommon
 
 			const static std::string SCOPE_GLOBAL;
 			const static std::string SCOPE_LINKLOCAL;
+			const static std::string SCOPE_LOCAL;
 
 			const static std::string VADDR_LOCALHOST;
 			const static std::string VADDR_ANY;
