@@ -107,18 +107,69 @@ namespace ibrcommon
 					// get ipv6 specific address
 					sockaddr_in6 *addr6 = (sockaddr_in6*)ifaceaddr;
 
-					// if the id is set, then this scope is link-local
-					if (addr6->sin6_scope_id == 0) {
-						if (scope != vaddress::SCOPE_GLOBAL) continue;
-					} else {
+					if (IN6_IS_ADDR_LINKLOCAL(&(addr6->sin6_addr))) {
 						if (scope != vaddress::SCOPE_LINKLOCAL) continue;
+					}
+					else if (IN6_IS_ADDR_LOOPBACK(&(addr6->sin6_addr))) {
+						if (scope != vaddress::SCOPE_LINKLOCAL) continue;
+					}
+					else {
+						if (scope != vaddress::SCOPE_GLOBAL) continue;
+					}
+				}
+				else if (ifaceaddr->sa_family == AF_INET) {
+					// get ipv6 specific address
+					sockaddr_in *addr = (sockaddr_in*)ifaceaddr;
+
+					if ((addr->sin_addr.s_addr & htonl(0xffff0000)) == htonl(0xA9FE0000)) {
+						// link-local address
+						if (scope != vaddress::SCOPE_LINKLOCAL) continue;
+					}
+					else if ((addr->sin_addr.s_addr & htonl(0xff000000)) == htonl(0x7F000000)) {
+						// loop-back address
+						if (scope != vaddress::SCOPE_LINKLOCAL) continue;
+					}
+					else {
+						// global address
+						if (scope != vaddress::SCOPE_GLOBAL) continue;
 					}
 				}
 			}
 
 			char address[256];
 			if (::getnameinfo((struct sockaddr *) ifaceaddr, sizeof (struct sockaddr_storage), address, sizeof address, 0, 0, NI_NUMERICHOST) == 0) {
-				ret.push_back( vaddress(std::string(address), "", ifaceaddr->sa_family) );
+				std::string addr_scope = ibrcommon::vaddress::SCOPE_LINKLOCAL;
+
+				if (ifaceaddr->sa_family == AF_INET6) {
+					// get ipv6 specific address
+					sockaddr_in6 *addr6 = (sockaddr_in6*)ifaceaddr;
+
+					if (IN6_IS_ADDR_LINKLOCAL(&(addr6->sin6_addr))) {
+						// link-local address
+					}
+					else if (IN6_IS_ADDR_LOOPBACK(&(addr6->sin6_addr))) {
+						// loop-back address
+					}
+					else {
+						addr_scope = ibrcommon::vaddress::SCOPE_GLOBAL;
+					}
+				}
+				else if (ifaceaddr->sa_family == AF_INET) {
+					// get ipv6 specific address
+					sockaddr_in *addr = (sockaddr_in*)ifaceaddr;
+
+					if ((addr->sin_addr.s_addr & htonl(0xffff0000)) == htonl(0xA9FE0000)) {
+						// link-local address
+					}
+					else if ((addr->sin_addr.s_addr & htonl(0xff000000)) == htonl(0x7F000000)) {
+						// loop-back address
+					}
+					else {
+						addr_scope = ibrcommon::vaddress::SCOPE_GLOBAL;
+					}
+				}
+
+				ret.push_back( vaddress(std::string(address), "", addr_scope, ifaceaddr->sa_family) );
 			}
 		}
 		freeifaddrs(ifap);
