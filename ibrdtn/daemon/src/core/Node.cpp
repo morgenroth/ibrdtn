@@ -250,7 +250,7 @@ namespace dtn
 				return Node::CONN_DGRAM_LOWPAN;
 			} else if (protocol == "P2P:WIFI") {
 				return Node::CONN_P2P_WIFI;
-			} else if (protocol == "unsupported") {
+			} else if (protocol == "P2P:BT") {
 				return Node::CONN_P2P_BT;
 			} else if (protocol == "unsupported") {
 				return Node::CONN_UNSUPPORTED;
