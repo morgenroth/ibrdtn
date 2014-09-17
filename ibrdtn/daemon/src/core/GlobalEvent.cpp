@@ -57,10 +57,10 @@ namespace dtn
 				return "Switched to IDLE mode.";
 			case GlobalEvent::GLOBAL_BUSY:
 				return "Switched to BUSY mode.";
-			case GlobalEvent::GLOBAL_SUSPEND:
-				return "Suspend components.";
-			case GlobalEvent::GLOBAL_RESUME:
-				return "Resume components.";
+			case GlobalEvent::GLOBAL_LOW_ENERGY:
+				return "Switched to low-energy mode.";
+			case GlobalEvent::GLOBAL_NORMAL:
+				return "Switched back to normal operations.";
 			case GlobalEvent::GLOBAL_START_DISCOVERY:
 				return "Start peer discovery.";
 			case GlobalEvent::GLOBAL_STOP_DISCOVERY:

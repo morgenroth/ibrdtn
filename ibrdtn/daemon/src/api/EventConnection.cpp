@@ -90,8 +90,8 @@ namespace dtn
 			case dtn::core::GlobalEvent::GLOBAL_IDLE:
 				_stream << "idle";
 				break;
-			case dtn::core::GlobalEvent::GLOBAL_RESUME:
-				_stream << "resume";
+			case dtn::core::GlobalEvent::GLOBAL_NORMAL:
+				_stream << "normal";
 				break;
 			case dtn::core::GlobalEvent::GLOBAL_RELOAD:
 				_stream << "reload";
@@ -99,8 +99,8 @@ namespace dtn
 			case dtn::core::GlobalEvent::GLOBAL_SHUTDOWN:
 				_stream << "shutdown";
 				break;
-			case dtn::core::GlobalEvent::GLOBAL_SUSPEND:
-				_stream << "suspend";
+			case dtn::core::GlobalEvent::GLOBAL_LOW_ENERGY:
+				_stream << "low-energy";
 				break;
 			case dtn::core::GlobalEvent::GLOBAL_INTERNET_AVAILABLE:
 				_stream << "internet available";

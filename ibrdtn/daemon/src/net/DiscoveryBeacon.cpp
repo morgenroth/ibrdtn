@@ -39,7 +39,7 @@ namespace dtn
 	namespace net
 	{
 		DiscoveryBeacon::DiscoveryBeacon(const Protocol version, const dtn::data::EID &eid)
-		 : _version(version), _flags(BEACON_NO_FLAGS), _canonical_eid(eid), _sn(0)
+		 : _version(version), _flags(BEACON_NO_FLAGS), _canonical_eid(eid), _sn(0), _period(1)
 		{
 		}
 
@@ -122,6 +122,21 @@ namespace dtn
 			_sn = sequence;
 		}
 
+		void DiscoveryBeacon::setPeriod(const dtn::data::Number &period)
+		{
+			_period = period;
+		}
+
+		const dtn::data::Number& DiscoveryBeacon::getPeriod() const
+		{
+			return _period;
+		}
+
+		bool DiscoveryBeacon::hasPeriod() const
+		{
+			return _period > 1;
+		}
+
 		std::ostream &operator<<(std::ostream &stream, const DiscoveryBeacon &announcement)
 		{
 			const dtn::net::DiscoveryBeacon::service_list &services = announcement._services;
@@ -175,6 +190,11 @@ namespace dtn
 						flags |= DiscoveryBeacon::BEACON_SERVICE_BLOCK;
 					}
 
+					if ( announcement._period > 1 )
+					{
+						flags |= DiscoveryBeacon::BEACON_CONTAINS_PERIOD;
+					}
+
 					stream << flags;
 
 					// sequencenumber
@@ -195,6 +215,13 @@ namespace dtn
 						{
 							stream << (*iter);
 						}
+					}
+
+					// not standard conform in version 01!
+					if ( flags & DiscoveryBeacon::BEACON_CONTAINS_PERIOD )
+					{
+						// append beacon period
+						stream << announcement._period;
 					}
 
 					break;
@@ -360,7 +387,15 @@ namespace dtn
 
 				if (announcement._flags & DiscoveryBeacon::BEACON_BLOOMFILTER)
 				{
-					// TODO: read the bloomfilter
+					// read the bloom-filter
+					stream >> announcement._bloomfilter;
+				}
+
+				// not standard conform in version 01!
+				if (announcement._flags & DiscoveryBeacon::BEACON_CONTAINS_PERIOD)
+				{
+					// read appended beacon period
+					stream >> announcement._period;
 				}
 
 				break;
