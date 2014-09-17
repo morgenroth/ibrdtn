@@ -38,6 +38,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.net.ConnectivityManager;
+import android.net.wifi.WifiManager;
 import android.os.Binder;
 import android.os.Build;
 import android.os.Bundle;
@@ -847,6 +849,9 @@ public class DaemonService extends Service {
 					
 					// unlisten to device state events
 					unregisterReceiver(mScreenStateReceiver);
+					
+					// unlisten to Wi-Fi events
+					unregisterReceiver(mNetworkStateReceiver);
 
 					// disable foreground service only if the daemon has been
 					// switched off
@@ -872,6 +877,12 @@ public class DaemonService extends Service {
 						if (mP2pManager != null)
 							mP2pManager.setEnabled(true);
 					}
+					
+					// listen to Wi-Fi events
+					IntentFilter netstatefilter = new IntentFilter();
+					netstatefilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+					netstatefilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
+					registerReceiver(mNetworkStateReceiver, netstatefilter);
 
 					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
 						// wake-up all apps in stopped-state when going online
@@ -937,6 +948,25 @@ public class DaemonService extends Service {
 				sendBroadcast(intent);
 			}
 		}
+
+		private BroadcastReceiver mNetworkStateReceiver = new BroadcastReceiver() {
+			@Override
+			public void onReceive(final Context context, final Intent intent) {
+				final ConnectivityManager connMgr = (ConnectivityManager) 
+						context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+				final android.net.NetworkInfo wifi = 
+						connMgr.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+				
+				// forward to the daemon if it is enabled
+				if (wifi.isConnected()) {
+					// tickle the daemon service
+					final Intent wakeUpIntent = new Intent(context, DaemonService.class);
+					wakeUpIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_NETWORK_CHANGED);
+					context.startService(wakeUpIntent);
+				}
+			}
+		};
 		
 		private BroadcastReceiver mScreenStateReceiver = new BroadcastReceiver() {
 			@Override

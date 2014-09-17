@@ -174,14 +174,6 @@
 			</intent-filter>
 		</receiver>
 
-		<receiver android:name=".service.NetworkStateReceiver"
-			android:label="NetworkStateReceiver">
-			<intent-filter>
-				<action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
-				<action android:name="android.net.wifi.WIFI_STATE_CHANGED" />
-			</intent-filter>
-		</receiver>
-
 		<provider
 			android:name=".stats.StatsContentProvider"
 			android:authorities="de.tubs.ibr.dtn.contentprovider"
