@@ -237,8 +237,14 @@ namespace dtn
 
 		void DeliveryPredictabilityMap::store(std::ostream &output) const
 		{
+			// get the current monotonic time-stamp difference
+			const dtn::data::Timestamp monotonic_diff = dtn::utils::Clock::getTime() - dtn::utils::Clock::getMonotonicTimestamp();
+
+			// get a absolute time-stamp
+			const dtn::data::Timestamp absAgingTime = monotonic_diff + _lastAgingTime;
+
 			// write last aged time-stamp
-			output << _lastAgingTime;
+			output << absAgingTime;
 
 			// store the number of map entries
 			output << dtn::data::Number(_predictmap.size());
@@ -263,8 +269,27 @@ namespace dtn
 			// clear the map
 			_predictmap.clear();
 
+			// get a absolute time-stamp
+			dtn::data::Timestamp absAgingTime;
+
 			// read last aged time-stamp
-			input >> _lastAgingTime;
+			input >> absAgingTime;
+
+			// get the current monotonic time-stamp difference
+			const dtn::data::Timestamp monotonic_diff = dtn::utils::Clock::getTime() - dtn::utils::Clock::getMonotonicTimestamp();
+			const dtn::data::Timestamp monotonic_now = dtn::utils::Clock::getMonotonicTimestamp();
+
+			// eliminate time-stamp which are in the future
+			if (monotonic_now >= (absAgingTime - monotonic_diff))
+			{
+				// add entry to the map
+				_lastAgingTime = absAgingTime - monotonic_diff;
+			}
+			else
+			{
+				// add entry to the map
+				_lastAgingTime = monotonic_now;
+			}
 
 			dtn::data::Number num_entries;
 			input >> num_entries;
