@@ -77,7 +77,7 @@ namespace dtn
 			bool _enabled;
 			uint16_t _sn;
 			dtn::data::Timestamp _adv_next;
-			dtn::data::Timestamp _last_announce_sent;
+			unsigned int _beacon_period;
 
 			ibrcommon::Mutex _provider_lock;
 

@@ -167,6 +167,11 @@ namespace dtn
 			dtn::core::BundleCore::getInstance().getStorage().clear();
 		}
 
+		void NativeDaemon::setLeMode(bool low_energy) const throw ()
+		{
+			dtn::core::GlobalEvent::raise(low_energy ? dtn::core::GlobalEvent::GLOBAL_LOW_ENERGY : dtn::core::GlobalEvent::GLOBAL_NORMAL);
+		}
+
 		void NativeDaemon::startDiscovery() const throw ()
 		{
 			dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_START_DISCOVERY);
@@ -319,8 +324,8 @@ namespace dtn
 			case dtn::core::GlobalEvent::GLOBAL_IDLE:
 				action = "idle";
 				break;
-			case dtn::core::GlobalEvent::GLOBAL_RESUME:
-				action = "resume";
+			case dtn::core::GlobalEvent::GLOBAL_NORMAL:
+				action = "normal";
 				break;
 			case dtn::core::GlobalEvent::GLOBAL_RELOAD:
 				action = "reload";
@@ -328,8 +333,8 @@ namespace dtn
 			case dtn::core::GlobalEvent::GLOBAL_SHUTDOWN:
 				action = "shutdown";
 				break;
-			case dtn::core::GlobalEvent::GLOBAL_SUSPEND:
-				action = "suspend";
+			case dtn::core::GlobalEvent::GLOBAL_LOW_ENERGY:
+				action = "low-energy";
 				break;
 			case dtn::core::GlobalEvent::GLOBAL_INTERNET_AVAILABLE:
 				action = "internet available";

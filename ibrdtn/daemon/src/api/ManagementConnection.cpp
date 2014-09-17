@@ -305,17 +305,17 @@ namespace dtn
 						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_RELOAD);
 						_stream << ClientHandler::API_STATUS_OK << " RELOAD" << std::endl;
 					}
-					else if (cmd[1] == "resume")
+					else if (cmd[1] == "low-energy")
 					{
-						// send powersave signal
-						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_RESUME);
-						_stream << ClientHandler::API_STATUS_OK << " RESUME" << std::endl;
+						// send low-energy signal
+						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_LOW_ENERGY);
+						_stream << ClientHandler::API_STATUS_OK << " LOW_ENERGY" << std::endl;
 					}
-					else if (cmd[1] == "suspend")
+					else if (cmd[1] == "normal")
 					{
-						// send suspend signal
-						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SUSPEND);
-						_stream << ClientHandler::API_STATUS_OK << " SUSPEND" << std::endl;
+						// send normal signal to disable LE mode
+						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_NORMAL);
+						_stream << ClientHandler::API_STATUS_OK << " NORMAL" << std::endl;
 					}
 					else if (cmd[1] == "start_discovery")
 					{

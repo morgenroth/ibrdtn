@@ -45,7 +45,8 @@ namespace dtn
 			{
 				BEACON_CONTAINS_EID = 0x01,
 				BEACON_SERVICE_BLOCK = 0x02,
-				BEACON_BLOOMFILTER = 0x04
+				BEACON_BLOOMFILTER = 0x04,
+				BEACON_CONTAINS_PERIOD = 0x08
 			};
 
 		public:
@@ -76,6 +77,10 @@ namespace dtn
 
 			void setSequencenumber(uint16_t sequence);
 
+			void setPeriod(const dtn::data::Number& period);
+			const dtn::data::Number& getPeriod() const;
+			bool hasPeriod() const;
+
 			bool isShort() const;
 
 		private:
@@ -87,6 +92,7 @@ namespace dtn
 			dtn::data::EID _canonical_eid;
 			uint16_t _sn;
 			dtn::data::BundleString _bloomfilter;
+			dtn::data::Number _period;
 
 			service_list _services;
 		};

@@ -38,7 +38,7 @@ namespace dtn
 	{
 		DiscoveryAgent::DiscoveryAgent()
 		 : _config(dtn::daemon::Configuration::getInstance().getDiscovery()),
-		   _enabled(true), _sn(0), _adv_next(0), _last_announce_sent(0)
+		   _enabled(true), _sn(0), _adv_next(0), _beacon_period(1)
 		{
 		}
 
@@ -59,8 +59,8 @@ namespace dtn
 				// advertise me
 				onAdvertise();
 
-				// next advertisement in one second
-				_adv_next = ts + 1;
+				// set next advertisement period
+				_adv_next = ts + _beacon_period;
 			}
 		}
 
@@ -73,6 +73,15 @@ namespace dtn
 			else if (global.getAction() == dtn::core::GlobalEvent::GLOBAL_STOP_DISCOVERY) {
 				// suspend discovery beacons
 				_enabled = false;
+			}
+			else if (global.getAction() == dtn::core::GlobalEvent::GLOBAL_LOW_ENERGY) {
+				// suspend mode - pro-long beaconing interval
+				_beacon_period = 60;
+			}
+			else if (global.getAction() == dtn::core::GlobalEvent::GLOBAL_NORMAL) {
+				// suspend mode stopped - reset beaconing interval
+				_beacon_period = 1;
+				_adv_next = 0;
 			}
 		}
 
@@ -157,7 +166,7 @@ namespace dtn
 				version = DiscoveryBeacon::DISCO_VERSION_01;
 				break;
 
-			case 1:
+			default:
 				version = DiscoveryBeacon::DISCO_VERSION_00;
 				break;
 
@@ -168,6 +177,9 @@ namespace dtn
 			};
 
 			DiscoveryBeacon beacon(version, dtn::core::BundleCore::local);
+
+			// set beaconing period
+			beacon.setPeriod(_beacon_period);
 
 			return beacon;
 		}
@@ -180,12 +192,13 @@ namespace dtn
 			// convert the announcement into NodeEvents
 			Node n(beacon.getEID());
 
+			// if beaconing period is defined by beacon, set time-out to twice the period
+			const dtn::data::Number to_value = beacon.hasPeriod() ? beacon.getPeriod() * 2 : _config.timeout();
+
 			const std::list<DiscoveryService> &services = beacon.getServices();
 
 			for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); ++iter)
 			{
-				const dtn::data::Number to_value = _config.timeout();
-
 				const DiscoveryService &s = (*iter);
 
 				// get protocol from tag
@@ -215,20 +228,20 @@ namespace dtn
 			dtn::core::BundleCore::getInstance().getConnectionManager().updateNeighbor(n);
 
 			// if continuous announcements are disabled, then reply to this message
-			if (!_config.announce())
+			if (!_config.announce() && _enabled)
 			{
 				// first check if another announcement was sent during the same seconds
 				const dtn::data::Timestamp ts = dtn::utils::Clock::getMonotonicTimestamp();
 
-				if (_last_announce_sent != ts)
+				if (_adv_next <= ts)
 				{
 					IBRCOMMON_LOGGER_DEBUG_TAG("DiscoveryAgent", 55) << "reply with discovery beacon" << IBRCOMMON_LOGGER_ENDL;
 
 					// reply with an own announcement
 					onAdvertise();
 
-					// remember timestamp of last sent discovery
-					_last_announce_sent = ts;
+					// set next advertisement period
+					_adv_next = ts + _beacon_period;
 				}
 			}
 		}
@@ -240,25 +253,7 @@ namespace dtn
 
 			IBRCOMMON_LOGGER_DEBUG_TAG("DiscoveryAgent", 55) << "advertise discovery beacon" << IBRCOMMON_LOGGER_ENDL;
 
-			DiscoveryBeacon::Protocol version;
-
-			switch (_config.version())
-			{
-			case 2:
-				version = DiscoveryBeacon::DISCO_VERSION_01;
-				break;
-
-			case 1:
-				version = DiscoveryBeacon::DISCO_VERSION_00;
-				break;
-
-			case 0:
-				IBRCOMMON_LOGGER_TAG("DiscoveryAgent", info) << "DTN2 compatibility mode" << IBRCOMMON_LOGGER_ENDL;
-				version = DiscoveryBeacon::DTND_IPDISCOVERY;
-				break;
-			};
-
-			DiscoveryBeacon beacon(version, dtn::core::BundleCore::local);
+			DiscoveryBeacon beacon = obtainBeacon();
 
 			// set sequencenumber
 			beacon.setSequencenumber(_sn);
@@ -317,9 +312,6 @@ namespace dtn
 					handler.onAdvertiseBeacon(iface, beacon);
 				}
 			}
-
-			// save the time of the last sent announcement
-			_last_announce_sent = dtn::utils::Clock::getTime();
 
 			// increment sequencenumber
 			_sn++;
