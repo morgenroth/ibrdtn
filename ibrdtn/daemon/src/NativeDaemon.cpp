@@ -167,6 +167,11 @@ namespace dtn
 			dtn::core::BundleCore::getInstance().getStorage().clear();
 		}
 
+		void NativeDaemon::setLeMode(bool low_energy) const throw ()
+		{
+			dtn::core::GlobalEvent::raise(low_energy ? dtn::core::GlobalEvent::GLOBAL_LOW_ENERGY : dtn::core::GlobalEvent::GLOBAL_NORMAL);
+		}
+
 		void NativeDaemon::startDiscovery() const throw ()
 		{
 			dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_START_DISCOVERY);

@@ -321,6 +321,11 @@ namespace dtn
 			 */
 			void stopDiscovery() const throw ();
 
+			/**
+			 * Control the Low-energy mode of the daemon
+			 */
+			void setLeMode(bool low_energy) const throw ();
+
 		private:
 			void init_up(DaemonRunLevel rl) throw (NativeDaemonException);
 			void init_down(DaemonRunLevel rl) throw (NativeDaemonException);
