@@ -58,6 +58,7 @@ public class DaemonProcess {
 	private DaemonState mState = DaemonState.OFFLINE;
 	private Boolean mDiscoveryEnabled = null;
 	private Boolean mDiscoveryActive = null;
+	private Boolean mLeModeEnabled = false;
 	
     private WifiManager.MulticastLock mMcastLock = null;
 
@@ -488,6 +489,15 @@ public class DaemonProcess {
 			}
 		}
 	};
+	
+	public synchronized void setLeMode(boolean enable) {
+		if (mLeModeEnabled == enable) return;
+		
+		// switch between LE and interactive mode
+		mDaemon.setLeMode(enable);
+		
+		mLeModeEnabled = enable;
+	}
 
 	public synchronized void startDiscovery() {
 	    if (mDiscoveryActive) return;

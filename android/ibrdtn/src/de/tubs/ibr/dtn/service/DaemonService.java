@@ -32,8 +32,10 @@ import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.os.Binder;
@@ -45,6 +47,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Parcelable;
+import android.os.PowerManager;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -841,6 +844,9 @@ public class DaemonService extends Service {
 						if (mP2pManager != null)
 							mP2pManager.setEnabled(false);
 					}
+					
+					// unlisten to device state events
+					unregisterReceiver(mScreenStateReceiver);
 
 					// disable foreground service only if the daemon has been
 					// switched off
@@ -891,6 +897,17 @@ public class DaemonService extends Service {
 								.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_START_DISCOVERY);
 						startService(discoIntent);
 					}
+					
+					// react to screen on/off events
+					IntentFilter dsfilter = new IntentFilter();
+					dsfilter.addAction(Intent.ACTION_SCREEN_ON);
+					dsfilter.addAction(Intent.ACTION_SCREEN_OFF);
+					registerReceiver(mScreenStateReceiver, dsfilter);
+					
+					// set initial state
+					PowerManager pm = (PowerManager)getSystemService(Context.POWER_SERVICE);
+					mDaemonProcess.setLeMode(!pm.isScreenOn());
+							
 					break;
 
 				case SUSPENDED:
@@ -920,6 +937,13 @@ public class DaemonService extends Service {
 				sendBroadcast(intent);
 			}
 		}
-
+		
+		private BroadcastReceiver mScreenStateReceiver = new BroadcastReceiver() {
+			@Override
+			public void onReceive(Context context, Intent intent) {
+				PowerManager pm = (PowerManager)getSystemService(Context.POWER_SERVICE);
+				mDaemonProcess.setLeMode(!pm.isScreenOn());
+			}
+		};
 	};
 }
