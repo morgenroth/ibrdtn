@@ -82,8 +82,8 @@ AC_HELP_STRING([--enable-gcov], [Turn on gcov coverage testing.]),
 	if test "x$CLANG" = xyes; then
 		AC_MSG_WARN([Code coverage is only supported in combination with GCC.])
 	else
-		CPPFLAGS="${CPPFLAGS} -fprofile-arcs -ftest-coverage"
-		CFLAGS="${CFLAGS} -fprofile-arcs -ftest-coverage"
+		CPPFLAGS="${CPPFLAGS} -fprofile-arcs -ftest-coverage -fPIC -O0"
+		CFLAGS="${CFLAGS} -fprofile-arcs -ftest-coverage -fPIC -O0"
 		LIBS="${LIBS} -lgcov"
 	fi
 ])
