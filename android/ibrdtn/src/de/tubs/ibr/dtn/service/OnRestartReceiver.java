@@ -29,20 +29,22 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import de.tubs.ibr.dtn.daemon.Preferences;
 
-public class OnBootReceiver extends BroadcastReceiver {
+public class OnRestartReceiver extends BroadcastReceiver {
 	
-	private final static String TAG = "IntentReceiver";
+	private final static String TAG = "OnRestartReceiver";
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		// load preferences
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-		Log.i(TAG, "IntentReceiver called by " + intent.getAction());
 		
-		if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED"))
+		if (	Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction()) ||
+				Intent.ACTION_MY_PACKAGE_REPLACED.equals(intent.getAction())	)
 		{
 			if (preferences.getBoolean(Preferences.KEY_ENABLED, true))
 			{
+				Log.d(TAG, "Restarted due to " + intent.getAction());
+				
 				// start the dtnd service
 				Intent is = new Intent(context, DaemonService.class);
 				is.setAction(DaemonService.ACTION_STARTUP);
