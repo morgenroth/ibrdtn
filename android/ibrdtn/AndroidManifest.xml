@@ -156,10 +156,13 @@
 			</intent-filter>
 		</receiver>
 
-		<receiver android:name=".service.OnBootReceiver"
-			android:enabled="true" android:exported="false" android:label="IntentReceiver">
+		<receiver android:name=".service.OnRestartReceiver"
+			android:enabled="true" android:exported="false" android:label="OnRestartReceiver">
 			<intent-filter>
 				<action android:name="android.intent.action.BOOT_COMPLETED" />
+			</intent-filter>
+			<intent-filter>
+				<action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
 			</intent-filter>
 		</receiver>
 
