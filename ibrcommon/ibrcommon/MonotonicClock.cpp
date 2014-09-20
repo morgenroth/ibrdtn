@@ -129,7 +129,12 @@ namespace ibrcommon {
 		ts.tv_sec = mts.tv_sec;
 		ts.tv_nsec = mts.tv_nsec;
 #else
-		::clock_gettime(CLOCK_MONOTONIC, &ts);
+		// use BOOTTIME as monotonic clock
+		if (::clock_gettime(CLOCK_BOOTTIME, &ts) != 0)
+		{
+			// fall-back to monotonic clock if boot-time is not available
+			::clock_gettime(CLOCK_MONOTONIC, &ts);
+		}
 #endif
 	}
 
