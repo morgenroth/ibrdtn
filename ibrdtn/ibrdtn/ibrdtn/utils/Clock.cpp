@@ -46,7 +46,7 @@ namespace dtn
 		/**
 		 * Class to generate a monotonic timestamp
 		 */
-		ibrcommon::MonotonicClock Clock::_monotonic_clock;
+		struct timespec Clock::_uptime_reference = Clock::__get_monotonic_ts();
 
 		Clock::Clock()
 		{
@@ -165,7 +165,9 @@ namespace dtn
 
 		dtn::data::Timestamp Clock::getMonotonicTimestamp()
 		{
-			return _monotonic_clock.getSeconds();
+			struct timespec ts;
+			ibrcommon::MonotonicClock::gettime(ts);
+			return dtn::data::Timestamp(ts.tv_sec);
 		}
 
 		const struct timeval& Clock::getOffset()
@@ -282,7 +284,21 @@ namespace dtn
 
 		dtn::data::Timestamp Clock::getUptime()
 		{
-			return Clock::getMonotonicTimestamp();
+			struct timespec now;
+			struct timespec result;
+			ibrcommon::MonotonicClock::gettime(now);
+			ibrcommon::MonotonicClock::diff(_uptime_reference, now, result);
+
+			return dtn::data::Timestamp(result.tv_sec);
+		}
+
+		struct timespec Clock::__get_monotonic_ts()
+		{
+			struct timespec ts;
+
+			// initialize up-time reference
+			ibrcommon::MonotonicClock::gettime(ts);
+			return ts;
 		}
 	}
 }

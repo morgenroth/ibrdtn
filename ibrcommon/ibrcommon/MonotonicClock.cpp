@@ -23,34 +23,10 @@ namespace ibrcommon {
 
 	MonotonicClock::MonotonicClock()
 	{
-		gettime(_start);
 	}
 
 	MonotonicClock::~MonotonicClock()
 	{
-	}
-
-	void MonotonicClock::get(struct timeval &tv) const
-	{
-		struct timespec ts;
-		get(ts);
-
-		tv.tv_sec = ts.tv_sec;
-		tv.tv_usec = ts.tv_nsec / 1000;
-	}
-
-	void MonotonicClock::get(struct timespec &ts) const
-	{
-		struct timespec now;
-		MonotonicClock::gettime(now);
-		MonotonicClock::diff(_start, now, ts);
-	}
-
-	time_t MonotonicClock::getSeconds() const
-	{
-		struct timespec t;
-		get(t);
-		return t.tv_sec;
 	}
 
 #ifdef __WIN32__

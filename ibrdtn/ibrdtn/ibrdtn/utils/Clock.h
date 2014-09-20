@@ -205,10 +205,12 @@ namespace dtn
 
 			static dtn::data::Timestamp __getExpireTime(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime);
 
+			static struct timespec __get_monotonic_ts();
+
 			static struct timeval _offset;
 			static bool _offset_init;
 
-			static ibrcommon::MonotonicClock _monotonic_clock;
+			static struct timespec _uptime_reference;
 		};
 	}
 }
