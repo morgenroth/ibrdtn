@@ -28,10 +28,6 @@ namespace ibrcommon {
 		MonotonicClock();
 		virtual ~MonotonicClock();
 
-		void get(struct timeval &tv) const;
-		void get(struct timespec &ts) const;
-		time_t getSeconds() const;
-
 		static void gettime(struct timeval &tv);
 		static void gettime(struct timespec &ts);
 
@@ -41,8 +37,6 @@ namespace ibrcommon {
 #ifdef __WIN32__
 		static LARGE_INTEGER getFILETIMEoffset();
 #endif
-
-		struct timespec _start;
 	};
 
 } /* namespace ctrl */

@@ -23,34 +23,10 @@ namespace ibrcommon {
 
 	MonotonicClock::MonotonicClock()
 	{
-		gettime(_start);
 	}
 
 	MonotonicClock::~MonotonicClock()
 	{
-	}
-
-	void MonotonicClock::get(struct timeval &tv) const
-	{
-		struct timespec ts;
-		get(ts);
-
-		tv.tv_sec = ts.tv_sec;
-		tv.tv_usec = ts.tv_nsec / 1000;
-	}
-
-	void MonotonicClock::get(struct timespec &ts) const
-	{
-		struct timespec now;
-		MonotonicClock::gettime(now);
-		MonotonicClock::diff(_start, now, ts);
-	}
-
-	time_t MonotonicClock::getSeconds() const
-	{
-		struct timespec t;
-		get(t);
-		return t.tv_sec;
 	}
 
 #ifdef __WIN32__
@@ -87,39 +63,39 @@ namespace ibrcommon {
 	void MonotonicClock::gettime(struct timespec &ts)
 	{
 #ifdef __WIN32__
-	    LARGE_INTEGER t;
-	    FILETIME f;
-	    double microseconds;
-	    static LARGE_INTEGER offset;
-	    static double frequencyToMicroseconds;
-	    static int initialized = 0;
-	    static BOOL usePerformanceCounter = 0;
+		LARGE_INTEGER t;
+		FILETIME f;
+		double microseconds;
+		static LARGE_INTEGER offset;
+		static double frequencyToMicroseconds;
+		static int initialized = 0;
+		static BOOL usePerformanceCounter = 0;
 
-	    if (!initialized) {
-	        LARGE_INTEGER performanceFrequency;
-	        initialized = 1;
-	        usePerformanceCounter = QueryPerformanceFrequency(&performanceFrequency);
-	        if (usePerformanceCounter) {
-	            QueryPerformanceCounter(&offset);
-	            frequencyToMicroseconds = (double)performanceFrequency.QuadPart / 1000000.;
-	        } else {
-	            offset = getFILETIMEoffset();
-	            frequencyToMicroseconds = 10.;
-	        }
-	    }
-	    if (usePerformanceCounter) QueryPerformanceCounter(&t);
-	    else {
-	        GetSystemTimeAsFileTime(&f);
-	        t.QuadPart = f.dwHighDateTime;
-	        t.QuadPart <<= 32;
-	        t.QuadPart |= f.dwLowDateTime;
-	    }
+		if (!initialized) {
+			LARGE_INTEGER performanceFrequency;
+			initialized = 1;
+			usePerformanceCounter = QueryPerformanceFrequency(&performanceFrequency);
+			if (usePerformanceCounter) {
+				QueryPerformanceCounter(&offset);
+				frequencyToMicroseconds = (double)performanceFrequency.QuadPart / 1000000.;
+			} else {
+				offset = getFILETIMEoffset();
+				frequencyToMicroseconds = 10.;
+			}
+		}
+		if (usePerformanceCounter) QueryPerformanceCounter(&t);
+		else {
+			GetSystemTimeAsFileTime(&f);
+			t.QuadPart = f.dwHighDateTime;
+			t.QuadPart <<= 32;
+			t.QuadPart |= f.dwLowDateTime;
+		}
 
-	    t.QuadPart -= offset.QuadPart;
-	    microseconds = (double)t.QuadPart / frequencyToMicroseconds;
-	    t.QuadPart = microseconds;
-	    ts.tv_sec = t.QuadPart / 1000000;
-	    ts.tv_nsec = (t.QuadPart % 1000000) * 1000;
+		t.QuadPart -= offset.QuadPart;
+		microseconds = (double)t.QuadPart / frequencyToMicroseconds;
+		t.QuadPart = microseconds;
+		ts.tv_sec = t.QuadPart / 1000000;
+		ts.tv_nsec = (t.QuadPart % 1000000) * 1000;
 #elif HAVE_MACH_MACH_TIME_H // OS X does not have clock_gettime, use clock_get_time
 		clock_serv_t cclock;
 		mach_timespec_t mts;
@@ -129,7 +105,12 @@ namespace ibrcommon {
 		ts.tv_sec = mts.tv_sec;
 		ts.tv_nsec = mts.tv_nsec;
 #else
-		::clock_gettime(CLOCK_MONOTONIC, &ts);
+		// use BOOTTIME as monotonic clock
+		if (::clock_gettime(CLOCK_BOOTTIME, &ts) != 0)
+		{
+			// fall-back to monotonic clock if boot-time is not available
+			::clock_gettime(CLOCK_MONOTONIC, &ts);
+		}
 #endif
 	}
 
@@ -147,4 +128,4 @@ namespace ibrcommon {
 		}
 	}
 
-} /* namespace ctrl */
+} /* namespace ibrcommon */

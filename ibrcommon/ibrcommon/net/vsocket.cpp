@@ -150,26 +150,24 @@ namespace ibrcommon
 		int ret = ::select(nfds, readfds, writefds, exceptfds, &to_copy);
 
 		// on timeout set the timeout value to zero
-	    if (ret == 0)
-	    {
-	    	timeout->tv_sec = 0;
-	    	timeout->tv_usec = 0;
-	    }
-	    else
-	    {
+		if (ret == 0)
+		{
+			timeout->tv_sec = 0;
+			timeout->tv_usec = 0;
+		}
+		else
+		{
 			tm.stop();
 
 			struct timespec time_spend;
 			tm.getTime(time_spend);
 
-			do {
-				timeout->tv_sec = timeout->tv_sec - time_spend.tv_sec;
-				timeout->tv_usec = timeout->tv_usec - (time_spend.tv_nsec / 1000);
-				if (timeout->tv_usec < 0) {
-					--timeout->tv_sec;
-					timeout->tv_usec += 1000000L;
-				}
-			} while (0);
+			timeout->tv_sec -= time_spend.tv_sec;
+			timeout->tv_usec -= time_spend.tv_nsec / 1000;
+			if (timeout->tv_usec < 0) {
+				--timeout->tv_sec;
+				timeout->tv_usec += 1000000L;
+			}
 
 			// adjust timeout value if that falls below zero
 			if (timeout->tv_sec < 0)
@@ -177,7 +175,7 @@ namespace ibrcommon
 				timeout->tv_sec = 0;
 				timeout->tv_usec = 0;
 			}
-	    }
+		}
 
 		return ret;
 	}
