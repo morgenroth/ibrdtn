@@ -33,8 +33,8 @@ namespace dtn
 	{
 		double Clock::_rating = 1.0;
 
-		struct timeval Clock::_offset;
-		bool Clock::_offset_init = false;
+		struct timeval Clock::_offset = Clock::__initialize_clock();
+		struct timeval Clock::__clock_reference = Clock::__get_clock_reference();
 
 		bool Clock::_modify_clock = false;
 
@@ -76,7 +76,16 @@ namespace dtn
 
 		void Clock::setModifyClock(bool val)
 		{
+			struct timeval tv;
+
+			// retrieve assumed clock
+			gettimeofday(&tv);
+
+			// switch clock mode
 			_modify_clock = val;
+
+			// set clock initially
+			settimeofday(&tv);
 		}
 
 		dtn::data::Timestamp Clock::getExpireTime(const dtn::data::Bundle &b)
@@ -179,12 +188,6 @@ namespace dtn
 		{
 			if (!Clock::shouldModifyClock())
 			{
-				if (!Clock::_offset_init)
-				{
-					timerclear(&Clock::_offset);
-					Clock::_offset_init = true;
-				}
-
 				timeradd(&Clock::_offset, &tv, &Clock::_offset);
 				IBRCOMMON_LOGGER_TAG("Clock", info) << "new local offset: " << Clock::toDouble(_offset) << "s" << IBRCOMMON_LOGGER_ENDL;
 			}
@@ -206,65 +209,55 @@ namespace dtn
 
 		void Clock::settimeofday(struct timeval *tv)
 		{
-			struct timezone tz;
 			struct timeval now;
-			::gettimeofday(&now, &tz);
+			struct timezone tz;
 
 			if (!Clock::shouldModifyClock())
 			{
-				if (!Clock::_offset_init)
-				{
-					timerclear(&Clock::_offset);
-					Clock::_offset_init = true;
-				}
+				// get the monotonic time of day
+				__monotonic_gettimeofday(&now);
+
+				// determine the new offset
 				timersub(&now, tv, &Clock::_offset);
-				IBRCOMMON_LOGGER_TAG("Clock", info) << "new local offset: " << Clock::toDouble(_offset) << "s" << IBRCOMMON_LOGGER_ENDL;
 			}
 			else
 			{
+				// get the hosts time of day
+				::gettimeofday(&now, &tz);
+
+				// determine the new offset
+				timersub(&now, tv, &Clock::_offset);
+
 #ifndef __WIN32__
 				// set the local clock to the new timestamp
 				::settimeofday(tv, &tz);
 #endif
 			}
+
+			IBRCOMMON_LOGGER_TAG("Clock", info) << "new local offset: " << Clock::toDouble(_offset) << "s" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void Clock::gettimeofday(struct timeval *tv)
 		{
-			struct timezone tz;
-			::gettimeofday(tv, &tz);
-
-			// correct by the local offset
-			if (!Clock::shouldModifyClock())
+			if (!Clock::shouldModifyClock() && Clock::_rating < 1.0)
 			{
-				if (!Clock::_offset_init)
-				{
-					timerclear(&Clock::_offset);
-					Clock::_offset_init = true;
-				}
+				// get the monotonic time of day
+				__monotonic_gettimeofday(tv);
 
 				// add offset
 				timersub(tv, &Clock::_offset, tv);
+			}
+			else
+			{
+				struct timezone tz;
+				::gettimeofday(tv, &tz);
 			}
 		}
 
 		void Clock::getdtntimeofday(struct timeval *tv)
 		{
-			struct timezone tz;
-			::gettimeofday(tv, &tz);
-
-			// correct by the local offset
-			if (!Clock::shouldModifyClock())
-			{
-				if (!Clock::_offset_init)
-				{
-					timerclear(&Clock::_offset);
-					Clock::_offset_init = true;
-				}
-
-				// add offset
-				timersub(tv, &Clock::_offset, tv);
-			}
+			// query local time
+			Clock::gettimeofday(tv);
 
 			// do we believe we are before the year 2000?
 			if (dtn::data::Timestamp(tv->tv_sec) < TIMEVAL_CONVERSION)
@@ -299,6 +292,38 @@ namespace dtn
 			// initialize up-time reference
 			ibrcommon::MonotonicClock::gettime(ts);
 			return ts;
+		}
+
+		struct timeval Clock::__get_clock_reference()
+		{
+			struct timezone tz;
+			struct timeval now, tv;
+
+			::gettimeofday(&now, &tz);
+			ibrcommon::MonotonicClock::gettime(tv);
+
+			timersub(&now, &tv, &now);
+
+			return now;
+		}
+
+		void Clock::__monotonic_gettimeofday(struct timeval *tv)
+		{
+			// use boot-time as reference to stay independent from
+			// external clock adjustments
+			struct timeval mtv;
+			ibrcommon::MonotonicClock::gettime(mtv);
+
+			// combine clock reference and current boot-time
+			timeradd(&__clock_reference, &mtv, tv);
+		}
+
+		struct timeval Clock::__initialize_clock()
+		{
+			struct timeval ret;
+			timerclear(&ret);
+			return ret;
+
 		}
 	}
 }

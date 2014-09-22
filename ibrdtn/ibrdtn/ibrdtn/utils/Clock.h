@@ -206,10 +206,14 @@ namespace dtn
 			static dtn::data::Timestamp __getExpireTime(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime);
 
 			static struct timespec __get_monotonic_ts();
+			static struct timeval __get_clock_reference();
+			static struct timeval __initialize_clock();
+
+			static void __monotonic_gettimeofday(struct timeval *tv);
 
 			static struct timeval _offset;
-			static bool _offset_init;
 
+			static struct timeval __clock_reference;
 			static struct timespec _uptime_reference;
 		};
 	}
