@@ -131,6 +131,9 @@ public class DaemonService extends Service {
 	
 	// global discovery state
 	private Boolean mDiscoveryState = false;
+	
+	// Last inspected Wi-Fi SSID
+	private String mDiscoverySsid = null;
 
 	// This is the object that receives interactions from clients. See
 	// RemoteService for a more complete example.
@@ -702,6 +705,9 @@ public class DaemonService extends Service {
 	@Override
 	public void onCreate() {
 		super.onCreate();
+		
+		// reset last SSID inspected for discovery
+		mDiscoverySsid = null;
 
 		// reset statistic action marker
 		mStatsLastAction = null;
@@ -957,13 +963,23 @@ public class DaemonService extends Service {
 
 				final android.net.NetworkInfo wifi = 
 						connMgr.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+
+				// extract SSID
+				String ssid = wifi.getExtraInfo();
 				
 				// forward to the daemon if it is enabled
-				if (wifi.isConnected()) {
-					// tickle the daemon service
-					final Intent wakeUpIntent = new Intent(context, DaemonService.class);
-					wakeUpIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_NETWORK_CHANGED);
-					context.startService(wakeUpIntent);
+				if (wifi.isConnected() && ssid != null) {
+					if (!ssid.equals(mDiscoverySsid)) {
+						// store SSID of last discovery
+						mDiscoverySsid = ssid;
+	
+						// tickle the daemon service
+						final Intent wakeUpIntent = new Intent(context, DaemonService.class);
+						wakeUpIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_NETWORK_CHANGED);
+						context.startService(wakeUpIntent);
+					}
+				} else {
+					mDiscoverySsid = null;
 				}
 			}
 		};
