@@ -987,6 +987,9 @@ public class Preferences extends PreferenceActivity {
 
 			// enable interface rebind
 			p.println("net_rebind = yes");
+			
+			// increase keep-alive timeout to 3 minutes
+			p.println("keepalive_timeout = 180");
 
 			// flush the write buffer
 			p.flush();
