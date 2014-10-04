@@ -54,7 +54,8 @@ namespace dtn
 		const int TCPConvergenceLayer::DEFAULT_PORT = 4556;
 
 		TCPConvergenceLayer::TCPConvergenceLayer()
-		 : _vsocket_state(false), _any_port(0), _stats_in(0), _stats_out(0)
+		 : _vsocket_state(false), _any_port(0), _stats_in(0), _stats_out(0),
+		   _keepalive_timeout( dtn::daemon::Configuration::getInstance().getNetwork().getKeepaliveInterval() )
 		{
 		}
 
@@ -394,7 +395,7 @@ namespace dtn
 
 			try {
 				// create a connection
-				TCPConnection *conn = new TCPConnection(*this, n, NULL, 10);
+				TCPConnection *conn = new TCPConnection(*this, n, NULL, _keepalive_timeout);
 
 #ifdef WITH_TLS
 				// enable TLS Support
@@ -440,7 +441,7 @@ namespace dtn
 
 			try {
 				// create a connection
-				TCPConnection *conn = new TCPConnection(*this, n, NULL, 10);
+				TCPConnection *conn = new TCPConnection(*this, n, NULL, _keepalive_timeout);
 
 #ifdef WITH_TLS
 				// enable TLS Support
@@ -550,7 +551,7 @@ namespace dtn
 							node.add( dtn::core::Node::URI(Node::NODE_CONNECTED, Node::CONN_TCPIP, uri, 0, 30) );
 
 							// create a new TCPConnection and return the pointer
-							TCPConnection *obj = new TCPConnection(*this, node, client, 10);
+							TCPConnection *obj = new TCPConnection(*this, node, client, _keepalive_timeout);
 
 #ifdef WITH_TLS
 							// enable TLS Support
