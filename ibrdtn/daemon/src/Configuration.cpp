@@ -93,7 +93,7 @@ namespace dtn
 		 : _quiet(false), _options(0), _timestamps(false), _verbose(false) {}
 
 		Configuration::Network::Network()
-		 : _routing("default"), _forwarding(true), _prefer_direct(true), _tcp_nodelay(true), _tcp_chunksize(4096), _tcp_idle_timeout(0), _default_net("lo"), _use_default_net(false), _auto_connect(0), _fragmentation(false), _scheduling(false), _link_request_interval(5000)
+		 : _routing("default"), _forwarding(true), _prefer_direct(true), _tcp_nodelay(true), _tcp_chunksize(4096), _tcp_idle_timeout(0), _keepalive_timeout(60), _default_net("lo"), _use_default_net(false), _auto_connect(0), _fragmentation(false), _scheduling(false), _link_request_interval(5000)
 		{}
 
 		Configuration::Security::Security()
@@ -897,6 +897,11 @@ namespace dtn
 			_tcp_idle_timeout = conf.read<unsigned int>("tcp_idle_timeout", 0);
 
 			/**
+			 * Keep alive interval for network connections
+			 */
+			_keepalive_timeout = conf.read<unsigned int>("keepalive_timeout", 60);
+
+			/**
 			 * auto connect interval
 			 */
 			_auto_connect = conf.read<dtn::data::Timeout>("net_autoconnect", 0);
@@ -1020,6 +1025,11 @@ namespace dtn
 		dtn::data::Timeout Configuration::Network::getTCPIdleTimeout() const
 		{
 			return _tcp_idle_timeout;
+		}
+
+		dtn::data::Timeout Configuration::Network::getKeepaliveInterval() const
+		{
+			return _keepalive_timeout;
 		}
 
 		dtn::data::Timeout Configuration::Network::getAutoConnect() const

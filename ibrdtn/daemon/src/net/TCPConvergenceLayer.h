@@ -179,6 +179,8 @@ namespace dtn
 			ibrcommon::Mutex _stats_lock;
 			size_t _stats_in;
 			size_t _stats_out;
+
+			const size_t _keepalive_timeout;
 		};
 	}
 }

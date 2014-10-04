@@ -316,6 +316,7 @@ namespace dtn
 				bool _tcp_nodelay;
 				dtn::data::Length _tcp_chunksize;
 				dtn::data::Timeout _tcp_idle_timeout;
+				dtn::data::Timeout _keepalive_timeout;
 				ibrcommon::vinterface _default_net;
 				bool _use_default_net;
 				dtn::data::Timeout _auto_connect;
@@ -373,6 +374,11 @@ namespace dtn
 				 * @return The idle timeout for TCP connections in seconds.
 				 */
 				dtn::data::Timeout getTCPIdleTimeout() const;
+
+				/**
+				 * @return The keep-alive interval for network connections.
+				 */
+				dtn::data::Timeout getKeepaliveInterval() const;
 
 				/**
 				 * @return Each x seconds try to connect to all available nodes.
