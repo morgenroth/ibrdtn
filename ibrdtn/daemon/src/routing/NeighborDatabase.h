@@ -148,6 +148,12 @@ namespace dtn
 				bool isExpired(const dtn::data::Timestamp &timestamp) const;
 
 				/**
+				 * Returns true if the filter has been received before and is
+				 * still not expired.
+				 */
+				bool isFilterValid() const;
+
+				/**
 				 * Returns the last update of this entry
 				 */
 				const dtn::data::Timestamp& getLastUpdate() const;

@@ -64,8 +64,7 @@ namespace dtn
 		public:
 			ProphetRoutingExtension(ForwardingStrategy *strategy, float p_encounter_max, float p_encounter_first,
 						float p_first_threshold, float beta, float gamma, float delta,
-						size_t time_unit, size_t i_typ,
-						dtn::data::Timestamp next_exchange_timeout);
+						size_t time_unit, size_t i_typ);
 			virtual ~ProphetRoutingExtension();
 
 			/* virtual methods from BaseRouter::Extension */
@@ -133,10 +132,6 @@ namespace dtn
 			ForwardingStrategy *_forwardingStrategy;
 			AcknowledgementSet _acknowledgementSet;
 
-			ibrcommon::Mutex _next_exchange_mutex; ///< Mutex for the _next_exchange_timestamp.
-			dtn::data::Timestamp _next_exchange_timeout; ///< Interval in seconds how often Handshakes should be executed on longer connections.
-			dtn::data::Timestamp _next_exchange_timestamp; ///< Unix timestamp, when the next handshake is due.
-
 			/*!
 			 * Calculates the p_encounter that rises linearly with the time since the encounter, up to p_encounter_max.
 			 */
@@ -169,15 +164,6 @@ namespace dtn
 				virtual std::string toString() const;
 
 				const dtn::data::EID eid;
-			};
-
-			class NextExchangeTask : public Task
-			{
-			public:
-				NextExchangeTask();
-				virtual ~NextExchangeTask();
-
-				virtual std::string toString() const;
 			};
 
 			ibrcommon::Queue<Task* > _taskqueue;

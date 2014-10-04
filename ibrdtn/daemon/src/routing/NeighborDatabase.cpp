@@ -88,6 +88,11 @@ namespace dtn
 			return _summary.has(id);
 		}
 
+		bool NeighborDatabase::NeighborEntry::isFilterValid() const
+		{
+			return (_filter_state == FILTER_AVAILABLE);
+		}
+
 		bool NeighborDatabase::NeighborEntry::isExpired(const dtn::data::Timestamp &timestamp) const
 		{
 			// expired after 15 minutes
