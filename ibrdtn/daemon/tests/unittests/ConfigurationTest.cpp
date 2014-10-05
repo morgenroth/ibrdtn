@@ -158,11 +158,11 @@ void ConfigurationTest::testDiscoveryPort()
 	CPPUNIT_ASSERT_EQUAL(4551, conf.getDiscovery().port());
 }
 
-void ConfigurationTest::testDiscoveryTimeout()
+void ConfigurationTest::testDiscoveryInterval()
 {
 	/* test signature () const */
 	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_EQUAL((unsigned int)5, conf.getDiscovery().timeout());
+	CPPUNIT_ASSERT_EQUAL((unsigned int)5, conf.getDiscovery().interval());
 }
 
 /*=== END   tests for class 'Discovery' ===*/

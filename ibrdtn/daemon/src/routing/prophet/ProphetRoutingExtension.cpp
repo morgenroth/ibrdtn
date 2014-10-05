@@ -45,9 +45,10 @@ namespace dtn
 		const std::string ProphetRoutingExtension::TAG = "ProphetRoutingExtension";
 
 		ProphetRoutingExtension::ProphetRoutingExtension(ForwardingStrategy *strategy, float p_encounter_max, float p_encounter_first, float p_first_threshold,
-								 float beta, float gamma, float delta, ibrcommon::Timer::time_t time_unit, ibrcommon::Timer::time_t i_typ)
+								 float beta, float gamma, float delta, ibrcommon::Timer::time_t time_unit, ibrcommon::Timer::time_t i_typ,
+								 dtn::data::Timestamp next_exchange_timeout)
 			: _deliveryPredictabilityMap(time_unit, beta, gamma),
-			  _forwardingStrategy(strategy),
+			  _forwardingStrategy(strategy), _next_exchange_timeout(next_exchange_timeout), _next_exchange_timestamp(0),
 			  _p_encounter_max(p_encounter_max), _p_encounter_first(p_encounter_first),
 			  _p_first_threshold(p_first_threshold), _delta(delta), _i_typ(i_typ)
 		{
@@ -56,6 +57,9 @@ namespace dtn
 
 			// set value for local EID to 1.0
 			_deliveryPredictabilityMap.set(core::BundleCore::local, 1.0);
+
+			// define the first exchange timestamp
+			_next_exchange_timestamp = dtn::utils::Clock::getMonotonicTimestamp() + _next_exchange_timeout;
 
 			try {
 				// set file to store prophet data
@@ -245,6 +249,17 @@ namespace dtn
 			{
 				// store persistent data to disk
 				if (_persistent_file.isValid()) store(_persistent_file);
+			}
+
+			ibrcommon::MutexLock l(_next_exchange_mutex);
+			const dtn::data::Timestamp now = dtn::utils::Clock::getMonotonicTimestamp();
+
+			if ((_next_exchange_timestamp > 0) && (_next_exchange_timestamp < now))
+			{
+				_taskqueue.push( new NextExchangeTask() );
+
+				// define the next exchange timestamp
+				_next_exchange_timestamp = now + _next_exchange_timeout;
 			}
 		}
 
@@ -500,6 +515,24 @@ namespace dtn
 						} catch (const dtn::storage::NoBundleFoundException &ex) {
 							IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 						} catch (const std::bad_cast&) { }
+
+						/**
+						 * NextExchangeTask is a timer based event, that triggers
+						 * a new dp_map exchange for every connected node
+						 */
+						try {
+							dynamic_cast<NextExchangeTask&>(*t);
+
+							std::set<dtn::core::Node> neighbors = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
+							std::set<dtn::core::Node>::const_iterator it;
+							for(it = neighbors.begin(); it != neighbors.end(); ++it)
+							{
+								try{
+									(**this).doHandshake(it->getEID());
+								} catch (const ibrcommon::Exception &ex) { }
+							}
+						} catch (const std::bad_cast&) { }
+
 					} catch (const ibrcommon::Exception &ex) {
 						IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 20) << "task failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
@@ -698,6 +731,19 @@ namespace dtn
 		std::string ProphetRoutingExtension::SearchNextBundleTask::toString() const
 		{
 			return "SearchNextBundleTask: " + eid.getString();
+		}
+
+		ProphetRoutingExtension::NextExchangeTask::NextExchangeTask()
+		{
+		}
+
+		ProphetRoutingExtension::NextExchangeTask::~NextExchangeTask()
+		{
+		}
+
+		std::string ProphetRoutingExtension::NextExchangeTask::toString() const
+		{
+			return "NextExchangeTask";
 		}
 
 		ProphetRoutingExtension::GRTR_Strategy::GRTR_Strategy()

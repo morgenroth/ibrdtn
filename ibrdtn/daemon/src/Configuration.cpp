@@ -84,7 +84,7 @@ namespace dtn
 		{}
 
 		Configuration::Discovery::Discovery()
-		 : _enabled(true), _timeout(5), _crosslayer(false) {}
+		 : _enabled(true), _interval(5), _announce(true), _short(false), _version(2), _crosslayer(false) {}
 
 		Configuration::Debug::Debug()
 		 : _enabled(false), _quiet(false), _level(0), _profiling(false) {}
@@ -404,7 +404,10 @@ namespace dtn
 
 		void Configuration::Discovery::load(const ibrcommon::ConfigFile &conf)
 		{
-			_timeout = conf.read<unsigned int>("discovery_timeout", 5);
+			_interval = conf.read<unsigned int>("discovery_interval", 5);
+			_announce = (conf.read<int>("discovery_announce", 1) == 1);
+			_short = (conf.read<int>("discovery_short", 0) == 1);
+			_version = conf.read<int>("discovery_version", 2);
 			_crosslayer = (conf.read<std::string>("discovery_crosslayer", "no") == "yes");
 		}
 
@@ -618,9 +621,9 @@ namespace dtn
 			return Configuration::getInstance()._conf.read<int>("discovery_port", 4551);
 		}
 
-		unsigned int Configuration::Discovery::timeout() const
+		unsigned int Configuration::Discovery::interval() const
 		{
-			return _timeout;
+			return _interval;
 		}
 
 		bool Configuration::Discovery::enableCrosslayer() const
@@ -789,6 +792,7 @@ namespace dtn
 				_prophet_config.i_typ = conf.read<ibrcommon::Timer::time_t>("prophet_i_typ", 300);
 				if(_prophet_config.i_typ < 1)
 					_prophet_config.i_typ = 1;
+				_prophet_config.next_exchange_timeout = conf.read<ibrcommon::Timer::time_t>("prophet_next_exchange_timeout", 120);
 				_prophet_config.forwarding_strategy = conf.read<std::string>("prophet_forwarding_strategy", "GRTR");
 				_prophet_config.gtmx_nf_max = conf.read<unsigned int>("prophet_gtmx_nf_max", 30);
 			}
@@ -963,17 +967,17 @@ namespace dtn
 
 		bool Configuration::Discovery::announce() const
 		{
-			return (Configuration::getInstance()._conf.read<int>("discovery_announce", 1) == 1);
+			return _announce;
 		}
 
 		bool Configuration::Discovery::shortbeacon() const
 		{
-			return (Configuration::getInstance()._conf.read<int>("discovery_short", 0) == 1);
+			return _short;
 		}
 
 		int Configuration::Discovery::version() const
 		{
-			return Configuration::getInstance()._conf.read<int>("discovery_version", 2);
+			return _version;
 		}
 
 		bool Configuration::doAPI() const

@@ -38,7 +38,7 @@ namespace dtn
 	{
 		DiscoveryAgent::DiscoveryAgent()
 		 : _config(dtn::daemon::Configuration::getInstance().getDiscovery()),
-		   _enabled(true), _sn(0), _adv_next(0), _beacon_period(1)
+		   _enabled(true), _sn(0), _adv_next(0), _beacon_period(_config.interval())
 		{
 		}
 
@@ -76,11 +76,11 @@ namespace dtn
 			}
 			else if (global.getAction() == dtn::core::GlobalEvent::GLOBAL_LOW_ENERGY) {
 				// suspend mode - pro-long beaconing interval
-				_beacon_period = 60;
+				_beacon_period = _config.interval() * 10;
 			}
 			else if (global.getAction() == dtn::core::GlobalEvent::GLOBAL_NORMAL) {
 				// suspend mode stopped - reset beaconing interval
-				_beacon_period = 1;
+				_beacon_period = _config.interval();
 				_adv_next = 0;
 			}
 		}
@@ -193,7 +193,7 @@ namespace dtn
 			Node n(beacon.getEID());
 
 			// if beaconing period is defined by beacon, set time-out to twice the period
-			const dtn::data::Number to_value = beacon.hasPeriod() ? beacon.getPeriod() * 2 : _config.timeout();
+			const dtn::data::Number to_value = beacon.hasPeriod() ? beacon.getPeriod() * 2 : _config.interval() * 2;
 
 			const std::list<DiscoveryService> &services = beacon.getServices();
 

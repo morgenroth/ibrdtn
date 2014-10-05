@@ -261,6 +261,16 @@ namespace dtn
 
 		void BaseRouter::raiseEvent(const dtn::routing::QueueBundleEvent &event) throw ()
 		{
+			// check Scope Control Block - do not forward bundles with hop limit == 0
+			if (event.bundle.hopcount == 0) return;
+
+			// if bundles are addressed to singletons ...
+			if (event.bundle.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+			{
+				// ... do not them if they are address to the local EID
+				if (event.bundle.destination.sameHost(dtn::core::BundleCore::local)) return;
+			}
+
 			// If an incoming bundle is received, forward it to all connected neighbors
 			// trigger all routing modules to forward the new bundle
 			__eventBundleQueued(event.origin, event.bundle);

@@ -171,7 +171,10 @@ namespace dtn
 				void load(const ibrcommon::ConfigFile &conf);
 
 				bool _enabled;
-				unsigned int _timeout;
+				unsigned int _interval;
+				bool _announce;
+				bool _short;
+				int _version;
 				bool _crosslayer;
 
 			public:
@@ -181,7 +184,7 @@ namespace dtn
 				int version() const;
 				const std::set<ibrcommon::vaddress> address() const throw (ParameterNotFoundException);
 				int port() const;
-				unsigned int timeout() const;
+				unsigned int interval() const;
 				bool enableCrosslayer() const;
 			};
 
@@ -285,7 +288,7 @@ namespace dtn
 				public:
 					ProphetConfig()
 					: p_encounter_max(0), p_encounter_first(0), p_first_threshold(0), beta(0), gamma(0), delta(0),
-					  time_unit(0), i_typ(0), forwarding_strategy(), gtmx_nf_max(0)
+					  time_unit(0), i_typ(0), next_exchange_timeout(0), forwarding_strategy(), gtmx_nf_max(0)
 					{ }
 
 					~ProphetConfig() { }
@@ -298,6 +301,7 @@ namespace dtn
 					float delta;
 					ibrcommon::Timer::time_t time_unit;
 					ibrcommon::Timer::time_t i_typ;
+					ibrcommon::Timer::time_t next_exchange_timeout;
 					std::string forwarding_strategy;
 					unsigned int gtmx_nf_max;
 				};

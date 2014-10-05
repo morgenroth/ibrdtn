@@ -38,7 +38,7 @@ class ConfigurationTest : public CppUnit::TestFixture {
 		void testDiscoveryVersion();
 		void testDiscoveryAddress();
 		void testDiscoveryPort();
-		void testDiscoveryTimeout();
+		void testDiscoveryInterval();
 		/*=== END   tests for class 'Discovery' ===*/
 
 		/*=== BEGIN tests for class 'Debug' ===*/
@@ -89,7 +89,7 @@ class ConfigurationTest : public CppUnit::TestFixture {
 			CPPUNIT_TEST(testDiscoveryVersion);
 			CPPUNIT_TEST(testDiscoveryAddress);
 			CPPUNIT_TEST(testDiscoveryPort);
-			CPPUNIT_TEST(testDiscoveryTimeout);
+			CPPUNIT_TEST(testDiscoveryInterval);
 			CPPUNIT_TEST(testDebugLevel);
 			CPPUNIT_TEST(testDebugEnabled);
 			CPPUNIT_TEST(testDebugQuiet);
