@@ -171,7 +171,10 @@ namespace dtn
 				void load(const ibrcommon::ConfigFile &conf);
 
 				bool _enabled;
-				unsigned int _timeout;
+				unsigned int _interval;
+				bool _announce;
+				bool _short;
+				int _version;
 				bool _crosslayer;
 
 			public:
@@ -181,7 +184,7 @@ namespace dtn
 				int version() const;
 				const std::set<ibrcommon::vaddress> address() const throw (ParameterNotFoundException);
 				int port() const;
-				unsigned int timeout() const;
+				unsigned int interval() const;
 				bool enableCrosslayer() const;
 			};
 
