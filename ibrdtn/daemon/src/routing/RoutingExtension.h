@@ -22,6 +22,7 @@
 #ifndef ROUTINGEXTENSION_H_
 #define ROUTINGEXTENSION_H_
 
+#include "storage/BundleResult.h"
 #include "routing/NeighborDatabase.h"
 #include "routing/NodeHandshake.h"
 #include "core/Event.h"
@@ -33,6 +34,17 @@ namespace dtn
 	namespace routing
 	{
 		class BaseRouter;
+
+		class RoutingResult
+		 : public dtn::storage::BundleResult, public std::list<std::pair<dtn::data::MetaBundle, std::string> >
+		{
+		public:
+			RoutingResult();
+			virtual ~RoutingResult();
+
+			virtual void put(const dtn::data::MetaBundle &bundle) throw ();
+			virtual void put(const dtn::data::MetaBundle &bundle, const std::string &iface) throw ();
+		};
 
 		class RoutingExtension
 		{

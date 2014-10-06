@@ -30,6 +30,24 @@ namespace dtn
 	{
 		const std::string RoutingExtension::TAG = "RoutingExtension";
 
+		RoutingResult::RoutingResult()
+		{
+		}
+
+		RoutingResult::~RoutingResult()
+		{
+		}
+
+		void RoutingResult::put(const dtn::data::MetaBundle &bundle) throw ()
+		{
+			put(bundle, "");
+		}
+
+		void RoutingResult::put(const dtn::data::MetaBundle &bundle, const std::string &iface) throw ()
+		{
+			push_back(make_pair(bundle, iface));
+		}
+
 		/**
 		 * base implementation of the Extension class
 		 */

@@ -81,9 +81,16 @@ namespace dtn
 
 				virtual dtn::data::Size limit() const throw () { return _entry.getFreeTransferSlots(); };
 
-				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
+				virtual bool addIfSelected(dtn::storage::BundleResult &result, const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
-					return _extension.shouldRouteTo(meta, _entry);
+					// check if the considered bundle should get routed
+					std::pair<bool, std::string> ret = _extension.shouldRouteTo(meta, _entry);
+
+					// put the considered bundle into the result-set if it should get routed
+					if (ret.first) static_cast<RoutingResult&>(result).put(meta, ret.second);
+
+					// signal that selection to the calling module
+					return ret.first;
 				};
 
 #ifdef HAVE_SQLITE
@@ -105,7 +112,7 @@ namespace dtn
 				const NeighborDatabase::NeighborEntry &_entry;
 			};
 
-			dtn::storage::BundleResultList list;
+			RoutingResult list;
 
 			while (true)
 			{
@@ -146,11 +153,11 @@ namespace dtn
 						IBRCOMMON_LOGGER_DEBUG_TAG(NeighborRoutingExtension::TAG, 5) << "got " << list.size() << " items to transfer to " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
 						// send the bundles as long as we have resources
-						for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
+						for (RoutingResult::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 						{
 							try {
 								// transfer the bundle to the neighbor
-								transferTo(task.eid, *iter);
+								transferTo(task.eid, (*iter).first);
 							} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 						}
 					} catch (const NeighborDatabase::NoMoreTransfersAvailable &ex) {
@@ -167,14 +174,17 @@ namespace dtn
 					try {
 						const ProcessBundleTask &task = dynamic_cast<ProcessBundleTask&>(*t);
 
+						// variable to store the result of shouldRouteTo()
+						std::pair<bool, std::string> ret;
+
 						// lock the neighbor database while searching for bundles
 						{
 							// this destination is not handles by any static route
 							ibrcommon::MutexLock l(db);
 							NeighborDatabase::NeighborEntry &entry = db.get(task.nexthop, true);
 
-							if (!shouldRouteTo(task.bundle, entry))
-								throw NeighborDatabase::NoRouteKnownException();
+							ret = shouldRouteTo(task.bundle, entry);
+							if (!ret.first) throw NeighborDatabase::NoRouteKnownException();
 						}
 
 						// transfer the bundle to the neighbor
@@ -197,12 +207,12 @@ namespace dtn
 			}
 		}
 
-		bool NeighborRoutingExtension::shouldRouteTo(const dtn::data::MetaBundle &meta, const NeighborDatabase::NeighborEntry &n) const
+		std::pair<bool, std::string> NeighborRoutingExtension::shouldRouteTo(const dtn::data::MetaBundle &meta, const NeighborDatabase::NeighborEntry &n) const
 		{
 			// check Scope Control Block - do not forward bundles with hop limit == 0
 			if (meta.hopcount == 0)
 			{
-				return false;
+				return make_pair(false, "");
 			}
 
 			if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
@@ -210,28 +220,28 @@ namespace dtn
 				// do not forward local bundles
 				if (meta.destination.sameHost(dtn::core::BundleCore::local))
 				{
-					return false;
+					return make_pair(false, "");
 				}
 
 				// do not forward bundles for other nodes
 				if (!meta.destination.sameHost(n.eid))
 				{
-					return false;
+					return make_pair(false, "");
 				}
 			}
 			else
 			{
 				// do not forward non-singleton bundles
-				return false;
+				return make_pair(false, "");
 			}
 
 			// do not forward bundles already known by the destination
 			if (n.has(meta))
 			{
-				return false;
+				return make_pair(false, "");
 			}
 
-			return true;
+			return make_pair(true, "<insert-iface>");
 		}
 
 		void NeighborRoutingExtension::eventDataChanged(const dtn::data::EID &peer) throw ()

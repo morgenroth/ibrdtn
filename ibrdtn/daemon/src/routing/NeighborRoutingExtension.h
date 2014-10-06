@@ -22,6 +22,7 @@
 #ifndef NEIGHBORROUTINGEXTENSION_H_
 #define NEIGHBORROUTINGEXTENSION_H_
 
+#include "storage/BundleResult.h"
 #include "routing/RoutingExtension.h"
 #include "routing/NeighborDatabase.h"
 #include "core/Node.h"
@@ -88,7 +89,7 @@ namespace dtn
 				const dtn::data::EID nexthop;
 			};
 
-			bool shouldRouteTo(const dtn::data::MetaBundle &meta, const NeighborDatabase::NeighborEntry &n) const;
+			std::pair<bool, std::string> shouldRouteTo(const dtn::data::MetaBundle &meta, const NeighborDatabase::NeighborEntry &n) const;
 
 			/**
 			 * hold queued tasks for later processing

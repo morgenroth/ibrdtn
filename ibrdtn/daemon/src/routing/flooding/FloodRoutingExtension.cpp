@@ -128,7 +128,7 @@ namespace dtn
 
 				virtual dtn::data::Size limit() const throw () { return _entry.getFreeTransferSlots(); };
 
-				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
+				virtual bool addIfSelected(dtn::storage::BundleResult &result, const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
 					// check Scope Control Block - do not forward bundles with hop limit == 0
 					if (meta.hopcount == 0)
@@ -175,6 +175,9 @@ namespace dtn
 						return false;
 					}
 
+					// put the selected bundle with targeted interface into the result-set
+					static_cast<RoutingResult&>(result).put(meta, "<insert-iface>");
+
 					return true;
 				};
 
@@ -184,7 +187,7 @@ namespace dtn
 			};
 
 			// list for bundles
-			dtn::storage::BundleResultList list;
+			RoutingResult list;
 
 			// set of known neighbors
 			std::set<dtn::core::Node> neighbors;
@@ -232,11 +235,11 @@ namespace dtn
 							}
 
 							// send the bundles as long as we have resources
-							for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
+							for (RoutingResult::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 							{
 								try {
 									// transfer the bundle to the neighbor
-									transferTo(task.eid, *iter);
+									transferTo(task.eid, (*iter).first);
 								} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 							}
 						} catch (const NeighborDatabase::NoMoreTransfersAvailable &ex) {
