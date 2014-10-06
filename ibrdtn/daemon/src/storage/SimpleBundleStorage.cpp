@@ -267,11 +267,7 @@ namespace dtn
 				// skip expired bundles
 				if ( dtn::utils::Clock::isExpired( meta ) ) continue;
 
-				if ( cb.shouldAdd(meta) )
-				{
-					result.put(meta);
-					items_added++;
-				}
+				if ( cb.addIfSelected(result, meta) ) items_added++;
 			}
 
 			if (items_added == 0) throw NoBundleFoundException();
