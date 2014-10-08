@@ -187,7 +187,7 @@ namespace dtn
 		void Clock::setOffset(const struct timeval &tv)
 		{
 			// do not modify time on reference nodes
-			if (Clock::getRating() < 1.0) return;
+			if (Clock::getRating() == 1.0) return;
 
 			if (!Clock::shouldModifyClock())
 			{
@@ -216,7 +216,7 @@ namespace dtn
 			struct timezone tz;
 
 			// do not modify time on reference nodes
-			if (Clock::getRating() < 1.0) return;
+			if (Clock::getRating() == 1.0) return;
 
 			if (!Clock::shouldModifyClock())
 			{
