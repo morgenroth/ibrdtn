@@ -186,6 +186,9 @@ namespace dtn
 
 		void Clock::setOffset(const struct timeval &tv)
 		{
+			// do not modify time on reference nodes
+			if (Clock::getRating() < 1.0) return;
+
 			if (!Clock::shouldModifyClock())
 			{
 				timeradd(&Clock::_offset, &tv, &Clock::_offset);
@@ -211,6 +214,9 @@ namespace dtn
 		{
 			struct timeval now;
 			struct timezone tz;
+
+			// do not modify time on reference nodes
+			if (Clock::getRating() < 1.0) return;
 
 			if (!Clock::shouldModifyClock())
 			{
@@ -239,7 +245,7 @@ namespace dtn
 
 		void Clock::gettimeofday(struct timeval *tv)
 		{
-			if (!Clock::shouldModifyClock() && Clock::_rating < 1.0)
+			if (!Clock::shouldModifyClock() && Clock::getRating() < 1.0)
 			{
 				// get the monotonic time of day
 				__monotonic_gettimeofday(tv);
