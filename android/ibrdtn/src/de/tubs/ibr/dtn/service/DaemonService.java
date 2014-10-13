@@ -93,6 +93,9 @@ public class DaemonService extends Service {
 
 	public static final String ACTION_START_DISCOVERY = "de.tubs.ibr.dtn.action.START_DISCOVERY";
 	public static final String ACTION_STOP_DISCOVERY = "de.tubs.ibr.dtn.action.STOP_DISCOVERY";
+	public static final String ACTION_START_BT_DISCOVERY = "de.tubs.ibr.dtn.action.START_BT_DISCOVERY";
+	public static final String ACTION_PAUSE_BT_DISCOVERY = "de.tubs.ibr.dtn.action.PAUSE_BT_DISCOVERY";
+	public static final String ACTION_STOP_BT_DISCOVERY = "de.tubs.ibr.dtn.action.STOP_BT_DISCOVERY";
 	public static final String EXTRA_DISCOVERY_DURATION = "de.tubs.ibr.dtn.intent.DISCOVERY_DURATION";
 	
 	public static final String ACTION_START_KEY_EXCHANGE = "de.tubs.ibr.dtn.action.START_KEY_EXCHANGE";
@@ -116,12 +119,16 @@ public class DaemonService extends Service {
 	
 	private int MSG_WHAT_STOP_DISCOVERY = 1;
 	private int MSG_WHAT_COLLECT_STATS = 2;
+	private int MSG_WHAT_BLE_DISCOVERY = 3;
 
 	// session manager for all active sessions
 	private SessionManager mSessionManager = null;
 
 	// the P2P manager used for wifi direct control
 	private P2pManager mP2pManager = null;
+	
+	// the BLE manager used for node discovery
+	private BleManager mBleManager = null;
 
 	// the daemon process
 	private DaemonProcess mDaemonProcess = null;
@@ -187,6 +194,11 @@ public class DaemonService extends Service {
 		public boolean isP2pActive() throws RemoteException {
 			return mP2pManager.isActive();
 		}
+		
+		@Override
+		public boolean isBleActive() throws RemoteException {
+			return mBleManager.isActive();
+		}
 
 		@Override
 		public String[] getVersion() throws RemoteException {
@@ -206,6 +218,27 @@ public class DaemonService extends Service {
 			} else {
 				if (mP2pManager != null)
 					mP2pManager.setEnabled(false);
+			}
+		}
+
+		@Override
+		public void setBleEnabled(boolean val) throws RemoteException {
+			if (val && mDaemonProcess.getState().equals(DaemonState.ONLINE)) {
+				if (mBleManager != null)
+					mBleManager.setEnabled(true);
+				
+				// enable BLE scanning
+				final Intent startBleDiscoIntent = new Intent(DaemonService.this, DaemonService.class);
+				startBleDiscoIntent.setAction(DaemonService.ACTION_START_BT_DISCOVERY);
+				startService(startBleDiscoIntent);
+			} else {
+				if (mBleManager != null)
+					mBleManager.setEnabled(false);
+				
+				// disable BLE scanning
+				final Intent stopBleDiscoIntent = new Intent(DaemonService.this, DaemonService.class);
+				stopBleDiscoIntent.setAction(DaemonService.ACTION_STOP_BT_DISCOVERY);
+				startService(stopBleDiscoIntent);
 			}
 		}
 	};
@@ -400,6 +433,10 @@ public class DaemonService extends Service {
 				boolean value = intent.getBooleanExtra(Preferences.KEY_P2P_ENABLED, false);
 				prefs.edit().putBoolean(Preferences.KEY_P2P_ENABLED, value).commit();
 			}
+			if (intent.hasExtra(Preferences.KEY_BLE_ENABLED)) {
+				boolean value = intent.getBooleanExtra(Preferences.KEY_BLE_ENABLED, false);
+				prefs.edit().putBoolean(Preferences.KEY_BLE_ENABLED, value).commit();
+			}
 			if (intent.hasExtra(Preferences.KEY_DISCOVERY_MODE)) {
 				String value = intent.getStringExtra(Preferences.KEY_DISCOVERY_MODE);
 				prefs.edit().putString(Preferences.KEY_DISCOVERY_MODE, value).commit();
@@ -565,6 +602,60 @@ public class DaemonService extends Service {
 			// remove all stop discovery messages
 			mServiceHandler.removeMessages(MSG_WHAT_STOP_DISCOVERY);
 			Log.i(TAG, "Scheduled discovery stop removed.");
+		} else if (ACTION_START_BT_DISCOVERY.equals(intent.getAction())) {
+			SharedPreferences prefs = getSharedPreferences("dtnd", Context.MODE_PRIVATE);
+			if ((mBleManager != null) && prefs.getBoolean(Preferences.KEY_BLE_ENABLED, false)) {
+				// TODO set proper values for scan duration
+				final int duration = Integer.parseInt(prefs.getString(Preferences.KEY_SCAN_DURATION, "2200"));
+
+				if (duration <= 0) {
+					Log.i(TAG, "scan duration invalid: " + duration + " ms");
+					return;
+				}
+				
+				Log.i(TAG, "scanning for " + duration + " ms");
+				mBleManager.startDiscovery();
+				
+				// schedule stop of discovery
+				Message msg = mServiceHandler.obtainMessage();
+				msg.what = MSG_WHAT_BLE_DISCOVERY;
+				msg.arg1 = 0;
+				msg.obj = new Intent(DaemonService.ACTION_PAUSE_BT_DISCOVERY);
+				mServiceHandler.sendMessageDelayed(msg, duration);
+			}
+		} else if (ACTION_PAUSE_BT_DISCOVERY.equals(intent.getAction())) {
+			SharedPreferences prefs = getSharedPreferences("dtnd", Context.MODE_PRIVATE);
+			if (mBleManager != null) {
+				// stop scanning
+				mBleManager.stopDiscovery();
+				
+				// TODO set proper values for scan delay
+				final int delay = Integer.parseInt(prefs.getString(Preferences.KEY_SCAN_DELAY, "7800"));
+				
+				if (delay <= 0) {
+					Log.i(TAG, "scan delay invalid: " + delay + " ms");
+					return;
+				}
+				
+				if (prefs.getBoolean(Preferences.KEY_BLE_ENABLED, false)) {
+					// schedule new scan
+					Log.i(TAG, "scanning again in " + delay + " ms");
+					
+					// schedule start of discovery
+					Message msg = mServiceHandler.obtainMessage();
+					msg.what = MSG_WHAT_BLE_DISCOVERY;
+					msg.arg1 = 0;
+					msg.obj = new Intent(DaemonService.ACTION_START_BT_DISCOVERY);
+					mServiceHandler.sendMessageDelayed(msg, delay);
+				}
+			}
+		} else if (ACTION_STOP_BT_DISCOVERY.equals(intent.getAction())) {
+			// stop discovery
+			if (mBleManager != null) mBleManager.stopDiscovery();
+			
+			// remove all BLE discovery operations
+			mServiceHandler.removeMessages(MSG_WHAT_BLE_DISCOVERY);
+			Log.i(TAG, "Scheduled BLE discovery operation removed.");
 		} else if (ACTION_START_KEY_EXCHANGE.equals(action)) {
 			int protocol = intent.getIntExtra("protocol", -1);
 			SingletonEndpoint endpoint = intent.getParcelableExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT);
@@ -686,6 +777,7 @@ public class DaemonService extends Service {
 		
 		e.putBoolean(Preferences.KEY_ENABLED, prefs.getBoolean(Preferences.KEY_ENABLED, true));
 		e.putBoolean(Preferences.KEY_P2P_ENABLED, prefs.getBoolean(Preferences.KEY_P2P_ENABLED, false));
+		e.putBoolean(Preferences.KEY_BLE_ENABLED, prefs.getBoolean(Preferences.KEY_BLE_ENABLED, false));
 		e.putString(Preferences.KEY_DISCOVERY_MODE, prefs.getString(Preferences.KEY_DISCOVERY_MODE, "smart"));
 		
 		int log_options = Integer.valueOf(prefs.getString(Preferences.KEY_LOG_OPTIONS, "0"));
@@ -731,6 +823,12 @@ public class DaemonService extends Service {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
 			mP2pManager = new P2pManager(this);
 			mP2pManager.create();
+		}
+		
+		// create BLE Manager
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+			mBleManager = new BleManager(this);
+			mBleManager.create();
 		}
 
 		// start initialization of the daemon process
@@ -778,6 +876,10 @@ public class DaemonService extends Service {
 		// disable P2P manager
 		if (mP2pManager != null)
 			mP2pManager.destroy();
+		
+		// disable BLE manager
+		if (mBleManager != null)
+			mBleManager.destroy();
 
 		// stop looper that handles incoming intents
 		mServiceLooper.quit();
@@ -791,6 +893,9 @@ public class DaemonService extends Service {
 
 		// dereference P2P Manager
 		mP2pManager = null;
+		
+		// dereference BLE Manager
+		mBleManager = null;
 
 		// call super method
 		super.onDestroy();
@@ -853,6 +958,11 @@ public class DaemonService extends Service {
 							mP2pManager.setEnabled(false);
 					}
 					
+					if (prefs.getBoolean(Preferences.KEY_BLE_ENABLED, true)) {
+						if (mBleManager != null)
+							mBleManager.setEnabled(false);
+					}
+					
 					// unlisten to device state events
 					unregisterReceiver(mScreenStateReceiver);
 					
@@ -873,6 +983,11 @@ public class DaemonService extends Service {
 						discoIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STOP_DISCOVERY);
 						startService(discoIntent);
 					}
+					
+					// disable BLE scanning
+					final Intent stopBleDiscoIntent = new Intent(DaemonService.this, DaemonService.class);
+					stopBleDiscoIntent.setAction(DaemonService.ACTION_STOP_BT_DISCOVERY);
+					startService(stopBleDiscoIntent);
 
 					break;
 
@@ -880,6 +995,11 @@ public class DaemonService extends Service {
 					if (prefs.getBoolean(Preferences.KEY_P2P_ENABLED, false)) {
 						if (mP2pManager != null)
 							mP2pManager.setEnabled(true);
+					}
+					
+					if (prefs.getBoolean(Preferences.KEY_BLE_ENABLED, false)) {
+						if (mBleManager != null)
+							mBleManager.setEnabled(true);
 					}
 					
 					// listen to Wi-Fi events
@@ -912,6 +1032,11 @@ public class DaemonService extends Service {
 								.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_START_DISCOVERY);
 						startService(discoIntent);
 					}
+					
+					// enable BLE scanning
+					final Intent startBleDiscoIntent = new Intent(DaemonService.this, DaemonService.class);
+					startBleDiscoIntent.setAction(DaemonService.ACTION_START_BT_DISCOVERY);
+					startService(startBleDiscoIntent);
 					
 					// react to screen on/off events
 					IntentFilter dsfilter = new IntentFilter();
