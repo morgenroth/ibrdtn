@@ -210,7 +210,7 @@ public class DaemonService extends Service {
 		}
 	};
 	
-    private final KeyExchangeManager.Stub mKeyExchangeBinder = new KeyExchangeManager.Stub() {
+	private final KeyExchangeManager.Stub mKeyExchangeBinder = new KeyExchangeManager.Stub() {
 		@Override
 		public SingletonEndpoint getEndpoint() throws RemoteException {
 			return new SingletonEndpoint(Preferences.getEndpoint(DaemonService.this));
@@ -225,9 +225,9 @@ public class DaemonService extends Service {
 		public Bundle getKeyInfo(SingletonEndpoint endpoint) throws RemoteException {
 			return mDaemonProcess.getKeyInfo(endpoint);
 		}
-    };
-    
-    private final SecurityService.Stub mSecurityBinder = new SecurityService.Stub() {
+	};
+
+	private final SecurityService.Stub mSecurityBinder = new SecurityService.Stub() {
 		@Override
 		public Bundle execute(Intent intent) throws RemoteException {
 			Bundle ret = new Bundle();
@@ -306,41 +306,41 @@ public class DaemonService extends Service {
 	}
 	
 	public static Intent createDtnServiceIntent(Context context) {
-        Intent i = new Intent(context, DaemonService.class);
-        
-        // set action to make the intent unique
-        i.setAction(DTNService.class.getName());
-        
-        // add Service name
-        i.putExtra(Services.EXTRA_NAME, DTNService.class.getName());
-        
-        // add Service version
-        i.putExtra(Services.EXTRA_VERSION, Services.VERSION_APPLICATION);
-        
+		Intent i = new Intent(context, DaemonService.class);
+
+		// set action to make the intent unique
+		i.setAction(DTNService.class.getName());
+
+		// add Service name
+		i.putExtra(Services.EXTRA_NAME, DTNService.class.getName());
+
+		// add Service version
+		i.putExtra(Services.EXTRA_VERSION, Services.VERSION_APPLICATION);
+
 		return i;
 	}
-	
+
 	public static Intent createKeyExchangeManagerIntent(Context context) {
-        Intent i = new Intent(context, DaemonService.class);
-        
-        // set action to make the intent unique
-        i.setAction(KeyExchangeManager.class.getName());
-        
-        // add Service name
-        i.putExtra(Services.EXTRA_NAME, KeyExchangeManager.class.getName());
-        
+		Intent i = new Intent(context, DaemonService.class);
+
+		// set action to make the intent unique
+		i.setAction(KeyExchangeManager.class.getName());
+
+		// add Service name
+		i.putExtra(Services.EXTRA_NAME, KeyExchangeManager.class.getName());
+
 		return i;
 	}
 	
 	public static Intent createControlServiceIntent(Context context) {
-        Intent i = new Intent(context, DaemonService.class);
-        
-        // set action to make the intent unique
-        i.setAction(ControlService.class.getName());
-        
-        // add Service name
-        i.putExtra(Services.EXTRA_NAME, ControlService.class.getName());
-        
+		Intent i = new Intent(context, DaemonService.class);
+
+		// set action to make the intent unique
+		i.setAction(ControlService.class.getName());
+
+		// add Service name
+		i.putExtra(Services.EXTRA_NAME, ControlService.class.getName());
+
 		return i;
 	}
 
@@ -869,10 +869,8 @@ public class DaemonService extends Service {
 					// if discovery is configured as some kind of active
 					if (!"off".equals(prefs.getString(Preferences.KEY_DISCOVERY_MODE, "smart"))) {
 						// disable discovery
-						final Intent discoIntent = new Intent(DaemonService.this,
-								DaemonService.class);
-						discoIntent
-								.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STOP_DISCOVERY);
+						final Intent discoIntent = new Intent(DaemonService.this, DaemonService.class);
+						discoIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STOP_DISCOVERY);
 						startService(discoIntent);
 					}
 
