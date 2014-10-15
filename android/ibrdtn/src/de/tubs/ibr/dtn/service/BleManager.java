@@ -15,7 +15,6 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.util.Log;
-import android.util.SparseArray;
 import de.tubs.ibr.dtn.swig.EID;
 import de.tubs.ibr.dtn.swig.NativeP2pManager;
 
@@ -35,8 +34,6 @@ public class BleManager extends NativeP2pManager {
 	private BluetoothManager mBluetoothManager = null;
 	private BluetoothAdapter mBluetoothAdapter = null;
 	
-	private SparseArray<Long> mDiscoveredDtnNodes = null;
-
 	private DaemonService mService = null;
 	
 	private boolean mServiceEnabled = false;
@@ -111,9 +108,6 @@ public class BleManager extends NativeP2pManager {
 	}
 	
 	private synchronized void onCreate() {
-		// initialize data-structures
-		mDiscoveredDtnNodes = new SparseArray<Long>();
-		
 		// For API level 18 and above, get a reference to BluetoothAdapter through
 		// BluetoothManager.
 		mBluetoothManager = (BluetoothManager) mService.getSystemService(Context.BLUETOOTH_SERVICE);
@@ -169,7 +163,6 @@ public class BleManager extends NativeP2pManager {
 	}
 	
 	private synchronized void onDestroy() {
-		mDiscoveredDtnNodes = null;
 		mBluetoothManager = null;
 
 		// set the current state
@@ -184,17 +177,15 @@ public class BleManager extends NativeP2pManager {
 		// check if stack is active
 		if (!ManagerState.ACTIVE.equals(mManagerState)) return;
 		
-		String ssid = DTN_DISCOVERY_PREFIX + "//" + identifier;
-		
 		WifiManager wifiManager = (WifiManager) mService.getSystemService(Context.WIFI_SERVICE);
 		
 		// connect to network with matching SSID if not already connected
 		WifiInfo wifiInfo = wifiManager.getConnectionInfo();
 		
-		if (!wifiInfo.getSSID().equals(String.format("\"%s\"", ssid))) {
-			Log.d(TAG, "connecting to SSID " + ssid);
+		if (!wifiInfo.getSSID().equals(String.format("\"%s\"", identifier))) {
+			Log.d(TAG, "connecting to SSID " + identifier);
 			WifiConfiguration wifiConfig = new WifiConfiguration();
-			wifiConfig.SSID = String.format("\"%s\"", ssid);
+			wifiConfig.SSID = String.format("\"%s\"", identifier);
 			wifiConfig.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
 
 			int networkId = wifiManager.addNetwork(wifiConfig);
@@ -243,24 +234,16 @@ public class BleManager extends NativeP2pManager {
 			if (!mServiceEnabled) return;
 			
 			Log.i(TAG, "onLeScan: " + device.getAddress() + " (rssi=" + rssi + ")");
-			
+
 			if (device.getName().toLowerCase(Locale.US).startsWith(DTN_DISCOVERY_PREFIX)) {
-				// transform address to proper format
-				String nodeAddress = device.getAddress().toLowerCase(Locale.US).replace(":", "");
+				// transform name to EID
+				String deviceId = device.getName().replace(" ", "-");
+				EID endpointId = new EID("dtn://" + deviceId);
 
-				// throttle announcements to once per minute
-				int nodeHash = nodeAddress.hashCode();
-				Long lastDiscoveryTime = mDiscoveredDtnNodes.get(nodeHash);
-				if (lastDiscoveryTime != null && System.currentTimeMillis() < lastDiscoveryTime + 60*1000 ) {
-					return;
-				}
-				mDiscoveredDtnNodes.put(nodeHash, System.currentTimeMillis());
-
-				Log.d(TAG, "found DTN node with address: " + nodeAddress);
-				String ssid = DTN_DISCOVERY_PREFIX + "//" + nodeAddress;
+				Log.d(TAG, "found DTN node " + deviceId + " with address " + device.getAddress());
 
 				// announce endpoint to IBR-DTN daemon
-				fireDiscovered(new EID(ssid + ".dtn"), nodeAddress, 90, 10);
+				fireDiscovered(endpointId, deviceId, 90, 10);
 			}
 		}
 	};
