@@ -299,6 +299,10 @@ namespace dtn
 
 		bool ConnectionManager::isReachable(const dtn::core::Node &node)
 		{
+			// if the node has been discovered via an dial-up extension
+			// then this node is always considered as reachable
+			if (node.hasDialup()) return true;
+
 			ibrcommon::MutexLock l(_cl_lock);
 			for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
 			{
