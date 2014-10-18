@@ -19,8 +19,8 @@ APP_OPTIM:=debug
 #NDK_TOOLCHAIN_VERSION=4.8
 
 # Build target
-#APP_ABI:=armeabi armeabi-v7a x86
-APP_ABI:=all
+APP_ABI:=armeabi armeabi-v7a x86 mips
+#APP_ABI:=all
 
 # API 9 has RW Mutex implementation in pthread lib
 APP_PLATFORM:=android-9
