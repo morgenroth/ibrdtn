@@ -549,6 +549,9 @@ public class KeyInformationFragment extends Fragment {
 	private void showNfcShowcase() {
 		if (android.os.Build.VERSION_CODES.ICE_CREAM_SANDWICH > android.os.Build.VERSION.SDK_INT) return;
 		
+		// do not show hint on Android with Material Design
+		if (android.os.Build.VERSION_CODES.LOLLIPOP <= android.os.Build.VERSION.SDK_INT) return;
+		
 		// check if NFC is available
 		if (!getActivity().getPackageManager().hasSystemFeature("android.hardware.nfc")) return;
 		
@@ -595,6 +598,9 @@ public class KeyInformationFragment extends Fragment {
 	@SuppressLint("NewApi")
 	private void showQrCodeShowcase() {
 		if (android.os.Build.VERSION_CODES.ICE_CREAM_SANDWICH > android.os.Build.VERSION.SDK_INT) return;
+		
+		// do not show hint on Android with Material Design
+		if (android.os.Build.VERSION_CODES.LOLLIPOP <= android.os.Build.VERSION.SDK_INT) return;
 		
 		// abort if qr code action item is not visible
 		if (mQrCodeScanMenu == null) return;
