@@ -74,23 +74,23 @@ public class NeighborListAdapter extends BaseAdapter {
 
         holder.node = mList.get(position);
         
-        int image_color = R.color.light_blue;
+        int image_color = R.color.node_default;
 
         if (holder.node.type.equals("NODE_P2P")) {
             holder.imageIcon.setImageResource(R.drawable.ic_p2p);
-            image_color = R.color.light_blue;
+            image_color = R.color.node_p2p;
         } else if (holder.node.type.equals("NODE_DISCOVERED")) {
             holder.imageIcon.setImageResource(R.drawable.ic_wifi);
-            image_color = R.color.light_blue;
+            image_color = R.color.node_discovered;
         } else if (holder.node.type.equals("NODE_CONNECTED")) {
             holder.imageIcon.setImageResource(R.drawable.ic_node);
-            image_color = R.color.light_green;
+            image_color = R.color.node_connected;
         } else if (holder.node.type.equals("NODE_INTERNET")) {
             holder.imageIcon.setImageResource(R.drawable.ic_world);
-            image_color = R.color.gray;
+            image_color = R.color.node_internet;
         } else {
             holder.imageIcon.setImageResource(R.drawable.ic_node);
-            image_color = R.color.light_yellow;
+            image_color = R.color.node_default;
         }
         
         holder.imageIcon.setColorFilter(mContext.getResources().getColor(image_color), Mode.SRC_IN);

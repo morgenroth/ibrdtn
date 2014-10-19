@@ -23,7 +23,7 @@
     <string name="select_neighbor">Nachbarn auswählen</string>
     <string name="showneighbors">Nachbarn anzeigen</string>
     <string name="list_logs">Logs</string>
-    <string name="list_logs_paused">Logs (PAUSE)</string>
+    <string name="list_logs_paused">Logs</string>
     <string name="showlog">Log anzeigen</string>
     <string name="clearstorage">Speicher leeren</string>
     <string name="interfaces">Schnittstellen</string>

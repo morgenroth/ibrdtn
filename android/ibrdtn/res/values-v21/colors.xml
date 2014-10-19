@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#00838f</color>
+    <color name="primary_dark">#006064</color>
+    <color name="accent">#00e5ff</color>
+    <color name="group_separator">#ffffff</color>
+    
+	<color name="mark_0">#00bcd4</color><!-- DEFAULT -->
+	<color name="mark_1">#e51c23</color><!-- ERROR -->
+	<color name="mark_2">#00bcd4</color><!-- DEFAULT -->
+	<color name="mark_3">#ff9800</color><!-- WARN -->
+	<color name="mark_4">#cddc39</color><!-- INFO -->
+	<color name="mark_5">#9c27b0</color><!-- DEBUG -->
+	
+	<color name="mark_dark_0">#00838f</color><!-- DEFAULT -->
+	<color name="mark_dark_1">#c41411</color><!-- ERROR -->
+	<color name="mark_dark_2">#00838f</color>
+	<color name="mark_dark_3">#ef6c00</color><!-- WARN -->
+	<color name="mark_dark_4">#9e9d24</color><!-- INFO -->
+	<color name="mark_dark_5">#6a1b9a</color><!-- DEBUG -->
+    
+	<!-- Already adapted -->
+    <color name="stats_first">#00bcd4</color><!-- Cyan -->
+    <color name="stats_second">#cddc39</color><!-- Lime -->
+    <color name="stats_third">#ffc107</color><!-- Amber -->
+    <color name="stats_fourth">#ffeb3b</color><!-- Yellow -->
+    <color name="stats_fifth">#9c27b0</color><!-- Purple -->
+    <color name="stats_sixth">#e51c23</color><!-- Red -->
+    
+    <color name="node_p2p">#e91e63</color>
+    <color name="node_discovered">#ffeb3b</color>
+    <color name="node_connected">#cddc39</color>
+    <color name="node_internet">#009688</color>
+    <color name="node_default">#00bcd4</color>
+    
+    <color name="trust_high">#cddc39</color>
+    <color name="trust_medium">#ffca28</color>
+    <color name="trust_low">#ff5722</color>
+</resources>

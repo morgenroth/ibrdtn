@@ -476,14 +476,14 @@ public class KeyInformationFragment extends Fragment {
 			
 			if (trust_level > 67) {
 				Drawable d = getResources().getDrawable(R.drawable.ic_security_closed);
-				d.setColorFilter(getResources().getColor(R.color.light_green), Mode.SRC_IN);
+				d.setColorFilter(getResources().getColor(R.color.trust_high), Mode.SRC_IN);
 				trustLevelImage1.setImageDrawable(d);
 				trustLevelImage2.setImageDrawable(d);
 				trustLevelImage3.setImageDrawable(d);
 			}
 			else if (trust_level > 33) {
 				Drawable d = getResources().getDrawable(R.drawable.ic_security_closed);
-				d.setColorFilter(getResources().getColor(R.color.light_yellow), Mode.SRC_IN);
+				d.setColorFilter(getResources().getColor(R.color.trust_medium), Mode.SRC_IN);
 				trustLevelImage1.setImageDrawable(d);
 				trustLevelImage2.setImageDrawable(d);
 				
@@ -492,7 +492,7 @@ public class KeyInformationFragment extends Fragment {
 			}
 			else if (trust_level > 0) {
 				Drawable d = getResources().getDrawable(R.drawable.ic_security_closed);
-				d.setColorFilter(getResources().getColor(R.color.light_red), Mode.SRC_IN);
+				d.setColorFilter(getResources().getColor(R.color.trust_low), Mode.SRC_IN);
 				trustLevelImage1.setImageDrawable(d);
 				
 				d = getResources().getDrawable(R.drawable.ic_action_security_open);
@@ -549,6 +549,9 @@ public class KeyInformationFragment extends Fragment {
 	private void showNfcShowcase() {
 		if (android.os.Build.VERSION_CODES.ICE_CREAM_SANDWICH > android.os.Build.VERSION.SDK_INT) return;
 		
+		// do not show hint on Android with Material Design
+		if (android.os.Build.VERSION_CODES.LOLLIPOP <= android.os.Build.VERSION.SDK_INT) return;
+		
 		// check if NFC is available
 		if (!getActivity().getPackageManager().hasSystemFeature("android.hardware.nfc")) return;
 		
@@ -595,6 +598,9 @@ public class KeyInformationFragment extends Fragment {
 	@SuppressLint("NewApi")
 	private void showQrCodeShowcase() {
 		if (android.os.Build.VERSION_CODES.ICE_CREAM_SANDWICH > android.os.Build.VERSION.SDK_INT) return;
+		
+		// do not show hint on Android with Material Design
+		if (android.os.Build.VERSION_CODES.LOLLIPOP <= android.os.Build.VERSION.SDK_INT) return;
 		
 		// abort if qr code action item is not visible
 		if (mQrCodeScanMenu == null) return;

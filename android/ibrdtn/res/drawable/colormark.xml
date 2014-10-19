@@ -2,32 +2,32 @@
 <level-list xmlns:android="http://schemas.android.com/apk/res/android">
   <item android:maxLevel="0">
 	<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-	<solid android:color="@color/gray" />
+	<solid android:color="@color/mark_0" />
 	</shape>
   </item>
   <item android:maxLevel="1">
 	<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-	    <solid android:color="@color/red" />
+	    <solid android:color="@color/mark_1" />
 	</shape>
   </item>
   <item android:maxLevel="2">
 	<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-	    <solid android:color="@color/blue" />
+	    <solid android:color="@color/mark_2" />
 	</shape>
   </item>
   <item android:maxLevel="3">
 	<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-	    <solid android:color="@color/violett" />
+	    <solid android:color="@color/mark_3" />
 	</shape>
   </item>
   <item android:maxLevel="4">
 	<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-	    <solid android:color="@color/green" />
+	    <solid android:color="@color/mark_4" />
 	</shape>
   </item>
   <item android:maxLevel="5">
 	<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-	    <solid android:color="@color/yellow" />
+	    <solid android:color="@color/mark_5" />
 	</shape>
   </item>
 </level-list>
