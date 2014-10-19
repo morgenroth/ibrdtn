@@ -200,12 +200,12 @@ public class ConvergenceLayerStatsChartFragment extends Fragment implements Cust
     private ConvergenceLayerStatsListAdapter.ColorProvider mColorProvider = new ConvergenceLayerStatsListAdapter.ColorProvider() {
 
         final int[] mColors = {
-                R.color.blue,
-                R.color.yellow,
-                R.color.green,
-                R.color.red,
-                R.color.violett,
-                R.color.gray
+                R.color.stats_first,
+                R.color.stats_second,
+                R.color.stats_fourth,
+                R.color.stats_third,
+                R.color.stats_fifth,
+                R.color.stats_sixth
         };
         
         int assignedColors = 0;
@@ -217,7 +217,7 @@ public class ConvergenceLayerStatsChartFragment extends Fragment implements Cust
                 return mColorMap.get(tag);
             
             if (assignedColors >= mColors.length)
-                return R.color.gray;
+                return R.color.stats_default;
             
             int color = mColors[assignedColors];
             mColorMap.put(tag, color);

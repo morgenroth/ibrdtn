@@ -4,7 +4,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -80,19 +79,19 @@ public class LogListAdapter extends BaseAdapter {
 
         if (holder.msg.level.equals("E")) {
             holder.imageMark.setImageLevel(1);
-            holder.textTag.setTextColor(context.getResources().getColor(R.color.light_red));
+            holder.textTag.setTextColor(context.getResources().getColor(R.color.mark_1));
         } else if (holder.msg.level.equals("W")) {
             holder.imageMark.setImageLevel(3);
-            holder.textTag.setTextColor(context.getResources().getColor(R.color.light_violett));
+            holder.textTag.setTextColor(context.getResources().getColor(R.color.mark_3));
         } else if (holder.msg.level.equals("I")) {
             holder.imageMark.setImageLevel(4);
-            holder.textTag.setTextColor(context.getResources().getColor(R.color.light_green));
+            holder.textTag.setTextColor(context.getResources().getColor(R.color.mark_4));
         } else if (holder.msg.level.equals("D")) {
             holder.imageMark.setImageLevel(5);
-            holder.textTag.setTextColor(context.getResources().getColor(R.color.light_yellow));
+            holder.textTag.setTextColor(context.getResources().getColor(R.color.mark_5));
         } else {
             holder.imageMark.setImageLevel(0);
-            holder.textTag.setTextColor(Color.WHITE);
+            holder.textTag.setTextColor(context.getResources().getColor(R.color.mark_0));
         }
 
         holder.textDate.setText(holder.msg.date);

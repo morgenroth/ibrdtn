@@ -1,21 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="dark_red">#640000</color>
-    <color name="red">#CC0000</color>
-    <color name="blue">#0099CC</color>
-    <color name="violett">#9933CC</color>
-    <color name="green">#669900</color>
-    <color name="yellow">#FF8800</color>
-    <color name="light_red">#FF4444</color>
-    <color name="light_yellow">#FFBB33</color>
-    <color name="light_green">#99CC00</color>
-    <color name="light_violett">#AA66CC</color>
-    <color name="light_blue">#33B5E5</color>
-    <color name="gray">#a1a1a1</color>
-    <color name="dark_gray">#666666</color>
-    <color name="dark_blue">#004c64</color>
-    <color name="dark_violett">#3c1450</color>
-    <color name="dark_green">#233400</color>
-    <color name="dark_yellow">#9c5300</color>
+	<color name="group_separator">#ffffff</color>
 
+	<color name="mark_0">#a1a1a1</color>
+	<color name="mark_1">#CC0000</color>
+	<color name="mark_2">#0099CC</color>
+	<color name="mark_3">#9933CC</color>
+	<color name="mark_4">#669900</color>
+	<color name="mark_5">#FF8800</color>
+	
+	<color name="mark_dark_0">#666666</color>
+	<color name="mark_dark_1">#640000</color>
+	<color name="mark_dark_2">#004c64</color>
+	<color name="mark_dark_3">#3c1450</color>
+	<color name="mark_dark_4">#233400</color>
+	<color name="mark_dark_5">#9c5300</color>
+    
+	<color name="stats_default">#a1a1a1</color>
+    <color name="stats_first">#0099CC</color>
+    <color name="stats_second">#FF8800</color>
+    <color name="stats_third">#CC0000</color>
+    <color name="stats_fourth">#669900</color>
+    <color name="stats_fifth">#9933CC</color>
+    <color name="stats_sixth">#a1a1a1</color>
+    
+    <color name="node_p2p">#33B5E5</color>
+    <color name="node_discovered">#33B5E5</color>
+    <color name="node_connected">#99CC00</color>
+    <color name="node_internet">#a1a1a1</color>
+    <color name="node_default">#FFBB33</color>
+    
+    <color name="trust_high">#99CC00</color>
+    <color name="trust_medium">#FFBB33</color>
+    <color name="trust_low">#FF4444</color>
 </resources>

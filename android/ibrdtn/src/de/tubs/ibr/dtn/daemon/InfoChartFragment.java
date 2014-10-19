@@ -10,7 +10,7 @@ import de.tubs.ibr.dtn.stats.StatsUtils;
 public class InfoChartFragment extends StatsChartFragment {
     
     private Integer[] mChartMap = { 0 };
-    private int[] mChartColors = { R.color.blue };
+    private int[] mChartColors = { R.color.stats_first };
     
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {

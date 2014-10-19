@@ -8,7 +8,7 @@ import de.tubs.ibr.dtn.daemon.data.StatsListAdapter;
 public class TransferChartFragment extends StatsChartFragment {
     
     private Integer[] mChartMap = { 12, 10, 6, 9 };
-    private int[] mChartColors = { R.color.green, R.color.yellow, R.color.red, R.color.blue };
+    private int[] mChartColors = { R.color.stats_fourth, R.color.stats_second, R.color.stats_third, R.color.stats_first };
     
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {

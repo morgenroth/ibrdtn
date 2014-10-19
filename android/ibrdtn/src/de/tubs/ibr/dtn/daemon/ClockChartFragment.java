@@ -8,7 +8,7 @@ import de.tubs.ibr.dtn.daemon.data.StatsListAdapter;
 public class ClockChartFragment extends StatsChartFragment {
     
     private Integer[] mChartMap = { 3, 4, 5 };
-    private int[] mChartColors = { R.color.blue, R.color.green, R.color.yellow };
+    private int[] mChartColors = { R.color.stats_first, R.color.stats_fourth, R.color.stats_second };
     
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {

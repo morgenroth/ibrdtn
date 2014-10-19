@@ -3,48 +3,48 @@
   <item android:maxLevel="0">
 	<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
 	<gradient xmlns:android="http://schemas.android.com/apk/res/android"
-		android:startColor="@color/dark_gray"
-		android:endColor="@color/gray"
+		android:startColor="@color/mark_dark_0"
+		android:endColor="@color/mark_0"
 		android:angle="270" />
 	</shape>
   </item>
   <item android:maxLevel="1">
 	<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
 	<gradient xmlns:android="http://schemas.android.com/apk/res/android"
-		android:startColor="@color/dark_red"
-		android:endColor="@color/red"
+		android:startColor="@color/mark_dark_1"
+		android:endColor="@color/mark_1"
 		android:angle="270" />
 	</shape>
   </item>
   <item android:maxLevel="2">
 	<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
 	<gradient xmlns:android="http://schemas.android.com/apk/res/android"
-		android:startColor="@color/dark_blue"
-		android:endColor="@color/blue"
+		android:startColor="@color/mark_dark_2"
+		android:endColor="@color/mark_2"
 		android:angle="270" />
 	</shape>
   </item>
   <item android:maxLevel="3">
 	<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
 	<gradient xmlns:android="http://schemas.android.com/apk/res/android"
-		android:startColor="@color/dark_violett"
-		android:endColor="@color/violett"
+		android:startColor="@color/mark_dark_3"
+		android:endColor="@color/mark_3"
 		android:angle="270" />
 	</shape>
   </item>
   <item android:maxLevel="4">
 	<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
 	<gradient xmlns:android="http://schemas.android.com/apk/res/android"
-		android:startColor="@color/dark_green"
-		android:endColor="@color/green"
+		android:startColor="@color/mark_dark_4"
+		android:endColor="@color/mark_4"
 		android:angle="270" />
 	</shape>
   </item>
   <item android:maxLevel="5">
 	<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
 	<gradient xmlns:android="http://schemas.android.com/apk/res/android"
-		android:startColor="@color/dark_yellow"
-		android:endColor="@color/yellow"
+		android:startColor="@color/mark_dark_5"
+		android:endColor="@color/mark_5"
 		android:angle="270" />
 	</shape>
   </item>

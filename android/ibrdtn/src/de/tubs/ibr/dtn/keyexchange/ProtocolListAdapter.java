@@ -79,16 +79,16 @@ public class ProtocolListAdapter extends BaseAdapter {
 		holder.protocol = mList.get(position);
 
 		EnumProtocol p = holder.protocol.getProtocol();
-		int protocol_color = R.color.light_red;
+		int protocol_color = R.color.trust_low;
 		
 		if (p == EnumProtocol.QR || p == EnumProtocol.NFC) {
-			protocol_color = R.color.green;
+			protocol_color = R.color.trust_high;
 		}
 		if (p == EnumProtocol.HASH || p == EnumProtocol.JPAKE) {
-			protocol_color = R.color.light_yellow;
+			protocol_color = R.color.trust_medium;
 		}
 		if (p == EnumProtocol.NONE || p == EnumProtocol.DH) {
-			protocol_color = R.color.light_red;
+			protocol_color = R.color.trust_low;
 		}
 
 		if (holder.protocol.isUsed()) {
