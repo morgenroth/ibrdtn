@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary">#00838f</color>
-    <color name="primary_dark">#006064</color>
-    <color name="accent">#00e5ff</color>
     <color name="group_separator">#ffffff</color>
     
 	<color name="mark_0">#00bcd4</color><!-- DEFAULT -->
@@ -20,12 +17,12 @@
 	<color name="mark_dark_5">#6a1b9a</color><!-- DEBUG -->
     
 	<!-- Already adapted -->
-    <color name="stats_first">#00bcd4</color><!-- Cyan -->
-    <color name="stats_second">#cddc39</color><!-- Lime -->
-    <color name="stats_third">#ffc107</color><!-- Amber -->
-    <color name="stats_fourth">#ffeb3b</color><!-- Yellow -->
-    <color name="stats_fifth">#9c27b0</color><!-- Purple -->
-    <color name="stats_sixth">#e51c23</color><!-- Red -->
+    <color name="stats_first">#ffc107</color><!-- Amber -->
+    <color name="stats_second">#00bcd4</color><!-- Cyan -->
+    <color name="stats_third">#e51c23</color><!-- Red -->
+    <color name="stats_fourth">#ab47bc</color><!-- Purple -->
+    <color name="stats_fifth">#cddc39</color><!-- Lime -->
+    <color name="stats_sixth">#ffeb3b</color><!-- Yellow -->
     
     <color name="node_p2p">#e91e63</color>
     <color name="node_discovered">#ffeb3b</color>
