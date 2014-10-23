@@ -4,7 +4,7 @@
     android:versionCode="500"
     android:versionName="1.5" >
     
-	<uses-sdk android:minSdkVersion="9" android:targetSdkVersion="17" />
+	<uses-sdk android:minSdkVersion="9" android:targetSdkVersion="21" />
     
     <uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
