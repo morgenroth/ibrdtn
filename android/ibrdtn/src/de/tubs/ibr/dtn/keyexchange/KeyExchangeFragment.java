@@ -1,5 +1,6 @@
 package de.tubs.ibr.dtn.keyexchange;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -152,7 +153,7 @@ public class KeyExchangeFragment extends Fragment {
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 		Log.d(TAG, "onActivityResult");
 		IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
-		if (scanResult != null) {
+		if (resultCode == Activity.RESULT_OK && scanResult != null) {
 			Intent startIntent = new Intent(getActivity(), DaemonService.class);
 			startIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_GIVE_QR_RESPONSE);
 			startIntent.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Parcelable)mEndpoint);
