@@ -15,6 +15,7 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.v4.view.MenuCompat;
 import android.support.v4.view.MenuItemCompat;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -23,9 +24,13 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import de.tubs.ibr.dtn.DtnManager;
+import de.tubs.ibr.dtn.Services;
 import de.tubs.ibr.dtn.api.Node;
+import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
 
 public class PingActivity extends Activity {
+	
+	private static final String TAG = "PingActivity";
     
     private static final int SELECT_NEIGHBOR = 1;
 	
@@ -191,7 +196,13 @@ public class PingActivity extends Activity {
         if (!mBound) {
             // bind to the PingService
             bindService(new Intent(this, PingService.class), mConnection, Context.BIND_AUTO_CREATE);
-            bindService(new Intent(DtnManager.class.getName()), mManageServiceConn, Context.BIND_AUTO_CREATE);
+            
+            try {
+				Services.SERVICE_MANAGER.bind(this, mManageServiceConn, Context.BIND_AUTO_CREATE);
+			} catch (ServiceNotAvailableException e) {
+				// Management Service not available
+				Log.e(TAG, "Management service not available", e);
+			}
             mBound = true;
         }
         
