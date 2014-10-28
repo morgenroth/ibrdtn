@@ -2,16 +2,13 @@ package de.tubs.ibr.dtn.keyexchange;
 
 import android.annotation.TargetApi;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
-import de.tubs.ibr.dtn.daemon.Preferences;
 
 @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
 public class KeyInformationActivity extends FragmentActivity {
@@ -41,15 +38,6 @@ public class KeyInformationActivity extends FragmentActivity {
 			
 			// change to fragment for the current state
 			changeToFragment(getIntent());
-		}
-		
-		// reset showcases in debug mode
-		if (Preferences.isDebuggable(this)) {
-			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-			prefs.edit()
-			.putBoolean(KeyInformationFragment.PREFERENCE_SHOWCASE_QRCODE, false)
-			.putBoolean(KeyInformationFragment.PREFERENCE_SHOWCASE_NFC, false)
-			.commit();
 		}
 	}
 	

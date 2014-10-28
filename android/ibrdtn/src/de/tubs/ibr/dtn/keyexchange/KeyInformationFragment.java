@@ -13,9 +13,10 @@ import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
 import android.database.DataSetObserver;
 import android.graphics.Bitmap;
+import android.graphics.Bitmap.Config;
+import android.graphics.Color;
 import android.graphics.PorterDuff.Mode;
 import android.graphics.drawable.Drawable;
 import android.nfc.NdefMessage;
@@ -27,7 +28,6 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcelable;
 import android.os.RemoteException;
-import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
@@ -42,15 +42,10 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.github.amlcurran.showcaseview.ApiUtils;
-import com.github.amlcurran.showcaseview.OnShowcaseEventListener;
-import com.github.amlcurran.showcaseview.ShowcaseView;
-import com.github.amlcurran.showcaseview.targets.ActionItemTarget;
-import com.github.amlcurran.showcaseview.targets.Target;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
-import com.jwetherell.quick_response_code.data.Contents;
-import com.jwetherell.quick_response_code.qrcode.QRCodeEncoder;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
 
 import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
@@ -84,13 +79,6 @@ public class KeyInformationFragment extends Fragment {
 	private MenuItem mQrCodeScanMenu = null;
 	private MenuItem mDeleteMenu = null;
 	//private MenuItem mKeyExchangeMenu = null;
-	
-	public static final String PREFERENCE_SHOWCASE_QRCODE = "showcase_qrcode";
-	public static final String PREFERENCE_SHOWCASE_NFC = "showcase_nfc";
-	private ShowcaseView mQrCodeShowCase = null;
-	private ShowcaseView mNfcShowCase= null;
-	
-	private final ApiUtils mApiUtils = new ApiUtils();
 	
 	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName name, IBinder s) {
@@ -304,8 +292,6 @@ public class KeyInformationFragment extends Fragment {
 		// show / hide local key window
 		MenuItem localKeyMenu = menu.findItem(R.id.itemKeyPanel);
 		localKeyMenu.setVisible(!mLocal);
-		
-		showQrCodeShowcase();
 	}
 
 	@Override
@@ -411,7 +397,6 @@ public class KeyInformationFragment extends Fragment {
 			// show / hide QR code scan menu item
 			if (mQrCodeScanMenu != null) {
 				mQrCodeScanMenu.setVisible(canScanQrCode());
-				showQrCodeShowcase(); 
 			}
 			
 			// show / hide delete action item
@@ -519,16 +504,20 @@ public class KeyInformationFragment extends Fragment {
 					try {
 						// show QR code
 						int pixel = getResources().getDimensionPixelSize(R.dimen.qrcode_rect_size);
-						QRCodeEncoder qrCodeEncoder = new QRCodeEncoder(fingerprint, null, Contents.Type.TEXT, BarcodeFormat.QR_CODE.toString(), pixel);
+						QRCodeWriter writer = new QRCodeWriter();
+						BitMatrix matrix = writer.encode(fingerprint, BarcodeFormat.QR_CODE, pixel, pixel);
+						Bitmap bitmap = Bitmap.createBitmap(pixel, pixel, Config.ARGB_8888);
+
+						for (int i = 0; i < pixel; i++) {
+							for (int j = 0; j < pixel; j++) {
+								bitmap.setPixel(i, j, matrix.get(i, j) ? Color.BLACK : Color.WHITE);
+							}
+						}
 		
-						Bitmap bitmap = qrCodeEncoder.encodeAsBitmap();
 						viewQRCode.setImageBitmap(bitmap);
 						
 						// show QR code
 						groupQRCode.setVisibility(View.VISIBLE);
-						
-						// show NFC show-case
-						showNfcShowcase();
 					} catch (WriterException e) {
 						Log.e(TAG, "", e);
 						
@@ -542,109 +531,6 @@ public class KeyInformationFragment extends Fragment {
 			}
 		} catch (RemoteException e) {
 			Log.e(TAG, "Failed to retrieve key information", e);
-		}
-	}
-	
-	@SuppressLint("NewApi")
-	private void showNfcShowcase() {
-		if (android.os.Build.VERSION_CODES.ICE_CREAM_SANDWICH > android.os.Build.VERSION.SDK_INT) return;
-		
-		// do not show hint on Android with Material Design
-		if (android.os.Build.VERSION_CODES.LOLLIPOP <= android.os.Build.VERSION.SDK_INT) return;
-		
-		// check if NFC is available
-		if (!getActivity().getPackageManager().hasSystemFeature("android.hardware.nfc")) return;
-		
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-		if (prefs.getBoolean(PREFERENCE_SHOWCASE_NFC, false)) return;
-		
-		if (mNfcShowCase == null) {
-			// create target for the show-case view
-			ShowcaseView.Builder scbuild = new ShowcaseView.Builder(getActivity());
-			scbuild.setTarget(Target.NONE);
-			scbuild.setContentTitle(R.string.showcase_nfc_title);
-			scbuild.setContentText(R.string.showcase_nfc_text);
-			scbuild.hideOnTouchOutside();
-			
-			scbuild.setShowcaseEventListener(new OnShowcaseEventListener() {
-				@Override
-				public void onShowcaseViewShow(ShowcaseView showcaseView) {
-					if (mApiUtils.isCompatWithHoneycomb()) {
-						getView().setAlpha(0.1f);
-					}
-				}
-				
-				@Override
-				public void onShowcaseViewHide(ShowcaseView showcaseView) {
-					if (mApiUtils.isCompatWithHoneycomb()) {
-						getView().setAlpha(1f);
-					}
-				}
-				
-				@Override
-				public void onShowcaseViewDidHide(ShowcaseView arg0) {
-					// no longer show this show-case
-					SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-					prefs.edit().putBoolean(PREFERENCE_SHOWCASE_NFC, true).commit();
-				}
-			});
-			
-			mNfcShowCase = scbuild.build();
-		} else {
-			mNfcShowCase.show();
-		}
-	}
-	
-	@SuppressLint("NewApi")
-	private void showQrCodeShowcase() {
-		if (android.os.Build.VERSION_CODES.ICE_CREAM_SANDWICH > android.os.Build.VERSION.SDK_INT) return;
-		
-		// do not show hint on Android with Material Design
-		if (android.os.Build.VERSION_CODES.LOLLIPOP <= android.os.Build.VERSION.SDK_INT) return;
-		
-		// abort if qr code action item is not visible
-		if (mQrCodeScanMenu == null) return;
-		if (!mQrCodeScanMenu.isVisible()) return;
-		
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-		if (prefs.getBoolean(PREFERENCE_SHOWCASE_QRCODE, false)) return;
-		
-		if (mQrCodeShowCase == null) {
-			// create target for the show-case view
-			ActionItemTarget target = new ActionItemTarget(getActivity(), R.id.itemQrCodeScan);
-			
-			ShowcaseView.Builder scbuild = new ShowcaseView.Builder(getActivity());
-			scbuild.setTarget(target);
-			scbuild.setContentTitle(R.string.showcase_qr_code_title);
-			scbuild.setContentText(R.string.showcase_qr_code_text);
-			scbuild.hideOnTouchOutside();
-	
-			scbuild.setShowcaseEventListener(new OnShowcaseEventListener() {
-				@Override
-				public void onShowcaseViewShow(ShowcaseView showcaseView) {
-					if (mApiUtils.isCompatWithHoneycomb()) {
-						getView().setAlpha(0.1f);
-					}
-				}
-				
-				@Override
-				public void onShowcaseViewHide(ShowcaseView showcaseView) {
-					if (mApiUtils.isCompatWithHoneycomb()) {
-						getView().setAlpha(1f);
-					}
-				}
-				
-				@Override
-				public void onShowcaseViewDidHide(ShowcaseView showcaseView) {
-					// no longer show this show-case
-					SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-					prefs.edit().putBoolean(PREFERENCE_SHOWCASE_QRCODE, true).commit();
-				}
-			});
-
-			mQrCodeShowCase = scbuild.build();
-		} else {
-			mQrCodeShowCase.show();
 		}
 	}
 	
