@@ -44,6 +44,8 @@ import android.os.PowerManager;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationCompat.WearableExtender;
+import android.support.v4.app.RemoteInput;
 import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 import de.tubs.ibr.dtn.DTNService;
@@ -63,6 +65,7 @@ import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.api.TransferMode;
 import de.tubs.ibr.dtn.chat.MainActivity;
 import de.tubs.ibr.dtn.chat.R;
+import de.tubs.ibr.dtn.chat.ReplyActivity;
 import de.tubs.ibr.dtn.chat.core.Buddy;
 import de.tubs.ibr.dtn.chat.core.Message;
 import de.tubs.ibr.dtn.chat.core.Roster;
@@ -82,6 +85,7 @@ public class ChatService extends IntentService {
 	public static final String EXTRA_DISPLAY_NAME = "de.tubs.ibr.dtn.chat.DISPLAY_NAME";
 	public static final String EXTRA_PRESENCE = "de.tubs.ibr.dtn.chat.EXTRA_PRESENCE";
 	public static final String EXTRA_STATUS = "de.tubs.ibr.dtn.chat.EXTRA_STATUS";
+	public static final String EXTRA_VOICE_REPLY = "extra_voice_reply";
 	
 	// mark a specific bundle as delivered
 	public static final String MARK_DELIVERED_INTENT = "de.tubs.ibr.dtn.chat.MARK_DELIVERED";
@@ -383,8 +387,18 @@ public class ChatService extends IntentService {
 		
 		// Adds the intent to the main view
 		stackBuilder.addNextIntent(intent);
+		
 		// Gets a PendingIntent containing the entire back stack
 		PendingIntent contentIntent = stackBuilder.getPendingIntent(buddyId.intValue(), PendingIntent.FLAG_UPDATE_CURRENT);
+		
+		// create a reply intent
+		String replyLabel = getResources().getString(R.string.reply_label);
+		RemoteInput remoteInput = new RemoteInput.Builder(EXTRA_VOICE_REPLY).setLabel(replyLabel).build();
+		
+		Intent replyIntent = new Intent(this, ReplyActivity.class);
+		replyIntent.putExtra(EXTRA_BUDDY_ID, buddyId);
+		PendingIntent replyPendingIntent = PendingIntent.getActivity(this, buddyId.intValue(), replyIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		NotificationCompat.Action action = new NotificationCompat.Action.Builder(R.drawable.ic_reply_icon, getString(R.string.reply_label), replyPendingIntent).addRemoteInput(remoteInput).build();
 		
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 		builder.setContentTitle(contentTitle);
@@ -396,6 +410,7 @@ public class ChatService extends IntentService {
 		builder.setContentIntent(contentIntent);
 		builder.setLights(0xffff0000, 300, 1000);
 		builder.setSound( Uri.parse( prefs.getString("ringtoneOnMessage", "content://settings/system/notification_sound") ) );
+		builder.extend(new WearableExtender().addAction(action));
 		builder.setAutoCancel(true);
 		
 		Notification notification = builder.getNotification();

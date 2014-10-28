@@ -130,10 +130,6 @@
 		<activity android:name="de.tubs.ibr.dtn.keyexchange.KeyInformationActivity"
 			android:icon="@drawable/ic_action_key" android:label="@string/key_information" />
 
-		<activity android:name="de.tubs.ibr.dtn.keyexchange.CaptureActivity"
-			android:icon="@drawable/ic_activity_qrscan" android:label="@string/title_qr_code_scan"
-			android:screenOrientation="landscape" />
-
 		<activity android:name="de.tubs.ibr.dtn.keyexchange.NFCReceiver">
 			<intent-filter>
 				<action android:name="android.nfc.action.NDEF_DISCOVERED" />

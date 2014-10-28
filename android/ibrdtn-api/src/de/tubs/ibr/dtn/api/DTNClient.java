@@ -165,11 +165,15 @@ public final class DTNClient {
 				notifyAll();
 			}
 		} catch (Exception e) {
-			Intent registrationIntent = new Intent(de.tubs.ibr.dtn.Intent.REGISTER);
-			registrationIntent.putExtra("app", PendingIntent.getBroadcast(mContext, 0, new Intent(), 0)); // boilerplate
-			registrationIntent.putExtra("registration", (Parcelable)reg);
-			mContext.startService(registrationIntent);
-			return;
+			try {
+				Intent registrationIntent = Services.SERVICE_APPLICATION.getIntent(mContext, de.tubs.ibr.dtn.Intent.REGISTER);
+				registrationIntent.putExtra("app", PendingIntent.getBroadcast(mContext, 0, new Intent(), 0)); // boilerplate
+				registrationIntent.putExtra("registration", (Parcelable)reg);
+				mContext.startService(registrationIntent);
+				return;
+			} catch (ServiceNotAvailableException err) {
+				Log.e(TAG, "Service not available!", err);
+			}
 		}
 		
 		mSessionHandler.onSessionConnected(s);

@@ -1,6 +1,5 @@
 package de.tubs.ibr.dtn.keyexchange;
 
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -22,6 +21,10 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
+
 import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.service.DaemonService;
@@ -29,7 +32,6 @@ import de.tubs.ibr.dtn.service.DaemonService;
 public class KeyExchangeFragment extends Fragment {
 
 	private static final String TAG = "KeyExchangeFragment";
-	private static final int QR_SCAN_RESULT = 1;
 	
 	private SingletonEndpoint mEndpoint;
 	private int mSession;
@@ -40,6 +42,20 @@ public class KeyExchangeFragment extends Fragment {
 	private EditText mEditTextPassword = null;
 	private CheckBox mCheckVisiblePassword = null;
 	private Button mButton = null;
+	
+	public final class FragmentIntentIntegrator extends IntentIntegrator {
+		private final Fragment fragment;
+
+		public FragmentIntentIntegrator(Fragment fragment) {
+			super(fragment.getActivity());
+			this.fragment = fragment;
+		}
+
+		@Override
+		protected void startActivityForResult(Intent intent, int code) {
+			fragment.startActivityForResult(intent, code);
+		}
+	}
 	
 	public static KeyExchangeFragment create(SingletonEndpoint endpoint, EnumProtocol protocol, int session) {
 		KeyExchangeFragment f = new KeyExchangeFragment();
@@ -135,16 +151,13 @@ public class KeyExchangeFragment extends Fragment {
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 		Log.d(TAG, "onActivityResult");
-		if (requestCode == QR_SCAN_RESULT) {
-			if (resultCode == Activity.RESULT_OK) {
-				Intent startIntent = new Intent(getActivity(), DaemonService.class);
-				startIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_GIVE_QR_RESPONSE);
-				startIntent.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Parcelable)mEndpoint);
-				startIntent.putExtra(KeyExchangeService.EXTRA_DATA, data.getStringExtra(KeyExchangeService.EXTRA_DATA));
-				getActivity().startService(startIntent);
-			}
-		} else {
-			super.onActivityResult(requestCode, resultCode, data);
+		IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+		if (scanResult != null) {
+			Intent startIntent = new Intent(getActivity(), DaemonService.class);
+			startIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_GIVE_QR_RESPONSE);
+			startIntent.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Parcelable)mEndpoint);
+			startIntent.putExtra(KeyExchangeService.EXTRA_DATA, scanResult.getContents());
+			getActivity().startService(startIntent);
 		}
 	}
 
@@ -185,8 +198,8 @@ public class KeyExchangeFragment extends Fragment {
 				break;
 				
 			case QR:
-				Intent i = new Intent(getActivity(), CaptureActivity.class);
-				startActivityForResult(i, QR_SCAN_RESULT);
+				IntentIntegrator integrator = new FragmentIntentIntegrator(KeyExchangeFragment.this);
+				integrator.initiateScan();
 				break;
 				
 			case JPAKE_PROMPT: {

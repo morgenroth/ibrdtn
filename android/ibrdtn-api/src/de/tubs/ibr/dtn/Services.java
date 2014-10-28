@@ -50,6 +50,20 @@ public class Services {
 			return mVersion;
 		}
 		
+		public Intent getIntent(Context context, String action) throws ServiceNotAvailableException {
+			Intent queryIntent = new Intent(mClassName);
+			List<ResolveInfo> list = context.getPackageManager().queryIntentServices(queryIntent, 0);
+			if (list.size() == 0) throw new ServiceNotAvailableException();
+			
+			// get the first found service
+			ServiceInfo serviceInfo = list.get(0).serviceInfo;
+			
+			// create bind intent to the first service
+			Intent intent = new Intent(action);
+			intent.setClassName(serviceInfo.packageName, serviceInfo.name);
+			return intent;
+		}
+		
 		public void bind(Context context, ServiceConnection conn, int flags) throws ServiceNotAvailableException {
 			Intent queryIntent = new Intent(mClassName);
 			List<ResolveInfo> list = context.getPackageManager().queryIntentServices(queryIntent, 0);
