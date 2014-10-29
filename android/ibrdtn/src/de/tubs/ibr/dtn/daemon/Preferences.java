@@ -952,9 +952,9 @@ public class Preferences extends PreferenceActivity {
 
 			p.println("net_interfaces = " + ifaces);
 
-			if (!"off".equals(preferences.getString(KEY_UPLINK_MODE, "off"))) {
+			if (!"off".equals(preferences.getString(KEY_UPLINK_MODE, "wifi"))) {
 				// add option to detect interface connections
-				if ("wifi".equals(preferences.getString(KEY_UPLINK_MODE, "off"))) {
+				if ("wifi".equals(preferences.getString(KEY_UPLINK_MODE, "wifi"))) {
 					p.println("net_internet = " + internet_ifaces);
 
 				}

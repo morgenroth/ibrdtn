@@ -42,7 +42,7 @@
             android:title="@string/pref_discovery_title" >
         </ListPreference>
         <ListPreference
-            android:defaultValue="off"
+            android:defaultValue="wifi"
             android:entries="@array/uplink_modes_names"
             android:entryValues="@array/uplink_modes_values"
             android:key="uplink_mode"
