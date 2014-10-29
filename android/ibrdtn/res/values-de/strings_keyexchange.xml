@@ -64,10 +64,5 @@
     
     <string name="no_key_available">Kein Schlüssel verfügbar</string>
     
-    <string name="showcase_qr_code_title">QR-Code verifizieren</string>
-    <string name="showcase_qr_code_text">Verwende die Kamera um den empfangenen öffentlichen Schlüssel mit Hilfe eines QR-Codes zu verfizieren.</string>
-    <string name="showcase_nfc_title">NFC Schlüsselaustausch</string>
-    <string name="showcase_nfc_text">Um den öffentlichen Schlüssel mit Hilfe von NFC auf ein anderes Gerät zu übertragen, bringen Sie die Geräte zusammen und tippen Sie dann auf den Bildschirm.</string>
-    
     <string name="text_show_password">Sichtbares Passwort</string>
 </resources>

@@ -420,7 +420,7 @@ public class Roster {
 			ContentValues values = new ContentValues();
 
 			try {
-				values.put(Buddy.NICKNAME, endpoint);
+				values.put(Buddy.NICKNAME, Roster.generateNickname(endpoint));
 				values.put(Buddy.ENDPOINT, endpoint);
 				
 				// store the message in the database
@@ -442,5 +442,15 @@ public class Roster {
 			i.putExtra(ChatService.EXTRA_BUDDY_ID, buddyId);
 			context.sendBroadcast(i);
 		}
+	}
+	
+	public static String generateNickname(String endpoint) {
+		if (endpoint.startsWith("dtn://android-") && endpoint.endsWith(".dtn/chat")) {
+			return "Android #" + endpoint.subSequence(14, endpoint.length() - 9);
+		}
+		if (endpoint.startsWith("dtn://") && endpoint.endsWith("/chat")) {
+			return endpoint.subSequence(6, endpoint.length() - 5).toString();
+		}
+		return endpoint;
 	}
 }

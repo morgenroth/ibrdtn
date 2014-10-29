@@ -682,6 +682,9 @@ public class Preferences extends PreferenceActivity {
 			if (Preferences.KEY_LOG_ENABLE_FILE.equals(key))
 				prefChangedIntent.putExtra(key, prefs.getBoolean(key, false));
 			
+			if (Preferences.KEY_UPLINK_MODE.equals(key))
+				prefChangedIntent.putExtra(key, prefs.getString(key, "wifi"));
+			
 			Preferences.this.startService(prefChangedIntent);
 			
 			/**
@@ -952,13 +955,10 @@ public class Preferences extends PreferenceActivity {
 
 			p.println("net_interfaces = " + ifaces);
 
-			if (!"off".equals(preferences.getString(KEY_UPLINK_MODE, "off"))) {
-				// add option to detect interface connections
-				if ("wifi".equals(preferences.getString(KEY_UPLINK_MODE, "off"))) {
-					p.println("net_internet = " + internet_ifaces);
-
-				}
-
+			if (!"off".equals(preferences.getString(KEY_UPLINK_MODE, "wifi"))) {
+				// disable globally connected by default
+				p.println("net_managed = yes");
+				
 				// add static host
 				p.println("static1_address = " + __CLOUD_ADDRESS__);
 				p.println("static1_port = " + __CLOUD_PORT__);

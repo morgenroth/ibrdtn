@@ -38,11 +38,8 @@
 	<!-- Custom permission to control the DTN services -->
 	<uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_SERVER" />
 
-	<!-- This app require access to NFC to send the local security key -->
+	<!-- This app require access to NFC to verify the hash of the security key -->
 	<uses-permission android:name="android.permission.NFC" />
-
-	<!-- This app require access to the camera to scan QR codes -->
-	<uses-permission android:name="android.permission.CAMERA" />
 
 	<!-- This app uses but not require Wi-Fi direct -->
 	<uses-feature android:name="android.hardware.wifi.direct"
@@ -50,14 +47,6 @@
 
 	<!-- This app uses NFC if available -->
 	<uses-feature android:name="android.hardware.nfc"
-		android:required="false" />
-
-	<!-- This app uses the camera to scan QR codes -->
-	<uses-feature android:name="android.hardware.camera"
-		android:required="false" />
-
-	<!-- This app uses but not require the camera auto-focus -->
-	<uses-feature android:name="android.hardware.camera.autofocus"
 		android:required="false" />
 
 	<!-- This app uses but not require a touchscreen -->

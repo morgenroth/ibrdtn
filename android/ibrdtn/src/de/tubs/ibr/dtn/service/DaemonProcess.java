@@ -28,9 +28,13 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -59,8 +63,9 @@ public class DaemonProcess {
 	private Boolean mDiscoveryEnabled = null;
 	private Boolean mDiscoveryActive = null;
 	private Boolean mLeModeEnabled = false;
+	private ConnectivityManager mConnManager = null;
 	
-    private WifiManager.MulticastLock mMcastLock = null;
+	private WifiManager.MulticastLock mMcastLock = null;
 
 	private final static String GNUSTL_NAME = "gnustl_shared";
 	private final static String CRYPTO_NAME = "cryptox";
@@ -115,6 +120,31 @@ public class DaemonProcess {
 		this.mDiscoveryEnabled = false;
 		this.mDiscoveryActive = true;
 	}
+	
+	private BroadcastReceiver mConnectivityListener = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			// do not proceed without a connection manager
+			if (mConnManager == null) return;
+			
+			// get current network info
+			NetworkInfo info = mConnManager.getActiveNetworkInfo();
+			
+			// get preferences
+			SharedPreferences prefs = context.getSharedPreferences("dtnd", Context.MODE_PRIVATE);
+			String cloud_mode = prefs.getString(Preferences.KEY_UPLINK_MODE, "wifi");
+			
+			if ("on".equals(cloud_mode) && info != null && info.isConnected()) {
+				mDaemon.setGloballyConnected(true);
+			}
+			else if ("wifi".equals(cloud_mode) && info != null && info.isConnected() && !mConnManager.isActiveNetworkMetered()) {
+				mDaemon.setGloballyConnected(true);
+			}
+			else {
+				mDaemon.setGloballyConnected(false);
+			}
+		}
+	};
 
 	public String[] getVersion() {
         StringVec version = mDaemon.getVersion();
@@ -301,6 +331,17 @@ public class DaemonProcess {
         } catch (NativeDaemonException e) {
             Log.e(TAG, "error while initializing the daemon process", e);
         }
+        
+        
+        // get instance of the connectivity manager
+        mConnManager = (ConnectivityManager)mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+        
+        // listen to connectivity changes
+        IntentFilter connectivityfilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+        mContext.registerReceiver(mConnectivityListener, connectivityfilter);
+        
+        // initially check connectivity
+        mConnectivityListener.onReceive(mContext, null);
     }
 	
 	public synchronized void start() {
@@ -324,6 +365,11 @@ public class DaemonProcess {
 	}
 	
 	public synchronized void onPreferenceChanged(String prefkey, OnRestartListener listener) {
+		// check connectivity if uplink mode changes
+		if (Preferences.KEY_UPLINK_MODE.equals(prefkey)) {
+			mConnectivityListener.onReceive(mContext, null);
+		}
+
 		if (prefkey.startsWith("interface_")) prefkey = "interface_";
 		if (!mRestartMap.containsKey(prefkey)) return;
 		
@@ -362,6 +408,10 @@ public class DaemonProcess {
 	}
 	
     public synchronized void destroy() {
+    	// unlisten to connectivity changes
+    	mContext.unregisterReceiver(mConnectivityListener);
+    	mConnManager = null;
+    	
         // stop the running daemon
         try {
             mDaemon.init(DaemonRunLevel.RUNLEVEL_ZERO);

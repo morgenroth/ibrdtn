@@ -327,6 +327,7 @@ namespace dtn
 				bool _scheduling;
 				ProphetConfig _prophet_config;
 				std::set<ibrcommon::vinterface> _internet_devices;
+				bool _managed_connectivity;
 				size_t _link_request_interval;
 
 			public:
@@ -407,6 +408,11 @@ namespace dtn
 				 * @return The interfaces which are potentially connected to the internet
 				 */
 				std::set<ibrcommon::vinterface> getInternetDevices() const;
+
+				/**
+				 * @return True, if the connectivity state is managed externally
+				 */
+				bool hasManagedConnectivity() const;
 
 				/**
 				 * @return Number of milliseconds between two linkstate-requests (as netlink-fallback)
