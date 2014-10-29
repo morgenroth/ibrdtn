@@ -418,6 +418,10 @@ public class DaemonService extends Service {
 				boolean value = intent.getBooleanExtra(Preferences.KEY_LOG_ENABLE_FILE, false);
 				prefs.edit().putBoolean(Preferences.KEY_LOG_ENABLE_FILE, value).commit();
 			}
+			if (intent.hasExtra(Preferences.KEY_UPLINK_MODE)) {
+				String value = intent.getStringExtra(Preferences.KEY_UPLINK_MODE);
+				prefs.edit().putString(Preferences.KEY_UPLINK_MODE, value).commit();
+			}
 
 			// restart the daemon into the given run-level
 			mDaemonProcess.onPreferenceChanged(prefkey, new DaemonProcess.OnRestartListener() {
@@ -695,6 +699,8 @@ public class DaemonService extends Service {
 		e.putInt(Preferences.KEY_LOG_DEBUG_VERBOSITY, debug_verbosity);
 
 		e.putBoolean(Preferences.KEY_LOG_ENABLE_FILE, prefs.getBoolean(Preferences.KEY_LOG_ENABLE_FILE, false));
+		
+		e.putString(Preferences.KEY_UPLINK_MODE, prefs.getString(Preferences.KEY_UPLINK_MODE, "wifi"));
 		
 		// set preferences to initialized
 		e.putBoolean("initialized", true);
