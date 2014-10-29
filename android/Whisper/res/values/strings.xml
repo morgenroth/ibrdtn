@@ -47,4 +47,6 @@
     <string name="action_trustinfo">Trust information</string>
     <string name="example_text">Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam.</string>
     <string name="example_timestamp">12:34 AM</string>
+    <string name="menu_pin">Always visible</string>
+    <string name="menu_unpin">Show only if online</string>
 </resources>

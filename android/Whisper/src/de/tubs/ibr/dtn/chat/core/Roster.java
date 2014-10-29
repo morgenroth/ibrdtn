@@ -66,7 +66,8 @@ public class Roster {
 				Buddy.VOICEEID + " TEXT, " +
 				Buddy.LANGUAGE + " TEXT, " +
 				Buddy.COUNTRY + " TEXT, " +
-				Buddy.FLAGS + " INTEGER NOT NULL DEFAULT 0" +
+				Buddy.FLAGS + " INTEGER NOT NULL DEFAULT 0, " +
+				Buddy.PINNED + " INTEGER NOT NULL DEFAULT 0 " +
 			");";
 	
 	private static final String DATABASE_CREATE_MESSAGES = 
@@ -84,7 +85,7 @@ public class Roster {
 	private class DBOpenHelper extends SQLiteOpenHelper {
 		
 		private static final String DATABASE_NAME = "dtnchat_user";
-		private static final int DATABASE_VERSION = 13;
+		private static final int DATABASE_VERSION = 14;
 		
 		public DBOpenHelper(Context context) {
 			super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -103,6 +104,8 @@ public class Roster {
 							+ newVersion + ", which will destroy all old data");
 			if ((oldVersion == 12) && (newVersion == 13)) {
 				db.execSQL("ALTER TABLE " + TABLE_NAME_ROSTER + " ADD COLUMN " + Buddy.FLAGS + " INTEGER NOT NULL DEFAULT 0");
+			} else if ((oldVersion == 13) && (newVersion == 14)) {
+				db.execSQL("ALTER TABLE " + TABLE_NAME_ROSTER + " ADD COLUMN " + Buddy.PINNED + " INTEGER NOT NULL DEFAULT 0");
 			} else {
 				db.execSQL("DROP TABLE IF EXISTS roster");
 				db.execSQL("DROP TABLE IF EXISTS messages");
@@ -261,6 +264,18 @@ public class Roster {
 		}
 		
 		return null;
+	}
+	
+	public void setPinned(Long buddyId, boolean pinned)
+	{
+		ContentValues values = new ContentValues();
+		values.put(Buddy.PINNED, pinned ? 1 : 0);
+		
+		// update buddy data
+		database.update(TABLE_NAME_ROSTER, values, Buddy.ID + " = ?", new String[] { buddyId.toString() });
+		
+        // send refresh intent
+        notifyBuddyChanged(buddyId);
 	}
 	
 	public void updatePresence(String buddyId, Date created, String presence, String nickname, String status, String voiceeid, String language, String country, Long flags)

@@ -54,7 +54,8 @@ public class RosterAdapter extends CursorAdapter {
     	Buddy.VOICEEID,
     	Buddy.LANGUAGE,
     	Buddy.COUNTRY,
-    	Buddy.FLAGS
+    	Buddy.FLAGS,
+    	Buddy.PINNED
     };
 	
     // The indexes of the default columns which must be consistent
@@ -70,6 +71,7 @@ public class RosterAdapter extends CursorAdapter {
     static final int COLUMN_ROSTER_LANGUAGE = 8;
     static final int COLUMN_ROSTER_COUNTRY  = 9;
     static final int COLUMN_ROSTER_FLAGS    = 10;
+    static final int COLUMN_ROSTER_PINNED   = 11;
     
     private static final int CACHE_SIZE     = 50;
     
@@ -133,6 +135,7 @@ public class RosterAdapter extends CursorAdapter {
         public int mColumnLanguage;
         public int mColumnCountry;
         public int mColumnFlags;
+        public int mColumnPinned;
 
         public ColumnsMap() {
         	mColumnId       = COLUMN_ROSTER_ID;
@@ -146,6 +149,7 @@ public class RosterAdapter extends CursorAdapter {
         	mColumnLanguage = COLUMN_ROSTER_LANGUAGE;
         	mColumnCountry = COLUMN_ROSTER_COUNTRY;
         	mColumnFlags = COLUMN_ROSTER_FLAGS;
+        	mColumnPinned = COLUMN_ROSTER_PINNED;
         }
 
         public ColumnsMap(Cursor cursor) {
@@ -213,6 +217,12 @@ public class RosterAdapter extends CursorAdapter {
             
             try {
                 mColumnFlags = cursor.getColumnIndexOrThrow(Buddy.FLAGS);
+            } catch (IllegalArgumentException e) {
+                Log.w("colsMap", e.getMessage());
+            }
+            
+            try {
+                mColumnPinned = cursor.getColumnIndexOrThrow(Buddy.PINNED);
             } catch (IllegalArgumentException e) {
                 Log.w("colsMap", e.getMessage());
             }
