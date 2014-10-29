@@ -81,7 +81,7 @@ namespace dtn
 		}
 
 		BundleCore::BundleCore()
-		 : _clock(1), _storage(NULL), _seeker(NULL), _router(NULL), _globally_connected(true)
+		 : _clock(1), _storage(NULL), _seeker(NULL), _router(NULL), _globally_connected(false)
 		{
 			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::core::BundlePurgeEvent>::add(this);
@@ -704,6 +704,9 @@ namespace dtn
 
 		void BundleCore::check_connection_state() throw ()
 		{
+			// do not execute checks if the connectivity is managed externally
+			if (dtn::daemon::Configuration::getInstance().getNetwork().hasManagedConnectivity()) return;
+
 			const std::set<ibrcommon::vinterface> &global_nets = dtn::daemon::Configuration::getInstance().getNetwork().getInternetDevices();
 
 			if (global_nets.empty()) {

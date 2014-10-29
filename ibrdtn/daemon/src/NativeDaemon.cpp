@@ -697,6 +697,11 @@ namespace dtn
 			}
 		}
 
+		void NativeDaemon::setGloballyConnected(bool connected) const
+		{
+			dtn::core::BundleCore::getInstance().setGloballyConnected(connected);
+		}
+
 		void NativeDaemon::onKeyExchangeBegin(std::string eid, int protocol, std::string password) const
 		{
 #ifdef IBRDTN_SUPPORT_BSP

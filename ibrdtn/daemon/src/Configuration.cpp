@@ -927,6 +927,11 @@ namespace dtn
 			} catch (const ibrcommon::ConfigFile::key_not_found&) { };
 
 			/**
+			 * read managed connectivity option
+			 */
+			_managed_connectivity = (conf.read<std::string>("net_managed", "yes") == "no");
+
+			/**
 			 * scheduling support
 			 */
 			_scheduling = (conf.read<std::string>("scheduling", "no") == "yes");
@@ -1048,6 +1053,11 @@ namespace dtn
 		std::set<ibrcommon::vinterface> Configuration::Network::getInternetDevices() const
 		{
 			return _internet_devices;
+		}
+
+		bool Configuration::Network::hasManagedConnectivity() const
+		{
+			return _managed_connectivity;
 		}
 
 		size_t Configuration::Network::getLinkRequestInterval() const

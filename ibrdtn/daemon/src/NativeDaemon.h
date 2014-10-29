@@ -266,6 +266,11 @@ namespace dtn
 			void initiateConnection(std::string eid) const;
 
 			/**
+			 * Set the globally connected state
+			 */
+			void setGloballyConnected(bool connected) const;
+
+			/**
 			 * Start the key exchange with the given neighbor and protocol
 			 */
 			void onKeyExchangeBegin(std::string eid, int protocol, std::string password) const;
