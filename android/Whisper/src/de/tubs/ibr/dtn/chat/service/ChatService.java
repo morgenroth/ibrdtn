@@ -398,7 +398,7 @@ public class ChatService extends IntentService {
 		Intent replyIntent = new Intent(this, ReplyActivity.class);
 		replyIntent.putExtra(EXTRA_BUDDY_ID, buddyId);
 		PendingIntent replyPendingIntent = PendingIntent.getActivity(this, buddyId.intValue(), replyIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-		NotificationCompat.Action action = new NotificationCompat.Action.Builder(R.drawable.ic_reply_icon, getString(R.string.reply_label), replyPendingIntent).addRemoteInput(remoteInput).build();
+		NotificationCompat.Action action = new NotificationCompat.Action.Builder(R.drawable.ic_action_reply, getString(R.string.reply_label), replyPendingIntent).addRemoteInput(remoteInput).build();
 		
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 		builder.setContentTitle(contentTitle);
