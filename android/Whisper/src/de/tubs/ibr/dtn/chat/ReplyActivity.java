@@ -34,13 +34,16 @@ public class ReplyActivity extends Activity {
 		super.onCreate(savedInstanceState);
 	
 		Bundle remoteInput = RemoteInput.getResultsFromIntent(getIntent());
+		Long buddyId = getIntent().getLongExtra(ChatService.EXTRA_BUDDY_ID, -1L);
 		
-		if (remoteInput != null) {
+		if (remoteInput != null && buddyId >= 0) {
 			final Intent intent = new Intent(this, ChatService.class);
 			intent.setAction(ChatService.ACTION_SEND_MESSAGE);
-			intent.putExtra(ChatService.EXTRA_BUDDY_ID, getIntent().getLongExtra(ChatService.EXTRA_BUDDY_ID, -1L));
+			intent.putExtra(ChatService.EXTRA_BUDDY_ID, buddyId);
 			intent.putExtra(ChatService.EXTRA_TEXT_BODY, remoteInput.getCharSequence(ChatService.EXTRA_VOICE_REPLY).toString());
 			startService(intent);
+			
+			ChatService.cancelNotification(this, buddyId);
 		}
 		
 		this.finish();

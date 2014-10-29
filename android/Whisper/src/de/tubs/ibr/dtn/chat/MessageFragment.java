@@ -315,6 +315,9 @@ public class MessageFragment extends Fragment {
 		IntentFilter filter = new IntentFilter(ChatService.ACTION_NEW_MESSAGE);
 		filter.setPriority(10);
 		getActivity().registerReceiver(mNotificationReceiver, filter);
+		
+		// cancel existing notifications
+		ChatService.cancelNotification(getActivity(), mBuddyId);
 	}
 	
 	private BroadcastReceiver mNotificationReceiver = new BroadcastReceiver() {

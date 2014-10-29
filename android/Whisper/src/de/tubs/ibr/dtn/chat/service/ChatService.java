@@ -361,6 +361,13 @@ public class ChatService extends IntentService {
 	{
 		return this.roster;
 	}
+	
+	public static void cancelNotification(Context context, Long buddyId)
+	{
+		if (buddyId == null) return;
+		NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+		mNotificationManager.cancel(buddyId.toString(), ChatService.MESSAGE_NOTIFICATION);
+	}
 
 	@SuppressWarnings("deprecation")
 	private void showNotification(Intent intent)
@@ -411,7 +418,7 @@ public class ChatService extends IntentService {
 		builder.setLights(0xffff0000, 300, 1000);
 		builder.setSound( Uri.parse( prefs.getString("ringtoneOnMessage", "content://settings/system/notification_sound") ) );
 		builder.extend(new WearableExtender().addAction(action));
-		builder.setAutoCancel(true);
+		builder.setAutoCancel(false);
 		
 		Notification notification = builder.getNotification();
 		
