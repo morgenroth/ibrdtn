@@ -65,10 +65,5 @@
     <string name="no_key_available">No key available</string>
     <string name="dummy_endpoint" translatable="false">dtn://android-012345</string>
     
-    <string name="showcase_qr_code_title">QR-Code verification</string>
-    <string name="showcase_qr_code_text">Use the camera to verify the received public key using a QR code.</string>
-    <string name="showcase_nfc_title">NFC Key-Exchange</string>
-    <string name="showcase_nfc_text">To beam your public key to another device using NFC, just bring the devices together and tap your display.</string>
-    
     <string name="text_show_password">Show password</string>
 </resources>
