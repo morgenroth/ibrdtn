@@ -39,4 +39,6 @@
     <string name="tts_when_on_headset">Nachricht vorlesen</string>
     <string name="tts_when_on_headset_desc">Spielt die Nachricht mittels TTS ab wenn ein Kopfhöhrer verbunden ist.</string>
 	<string name="type_to_compose_text_enter_to_send">Nachricht schreiben</string>
+    <string name="menu_pin">Immer anzeigen</string>
+    <string name="menu_unpin">Nur anzeigen wenn verfügbar</string>
 </resources>

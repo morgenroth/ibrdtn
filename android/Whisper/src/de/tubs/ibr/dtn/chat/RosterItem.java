@@ -36,6 +36,10 @@ public class RosterItem extends LinearLayout {
     	return mBuddy.getId();
     }
     
+    public boolean isPinned() {
+    	return mBuddy.isPinned();
+    }
+    
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();

@@ -48,6 +48,7 @@ public class Buddy implements Comparable<Buddy> {
 	public static final String LANGUAGE = "language";
 	public static final String COUNTRY = "country";
 	public static final String FLAGS = "flags";
+	public static final String PINNED = "pinned";
 	
 	public static final int FLAG_SIGNED = 4;
 	
@@ -62,6 +63,7 @@ public class Buddy implements Comparable<Buddy> {
 	private String language = null;
 	private String country = null;
 	private Long flags = 0L;
+	private boolean pinned = false;
 
 	public Buddy(Context context, Cursor cursor, RosterAdapter.ColumnsMap cmap)
 	{
@@ -78,6 +80,7 @@ public class Buddy implements Comparable<Buddy> {
 		this.language = cursor.getString(cmap.mColumnLanguage);
 		this.country = cursor.getString(cmap.mColumnCountry);
 		this.flags = cursor.getLong(cmap.mColumnFlags);
+		this.pinned = cursor.getLong(cmap.mColumnPinned) > 0;
 		
 		// set the last seen parameter
 		if (!cursor.isNull(cmap.mColumnLastseen))
@@ -133,6 +136,11 @@ public class Buddy implements Comparable<Buddy> {
 		}
 		
 		return true;
+	}
+	
+	public Boolean isPinned()
+	{
+		return pinned;
 	}
 	
 	public Calendar getExpiration()

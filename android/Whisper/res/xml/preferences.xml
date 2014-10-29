@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" android:defaultValue="Nobody">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" android:defaultValue="">
     <EditTextPreference android:title="@string/nickname" android:key="editNickname"/>
     <CheckBoxPreference android:key="checkBroadcastPresence" android:title="@string/broadcast_presence" android:summary="@string/broadcast_presence_desc"/>
 <!--     <ListPreference android:entries="@array/presence_tag_names" android:entryValues="@array/presence_tag_values" android:title="@string/presenceTag" android:key="presencetag" android:defaultValue="auto"/> -->

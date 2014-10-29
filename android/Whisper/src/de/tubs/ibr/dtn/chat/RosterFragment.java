@@ -19,6 +19,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListView;
 import de.tubs.ibr.dtn.chat.service.ChatService;
@@ -258,6 +259,15 @@ public class RosterFragment extends ListFragment implements LoaderManager.Loader
 		
 		MenuInflater inflater = getActivity().getMenuInflater();
 		inflater.inflate(R.menu.buddycontext_menu, menu);
+		
+		AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)menuInfo;
+		RosterItem ritem = (RosterItem)info.targetView;
+		
+		if (ritem.isPinned()) {
+			menu.removeItem(R.id.itemPin);
+		} else {
+			menu.removeItem(R.id.itemUnpin);
+		}
 	}
 	
 	@Override
@@ -272,6 +282,16 @@ public class RosterFragment extends ListFragment implements LoaderManager.Loader
 			case R.id.itemDelete:
 				if (mService != null) {
 					mService.getRoster().removeBuddy(ritem.getBuddyId());
+				}
+				return true;
+			case R.id.itemPin:
+				if (mService != null) {
+					mService.getRoster().setPinned(ritem.getBuddyId(), true);
+				}
+				return true;
+			case R.id.itemUnpin:
+				if (mService != null) {
+					mService.getRoster().setPinned(ritem.getBuddyId(), false);
 				}
 				return true;
 			default:
