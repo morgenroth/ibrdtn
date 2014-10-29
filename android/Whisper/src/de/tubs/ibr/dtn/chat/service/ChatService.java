@@ -362,6 +362,24 @@ public class ChatService extends IntentService {
 		return this.roster;
 	}
 	
+	public synchronized String getLocalNickname()
+	{
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(ChatService.this);
+		String presence_nick = preferences.getString("editNickname", "");
+		
+		if (presence_nick.length() == 0)
+		{
+			try {
+				String endpoint = _client.getDTNService().getEndpoint();
+				return Roster.generateNickname(endpoint);
+			} catch (RemoteException e) {
+				return "Nobody";
+			}
+		}
+		
+		return presence_nick;
+	}
+	
 	public static void cancelNotification(Context context, Long buddyId)
 	{
 		if (buddyId == null) return;
@@ -448,14 +466,6 @@ public class ChatService extends IntentService {
 		// send intent to activity or broadcast receiver for notification
 		sendOrderedBroadcast(intent, null);
 	}
-	
-	public void clearNotification(Long buddyId) {
-		if (buddyId == null) return;
-		
-		// clear notification
-		NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		mNotificationManager.cancel(buddyId.toString(), MESSAGE_NOTIFICATION);
-	}
 
 	@Override
 	protected void onHandleIntent(Intent intent) {
@@ -471,7 +481,7 @@ public class ChatService extends IntentService {
 			Boolean screenOn = pm.isScreenOn();
 			
 			String presence_tag = preferences.getString("presencetag", "auto");
-			String presence_nick = preferences.getString("editNickname", "Nobody");
+			String presence_nick = getLocalNickname();
 			String presence_text = preferences.getString("statustext", "");
 			
 			if (presence_tag.equals("auto"))

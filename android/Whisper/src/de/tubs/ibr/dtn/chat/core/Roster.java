@@ -448,6 +448,12 @@ public class Roster {
 		if (endpoint.startsWith("dtn://android-") && endpoint.endsWith(".dtn/chat")) {
 			return "Android #" + endpoint.subSequence(14, endpoint.length() - 9);
 		}
+		if (endpoint.startsWith("dtn://android-") && endpoint.endsWith(".dtn")) {
+			return "Android #" + endpoint.subSequence(14, endpoint.length() - 4);
+		}
+		if (endpoint.startsWith("ipn:")) {
+			return "Android #" + endpoint.subSequence(4, (endpoint.indexOf(".") > 0) ? endpoint.indexOf(".") - 1 : endpoint.length());
+		}
 		if (endpoint.startsWith("dtn://") && endpoint.endsWith("/chat")) {
 			return endpoint.subSequence(6, endpoint.length() - 5).toString();
 		}

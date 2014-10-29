@@ -3,6 +3,7 @@ package de.tubs.ibr.dtn.chat;
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.IntentSender.SendIntentException;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
@@ -25,6 +26,7 @@ import de.tubs.ibr.dtn.SecurityService;
 import de.tubs.ibr.dtn.SecurityUtils;
 import de.tubs.ibr.dtn.Services;
 import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
+import de.tubs.ibr.dtn.chat.service.ChatService;
 
 public class MeFragment extends Fragment implements View.OnClickListener {
 	
@@ -33,6 +35,10 @@ public class MeFragment extends Fragment implements View.OnClickListener {
 	TextView mNickname = null;
 	TextView mStatusMsg = null;
 	ImageView mState = null;
+	
+	// ChatService
+	private ChatService mChatService = null;
+	private boolean mChatServiceBound = false;
 	
 	// Security API provided by IBR-DTN
 	private SecurityService mSecurityService = null;
@@ -49,6 +55,17 @@ public class MeFragment extends Fragment implements View.OnClickListener {
 
 		public void onServiceDisconnected(ComponentName name) {
 			mSecurityService = null;
+		}
+	};
+	
+	private ServiceConnection mChatConnection = new ServiceConnection() {
+		public void onServiceConnected(ComponentName name, IBinder service) {
+			mChatService = ((ChatService.LocalBinder)service).getService();
+			onPreferencesChanged();
+		}
+
+		public void onServiceDisconnected(ComponentName name) {
+			mChatService = null;
 		}
 	};
 
@@ -122,13 +139,23 @@ public class MeFragment extends Fragment implements View.OnClickListener {
 		} catch (ServiceNotAvailableException e) {
 			// Security API not available
 		}
+		
+		getActivity().bindService(new Intent(getActivity(), ChatService.class), mChatConnection, Context.BIND_AUTO_CREATE);
+		mChatServiceBound = true;
 	}
 
 	@Override
 	public void onStop() {
 		if (mSecurityBound) {
 		    getActivity().unbindService(mSecurityConnection);
+		    mSecurityService = null;
 		    mSecurityBound = false;
+		}
+		
+		if (mChatServiceBound) {
+			getActivity().unbindService(mChatConnection);
+			mChatService = null;
+			mChatServiceBound = false;
 		}
 		
 		super.onStop();
@@ -160,7 +187,7 @@ public class MeFragment extends Fragment implements View.OnClickListener {
 	private void onPreferencesChanged() {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
 		String presence_tag = prefs.getString("presencetag", "auto");
-		String presence_nick = prefs.getString("editNickname", "Nobody");
+		String presence_nick = (mChatService != null) ? mChatService.getLocalNickname() : "";
 		String presence_text = prefs.getString("statustext", "");
 		
 		int presence_icon = R.drawable.online;
@@ -196,13 +223,16 @@ public class MeFragment extends Fragment implements View.OnClickListener {
 			mStatusMsg.setText(this.getResources().getText(R.string.no_status_message));
 		}
 		
-		// get local security info
-		Bundle keyinfo = SecurityUtils.getSecurityInfo(mSecurityService, null);
-		if (mItemKeyInfo != null) {
-			if (keyinfo != null) {
-				mItemKeyInfo.setVisible(true);
-			} else {
-				mItemKeyInfo.setVisible(false);
+		if (mSecurityService != null)
+		{
+			// get local security info
+			Bundle keyinfo = SecurityUtils.getSecurityInfo(mSecurityService, null);
+			if (mItemKeyInfo != null) {
+				if (keyinfo != null) {
+					mItemKeyInfo.setVisible(true);
+				} else {
+					mItemKeyInfo.setVisible(false);
+				}
 			}
 		}
 	}
