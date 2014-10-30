@@ -468,7 +468,7 @@ public class TalkieService extends IntentService {
             // mark the message as played
             mDatabase.mark(f, msgid, true);
             
-            // remove notification is there are no more pending
+            // remove notification if there are no more pending
             // messages
             removeNotification();
         }
