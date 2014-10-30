@@ -234,12 +234,16 @@ public class ApiDatabase implements Closeable {
 		values.put(Endpoint.SINGLETON, singleton ? 1 : 0);
 		values.put(Endpoint.FQEID, fqeid ? 1 : 0);
 		
-		long rowid = mDatabase.insert(TABLE_NAME_ENDPOINTS, null, values);
-		
-		// return null if the endpoint is already registered
-		if (rowid == -1) return null;
-		
-		return getEndpoint(rowid);
+		try {
+			long rowid = mDatabase.insert(TABLE_NAME_ENDPOINTS, null, values);
+			
+			// return null if the endpoint is already registered
+			if (rowid == -1) return null;
+			
+			return getEndpoint(rowid);
+		} catch (SQLException e) {
+			return null;
+		}
 	}
 	
 	public Endpoint createEndpoint(Session s, GroupEndpoint group) {

@@ -9,6 +9,7 @@ import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -28,6 +29,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcelable;
 import android.os.RemoteException;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
@@ -333,7 +335,8 @@ public class KeyInformationFragment extends Fragment {
 			Intent i = new Intent(getActivity(), KeyInformationActivity.class);
 			
 			// create local singleton endpoint
-			SingletonEndpoint node = new SingletonEndpoint(Preferences.getEndpoint(getActivity()));
+			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+			SingletonEndpoint node = new SingletonEndpoint(Preferences.getEndpoint(getActivity(), prefs));
 			
 			i.putExtra(KeyInformationActivity.EXTRA_IS_LOCAL, true);
 			i.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Parcelable)node);

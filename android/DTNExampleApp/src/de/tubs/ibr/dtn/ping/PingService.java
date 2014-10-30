@@ -15,7 +15,6 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
-import android.os.RemoteException;
 import android.util.Log;
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.Bundle;
@@ -73,6 +72,8 @@ public class PingService extends IntentService {
     
     // The communication with the DTN service is done using the DTNClient
     private DTNClient mClient = null;
+    private DTNClient.Session mSession = null;
+    private Object mWaitLock = new Object();
     
     private DtnStreamReceiver mReceiver = null;
     private DtnStreamTransmitter mTransmitter = null;
@@ -111,53 +112,43 @@ public class PingService extends IntentService {
     }
     
     private String getLocalEndpoint() {
-        try {
-            if (mClient != null) {
-                if (mClient.getDTNService() == null) return null;
-                return mClient.getDTNService().getEndpoint();
-            }
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
-        
-        return null;
+        return mClient.getEndpoint();
     }
     
     public PendingIntent getSelectNeighborIntent() {
-        try {
-            // wait until the session is available
-            mClient.getSession();
-            
-            // get pending intent for neighbor list
-            android.os.Bundle b = mClient.getDTNService().getSelectNeighborIntent();
-            return b.getParcelable(de.tubs.ibr.dtn.Intent.EXTRA_PENDING_INTENT);
-        } catch (SessionDestroyedException e) {
-            Log.e(TAG, "can not query for neighbors", e);
-        } catch (InterruptedException e) {
-            Log.e(TAG, "can not query for neighbors", e);
-        } catch (RemoteException e) {
-            Log.e(TAG, "can not query for neighbors", e);
-        }
+		// wait until the session is available
+		try {
+			synchronized (mWaitLock) {
+				while (mSession == null) {
+					if (mClient.isDisconnected()) return null;
+					mWaitLock.wait();
+				}
+			}
+		} catch (InterruptedException e) {
+			return null;
+		}
         
-        return null;
+        // get pending intent for neighbor list
+        return mClient.getSelectNeighborIntent();
     }
     
     public List<Node> getNeighbors() {
-        try {
-            // wait until the session is available
-            mClient.getSession();
-            
-            // query all neighbors
-            return mClient.getDTNService().getNeighbors();
-        } catch (SessionDestroyedException e) {
-            Log.e(TAG, "can not query for neighbors", e);
-        } catch (InterruptedException e) {
-            Log.e(TAG, "can not query for neighbors", e);
-        } catch (RemoteException e) {
-            Log.e(TAG, "can not query for neighbors", e);
-        }
+		// wait until the session is available
+		try {
+			synchronized (mWaitLock) {
+				while (mSession == null) {
+					if (mClient.isDisconnected()) return new LinkedList<Node>();
+					mWaitLock.wait();
+				}
+			}
+		} catch (InterruptedException e) {
+			return new LinkedList<Node>();
+		}
         
-        return new LinkedList<Node>();
+        // query all neighbors
+        List<Node> ret = mClient.getNeighbors();
+        
+        return (ret != null) ? ret : new LinkedList<Node>();
     }
     
     private void doPing(SingletonEndpoint destination) {
@@ -180,14 +171,11 @@ public class PingService extends IntentService {
         String payload = "Hello World";
 
         try {
-            // get the DTN session
-            Session s = mClient.getSession();
-            
             // store the current time
             mStart = System.nanoTime();
             
             // send the bundle
-            BundleID ret = s.send(b, payload.getBytes());
+            BundleID ret = mSession.send(b, payload.getBytes());
             
             if (ret == null)
             {
@@ -199,8 +187,6 @@ public class PingService extends IntentService {
             }
         } catch (SessionDestroyedException e) {
             Log.e(TAG, "could not send the message", e);
-        } catch (InterruptedException e) {
-            Log.e(TAG, "could not send the message", e);
         }
     }
 
@@ -208,16 +194,26 @@ public class PingService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         String action = intent.getAction();
         
+		// wait until the session is available
+		try {
+			synchronized (mWaitLock) {
+				while (mSession == null) {
+					if (mClient.isDisconnected()) return;
+					mWaitLock.wait();
+				}
+			}
+		} catch (InterruptedException e) {
+			return;
+		}
+        
         if (de.tubs.ibr.dtn.Intent.RECEIVE.equals(action))
         {
             // Received bundles from the DTN service here
             try {
                 // We loop here until no more bundles are available
                 // (queryNext() returns false)
-                while (mClient.getSession().queryNext());
+                while (mSession.queryNext());
             } catch (SessionDestroyedException e) {
-                Log.e(TAG, "Can not query for bundle", e);
-            } catch (InterruptedException e) {
                 Log.e(TAG, "Can not query for bundle", e);
             }
         }
@@ -228,7 +224,7 @@ public class PingService extends IntentService {
             
             try {
                 // mark the bundle ID as delivered
-                mClient.getSession().delivered(bundleid);
+            	mSession.delivered(bundleid);
             } catch (Exception e) {
                 Log.e(TAG, "Can not mark bundle as delivered.", e);
             }
@@ -256,29 +252,23 @@ public class PingService extends IntentService {
             Log.d(TAG, "create stream");
             
             // create DTN stream
-            try {
-                mTransmitter = new DtnStreamTransmitter(PingService.this, mClient.getSession());
-                mTransmitter.connect(mStreamGroup, MediaType.BINARY, null);
-                mTransmitter.setLifetime(10);
-                
-                mStreamJob = mExecutor.scheduleWithFixedDelay(new Runnable() {
-                    @Override
-                    public void run() {
-                        Log.d(TAG, "send stream packet");
-                        try {
-                            mTransmitter.write("Hello World!".getBytes());
-                        } catch (InterruptedException e) {
-                            Log.d(TAG, "interrupted while sending", e);
-                        } catch (IOException e) {
-                            Log.d(TAG, "error while sending", e);
-                        }
+            mTransmitter = new DtnStreamTransmitter(PingService.this, mSession);
+            mTransmitter.connect(mStreamGroup, MediaType.BINARY, null);
+            mTransmitter.setLifetime(10);
+            
+            mStreamJob = mExecutor.scheduleWithFixedDelay(new Runnable() {
+                @Override
+                public void run() {
+                    Log.d(TAG, "send stream packet");
+                    try {
+                        mTransmitter.write("Hello World!".getBytes());
+                    } catch (InterruptedException e) {
+                        Log.d(TAG, "interrupted while sending", e);
+                    } catch (IOException e) {
+                        Log.d(TAG, "error while sending", e);
                     }
-                }, 0, 1, TimeUnit.SECONDS);
-            } catch (SessionDestroyedException e1) {
-                Log.e(TAG, "could not start the stream", e1);
-            } catch (InterruptedException e1) {
-                Log.e(TAG, "could not start the stream", e1);
-            }
+                }
+            }, 0, 1, TimeUnit.SECONDS);
         }
         else if (STREAM_STOP_INTENT.equals(action))
         {
@@ -298,7 +288,7 @@ public class PingService extends IntentService {
         else if (STREAM_SWITCH_GROUP.equals(action))
         {
             try {
-                mClient.getSession().leave(mStreamGroup);
+            	mSession.leave(mStreamGroup);
     
                 if (STREAM_GROUP2_EID.equals(mStreamGroup)) {
                     // set current stream group
@@ -308,11 +298,9 @@ public class PingService extends IntentService {
                     mStreamGroup = STREAM_GROUP2_EID;
                 }
                 
-                mClient.getSession().join(mStreamGroup);
+                mSession.join(mStreamGroup);
             } catch (SessionDestroyedException e) {
                 Log.e(TAG, "session destroyed", e);
-            } catch (InterruptedException e) {
-                Log.e(TAG, "interrupted", e);
             }
         }
     }
@@ -347,7 +335,7 @@ public class PingService extends IntentService {
             
             try {
                 // list all registered endpoints
-                for (GroupEndpoint group : session.getGroups()) {
+               for (GroupEndpoint group : session.getGroups()) {
                     Log.d(TAG, "Group: " + group);
                 }
             } catch (SessionDestroyedException e) {
@@ -374,11 +362,23 @@ public class PingService extends IntentService {
                 i.putExtra("localeid", localeid);
                 sendBroadcast(i);
             }
+            
+            // notify waiting threads
+            synchronized (mWaitLock) {
+                mSession = session;
+                mWaitLock.notifyAll();
+            }
         }
 
         @Override
         public void onSessionDisconnected() {
             Log.d(TAG, "Session disconnected");
+            
+            // notify waiting threads
+            synchronized (mWaitLock) {
+                mSession = null;
+	            mWaitLock.notifyAll();
+            }
         }
         
     };

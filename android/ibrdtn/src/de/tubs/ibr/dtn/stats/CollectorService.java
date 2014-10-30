@@ -33,7 +33,6 @@ public class CollectorService extends IntentService {
 	public final static String DELIVER_DATA = "de.tubs.ibr.dtn.stats.DELIVER_DATA";
 	public final static String REC_DATA = "de.tubs.ibr.dtn.stats.REC_DATA";
 	private final static String TAG = "CollectorService";
-	private Boolean _connected = false;
 	
 	private final long LIMIT_FILESIZE = 500000;
 	public static Object datalock = new Object(); 
@@ -42,61 +41,19 @@ public class CollectorService extends IntentService {
 	
 	// DTN client to talk with the DTN service
 	private DTNClient _client = null;
-	
-	private SessionConnection _session_listener = new SessionConnection() {
-		public void onSessionConnected(Session session) {
-			setConnected(true);
-		}
-
-		public void onSessionDisconnected() {
-		}
-	};
+	private DTNClient.Session _session = null;
 	
 	public CollectorService() {
 		super(TAG);
 	}
 	
-	private synchronized void setConnected(Boolean val) {
-		_connected = val;
-		notifyAll();
-	}
-
-	private synchronized void waitConnected() throws InterruptedException {
-		while (!_connected) { this.wait(); }
-	}
-
-	@Override
-	public void onCreate() {
-		super.onCreate();
-		setConnected(false);
-	}
-	
-	private void createSession() {
-		if (_client != null) return;
-		
-        // create a new registration
-        Registration reg = new Registration("datacollector");
-        
-		try {
-	        // create a new DTN client
-	        _client = new DTNClient(_session_listener);
-			_client.initialize(this, reg);
-		} catch (ServiceNotAvailableException e) {
-			// error
-		}
-	}
-
 	@Override
 	public void onDestroy() {
 		// destroy DTN client
 		if (_client != null) {
 			// unregister at the daemon
-			try {
-				_client.getSession().destroy();
-			} catch (SessionDestroyedException e) {
-				Log.e(TAG, null, e);
-			} catch (InterruptedException e) {
-				Log.e(TAG, null, e);
+			if (_session != null) {
+				_session.destroy();
 			}
 	
 			_client.terminate();
@@ -144,11 +101,53 @@ public class CollectorService extends IntentService {
 		}
 	}
 	
+	private synchronized void performDataTransmission() {
+		if (_client == null) {
+			// create a new registration
+			Registration reg = new Registration("datacollector");
+			
+			try {
+				// create a new DTN client
+				_client = new DTNClient(_session_listener);
+				_client.initialize(this, reg);
+			} catch (ServiceNotAvailableException e) {
+				// error
+			}
+		}
+		
+		try {
+			// wait until the client is connected
+			while (_session == null) {
+				if (_client.isDisconnected()) return;
+				wait();
+			}
+		} catch (InterruptedException e) {
+			return;
+		}
+		
+		// send data
+		performDataDelivery();
+	}
+	
+	private SessionConnection _session_listener = new SessionConnection() {
+		public void onSessionConnected(Session session) {
+			synchronized(CollectorService.this) {
+				_session = session;
+				notifyAll();
+			}
+		}
+
+		public void onSessionDisconnected() {
+			synchronized(CollectorService.this) {
+				_session = null;
+				notifyAll();
+			}
+		}
+	};
+	
 	private void performDataDelivery() {
 		// wait until the DTN service is connected
 		try {
-			CollectorService.this.waitConnected();
-		
 			final String androidId = Secure.getString(getContentResolver(), Secure.ANDROID_ID);
 
 			Calendar gmt = new GregorianCalendar(TimeZone.getTimeZone("GMT"));
@@ -184,16 +183,16 @@ public class CollectorService extends IntentService {
 				
 				ParcelFileDescriptor fd = ParcelFileDescriptor.open(efz, ParcelFileDescriptor.MODE_READ_ONLY);
 				try {
-					// send compressed data as bundle
-					_client.getSession().send(deliver_endpoint, 172800, fd);
-					
-					Log.d(TAG, "data file sent");
+					if (_session != null) {
+						// send compressed data as bundle
+						_session.send(deliver_endpoint, 172800, fd);
+						
+						Log.d(TAG, "data file sent");
+					}
 					
 					// delete data file
 					ef.delete();
 				} catch (SessionDestroyedException e) {
-					
-				} catch (InterruptedException e) {
 					
 				}
 				
@@ -204,8 +203,6 @@ public class CollectorService extends IntentService {
 			// no data to send here
 		} catch (IOException e) {
 			Log.e(TAG, "error", e);
-		} catch (InterruptedException e) {
-			Log.e(TAG, "interrupted", e);
 		}
 	}
 
@@ -215,8 +212,7 @@ public class CollectorService extends IntentService {
 
 		if ( DELIVER_DATA.equals( intent.getAction() ) ) {
 			if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "Compress and deliver");
-			if (_client == null) createSession();
-			performDataDelivery();
+			performDataTransmission();
 		} else if ( REC_DATA.equals( intent.getAction() ) ) {
 			if ( intent.hasExtra("xmldata") ) {
 				final String data = intent.getStringExtra("xmldata");

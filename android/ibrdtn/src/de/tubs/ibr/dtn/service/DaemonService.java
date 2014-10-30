@@ -169,7 +169,8 @@ public class DaemonService extends Service {
 
 		@Override
 		public String getEndpoint() throws RemoteException {
-			return Preferences.getEndpoint(DaemonService.this);
+			SharedPreferences prefs = getSharedPreferences("dtnd", Context.MODE_PRIVATE);
+			return Preferences.getEndpoint(DaemonService.this, prefs);
 		}
 
 		@Override
@@ -213,7 +214,8 @@ public class DaemonService extends Service {
 	private final KeyExchangeManager.Stub mKeyExchangeBinder = new KeyExchangeManager.Stub() {
 		@Override
 		public SingletonEndpoint getEndpoint() throws RemoteException {
-			return new SingletonEndpoint(Preferences.getEndpoint(DaemonService.this));
+			SharedPreferences prefs = getSharedPreferences("dtnd", Context.MODE_PRIVATE);
+			return new SingletonEndpoint(Preferences.getEndpoint(DaemonService.this, prefs));
 		}
 
 		@Override
@@ -242,7 +244,8 @@ public class DaemonService extends Service {
 				// set default node, if not set
 				if (endpoint == null) {
 					// create local singleton endpoint
-					node = new de.tubs.ibr.dtn.swig.EID(Preferences.getEndpoint(DaemonService.this));
+					SharedPreferences prefs = getSharedPreferences("dtnd", Context.MODE_PRIVATE);
+					node = new de.tubs.ibr.dtn.swig.EID(Preferences.getEndpoint(DaemonService.this, prefs));
 					
 					// mark the endpoint as local
 					infoIntent.putExtra(KeyInformationActivity.EXTRA_IS_LOCAL, true);
@@ -268,7 +271,8 @@ public class DaemonService extends Service {
 				// set default node, if not set
 				if (endpoint == null) {
 					// create local singleton endpoint
-					node = new SingletonEndpoint(Preferences.getEndpoint(DaemonService.this));
+					SharedPreferences prefs = getSharedPreferences("dtnd", Context.MODE_PRIVATE);
+					node = new SingletonEndpoint(Preferences.getEndpoint(DaemonService.this, prefs));
 				} else {
 					// create singleton endpoint
 					node = new SingletonEndpoint(endpoint);
@@ -421,6 +425,10 @@ public class DaemonService extends Service {
 			if (intent.hasExtra(Preferences.KEY_UPLINK_MODE)) {
 				String value = intent.getStringExtra(Preferences.KEY_UPLINK_MODE);
 				prefs.edit().putString(Preferences.KEY_UPLINK_MODE, value).commit();
+			}
+			if (intent.hasExtra(Preferences.KEY_ENDPOINT_ID)){
+				String value = intent.getStringExtra(Preferences.KEY_ENDPOINT_ID);
+				prefs.edit().putString(Preferences.KEY_ENDPOINT_ID, value).commit();
 			}
 
 			// restart the daemon into the given run-level

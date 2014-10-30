@@ -6,7 +6,9 @@ import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.preference.ListPreference;
+import android.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
@@ -67,7 +69,8 @@ public class EndpointListPreference extends ListPreference {
 		alert.setView(input);
 		
 		// assign current endpoint ID
-		input.setText(Preferences.getEndpoint(getContext()));
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+		input.setText(Preferences.getEndpoint(getContext(), prefs));
 		
 		alert.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 			@Override

@@ -20,7 +20,6 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.ParcelFileDescriptor.AutoCloseOutputStream;
-import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import de.tubs.ibr.dtn.api.Block;
@@ -74,6 +73,8 @@ public class DtnService extends IntentService {
     
     // The communication with the DTN service is done using the DTNClient
     private DTNClient mClient = null;
+    private DTNClient.Session mSession = null;
+    private Object mWaitLock = new Object();
     
     // should be set to true if a download is requested 
     private Boolean mIsDownloading = false;
@@ -117,16 +118,16 @@ public class DtnService extends IntentService {
     public PendingIntent getSelectNeighborIntent() {
         try {
             // wait until the session is available
-            mClient.getSession();
+            synchronized(mWaitLock) {
+                while (mSession == null) {
+                    if (mClient.isDisconnected()) return null;
+                    mWaitLock.wait();
+                }
+            }
             
             // get pending intent for neighbor list
-            android.os.Bundle b = mClient.getDTNService().getSelectNeighborIntent();
-            return b.getParcelable(de.tubs.ibr.dtn.Intent.EXTRA_PENDING_INTENT);
-        } catch (SessionDestroyedException e) {
-            Log.e(TAG, "can not query for neighbors", e);
+            return mClient.getSelectNeighborIntent();
         } catch (InterruptedException e) {
-            Log.e(TAG, "can not query for neighbors", e);
-        } catch (RemoteException e) {
             Log.e(TAG, "can not query for neighbors", e);
         }
         
@@ -141,10 +142,18 @@ public class DtnService extends IntentService {
         {
             // Receive bundle info from the DTN service here
             try {
+                // wait until the session is available
+                synchronized(mWaitLock) {
+                    while (mSession == null) {
+                        if (mClient.isDisconnected()) return;
+                        mWaitLock.wait();
+                    }
+                }
+                
                 // We loop here until no more bundles are available
                 // (queryNext() returns false)
                 mIsDownloading = false;
-                while (mClient.getSession().queryInfoNext());
+                while (mSession.queryInfoNext());
             } catch (SessionDestroyedException e) {
                 Log.e(TAG, "Can not query for bundle", e);
             } catch (InterruptedException e) {
@@ -157,8 +166,16 @@ public class DtnService extends IntentService {
             BundleID bundleid = intent.getParcelableExtra(EXTRA_KEY_BUNDLE_ID);
             
             try {
+                // wait until the session is available
+                synchronized(mWaitLock) {
+                    while (mSession == null) {
+                        if (mClient.isDisconnected()) return;
+                        mWaitLock.wait();
+                    }
+                }
+                
                 // mark the bundle ID as delivered
-                mClient.getSession().delivered(bundleid);
+                mSession.delivered(bundleid);
             } catch (Exception e) {
                 Log.e(TAG, "Can not mark bundle as delivered.", e);
             }
@@ -208,8 +225,16 @@ public class DtnService extends IntentService {
             mNotificationFactory.showDownload(d);
             
             try {
+                // wait until the session is available
+                synchronized(mWaitLock) {
+                    while (mSession == null) {
+                        if (mClient.isDisconnected()) return;
+                        mWaitLock.wait();
+                    }
+                }
+                
                 mIsDownloading = true;
-                if (mClient.getSession().query(bundleid)) {
+                if (mSession.query(bundleid)) {
                     mNotificationFactory.showDownloadCompleted(d);
                 } else {
                     // set state to aborted
@@ -275,8 +300,13 @@ public class DtnService extends IntentService {
         mNotificationFactory.showUpload(destination, uris.size());
         
         try {
-            // get the DTN session
-            Session s = mClient.getSession();
+            // wait until the session is available
+            synchronized(mWaitLock) {
+                while (mSession == null) {
+                    if (mClient.isDisconnected()) return;
+                    mWaitLock.wait();
+                }
+            }
             
             // create a pipe
             final ParcelFileDescriptor[] pipe = ParcelFileDescriptor.createPipe();
@@ -349,7 +379,7 @@ public class DtnService extends IntentService {
             
             try {
                 // send the data
-                s.send(destination, lifetime, pipe[0]);
+                mSession.send(destination, lifetime, pipe[0]);
             } catch (Exception e) {
                 pipe[0].close();
                 targetStream.close();
@@ -365,7 +395,7 @@ public class DtnService extends IntentService {
         }
     }
     
-    SessionConnection mSession = new SessionConnection() {
+    SessionConnection mSessionListener = new SessionConnection() {
 
         @Override
         public void onSessionConnected(Session session) {
@@ -373,11 +403,21 @@ public class DtnService extends IntentService {
             
             // register own data handler for incoming bundles
             session.setDataHandler(mDataHandler);
+            
+            synchronized(mWaitLock) {
+            	mSession = session;
+            	mWaitLock.notifyAll();
+            }
         }
 
         @Override
         public void onSessionDisconnected() {
             Log.d(TAG, "Session disconnected");
+            
+            synchronized(mWaitLock) {
+            	mSession = null;
+            	mWaitLock.notifyAll();
+            }
         }
         
     };
@@ -393,7 +433,7 @@ public class DtnService extends IntentService {
         mDatabase = new Database(this);
         
         // create a new DTN client
-        mClient = new DTNClient(mSession);
+        mClient = new DTNClient(mSessionListener);
         
         // create registration with "sharebox" as endpoint
         // if the EID of this device is "dtn://device" then the

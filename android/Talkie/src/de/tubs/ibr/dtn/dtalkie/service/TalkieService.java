@@ -96,6 +96,8 @@ public class TalkieService extends IntentService {
     
     // basic dtn client
     private DTNClient mClient = null;
+    private DTNClient.Session mSession = null;
+    private Object mWaitLock = new Object();
     
     public TalkieService() {
         super(TAG);
@@ -107,9 +109,18 @@ public class TalkieService extends IntentService {
 			
 			// register own data handler for incoming bundles
 			session.setDataHandler(_data_handler);
+			
+			synchronized(mWaitLock) {
+				mSession = session;
+				mWaitLock.notifyAll();
+			}
 		}
 
 		public void onSessionDisconnected() {
+			synchronized(mWaitLock) {
+				mSession = null;
+				mWaitLock.notifyAll();
+			}
 		}
 	};
 
@@ -397,14 +408,30 @@ public class TalkieService extends IntentService {
         String action = intent.getAction();
         
         if (de.tubs.ibr.dtn.Intent.RECEIVE.equals(action)) {
+
             try {
-                while (mClient.getSession().queryNext());
+                synchronized(mWaitLock) {
+                    while (mSession == null) {
+                        if (mClient.isDisconnected()) return;
+                        mWaitLock.wait();
+                    }
+                }
+                
+                while (mSession.queryNext());
             } catch (Exception e) { };
         }
         else if (ACTION_MARK_DELIVERED.equals(action)) {
             final BundleID received = intent.getParcelableExtra("bundleid");
+            
             try {
-                mClient.getSession().delivered(received);
+                synchronized(mWaitLock) {
+                    while (mSession == null) {
+                        if (mClient.isDisconnected()) return;
+                        mWaitLock.wait();
+                    }
+                }
+                
+                mSession.delivered(received);
             } catch (Exception e) {
                 Log.e(TAG, "Can not mark bundle as delivered.", e);
             }
@@ -475,8 +502,15 @@ public class TalkieService extends IntentService {
             b.set(ProcFlags.DTNSEC_REQUEST_SIGN, true);
             
             try {
+                synchronized(mWaitLock) {
+                    while (mSession == null) {
+                        if (mClient.isDisconnected()) return;
+                        mWaitLock.wait();
+                    }
+                }
+                
                 ParcelFileDescriptor fd = ParcelFileDescriptor.open(recfile, ParcelFileDescriptor.MODE_READ_ONLY);
-                BundleID ret = mClient.getSession().send(b, fd);
+                BundleID ret = mSession.send(b, fd);
                 
                 if (ret == null)
                 {
