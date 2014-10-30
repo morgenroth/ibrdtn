@@ -34,6 +34,7 @@ public class HeadsetService extends Service {
     
     private Boolean mPersistent = false;
     private AudioManager mAudioManager = null;
+    private ComponentName mMediaButtonReceiver = null;
     
     private Boolean mRecording = false;
     
@@ -56,8 +57,7 @@ public class HeadsetService extends Service {
             
             if (!mPersistent) {
                 // listen to media button events
-                ComponentName receiver = new ComponentName(getPackageName(), MediaButtonReceiver.class.getName());
-                mAudioManager.registerMediaButtonEventReceiver(receiver);
+                mAudioManager.registerMediaButtonEventReceiver(mMediaButtonReceiver);
                 
                 // acquire auto-play lock
                 ENABLED = true;
@@ -75,8 +75,7 @@ public class HeadsetService extends Service {
                 ENABLED = false;
                 
                 // unlisten to media button events
-                ComponentName receiver = new ComponentName(getPackageName(), MediaButtonReceiver.class.getName());
-                mAudioManager.unregisterMediaButtonEventReceiver(receiver);
+                mAudioManager.unregisterMediaButtonEventReceiver(mMediaButtonReceiver);
             }
             
             // set service mode to persistent
@@ -203,6 +202,9 @@ public class HeadsetService extends Service {
     	IntentFilter filter = new IntentFilter();
     	filter.addAction(RecorderService.EVENT_RECORDING_EVENT);
     	registerReceiver(mRecorderEventReceiver, filter);
+    	
+    	// create a media button receiver
+    	mMediaButtonReceiver = new ComponentName(getPackageName(), MediaButtonReceiver.class.getName());
     }
 
     @Override
