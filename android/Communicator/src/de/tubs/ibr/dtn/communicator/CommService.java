@@ -45,7 +45,7 @@ public class CommService extends Service {
     
     // The communication with the DTN service is done using the DTNClient
     private DTNClient mClient = null;
-    private Session mSession = null;
+    private DTNClient.Session mSession = null;
     
     private DtnStreamReceiver mStreamEndpoint = null;
     
