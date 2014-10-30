@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item android:id="@+id/itemPlayAll" android:title="@string/play_all" android:icon="@drawable/ic_action_playall" android:showAsAction="always"></item>
     <item android:id="@+id/itemClearList" android:title="@string/clear_list" android:icon="@drawable/ic_action_discard" android:showAsAction="never|withText"></item>
 </menu>

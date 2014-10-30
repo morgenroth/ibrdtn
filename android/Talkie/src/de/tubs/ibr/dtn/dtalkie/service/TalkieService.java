@@ -26,6 +26,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 import android.app.IntentService;
 import android.app.Notification;
@@ -70,6 +71,7 @@ public class TalkieService extends IntentService {
 
 	public static final String ACTION_RECORDED = "de.tubs.ibr.dtn.dtalkie.RECORDED";
 	public static final String ACTION_PLAY = "de.tubs.ibr.dtn.dtalkie.PLAY";
+	public static final String ACTION_PLAY_ALL = "de.tubs.ibr.dtn.dtalkie.PLAY_ALL";
 	public static final String ACTION_PLAY_NEXT = "de.tubs.ibr.dtn.dtalkie.PLAY_NEXT";
 	
 	private static final String ACTION_RECEIVED = "de.tubs.ibr.dtn.dtalkie.RECEIVED";
@@ -436,6 +438,17 @@ public class TalkieService extends IntentService {
                 Log.e(TAG, "Can not mark bundle as delivered.", e);
             }
         }
+        else if (ACTION_PLAY_ALL.equals(action)) {
+        	List<Long> msgs = mDatabase.getMarkedMessages(Folder.INBOX, false);
+        	
+        	for (Long id : msgs) {
+                Intent play_i = new Intent(this, TalkieService.class);
+                play_i.setAction(TalkieService.ACTION_PLAY);
+                play_i.putExtra("folder", Folder.INBOX.toString());
+                play_i.putExtra("message", id);
+                startService(play_i);
+        	}
+        }
         else if (ACTION_PLAY.equals(action)) {
             Folder f = Folder.valueOf( intent.getStringExtra("folder") );
             Long msgid = intent.getLongExtra("message", 0L);
@@ -446,17 +459,19 @@ public class TalkieService extends IntentService {
             try {
                 // prepare player
                 Message msg = mDatabase.get(f, msgid);
-                mPlayer.setDataSource(msg.getFile().getAbsolutePath());
-                mPlayer.setAudioStreamType(AudioManager.STREAM_VOICE_CALL);
-                mPlayer.prepareAsync();
-                
-                synchronized(mPlayerLock) {
-                    // set the player to playing
-                    mPlaying = true;
-
-                    // wait until the play-back is done
-                    while (mPlaying) {
-                        mPlayerLock.wait();
+                if (msg != null) {
+                    mPlayer.setDataSource(msg.getFile().getAbsolutePath());
+                    mPlayer.setAudioStreamType(AudioManager.STREAM_VOICE_CALL);
+                    mPlayer.prepareAsync();
+                    
+                    synchronized(mPlayerLock) {
+                        // set the player to playing
+                        mPlaying = true;
+                        
+                        // wait until the play-back is done
+                        while (mPlaying) {
+                            mPlayerLock.wait();
+                        }
                     }
                 }
             } catch (InterruptedException e) {
