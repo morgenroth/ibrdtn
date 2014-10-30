@@ -264,7 +264,7 @@ public class TalkieService extends IntentService {
 		mDatabase = new MessageDatabase(this);
 		
         // init sound pool
-        mSoundManager = new SoundFXManager(AudioManager.STREAM_VOICE_CALL, 2);
+        mSoundManager = new SoundFXManager(AudioManager.STREAM_MUSIC, 2);
         
         mSoundManager.load(this, Sound.BEEP);
         mSoundManager.load(this, Sound.CONFIRM);
@@ -366,7 +366,7 @@ public class TalkieService extends IntentService {
         public void onPrepared(MediaPlayer mp) {
     		// request audio focus
     		int result = mAudioManager.requestAudioFocus(mAudioFocusChangeListener,
-                    AudioManager.STREAM_VOICE_CALL,
+                    AudioManager.STREAM_MUSIC,
                     // Request transient focus.
                     AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
 
@@ -461,7 +461,7 @@ public class TalkieService extends IntentService {
                 Message msg = mDatabase.get(f, msgid);
                 if (msg != null) {
                     mPlayer.setDataSource(msg.getFile().getAbsolutePath());
-                    mPlayer.setAudioStreamType(AudioManager.STREAM_VOICE_CALL);
+                    mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
                     mPlayer.prepareAsync();
                     
                     synchronized(mPlayerLock) {
