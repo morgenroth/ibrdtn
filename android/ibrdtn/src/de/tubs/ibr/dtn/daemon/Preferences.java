@@ -934,7 +934,6 @@ public class Preferences extends PreferenceActivity {
 			// set multicast address for discovery
 			p.println("discovery_address = ff02::142 224.0.0.142");
 
-			String internet_ifaces = "";
 			String ifaces = "";
 
 			Map<String, ?> prefs = preferences.getAll();
@@ -949,7 +948,6 @@ public class Preferences extends PreferenceActivity {
 							p.println("net_" + iface + "_type = tcp");
 							p.println("net_" + iface + "_interface = " + iface);
 							p.println("net_" + iface + "_port = 4556");
-							internet_ifaces += iface + " ";
 						}
 					}
 				}
