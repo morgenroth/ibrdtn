@@ -102,6 +102,14 @@ public class MessageFragment extends ListFragment implements LoaderManager.Loade
                 MessageDatabase db = mService.getDatabase();
                 db.clear(Folder.INBOX);
                 return true;
+                
+            case R.id.itemPlayAll:
+                // play all unread messages
+                Intent play_i = new Intent(getActivity(), TalkieService.class);
+                play_i.setAction(TalkieService.ACTION_PLAY_ALL);
+                play_i.putExtra("folder", Folder.INBOX.toString());
+                getActivity().startService(play_i);
+                return true;
             
             default:
                 return super.onOptionsItemSelected(item);

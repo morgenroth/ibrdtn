@@ -23,6 +23,8 @@ package de.tubs.ibr.dtn.dtalkie.db;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.LinkedList;
+import java.util.List;
 
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
@@ -156,12 +158,32 @@ public class MessageDatabase {
         return msg;
 	}
 	
+	public List<Long> getMarkedMessages(Folder f, Boolean val) {
+		LinkedList<Long> ret = new LinkedList<Long>();
+		
+        try {
+            Cursor cur = mDatabase.query(f.getTableName(), new String[] { Message.ID }, Message.MARKED + " = ?", new String[] { val ? "yes" : "no" }, null, null, Message.RECEIVED + " DESC");
+
+            while (cur.moveToNext())
+            {
+                ret.push(cur.getLong(0));
+            }
+            
+            cur.close();
+        } catch (Exception e) {
+            // messages not found
+            Log.e(TAG, "getMarkedMessages() failed", e);
+        }
+        
+        return ret;
+	}
+	
 	public Integer getMarkedMessageCount(Folder f, Boolean val) {
 	    Integer ret = 0;
 	    
         try {
             Cursor cur = mDatabase.query(f.getTableName(), new String[] { "COUNT(*)" }, Message.MARKED + " = ?", new String[] { val ? "yes" : "no" }, null, null, null);
-
+            
             if (cur.moveToNext())
             {
                 ret = cur.getInt(0);
@@ -169,8 +191,7 @@ public class MessageDatabase {
             
             cur.close();
         } catch (Exception e) {
-            // message not found
-            Log.e(TAG, "getMessage() failed", e);
+            Log.e(TAG, "getMarkedMessageCount() failed", e);
         }
         
         return ret;
@@ -180,7 +201,7 @@ public class MessageDatabase {
         Message msg = null;
         
         try {
-            Cursor cur = mDatabase.query(f.getTableName(), MessageAdapter.PROJECTION, Message.MARKED + " = ?", new String[] { val ? "yes" : "no" }, null, null, null, "0, 1");
+            Cursor cur = mDatabase.query(f.getTableName(), MessageAdapter.PROJECTION, Message.MARKED + " = ?", new String[] { val ? "yes" : "no" }, null, null, Message.RECEIVED + " ASC", "0, 1");
             
             if (cur.moveToNext())
             {
