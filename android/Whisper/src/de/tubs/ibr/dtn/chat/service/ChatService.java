@@ -41,14 +41,12 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.PowerManager;
-import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat.WearableExtender;
 import android.support.v4.app.RemoteInput;
 import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
-import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.Bundle;
 import de.tubs.ibr.dtn.api.Bundle.ProcFlags;
@@ -99,8 +97,11 @@ public class ChatService extends IntentService {
 	private static final int MESSAGE_NOTIFICATION = 1;
 	public static final String ACTION_OPENCHAT = "de.tubs.ibr.dtn.chat.OPENCHAT";
 	public static final GroupEndpoint PRESENCE_GROUP_EID = new GroupEndpoint("dtn://chat.dtn/presence");
+	
 	private Registration _registration = null;
 	private ServiceError _service_error = ServiceError.NO_ERROR;
+	
+	private final static String FALLBACK_NICKNAME = "Nobody";
 
 	// This is the object that receives interactions from clients.  See
 	// RemoteService for a more complete example.
@@ -111,6 +112,8 @@ public class ChatService extends IntentService {
 	
 	// DTN client to talk with the DTN service
 	private DTNClient _client = null;
+	private DTNClient.Session _session = null;
+	private Object _waitLock = new Object();
 	
 	public ChatService() {
 		super(TAG);
@@ -308,10 +311,21 @@ public class ChatService extends IntentService {
 				
 				// register own data handler for incoming bundles
 				session.setDataHandler(_data_handler);
+
+				synchronized (_waitLock) {
+					// store session locally
+					_session = session;
+					_waitLock.notifyAll();
+				}
 			}
 
 			@Override
 			public void onSessionDisconnected() {
+				synchronized (_waitLock) {
+					// free session object
+					_session = null;
+					_waitLock.notifyAll();
+				}
 			}
 		});
 
@@ -364,17 +378,28 @@ public class ChatService extends IntentService {
 	
 	public synchronized String getLocalNickname()
 	{
+		// wait until connected
+		try {
+			synchronized(_waitLock) {
+				while (_session == null) {
+					if (_client.isDisconnected()) return FALLBACK_NICKNAME;
+					_waitLock.wait();
+				}
+			}
+		} catch (InterruptedException e) {
+			return FALLBACK_NICKNAME;
+		}
+		
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(ChatService.this);
 		String presence_nick = preferences.getString("editNickname", "");
 		
 		if (presence_nick.length() == 0)
 		{
-			try {
-				String endpoint = _client.getDTNService().getEndpoint();
-				return Roster.generateNickname(endpoint);
-			} catch (RemoteException e) {
-				return "Nobody";
-			}
+			String endpoint = _client.getEndpoint();
+			Log.d(TAG, "Endpoint: " + endpoint);
+			
+			if (endpoint == null) return FALLBACK_NICKNAME;
+			return Roster.generateNickname(endpoint);
 		}
 		
 		return presence_nick;
@@ -506,11 +531,19 @@ public class ChatService extends IntentService {
 		// create a task to check for messages
 		else if (de.tubs.ibr.dtn.Intent.RECEIVE.equals(action))
 		{
+			// wait until connected
 			try {
-				while (_client.getSession().queryNext());
-			} catch (SessionDestroyedException e) {
-				Log.e(TAG, "Can not query for bundle", e);
+				synchronized(_waitLock) {
+					while (_session == null) {
+						if (_client.isDisconnected()) throw new InterruptedException();
+						_waitLock.wait();
+					}
+				}
+				
+				while (_session.queryNext());
 			} catch (InterruptedException e) {
+				Log.e(TAG, "Can not query for bundle", e);
+			} catch (SessionDestroyedException e) {
 				Log.e(TAG, "Can not query for bundle", e);
 			}
 		}
@@ -553,7 +586,17 @@ public class ChatService extends IntentService {
 		}
 		
 		try {
-			_client.getSession().delivered(bundleid);
+			// wait until connected
+			synchronized(_waitLock) {
+				while (_session == null) {
+					if (_client.isDisconnected()) new InterruptedException();
+					_waitLock.wait();
+				}
+			}
+
+			_session.delivered(bundleid);
+		} catch (InterruptedException e) {
+			Log.e(TAG, "Can not mark bundle as delivered.", e);
 		} catch (Exception e) {
 			Log.e(TAG, "Can not mark bundle as delivered.", e);
 		}	
@@ -576,8 +619,6 @@ public class ChatService extends IntentService {
 	
 	private void actionSendMessage(Long buddyId, String text) {
 		try {
-			Session s = _client.getSession();
-			
 			Long msgId = getRoster().createMessage(buddyId, new Date(), new Date(), false, text, 0L);
 			
 			// load buddy from roster
@@ -601,9 +642,17 @@ public class ChatService extends IntentService {
 			// request signing of the message
 			b.set(ProcFlags.DTNSEC_REQUEST_SIGN, true);
 			
+			// wait until connected
+			synchronized(_waitLock) {
+				while (_session == null) {
+					if (_client.isDisconnected()) throw new InterruptedException();
+					_waitLock.wait();
+				}
+			}
+			
 			synchronized(this.roster) {
 				// send out the message
-				BundleID ret = s.send(b, text.getBytes());
+				BundleID ret = _session.send(b, text.getBytes());
 				
 				if (ret == null)
 				{
@@ -617,31 +666,27 @@ public class ChatService extends IntentService {
 				// update message into the database
 				getRoster().reportSent(msgId, ret.toString());
 			}
-		} catch (InterruptedException e) {
-			e.printStackTrace();
 		} catch (SessionDestroyedException e) {
-			e.printStackTrace();
+			Log.e(TAG, "Can not send message", e);
+		} catch (InterruptedException e) {
+			Log.e(TAG, "Can not send message", e);
 		}
 	}
 	
 	public void actionRefreshPresence(String presence, String nickname, String status) {	
 		try {
-			Session s = _client.getSession();
-			
 			String presence_message = "Presence: " + presence + "\n" +
 					"Nickname: " + nickname + "\n" +
 					"Status: " + status + "\n" +
 					"Language: " + Locale.getDefault().getLanguage() + "\n" +
 					"Country: " + Locale.getDefault().getCountry();
 			
-			try {
-				if (Utils.isVoiceRecordingSupported(this)) {
-					DTNService dtns = _client.getDTNService();
-					if (dtns != null) {
-						presence_message += "\n" + "Voice: " + dtns.getEndpoint() + "/dtalkie";
-					}
+			if (Utils.isVoiceRecordingSupported(this)) {
+				String endpoint = _client.getEndpoint();
+				if (endpoint != null) {
+					presence_message += "\n" + "Voice: " + endpoint + "/dtalkie";
 				}
-			} catch (RemoteException e) { }
+			}
 			
 			// create a new bundle
 			Bundle b = new Bundle();
@@ -655,7 +700,15 @@ public class ChatService extends IntentService {
 			// request signing of the message
 			b.set(ProcFlags.DTNSEC_REQUEST_SIGN, true);
 			
-			BundleID ret = s.send(b, presence_message.getBytes());
+			// wait until connected
+			synchronized(_waitLock) {
+				while (_session == null) {
+					if (_client.isDisconnected()) new InterruptedException();
+					_waitLock.wait();
+				}
+			}
+			
+			BundleID ret = _session.send(b, presence_message.getBytes());
 			
 			if (ret == null)
 			{
@@ -665,10 +718,10 @@ public class ChatService extends IntentService {
 			{
 				Log.d(TAG, "Presence sent, BundleID: " + ret.toString());
 			}
-		} catch (InterruptedException e) {
-			e.printStackTrace();
 		} catch (SessionDestroyedException e) {
-			e.printStackTrace();
+			Log.e(TAG, "Can not send presence", e);
+		} catch (InterruptedException e) {
+			Log.e(TAG, "Can not send presence", e);
 		}
 	}
 	
