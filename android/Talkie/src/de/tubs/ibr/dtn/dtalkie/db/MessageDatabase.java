@@ -180,7 +180,7 @@ public class MessageDatabase {
         Message msg = null;
         
         try {
-            Cursor cur = mDatabase.query(f.getTableName(), MessageAdapter.PROJECTION, Message.MARKED + " = ?", new String[] { val ? "yes" : "no" }, null, null, null, "0, 1");
+            Cursor cur = mDatabase.query(f.getTableName(), MessageAdapter.PROJECTION, Message.MARKED + " = ?", new String[] { val ? "yes" : "no" }, null, null, Message.RECEIVED + " ASC", "0, 1");
             
             if (cur.moveToNext())
             {
