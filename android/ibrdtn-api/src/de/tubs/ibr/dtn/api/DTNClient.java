@@ -50,62 +50,62 @@ public final class DTNClient {
 	// DTN service provided by IBR-DTN
 	private DTNService mService = null;
 	
-	// session object
-	private Session mSession = null;
-	
 	private Context mContext = null;
 	
 	private Registration mRegistration = null;
 	
 	private SessionConnection mSessionHandler = null;
 	
-	private Boolean mShutdown = false;
-	
 	// marker to know if the client was initialized
 	private Boolean mInitialized = false;
+	
+	// marker to know if the service is connected
+	private Boolean mConnected = false;
+	
+	// marker to know if the service has been disconnected
+	private Boolean mDisconnected = false;
 	
 	public DTNClient(SessionConnection handler) {
 		mSessionHandler = handler;
 	}
 	
-	public DTNClient() {
-		// add dummy handler
-		mSessionHandler = new SessionConnection() {
-			@Override
-			public void onSessionConnected(Session session) { }
-
-			@Override
-			public void onSessionDisconnected() { }
-		};
-	}
-	
 	/**
-	 * If blocking is enabled, this method will block until a valid session
-	 * exists. If set to false, the method would return null if there is no active session.
-	 * @param val
+	 * May return null if the service is not connected
+	 * @return
 	 */
-	public Session getSession() throws SessionDestroyedException, InterruptedException {
-		return getSession(true);
+	public String getEndpoint() {
+		if (mConnected) {
+			try {
+				return mService.getEndpoint();
+			} catch (RemoteException e) {
+				return null;
+			}
+		} else {
+			return null;
+		}
 	}
 	
-	public synchronized Session getSession(boolean blocking) throws SessionDestroyedException, InterruptedException {
-		if (blocking)
-		{
-			while (mSession == null)
-			{
-				if (mShutdown) throw new SessionDestroyedException();
-				wait();
-			}
-			
-			return mSession;
+	public synchronized PendingIntent getSelectNeighborIntent() {
+		if (!mConnected) return null;
+		
+		try {
+			android.os.Bundle b = mService.getSelectNeighborIntent();
+			return b.getParcelable(de.tubs.ibr.dtn.Intent.EXTRA_PENDING_INTENT);
+		} catch (RemoteException e) {
 		}
-		else
-		{
-			if ((mSession == null) || mShutdown) throw new SessionDestroyedException();
-			return mSession;
+		
+		return null;
+	}
+	
+	public synchronized List<Node> getNeighbors() {
+		if (!mConnected) return null;
+		try {
+			return mService.getNeighbors();
+		} catch (RemoteException e) {
+			return null;
 		}
 	}
-	   
+	
 	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			if (service == null) {
@@ -118,7 +118,18 @@ public final class DTNClient {
 		}
 
 		public void onServiceDisconnected(ComponentName name) {
-			mSessionHandler.onSessionDisconnected();
+			if (mConnected) {
+				// set state to disconnected
+				mConnected = false;
+				
+				// mark as disconnected
+				mDisconnected = true;
+				
+				// announce disconnected state
+				mSessionHandler.onSessionDisconnected();
+			}
+			
+			// clear local variables
 			mService = null;
 		}
 	};
@@ -159,11 +170,6 @@ public final class DTNClient {
 			s = new Session(mContext, mService);
 			
 			s.initialize(reg);
-			
-			synchronized(DTNClient.this) {
-				mSession = s;
-				notifyAll();
-			}
 		} catch (Exception e) {
 			try {
 				Intent registrationIntent = Services.SERVICE_APPLICATION.getIntent(mContext, de.tubs.ibr.dtn.Intent.REGISTER);
@@ -176,6 +182,10 @@ public final class DTNClient {
 			}
 		}
 		
+		// set state to connected
+		mConnected = true;
+		
+		// announce connected state
 		mSessionHandler.onSessionConnected(s);
 	}
 	
@@ -428,6 +438,10 @@ public final class DTNClient {
 		}
 	};
 	
+	public boolean isDisconnected() {
+		return mDisconnected;
+	}
+	
 	/**
 	 * This method initialize the DTNClient connection to the DTN service. Call this method in the
 	 * onCreate() method of your activity or service.
@@ -439,12 +453,9 @@ public final class DTNClient {
 		// set the context
 		mContext = context;
 		
-  		// store registration
-  		mRegistration = reg;
-  		
-		// create new executor
-		mShutdown = false;
-  		
+		// store registration
+		mRegistration = reg;
+		
 		// register to daemon events
 		IntentFilter rfilter = new IntentFilter(de.tubs.ibr.dtn.Intent.REGISTRATION);
 		rfilter.addCategory(context.getApplicationContext().getPackageName());
@@ -452,7 +463,10 @@ public final class DTNClient {
 		
 		// mark this client as initialized
 		mInitialized = true;
-  		
+		
+		// clear disconnected marker
+		mDisconnected = false;
+		
 		// Establish a connection with the service.
 		Services.SERVICE_APPLICATION.bind(mContext, mConnection, Context.BIND_AUTO_CREATE);
 	}
@@ -462,9 +476,6 @@ public final class DTNClient {
 	 * method in the onDestroy() method of your activity or service.
 	 */
 	public synchronized void terminate() {
-		mShutdown = true;
-		notifyAll();
-		
 		if (mInitialized) {
 			// unregister to daemon events
 			mContext.unregisterReceiver(mStateReceiver);
@@ -472,16 +483,22 @@ public final class DTNClient {
 			// Detach our existing connection.
 			mContext.unbindService(mConnection);
 			
-			if (mService != null) {
-				mConnection.onServiceDisconnected(null);
+			if (mConnected) {
+				// set state to disconnected
+				mConnected = false;
+				
+				// mark as disconnected
+				mDisconnected = true;
+				
+				// announce disconnected state
+				mSessionHandler.onSessionDisconnected();
 			}
 			
 			// mark this client as uninitialized
 			mInitialized = false;
+			
+			// free the service
+			mService = null;
 		}
-	}
-	
-	public DTNService getDTNService() {
-		return mService;
 	}
 }
