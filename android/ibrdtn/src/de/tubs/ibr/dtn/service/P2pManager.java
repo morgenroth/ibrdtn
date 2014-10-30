@@ -15,6 +15,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.net.NetworkInfo;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
@@ -29,6 +30,7 @@ import android.net.wifi.p2p.WifiP2pManager.PeerListListener;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
 import android.os.Build;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import de.tubs.ibr.dtn.daemon.Preferences;
 import de.tubs.ibr.dtn.swig.EID;
@@ -245,7 +247,8 @@ public class P2pManager extends NativeP2pManager {
 
 		// create local service info
 		Map<String, String> record = new HashMap<String, String>();
-		record.put("eid", Preferences.getEndpoint(mService));
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mService);
+		record.put("eid", Preferences.getEndpoint(mService, prefs));
 		
 		// create service info
 		mServiceInfo = WifiP2pDnsSdServiceInfo.newInstance("DtnNode", "_dtn._tcp", record);

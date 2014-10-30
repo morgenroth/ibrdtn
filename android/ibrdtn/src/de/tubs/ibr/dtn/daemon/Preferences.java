@@ -254,7 +254,8 @@ public class Preferences extends PreferenceActivity {
 				Intent i = new Intent(Preferences.this, KeyInformationActivity.class);
 				
 				// create local singleton endpoint
-				SingletonEndpoint node = new SingletonEndpoint(Preferences.getEndpoint(this));
+				SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+				SingletonEndpoint node = new SingletonEndpoint(Preferences.getEndpoint(this, prefs));
 				
 				i.putExtra(KeyInformationActivity.EXTRA_IS_LOCAL, true);
 				i.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, (Parcelable)node);
@@ -275,7 +276,7 @@ public class Preferences extends PreferenceActivity {
 			return;
 
 		Editor e = prefs.edit();
-		e.putString(KEY_ENDPOINT_ID, Preferences.getEndpoint(context).toString());
+		e.putString(KEY_ENDPOINT_ID, Preferences.getEndpoint(context, prefs).toString());
 		
 		// set preferences to initialized
 		e.putBoolean("initialized", true);
@@ -594,9 +595,7 @@ public class Preferences extends PreferenceActivity {
 		}
 	}
 	
-	public static String getEndpoint(Context context) {
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-		
+	public static String getEndpoint(Context context, SharedPreferences prefs) {
 		if (prefs.contains(KEY_ENDPOINT_ID)) {
 			String endpointValue = prefs.getString(KEY_ENDPOINT_ID, "dtn");
 			if ("dtn".equals( endpointValue )) {
@@ -684,6 +683,9 @@ public class Preferences extends PreferenceActivity {
 			
 			if (Preferences.KEY_UPLINK_MODE.equals(key))
 				prefChangedIntent.putExtra(key, prefs.getString(key, "wifi"));
+			
+			if (Preferences.KEY_ENDPOINT_ID.equals(key))
+				prefChangedIntent.putExtra(key, prefs.getString(key, "dtn"));
 			
 			Preferences.this.startService(prefChangedIntent);
 			
@@ -860,7 +862,7 @@ public class Preferences extends PreferenceActivity {
 
 			// set EID
 			PrintStream p = new PrintStream(writer);
-			p.println("local_uri = " + Preferences.getEndpoint(context));
+			p.println("local_uri = " + Preferences.getEndpoint(context, preferences));
 			p.println("routing = " + preferences.getString(KEY_ROUTING, "default"));
 
 			// enable traffic stats
