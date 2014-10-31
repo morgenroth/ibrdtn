@@ -69,7 +69,6 @@ public class RosterFragment extends ListFragment implements LoaderManager.Loader
     @Override
 	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
 	    inflater.inflate(R.menu.buddy_menu, menu);
-	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemPreferences), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
 	    
 	    if (0 != (getActivity().getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
 	    	menu.findItem(R.id.itemDebugNotification).setVisible(true);
