@@ -517,6 +517,9 @@ public class TalkieService extends IntentService {
             // request signing of the message
             b.set(ProcFlags.DTNSEC_REQUEST_SIGN, true);
             
+            // request encryption of the message
+            b.set(ProcFlags.DTNSEC_REQUEST_ENCRYPT, true);
+            
             try {
                 synchronized(mWaitLock) {
                     while (mSession == null) {
