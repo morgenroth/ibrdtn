@@ -45,6 +45,7 @@ import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationCompat.WearableExtender;
 import android.util.Log;
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.Bundle;
@@ -616,6 +617,14 @@ public class TalkieService extends IntentService {
             defaults |= Notification.DEFAULT_VIBRATE;
         }
         
+        // create a play all unread messages intent
+        Intent play_i = new Intent(this, TalkieService.class);
+        play_i.setAction(TalkieService.ACTION_PLAY_ALL);
+        play_i.putExtra("folder", Folder.INBOX.toString());
+        
+        PendingIntent playPendingIntent = PendingIntent.getService(this, 0, play_i, PendingIntent.FLAG_UPDATE_CURRENT);
+        NotificationCompat.Action action = new NotificationCompat.Action.Builder(R.drawable.ic_wear_play, getString(R.string.play_label), playPendingIntent).build();
+        
         /** CREATE AN INTENT TO OPEN THE MESSAGES ACTIVITY **/
         Intent resultIntent = new Intent(this, TalkieActivity.class);
         PendingIntent contentIntent = PendingIntent.getActivity(this, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -629,6 +638,8 @@ public class TalkieService extends IntentService {
         builder.setContentIntent(contentIntent);
         builder.setLights(0xff0080ff, 300, 1000);
         builder.setSound( Uri.parse( prefs.getString("ringtoneOnMessage", "content://settings/system/notification_sound") ) );
+        builder.extend(new WearableExtender().addAction(action));
+        builder.addAction(R.drawable.ic_action_play, getString(R.string.play_label), playPendingIntent);
         
         Notification notification = builder.getNotification();
         mNotificationManager.notify(MESSAGE_NOTIFICATION, notification);
