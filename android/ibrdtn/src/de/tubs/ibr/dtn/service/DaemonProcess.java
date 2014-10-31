@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+import android.annotation.TargetApi;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -36,6 +37,7 @@ import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import de.tubs.ibr.dtn.DaemonState;
@@ -122,6 +124,7 @@ public class DaemonProcess {
 	}
 	
 	private BroadcastReceiver mConnectivityListener = new BroadcastReceiver() {
+		@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			// do not proceed without a connection manager
@@ -134,15 +137,24 @@ public class DaemonProcess {
 			SharedPreferences prefs = context.getSharedPreferences("dtnd", Context.MODE_PRIVATE);
 			String cloud_mode = prefs.getString(Preferences.KEY_UPLINK_MODE, "wifi");
 			
-			if ("on".equals(cloud_mode) && info != null && info.isConnected()) {
-				mDaemon.setGloballyConnected(true);
+			if (info != null && info.isConnected()) {
+				if ("on".equals(cloud_mode)) {
+					mDaemon.setGloballyConnected(true);
+					return;
+				}
+				else if ("wifi".equals(cloud_mode) && info.getType() == ConnectivityManager.TYPE_WIFI) {
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+						mDaemon.setGloballyConnected(!mConnManager.isActiveNetworkMetered());
+						return;
+					}
+					else {
+						mDaemon.setGloballyConnected(true);
+						return;
+					}
+				}
 			}
-			else if ("wifi".equals(cloud_mode) && info != null && info.isConnected() && !mConnManager.isActiveNetworkMetered()) {
-				mDaemon.setGloballyConnected(true);
-			}
-			else {
-				mDaemon.setGloballyConnected(false);
-			}
+			
+			mDaemon.setGloballyConnected(false);
 		}
 	};
 
