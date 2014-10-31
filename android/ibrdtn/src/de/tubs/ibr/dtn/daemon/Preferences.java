@@ -36,12 +36,9 @@ import java.util.Map;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.ActionBar;
-import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -80,7 +77,6 @@ import de.tubs.ibr.dtn.service.ControlService;
 import de.tubs.ibr.dtn.service.DaemonService;
 import de.tubs.ibr.dtn.service.DaemonStorageUtils;
 import de.tubs.ibr.dtn.service.P2pManager;
-import de.tubs.ibr.dtn.stats.CollectorService;
 
 public class Preferences extends PreferenceActivity {
 	
@@ -90,6 +86,7 @@ public class Preferences extends PreferenceActivity {
 	public static final String KEY_ENDPOINT_ID = "endpoint_id";
 	public static final String KEY_DISCOVERY_MODE = "discovery_mode";
 	public static final String KEY_P2P_ENABLED = "p2p_enabled";
+	public static final String KEY_DEBUG_MODE = "debugging";
 	
 	public static final String KEY_LOG_OPTIONS = "log_options";
 	public static final String KEY_LOG_DEBUG_VERBOSITY = "log_debug_verbosity";
@@ -121,6 +118,7 @@ public class Preferences extends PreferenceActivity {
 	private CheckBoxPreference checkBoxPreference = null;
 	private InterfacePreferenceCategory mInterfacePreference = null;
 	private SwitchPreference mP2pSwitch = null;
+	private MenuItem mActionClearStorage = null;
 
 	private ServiceConnection mConnection = new ServiceConnection() {
 		@SuppressLint("NewApi")
@@ -155,54 +153,18 @@ public class Preferences extends PreferenceActivity {
 		}
 	};
 
-	public static void showStatisticLoggerDialog(final Activity activity) {
-		DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int which) {
-				SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
-				PreferenceActivity prefactivity = (PreferenceActivity) activity;
-
-				@SuppressWarnings("deprecation")
-				CheckBoxPreference cb = (CheckBoxPreference) prefactivity
-						.findPreference("collect_stats");
-
-				switch (which) {
-					case DialogInterface.BUTTON_POSITIVE:
-						prefs.edit().putBoolean("collect_stats", true)
-								.putBoolean("collect_stats_initialized", true).commit();
-						cb.setChecked(true);
-						break;
-
-					case DialogInterface.BUTTON_NEGATIVE:
-						prefs.edit().putBoolean("collect_stats", false)
-								.putBoolean("collect_stats_initialized", true).commit();
-						cb.setChecked(false);
-						break;
-				}
-			}
-		};
-
-		AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-		builder.setTitle(R.string.alert_statistic_logger_title);
-		builder.setMessage(activity.getResources()
-				.getString(R.string.alert_statistic_logger_dialog));
-		builder.setPositiveButton(activity.getResources().getString(android.R.string.yes),
-				dialogClickListener);
-		builder.setNegativeButton(activity.getResources().getString(android.R.string.no),
-				dialogClickListener);
-		builder.show();
-	}
-
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.main_menu, menu);
-
+		mActionClearStorage = menu.findItem(R.id.itemClearStorage);
+		
 		if (Preferences.isDebuggable(this)) {
-			menu.findItem(R.id.itemSendDataNow).setVisible(true);
+			mActionClearStorage.setVisible(true);
 		} else {
-			menu.findItem(R.id.itemSendDataNow).setVisible(false);
+			mActionClearStorage.setVisible(false);
 		}
-
+		
 		return super.onCreateOptionsMenu(menu);
 	}
 
@@ -219,18 +181,6 @@ public class Preferences extends PreferenceActivity {
 			case R.id.itemClearStorage: {
 				Intent i = new Intent(Preferences.this, DaemonService.class);
 				i.setAction(DaemonService.ACTION_CLEAR_STORAGE);
-				startService(i);
-				return true;
-			}
-
-			case R.id.itemSendDataNow: {
-				SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-				Calendar now = Calendar.getInstance();
-				prefs.edit().putLong("stats_timestamp", now.getTimeInMillis()).commit();
-
-				// open activity
-				Intent i = new Intent(this, CollectorService.class);
-				i.setAction(CollectorService.DELIVER_DATA);
 				startService(i);
 				return true;
 			}
@@ -291,7 +241,7 @@ public class Preferences extends PreferenceActivity {
 	public static boolean isDebuggable(Context context) {
 		if (0 != (context.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
 			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-			return (prefs.getBoolean("debugging", false));
+			return (prefs.getBoolean(KEY_DEBUG_MODE, false));
 		}
 		return false;
 	}
@@ -316,11 +266,12 @@ public class Preferences extends PreferenceActivity {
 		// add debugging preference in debuggable version
 		if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
 			CheckBoxPreference pref_debug = new CheckBoxPreference(this);
-			pref_debug.setKey("debugging");
+			pref_debug.setKey(KEY_DEBUG_MODE);
 			pref_debug.setTitle(R.string.pref_debugging);
 			pref_debug.setSummary(R.string.pref_debugging_desc);
 			pref_debug.setDefaultValue(false);
-			((PreferenceCategory)findPreference("prefcat_logging")).addPreference(pref_debug);
+			pref_debug.setOrder(-10);
+			((PreferenceCategory)findPreference("prefcat_system")).addPreference(pref_debug);
 		}
 
 		mInterfacePreference = (InterfacePreferenceCategory) findPreference("prefcat_interfaces");
@@ -442,12 +393,6 @@ public class Preferences extends PreferenceActivity {
 		}
 
 		super.onResume();
-
-		// on first startup ask for permissions to collect statistical data
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
-		if (!prefs.getBoolean("collect_stats_initialized", false)) {
-			showStatisticLoggerDialog(Preferences.this);
-		}
 
 		IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
 		filter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
@@ -816,6 +761,15 @@ public class Preferences extends PreferenceActivity {
 					discoIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_START_DISCOVERY);
 					discoIntent.putExtra(DaemonService.EXTRA_DISCOVERY_DURATION, 120L);
 					startService(discoIntent);
+				}
+			}
+			else if (Preferences.KEY_DEBUG_MODE.equals(key)) {
+				if (mActionClearStorage != null) {
+					if (Preferences.isDebuggable(Preferences.this)) {
+						mActionClearStorage.setVisible(true);
+					} else {
+						mActionClearStorage.setVisible(false);
+					}
 				}
 			}
 			else if (mConfigurationSet.contains(key))

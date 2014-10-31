@@ -151,17 +151,6 @@
 			</intent-filter>
 		</receiver>
 
-		<service android:name=".stats.CollectorService"
-			android:exported="false" />
-
-		<receiver android:name=".stats.DataReceiver"
-			android:exported="false" android:label="DataReceiver">
-			<intent-filter>
-				<action android:name="de.tubs.ibr.dtn.intent.EVENT" />
-				<category android:name="android.intent.category.DEFAULT" />
-			</intent-filter>
-		</receiver>
-
 		<provider
 			android:name=".stats.StatsContentProvider"
 			android:authorities="de.tubs.ibr.dtn.contentprovider"

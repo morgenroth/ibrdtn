@@ -6,5 +6,4 @@
     <item android:id="@+id/itemKeyPanel" android:title="@string/menu_local_key" android:alphabeticShortcut="@string/menu_local_key" android:icon="@drawable/ic_menu_keypanel" android:showAsAction="ifRoom"></item>
     <item android:id="@+id/itemShowLog" android:title="@string/showlog" android:alphabeticShortcut="@string/showlog" android:icon="@drawable/ic_menu_log" android:showAsAction="ifRoom"></item>
     <item android:id="@+id/itemClearStorage" android:title="@string/clearstorage" android:alphabeticShortcut="@string/clearstorage" android:icon="@drawable/ic_menu_clear" android:showAsAction="never"></item>
-    <item android:id="@+id/itemSendDataNow" android:title="@string/senddatanow" android:alphabeticShortcut="@string/senddatanow" android:icon="@drawable/ic_menu_sendnow" android:showAsAction="never"></item>
 </menu>

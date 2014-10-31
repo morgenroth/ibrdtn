@@ -36,13 +36,8 @@
     <string name="pref_security_mode_desc">Specify the security policy for the network.</string>
     <string name="pref_timesync_mode">Synchronization mode</string>
     <string name="pref_timesync_mode_desc">Defines the behavior of this nodes regarding time-synchronization.</string>
-    <string name="pref_collect_stats">Collect statistic data</string>
-    <string name="pref_collect_stats_desc">Statistic data is collected in background and transmitted to the DTN research community</string>
     <string name="general">General</string>
     <string name="system_version">Version</string>
-    <string name="alert_statistic_logger_title">Thank you for using IBR-DTN</string>
-    <string name="alert_statistic_logger_dialog">Since this is research related software we ask for your support and the permission to collect statistical data about exchanged bundles of this device. These data is transmitted via DTN to the researchers who made this software. Do you allow the collection and transmission of statistical data?</string>
-    <string name="senddatanow">Send collected data</string>
     <string name="pref_uplink_title">Cloud connect</string>
     <string name="pref_uplink_summary">Enable a static uplink to the DTN bone</string>
     <string name="pref_connection">Connection</string>

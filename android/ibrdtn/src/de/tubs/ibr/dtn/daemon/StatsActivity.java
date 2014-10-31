@@ -44,21 +44,18 @@ public class StatsActivity extends FragmentActivity {
         public CharSequence getPageTitle(int position) {
             switch (position) {
                 case 0:
-                    return StatsActivity.this.getString(R.string.stats_tab_info);
-
-                case 1:
                     return StatsActivity.this.getString(R.string.stats_tab_storage);
 
-                case 2:
+                case 1:
                     return StatsActivity.this.getString(R.string.stats_tab_bundles);
 
-                case 3:
+                case 2:
                     return StatsActivity.this.getString(R.string.stats_tab_transfer);
 
-                case 4:
+                case 3:
                     return StatsActivity.this.getString(R.string.stats_tab_cl);
 
-                case 5:
+                case 4:
                     return StatsActivity.this.getString(R.string.stats_tab_clock);
             }
             
@@ -71,21 +68,18 @@ public class StatsActivity extends FragmentActivity {
         public Fragment getItem(int index) {
             switch (index) {
                 case 0:
-                    return new InfoChartFragment();
-
-                case 1:
                     return new StorageChartFragment();
 
-                case 2:
+                case 1:
                     return new BundleChartFragment();
 
-                case 3:
+                case 2:
                     return new TransferChartFragment();
 
-                case 4:
+                case 3:
                     return new ConvergenceLayerStatsChartFragment();
 
-                case 5:
+                case 4:
                     return new ClockChartFragment();
             }
             
@@ -94,7 +88,7 @@ public class StatsActivity extends FragmentActivity {
 
         @Override
         public int getCount() {
-            return mShowClock ? 6 : 5;
+            return mShowClock ? 5 : 4;
         }
     }
 }

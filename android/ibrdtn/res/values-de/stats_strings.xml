@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="stats_tab_info">Info</string>
     <string name="stats_tab_bundles">Bündel</string>
     <string name="stats_tab_transfer">Übertragung</string>
     <string name="stats_tab_clock">Uhr</string>
