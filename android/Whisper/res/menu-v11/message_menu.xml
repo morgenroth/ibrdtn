@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+	<item android:id="@+id/itemVoiceMessage" android:title="@string/voicemsg" android:icon="@drawable/ic_action_mic" android:showAsAction="ifRoom"></item>
+	<item android:id="@+id/itemClearMessages" android:title="@string/clearmsg" android:icon="@drawable/ic_action_delete" android:showAsAction="never"></item>
+</menu>
