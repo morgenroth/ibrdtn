@@ -9,7 +9,7 @@ Homepage: http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/
 Package: ibrdtnd
 Architecture: any
 Pre-Depends: debconf, adduser
-Depends: ${shlibs:Depends}, ${misc:Depends}, ibrcommon1, ibrdtn1, libsqlite3-0, libcurl3 (>= 7.18), libdaemon0 (>= 0.12), dtndht1
+Depends: ${shlibs:Depends}, ${misc:Depends}, ibrcommon1, ibrdtn1, libsqlite3-0, libcurl3 (>= 7.18), libdaemon0 (>= 0.12), dtndht1, openssl
 Suggests: logrotate (>= 3.0.0), ibrdtn-tools
 Description: IBR-DTN daemon
 	The implementation of the bundle protocol of the IBR (TU Braunschweig).
