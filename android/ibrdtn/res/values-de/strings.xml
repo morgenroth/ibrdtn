@@ -36,13 +36,8 @@
     <string name="pref_security_mode_desc">Legt die Sicherheitseinstellungen fest.</string>
     <string name="pref_timesync_mode">Synchronisationsmodus</string>
     <string name="pref_timesync_mode_desc">Definiert das Verhalten dieses Knotens hinsichtlich Zeitsynchronisation.</string>
-    <string name="pref_collect_stats">Statistische Daten sammeln</string>
-    <string name="pref_collect_stats_desc">Statistische Daten werden im Hintergrund gesammelt und an die DTN Forschungsgemeinschaft übermittelt</string>
     <string name="general">Allgemein</string>
     <string name="system_version">Version</string>
-    <string name="alert_statistic_logger_title">Danke dass Sie IBR-DTN verwenden</string>
-    <string name="alert_statistic_logger_dialog">Da es sich hierbei um Software aus der Forschung handelt bitten wir Sie um Unterstützung und hätten gerne die Erlaubnis statistische Daten über ausgetauschte Bündel zu sammeln. Diese Daten werden mittels DTN an die Forscher die diese Software entwickelt haben übertragen. Erlauben Sie die Sammlung und Übertragung von statistischen Daten?</string>
-    <string name="senddatanow">Gesammelte Daten übertragen</string>
     <string name="pref_uplink_title">Cloud connect</string>
     <string name="pref_uplink_summary">Verwendet eine statische Verbindung zum DTN bone</string>
     <string name="pref_connection">Verbindung</string>
