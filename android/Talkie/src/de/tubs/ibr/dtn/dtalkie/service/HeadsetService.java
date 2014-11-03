@@ -16,16 +16,18 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.support.v4.app.NotificationCompat;
-import android.view.KeyEvent;
 import de.tubs.ibr.dtn.dtalkie.R;
 import de.tubs.ibr.dtn.dtalkie.TalkieActivity;
+import de.tubs.ibr.dtn.dtalkie.db.MessageDatabase.Folder;
 
 public class HeadsetService extends Service {
     
-    private static final String TAG = "HeadsetService";
     public static final String ENTER_HEADSET_MODE = "de.tubs.ibr.dtn.dtalkie.ENTER_HEADSET_MODE";
     public static final String LEAVE_HEADSET_MODE = "de.tubs.ibr.dtn.dtalkie.LEAVE_HEADSET_MODE";
-    public static final String MEDIA_BUTTON_PRESSED = "de.tubs.ibr.dtn.dtalkie.MEDIA_BUTTON_PRESSED";
+    public static final String ACTION_TOGGLE_RECORD = "de.tubs.ibr.dtn.dtalkie.TOGGLE_RECORD";
+    public static final String ACTION_START_RECORD = "de.tubs.ibr.dtn.dtalkie.START_RECORD";
+    public static final String ACTION_STOP_RECORD = "de.tubs.ibr.dtn.dtalkie.STOP_RECORD";
+    public static final String ACTION_PLAY_ALL = "de.tubs.ibr.dtn.dtalkie.PLAY_ALL";
     
     public static Boolean ENABLED = false;
     
@@ -45,6 +47,17 @@ public class HeadsetService extends Service {
         return null;
     }
     
+    private AudioManager.OnAudioFocusChangeListener mAfListener = new AudioManager.OnAudioFocusChangeListener() {
+		@Override
+		public void onAudioFocusChange(int focusChange) {
+			if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
+				Intent i = new Intent(HeadsetService.this, HeadsetService.class);
+				i.setAction(HeadsetService.LEAVE_HEADSET_MODE);
+				HeadsetService.this.startService(i);
+			}
+		}
+	};
+    
     protected void onHandleIntent(Intent intent, int startId) {
         String action = intent.getAction();
         
@@ -55,13 +68,8 @@ public class HeadsetService extends Service {
             // turn this to a foreground service (kill-proof)
             startForeground(1, n);
             
-            if (!mPersistent) {
-                // listen to media button events
-                mAudioManager.registerMediaButtonEventReceiver(mMediaButtonReceiver);
-                
-                // acquire auto-play lock
-                ENABLED = true;
-            }
+            // acquire auto-play lock
+            ENABLED = true;
             
             // set service mode to persistent
             mPersistent = true;
@@ -70,53 +78,40 @@ public class HeadsetService extends Service {
             // turn this to a foreground service (kill-proof)
             stopForeground(true);
             
-            if (mPersistent) {
-                // remove auto-play lock
-                ENABLED = false;
-                
-                // unlisten to media button events
-                mAudioManager.unregisterMediaButtonEventReceiver(mMediaButtonReceiver);
-            }
+            // remove auto-play lock
+            ENABLED = false;
             
             // set service mode to persistent
             mPersistent = false;
         }
-        else if (MEDIA_BUTTON_PRESSED.equals(action) && mPersistent) {
-            KeyEvent event = (KeyEvent)intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
-            
-            if (KeyEvent.KEYCODE_MEDIA_PLAY == event.getKeyCode()) {
-            	// only handle button down events
-                if (KeyEvent.ACTION_DOWN != event.getAction()) return;
-                
-            	// ignore if in-call or signalling call
-            	if (mAudioManager.getMode() != AudioManager.MODE_NORMAL) return;
-            	
-            	// start recording
-            	startRecording();
-            }
-            else if (KeyEvent.KEYCODE_MEDIA_STOP == event.getKeyCode()) {
-            	// only handle button down events
-                if (KeyEvent.ACTION_DOWN != event.getAction()) return;
-                
+        else if (ACTION_TOGGLE_RECORD.equals(action) && mPersistent) {
+            // if we're currently recording ...
+            if (mRecording) {
                 // stop recording
-            	stopRecording();
+                stopRecording();
+            } else {
+                // start recording
+                startRecording();
             }
-            else if (KeyEvent.KEYCODE_HEADSETHOOK == event.getKeyCode()) {
-            	// only handle button down events
-                if (KeyEvent.ACTION_DOWN != event.getAction()) return;
-
-                // if we're currently recording ...
-            	if (mRecording) {
-            		// stop recording
-            		stopRecording();
-            	} else {
-                	// ignore if in-call or signalling call
-                	if (mAudioManager.getMode() != AudioManager.MODE_NORMAL) return;
-                	
-                	// start recording
-            		startRecording();
-            	}
+        }
+        else if (ACTION_START_RECORD.equals(action) && mPersistent) {
+            if (!mRecording) {
+                // start recording
+                startRecording();
             }
+        }
+        else if (ACTION_STOP_RECORD.equals(action) && mPersistent) {
+            if (mRecording) {
+                // stop recording
+                stopRecording();
+            }
+        }
+        else if (ACTION_PLAY_ALL.equals(action) && mPersistent) {
+            // play all unread messages
+            Intent play_i = new Intent(this, TalkieService.class);
+            play_i.setAction(TalkieService.ACTION_PLAY_ALL);
+            play_i.putExtra("folder", Folder.INBOX.toString());
+            startService(play_i);
         }
     }
     
@@ -169,7 +164,7 @@ public class HeadsetService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         onStart(intent, startId);
-        return START_NOT_STICKY;
+        return START_STICKY;
     }
     
     @Override
@@ -205,10 +200,22 @@ public class HeadsetService extends Service {
     	
     	// create a media button receiver
     	mMediaButtonReceiver = new ComponentName(getPackageName(), MediaButtonReceiver.class.getName());
+    	
+    	// request audio-focus
+    	mAudioManager.requestAudioFocus(mAfListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+    	
+        // listen to media button events
+        mAudioManager.registerMediaButtonEventReceiver(mMediaButtonReceiver);
     }
 
     @Override
     public void onDestroy() {
+        // unlisten to media button events
+        mAudioManager.unregisterMediaButtonEventReceiver(mMediaButtonReceiver);
+        
+        // abandon audio-focus
+        mAudioManager.abandonAudioFocus(mAfListener);
+        
         // unregister from recorder events
         unregisterReceiver(mRecorderEventReceiver);
         
@@ -263,6 +270,6 @@ public class HeadsetService extends Service {
         PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notifyIntent, 0);
         builder.setContentIntent(contentIntent);
 
-        return builder.getNotification();
+        return builder.build();
     }
 }
