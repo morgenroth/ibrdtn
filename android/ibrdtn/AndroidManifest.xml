@@ -72,7 +72,7 @@
 		<service android:name=".service.DaemonService"
 			android:permission="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"
 			android:exported="true" android:label="@string/app_name_daemon"
-			android:process="de.tubs.ibr.dtnd">
+			android:process=":dtnd">
 			<intent-filter>
 				<action android:name="de.tubs.ibr.dtn.intent.REGISTER" />
 				<action android:name="de.tubs.ibr.dtn.intent.UNREGISTER" />
@@ -83,7 +83,7 @@
 
 		<service android:name=".service.DaemonManager"
 			android:permission="de.tubs.ibr.dtn.permission.DTN_CONTROL"
-			android:exported="true" android:process="de.tubs.ibr.dtnd">
+			android:exported="true" android:process=":dtnd">
 			<intent-filter>
 				<action android:name="de.tubs.ibr.dtn.DtnManager" />
 			</intent-filter>
