@@ -563,37 +563,53 @@ namespace dtn
 
 		void BundleCore::processBlocks(dtn::data::Bundle &b)
 		{
-			// walk through the block and process them when needed
-			for (dtn::data::Bundle::iterator iter = b.begin(); iter != b.end(); ++iter)
+			bool restart = true;
+
+			// loop as long as necessary over all blocks
+			while (restart)
 			{
-				const dtn::data::Block &block = (**iter);
-#ifdef IBRDTN_SUPPORT_BSP
-				if (block.getType() == dtn::security::PayloadConfidentialBlock::BLOCK_TYPE)
+				// disable restart
+				restart = false;
+
+				// walk through the block and process them when needed
+				for (dtn::data::Bundle::iterator iter = b.begin(); iter != b.end(); ++iter)
 				{
-					// try to decrypt the bundle
-					try {
-						dtn::security::SecurityManager::getInstance().decrypt(b);
-					} catch (const dtn::security::SecurityManager::KeyMissingException&) {
-						// decrypt needed, but no key is available
-						IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "No key available for decrypt bundle." << IBRCOMMON_LOGGER_ENDL;
-					} catch (const dtn::security::DecryptException &ex) {
-						// decrypt failed
-						IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "Decryption of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					const dtn::data::Block &block = (**iter);
+
+#ifdef IBRDTN_SUPPORT_BSP
+					if (block.getType() == dtn::security::PayloadConfidentialBlock::BLOCK_TYPE)
+					{
+						// try to decrypt the bundle
+						try {
+							dtn::security::SecurityManager::getInstance().decrypt(b);
+						} catch (const dtn::security::SecurityManager::KeyMissingException&) {
+							// decrypt needed, but no key is available
+							IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "No key available for decrypt bundle." << IBRCOMMON_LOGGER_ENDL;
+						} catch (const dtn::security::DecryptException &ex) {
+							// decrypt failed
+							IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "Decryption of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						}
+
+						// bundle has been altered - proceed from the first block
+						restart = true;
+						break;
 					}
-					break;
-				}
 #endif
 
 #ifdef IBRDTN_SUPPORT_COMPRESSION
-				if (block.getType() == dtn::data::CompressedPayloadBlock::BLOCK_TYPE)
-				{
-					// try to decompress the bundle
-					try {
-						dtn::data::CompressedPayloadBlock::extract(b);
-					} catch (const ibrcommon::Exception&) { };
-					break;
-				}
+					if (block.getType() == dtn::data::CompressedPayloadBlock::BLOCK_TYPE)
+					{
+						// try to decompress the bundle
+						try {
+							dtn::data::CompressedPayloadBlock::extract(b);
+						} catch (const ibrcommon::Exception&) { };
+
+						// bundle has been altered - proceed from the first block
+						restart = true;
+						break;
+					}
 #endif
+				}
 			}
 		}
 

@@ -33,15 +33,6 @@
 #include "storage/SQLiteBundleStorage.h"
 #endif
 
-#include <ibrdtn/ibrdtn.h>
-#ifdef IBRDTN_SUPPORT_COMPRESSION
-#include <ibrdtn/data/CompressedPayloadBlock.h>
-#endif
-
-#ifdef IBRDTN_SUPPORT_BSP
-#include "security/SecurityManager.h"
-#endif
-
 #include <ibrdtn/data/TrackingBlock.h>
 #include <ibrdtn/data/AgeBlock.h>
 
