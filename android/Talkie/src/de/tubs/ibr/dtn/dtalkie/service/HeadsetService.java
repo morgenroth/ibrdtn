@@ -258,7 +258,7 @@ public class HeadsetService extends Service {
 
         builder.setContentTitle(getResources().getString(R.string.service_headset_name));
         builder.setContentText(getResources().getString(R.string.service_headset_desc));
-        builder.setSmallIcon(R.drawable.ic_action_headset);
+        builder.setSmallIcon(R.drawable.ic_stat_headset);
         builder.setOngoing(true);
         builder.setOnlyAlertOnce(true);
         builder.setWhen(0);

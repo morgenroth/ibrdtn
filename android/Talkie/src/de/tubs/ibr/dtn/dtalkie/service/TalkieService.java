@@ -635,7 +635,7 @@ public class TalkieService extends IntentService {
         builder.setNumber(mcount);
         builder.setContentTitle(getResources().getQuantityString(R.plurals.notification_title, mcount));
         builder.setContentText(getResources().getQuantityString(R.plurals.notification_text, mcount));
-        builder.setSmallIcon(R.drawable.ic_mic);
+        builder.setSmallIcon(R.drawable.ic_stat_mic);
         builder.setDefaults(defaults);
         builder.setWhen( System.currentTimeMillis() );
         builder.setContentIntent(contentIntent);
