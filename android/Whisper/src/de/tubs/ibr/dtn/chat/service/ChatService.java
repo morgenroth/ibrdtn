@@ -453,7 +453,7 @@ public class ChatService extends IntentService {
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 		builder.setContentTitle(contentTitle);
 		builder.setContentText(contentText);
-		builder.setSmallIcon(R.drawable.ic_message);
+		builder.setSmallIcon(R.drawable.ic_stat_message);
 		builder.setTicker(tickerText);
 		builder.setDefaults(defaults);
 		builder.setWhen( System.currentTimeMillis() );
