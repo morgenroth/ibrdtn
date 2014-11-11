@@ -8,5 +8,8 @@
 # Additional options that are passed to the Daemon.
 DAEMON_OPTS="-c /etc/ibrdtn/ibrdtnd.conf"
 
+# Directory for additional configuration, e.g. security keys and certificates
+DAEMON_CONFDIR="/etc/ibrdtn"
+
 # Run the daemon as this specific user
 DAEMON_USER="dtnd"
