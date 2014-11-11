@@ -58,6 +58,14 @@ do_start()
 		#chgrp ${DAEMON_USER} ${PIDDIR}
 	fi
 
+	# grant write access to certs / bpsec dir
+	if [ -d ${DAEMON_CONFDIR} ]; then
+		mkdir -p ${DAEMON_CONFDIR}/bpsec
+		chown ${DAEMON_USER} ${DAEMON_CONFDIR}/bpsec
+		mkdir -p ${DAEMON_CONFDIR}/certs
+		chown ${DAEMON_USER} ${DAEMON_CONFDIR}/certs
+	fi
+
 	# Return
 	#   0 if daemon has been started
 	#   1 if daemon was already running
