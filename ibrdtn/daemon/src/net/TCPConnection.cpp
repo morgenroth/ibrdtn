@@ -519,6 +519,11 @@ namespace dtn
 				// start keepalive sender
 				_keepalive_sender.start();
 
+				// create a filter context
+				dtn::core::FilterContext context;
+				context.setPeer(_peer._localeid);
+				context.setProtocol(_callback.getDiscoveryProtocol());
+
 				// create a deserializer for next bundle
 				dtn::data::DefaultDeserializer deserializer(stream, dtn::core::BundleCore::getInstance());
 
@@ -544,8 +549,23 @@ namespace dtn
 							throw dtn::data::Validator::RejectedException("destination or source EID is null");
 						}
 
-						// raise default bundle received event
-						dtn::net::BundleReceivedEvent::raise(_peer._localeid, bundle, false);
+						// push bundle through the filter routines
+						context.setBundle(bundle);
+						BundleFilter::ACTION ret = dtn::core::BundleCore::getInstance().filter(dtn::core::BundleFilter::INPUT, context, bundle);
+
+						switch (ret) {
+							case BundleFilter::ACCEPT:
+								// raise default bundle received event
+								dtn::net::BundleReceivedEvent::raise(_peer._localeid, bundle, false);
+								break;
+
+							case BundleFilter::REJECT:
+								throw dtn::data::Validator::RejectedException("rejected by input filter");
+								break;
+
+							case BundleFilter::DROP:
+								break;
+						}
 					}
 					catch (const dtn::data::Validator::RejectedException &ex)
 					{
@@ -645,6 +665,11 @@ namespace dtn
 				TCPConnection::safe_streamconnection sc = _connection.getProtocolStream();
 				std::iostream &stream = (*sc);
 
+				// create a filter context
+				dtn::core::FilterContext context;
+				context.setPeer(_connection._peer._localeid);
+				context.setProtocol(_connection._callback.getDiscoveryProtocol());
+
 				// create a serializer
 				dtn::data::DefaultSerializer serializer(stream);
 
@@ -659,6 +684,18 @@ namespace dtn
 						// read the bundle out of the storage
 						dtn::data::Bundle bundle = storage.get(transfer.getBundle());
 
+						// push bundle through the filter routines
+						context.setBundle(bundle);
+						BundleFilter::ACTION ret = dtn::core::BundleCore::getInstance().filter(dtn::core::BundleFilter::OUTPUT, context, bundle);
+
+						switch (ret) {
+							case BundleFilter::ACCEPT:
+								break;
+							case BundleFilter::REJECT:
+							case BundleFilter::DROP:
+								transfer.abort(dtn::net::TransferAbortedEvent::REASON_REFUSED_BY_FILTER);
+								continue;
+						}
 #ifdef IBRDTN_SUPPORT_BSP
 						const int seclevel = dtn::daemon::Configuration::getInstance().getSecurity().getLevel();
 

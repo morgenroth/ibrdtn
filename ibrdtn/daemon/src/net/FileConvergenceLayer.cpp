@@ -113,6 +113,11 @@ namespace dtn
 									// scan for bundles
 									std::list<dtn::data::MetaBundle> bundles = scan(path);
 
+									// create a filter context
+									dtn::core::FilterContext context;
+									context.setPeer(sbt.job.getNeighbor());
+									context.setProtocol(getDiscoveryProtocol());
+
 									try {
 										// check if bundle is a routing bundle
 										const dtn::data::EID &source = sbt.job.getBundle().source;
@@ -120,11 +125,21 @@ namespace dtn
 										if (source.isApplication("routing"))
 										{
 											// read the bundle out of the storage
-											const dtn::data::Bundle bundle = storage.get(sbt.job.getBundle());
+											dtn::data::Bundle bundle = storage.get(sbt.job.getBundle());
 											const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(bundle);
 
 											if (bundle.destination.isApplication("routing"))
 											{
+												// push bundle through the filter routines
+												context.setBundle(bundle);
+												BundleFilter::ACTION ret = dtn::core::BundleCore::getInstance().filter(dtn::core::BundleFilter::OUTPUT, context, bundle);
+
+												if (ret != BundleFilter::ACCEPT)
+												{
+													sbt.job.abort(dtn::net::TransferAbortedEvent::REASON_REFUSED_BY_FILTER);
+													continue;
+												}
+
 												// add this bundle to the blacklist
 												{
 													ibrcommon::MutexLock l(_blacklist_mutex);
@@ -161,7 +176,17 @@ namespace dtn
 
 										try {
 											// read the bundle out of the storage
-											const dtn::data::Bundle bundle = storage.get(sbt.job.getBundle());
+											dtn::data::Bundle bundle = storage.get(sbt.job.getBundle());
+
+											// push bundle through the filter routines
+											context.setBundle(bundle);
+											BundleFilter::ACTION ret = dtn::core::BundleCore::getInstance().filter(dtn::core::BundleFilter::OUTPUT, context, bundle);
+
+											if (ret != BundleFilter::ACCEPT)
+											{
+												sbt.job.abort(dtn::net::TransferAbortedEvent::REASON_REFUSED_BY_FILTER);
+												continue;
+											}
 
 											std::fstream fs(filename.getPath().c_str(), std::fstream::out);
 
@@ -243,6 +268,11 @@ namespace dtn
 			// get a reference to the router
 			dtn::routing::BaseRouter &router = dtn::core::BundleCore::getInstance().getRouter();
 
+			// create a filter context
+			dtn::core::FilterContext context;
+			context.setPeer(n.getEID());
+			context.setProtocol(getDiscoveryProtocol());
+
 			for (std::list<ibrcommon::File>::const_iterator iter = files.begin(); iter != files.end(); ++iter)
 			{
 				const ibrcommon::File &f = (*iter);
@@ -288,8 +318,15 @@ namespace dtn
 					// load meta data
 					d >> bundle;
 
-					// raise default bundle received event
-					dtn::net::BundleReceivedEvent::raise(n.getEID(), bundle, false);
+					// push bundle through the filter routines
+					context.setBundle(bundle);
+					BundleFilter::ACTION ret = dtn::core::BundleCore::getInstance().filter(dtn::core::BundleFilter::INPUT, context, bundle);
+
+					if (ret == BundleFilter::ACCEPT)
+					{
+						// raise default bundle received event
+						dtn::net::BundleReceivedEvent::raise(n.getEID(), bundle, false);
+					}
 				}
 				catch (const dtn::data::Validator::RejectedException &ex)
 				{
@@ -445,8 +482,20 @@ namespace dtn
 				dtn::data::ScopeControlHopLimitBlock &schl = answer.push_front<dtn::data::ScopeControlHopLimitBlock>();
 				schl.setLimit(1);
 
-				// raise default bundle received event
-				dtn::net::BundleReceivedEvent::raise(bundle.destination.getNode(), answer, false);
+				// create a filter context
+				dtn::core::FilterContext context;
+				context.setPeer(answer.source);
+				context.setProtocol(getDiscoveryProtocol());
+
+				// push bundle through the filter routines
+				context.setBundle(answer);
+				BundleFilter::ACTION ret = dtn::core::BundleCore::getInstance().filter(dtn::core::BundleFilter::INPUT, context, answer);
+
+				if (ret == BundleFilter::ACCEPT)
+				{
+					// raise default bundle received event
+					dtn::net::BundleReceivedEvent::raise(bundle.destination.getNode(), answer, false);
+				}
 			}
 		}
 	} /* namespace net */

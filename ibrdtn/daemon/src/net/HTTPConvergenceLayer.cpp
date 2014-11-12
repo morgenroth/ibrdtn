@@ -146,11 +146,21 @@ namespace dtn
 		void DownloadThread::run() throw ()
 		{
 			try  {
+				// create a filter context
+				dtn::core::FilterContext context;
+				context.setProtocol(dtn::core::Node::CONN_HTTP);
+
 				while(_stream.good())
 				{
 					try  {
 						dtn::data::Bundle bundle;
 						dtn::data::DefaultDeserializer(_stream, dtn::core::BundleCore::getInstance()) >> bundle;
+
+						// push bundle through the filter routines
+						context.setBundle(bundle);
+						BundleFilter::ACTION ret = dtn::core::BundleCore::getInstance().filter(dtn::core::BundleFilter::INPUT, context, bundle);
+
+						if (ret != BundleFilter::ACCEPT) continue;
 
 						// raise default bundle received event
 						dtn::net::BundleReceivedEvent::raise(dtn::data::EID(), bundle, false);
@@ -190,9 +200,23 @@ namespace dtn
 			long http_code = 0;
 			//double upload_size = 0;
 
+			// create a filter context
+			dtn::core::FilterContext context;
+			context.setProtocol(dtn::core::Node::CONN_HTTP);
+
 			try {
 				// read the bundle out of the storage
-				const dtn::data::Bundle bundle = storage.get(job.getBundle());
+				dtn::data::Bundle bundle = storage.get(job.getBundle());
+
+				// push bundle through the filter routines
+				context.setBundle(bundle);
+				BundleFilter::ACTION ret = dtn::core::BundleCore::getInstance().filter(dtn::core::BundleFilter::OUTPUT, context, bundle);
+
+				if (ret != BundleFilter::ACCEPT) {
+					dtn::net::BundleTransfer local_job = job;
+					local_job.abort(dtn::net::TransferAbortedEvent::REASON_REFUSED_BY_FILTER);
+					return;
+				}
 
 				ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 				{

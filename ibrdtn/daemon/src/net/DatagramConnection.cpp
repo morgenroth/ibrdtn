@@ -79,6 +79,11 @@ namespace dtn
 		{
 			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 40) << "run()" << IBRCOMMON_LOGGER_ENDL;
 
+			// create a filter context
+			dtn::core::FilterContext context;
+			context.setPeer(_peer_eid);
+			context.setProtocol(_callback.getDiscoveryProtocol());
+
 			// create a deserializer for the stream
 			dtn::data::DefaultDeserializer deserializer(_stream, dtn::core::BundleCore::getInstance());
 
@@ -91,8 +96,23 @@ namespace dtn
 						// read the bundle out of the stream
 						deserializer >> bundle;
 
-						// raise default bundle received event
-						dtn::net::BundleReceivedEvent::raise(_peer_eid, bundle, false);
+						// push bundle through the filter routines
+						context.setBundle(bundle);
+						BundleFilter::ACTION ret = dtn::core::BundleCore::getInstance().filter(dtn::core::BundleFilter::INPUT, context, bundle);
+
+						switch (ret) {
+							case BundleFilter::ACCEPT:
+								// raise default bundle received event
+								dtn::net::BundleReceivedEvent::raise(_peer_eid, bundle, false);
+								break;
+
+							case BundleFilter::REJECT:
+								throw dtn::data::Validator::RejectedException("rejected by input filter");
+								break;
+
+							case BundleFilter::DROP:
+								break;
+						}
 					} catch (const dtn::data::Validator::RejectedException &ex) {
 						IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 25) << "Bundle rejected: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 
@@ -768,6 +788,10 @@ namespace dtn
 				// get reference to the storage
 				dtn::storage::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 
+				// create a filter context
+				dtn::core::FilterContext context;
+				context.setProtocol(_connection._callback.getDiscoveryProtocol());
+
 				// create a standard serializer
 				dtn::data::DefaultSerializer serializer(_stream);
 
@@ -779,7 +803,17 @@ namespace dtn
 
 					try {
 						// read the bundle out of the storage
-						const dtn::data::Bundle bundle = storage.get(job.getBundle());
+						dtn::data::Bundle bundle = storage.get(job.getBundle());
+
+						// push bundle through the filter routines
+						context.setBundle(bundle);
+						context.setPeer(job.getNeighbor());
+						BundleFilter::ACTION ret = dtn::core::BundleCore::getInstance().filter(dtn::core::BundleFilter::OUTPUT, context, bundle);
+
+						if (ret != BundleFilter::ACCEPT) {
+							job.abort(dtn::net::TransferAbortedEvent::REASON_REFUSED_BY_FILTER);
+							continue;
+						}
 
 						// reset skip flag
 						_skip = false;

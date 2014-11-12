@@ -510,8 +510,19 @@ namespace dtn
 				throw IMAPException("Bundle in mail" + mailID + " was rejected by validator");
 			}
 
-			// Raise default bundle received event
-			dtn::net::BundleReceivedEvent::raise(newBundle.source, newBundle, false);
+			// create a filter context
+			dtn::core::FilterContext context;
+			context.setProtocol(dtn::core::Node::CONN_EMAIL);
+
+			// push bundle through the filter routines
+			context.setBundle(newBundle);
+			BundleFilter::ACTION ret = dtn::core::BundleCore::getInstance().filter(dtn::core::BundleFilter::INPUT, context, newBundle);
+
+			if (ret == BundleFilter::ACCEPT)
+			{
+				// Raise default bundle received event
+				dtn::net::BundleReceivedEvent::raise(newBundle.source, newBundle, false);
+			}
 		}
 
 		void EMailImapService::returningMailCheck(vmime::ref<vmime::net::message> &msg)
@@ -558,7 +569,7 @@ namespace dtn
 				{
 					if((*iter)->getJob().getBundle() == bid)
 					{
-						dtn::routing::RequeueBundleEvent::raise((*iter)->getNode().getEID(), bid);
+						dtn::routing::RequeueBundleEvent::raise((*iter)->getNode().getEID(), bid, dtn::core::Node::CONN_EMAIL);
 						_processedTasks.erase(iter);
 						break;
 					}
