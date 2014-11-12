@@ -180,7 +180,7 @@ namespace dtn
 			std::list<URI> get(Node::Type type, Node::Protocol proto) const;
 
 			/**
-			 * Returns a ordered list of all available URIs
+			 * Returns an ordered list of all available URIs
 			 */
 			std::list<Node::URI> getAll() const;
 
