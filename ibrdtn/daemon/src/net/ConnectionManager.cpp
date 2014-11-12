@@ -523,6 +523,44 @@ namespace dtn
 			}
 		}
 
+		const ConnectionManager::protocol_list ConnectionManager::getSupportedProtocols()
+		{
+			protocol_list ret;
+
+			// lock convergence layers while iterating over them
+			ibrcommon::MutexLock l(_cl_lock);
+
+			// search a matching convergence layer for the desired path
+			for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
+			{
+				const ConvergenceLayer &cl = (**iter);
+				ret.push_back(cl.getDiscoveryProtocol());
+			}
+
+			return ret;
+		}
+
+		const ConnectionManager::protocol_list ConnectionManager::getSupportedProtocols(const dtn::data::EID &peer)
+		{
+			protocol_list ret;
+
+			const dtn::core::Node node = getNeighbor(peer);
+
+			// lock convergence layers while iterating over them
+			ibrcommon::MutexLock l(_cl_lock);
+
+			// search a matching convergence layer for the desired path
+			for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
+			{
+				const ConvergenceLayer &cl = (**iter);
+				if (node.has(cl.getDiscoveryProtocol())) {
+					ret.push_back(cl.getDiscoveryProtocol());
+				}
+			}
+
+			return ret;
+		}
+
 		const std::set<dtn::core::Node> ConnectionManager::getNeighbors()
 		{
 			ibrcommon::MutexLock l(_node_lock);
