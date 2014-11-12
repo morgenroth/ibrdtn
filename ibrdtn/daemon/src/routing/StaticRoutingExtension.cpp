@@ -77,8 +77,8 @@ namespace dtn
 			class BundleFilter : public dtn::storage::BundleSelector
 			{
 			public:
-				BundleFilter(const NeighborDatabase::NeighborEntry &entry, const std::list<const StaticRoute*> &routes)
-				 : _entry(entry), _routes(routes)
+				BundleFilter(const NeighborDatabase::NeighborEntry &entry, const std::list<const StaticRoute*> &routes, const dtn::core::FilterContext &context, const dtn::net::ConnectionManager::protocol_list &plist)
+				 : _entry(entry), _routes(routes), _plist(plist), _context(context)
 				{};
 
 				virtual ~BundleFilter() {};
@@ -113,18 +113,35 @@ namespace dtn
 						return false;
 					}
 
+					// update filter context
+					dtn::core::FilterContext context = _context;
+					context.setMetaBundle(meta);
+
 					// search for one rule that match
-					for (std::list<const StaticRoute*>::const_iterator iter = _routes.begin();
-							iter != _routes.end(); ++iter)
+					for (std::list<const StaticRoute*>::const_iterator iter = _routes.begin(); iter != _routes.end(); ++iter)
 					{
 						const StaticRoute &route = (**iter);
 
 						if (route.match(meta.destination))
 						{
-							// put the selected bundle with targeted interface into the result-set
-							static_cast<RoutingResult&>(result).put(meta, "<insert-iface>");
+							// check bundle filter for each possible path
+							for (dtn::net::ConnectionManager::protocol_list::const_iterator it = _plist.begin(); it != _plist.end(); ++it)
+							{
+								const dtn::core::Node::Protocol &p = (*it);
 
-							return true;
+								// update context with current protocol
+								context.setProtocol(p);
+
+								// execute filtering
+								dtn::core::BundleFilter::ACTION ret = dtn::core::BundleCore::getInstance().evaluate(dtn::core::BundleFilter::ROUTING, context);
+
+								if (ret == dtn::core::BundleFilter::ACCEPT)
+								{
+									// put the selected bundle with targeted interface into the result-set
+									static_cast<RoutingResult&>(result).put(meta, p);
+									return true;
+								}
+							}
 						}
 					}
 
@@ -134,6 +151,8 @@ namespace dtn
 			private:
 				const NeighborDatabase::NeighborEntry &_entry;
 				const std::list<const StaticRoute*> &_routes;
+				const dtn::net::ConnectionManager::protocol_list &_plist;
+				const dtn::core::FilterContext &_context;
 			};
 
 			// announce static routes here
@@ -188,8 +207,17 @@ namespace dtn
 								if (!entry.isTransferThresholdReached())
 									throw NeighborDatabase::NoMoreTransfersAvailable();
 
+								// get a list of protocols supported by both, the local BPA and the remote peer
+								const dtn::net::ConnectionManager::protocol_list plist =
+										dtn::core::BundleCore::getInstance().getConnectionManager().getSupportedProtocols(entry.eid);
+
+								// create a filter context
+								dtn::core::FilterContext context;
+								context.setPeer(entry.eid);
+								context.setRouting(*this);
+
 								// get the bundle filter of the neighbor
-								BundleFilter filter(entry, routes);
+								BundleFilter filter(entry, routes, context, plist);
 
 								// some debug
 								IBRCOMMON_LOGGER_DEBUG_TAG(StaticRoutingExtension::TAG, 40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
@@ -204,7 +232,7 @@ namespace dtn
 							{
 								try {
 									// transfer the bundle to the neighbor
-									transferTo(task.eid, (*iter).first);
+									transferTo(task.eid, (*iter).first, (*iter).second);
 								} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 							}
 						}
@@ -220,17 +248,52 @@ namespace dtn
 						const ProcessBundleTask &task = dynamic_cast<ProcessBundleTask&>(*t);
 						IBRCOMMON_LOGGER_DEBUG_TAG(StaticRoutingExtension::TAG, 50) << "search static route for " << task.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
+						// check Scope Control Block - do not forward non-group bundles with hop limit <= 1
+						if ((task.bundle.hopcount <= 1) && (task.bundle.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))) continue;
+
 						// look for routes to this node
-						for (std::list<StaticRoute*>::const_iterator iter = _routes.begin();
-								iter != _routes.end(); ++iter)
+						for (std::list<StaticRoute*>::const_iterator iter = _routes.begin(); iter != _routes.end(); ++iter)
 						{
 							const StaticRoute &route = (**iter);
+
 							IBRCOMMON_LOGGER_DEBUG_TAG(StaticRoutingExtension::TAG, 50) << "check static route: " << route.toString() << IBRCOMMON_LOGGER_ENDL;
+
 							try {
 								if (route.match(task.bundle.destination))
 								{
-									// transfer the bundle to the neighbor
-									transferTo(route.getDestination(), task.bundle);
+									// get data about the potential next-hop
+									NeighborDatabase::NeighborEntry &entry = db.get(route.getDestination(), true);
+
+									// do not forward bundles already known by the destination
+									if (entry.has(task.bundle)) continue;
+
+									// get a list of protocols supported by both, the local BPA and the remote peer
+									const dtn::net::ConnectionManager::protocol_list plist =
+											dtn::core::BundleCore::getInstance().getConnectionManager().getSupportedProtocols(entry.eid);
+
+									// create a filter context
+									dtn::core::FilterContext context;
+									context.setPeer(entry.eid);
+									context.setRouting(*this);
+
+									// check bundle filter for each possible path
+									for (dtn::net::ConnectionManager::protocol_list::const_iterator it = plist.begin(); it != plist.end(); ++it)
+									{
+										const dtn::core::Node::Protocol &p = (*it);
+
+										// update context with current protocol
+										context.setProtocol(p);
+
+										// execute filtering
+										dtn::core::BundleFilter::ACTION ret = dtn::core::BundleCore::getInstance().evaluate(dtn::core::BundleFilter::ROUTING, context);
+
+										if (ret == dtn::core::BundleFilter::ACCEPT)
+										{
+											// transfer the bundle to the neighbor
+											transferTo(route.getDestination(), task.bundle, p);
+											break;
+										}
+									}
 								}
 							} catch (const NeighborDatabase::NeighborNotAvailableException&) {
 								// neighbor is not available, can not forward this bundle
@@ -430,6 +493,11 @@ namespace dtn
 			} catch (const ibrcommon::ThreadException &ex) {
 				IBRCOMMON_LOGGER_TAG(StaticRoutingExtension::TAG, error) << "componentDown failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
+		}
+
+		const std::string StaticRoutingExtension::getTag() const throw ()
+		{
+			return "neighbor";
 		}
 
 		StaticRoutingExtension::EIDRoute::EIDRoute(const dtn::data::EID &match, const dtn::data::EID &nexthop, const dtn::data::Timestamp &et)

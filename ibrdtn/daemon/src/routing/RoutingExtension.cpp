@@ -40,12 +40,12 @@ namespace dtn
 
 		void RoutingResult::put(const dtn::data::MetaBundle &bundle) throw ()
 		{
-			put(bundle, "");
+			put(bundle, dtn::core::Node::CONN_UNDEFINED);
 		}
 
-		void RoutingResult::put(const dtn::data::MetaBundle &bundle, const std::string &iface) throw ()
+		void RoutingResult::put(const dtn::data::MetaBundle &bundle, const dtn::core::Node::Protocol p) throw ()
 		{
-			push_back(make_pair(bundle, iface));
+			push_back(make_pair(bundle, p));
 		}
 
 		/**
@@ -67,7 +67,7 @@ namespace dtn
 		 * @param destination The EID of the other node.
 		 * @param id The ID of the bundle to transfer. This bundle must be stored in the storage.
 		 */
-		void RoutingExtension::transferTo(const dtn::data::EID &destination, const dtn::data::MetaBundle &meta)
+		void RoutingExtension::transferTo(const dtn::data::EID &destination, const dtn::data::MetaBundle &meta, const dtn::core::Node::Protocol p)
 		{
 			// acquire the transfer of this bundle, could throw already in transit or no resource left exception
 			{
@@ -80,15 +80,14 @@ namespace dtn
 				// acquire the transfer, could throw already in transit or no resource left exception
 				entry.acquireTransfer(meta);
 			}
-
-			try {
-				// create a new bundle transfer object
-				dtn::net::BundleTransfer transfer(destination, meta);
+			try{
+				//create the transfer object
+				dtn::net::BundleTransfer transfer(destination, meta, p);
 
 				// transfer the bundle to the next hop
 				dtn::core::BundleCore::getInstance().getConnectionManager().queue(transfer);
 
-				IBRCOMMON_LOGGER_DEBUG_TAG(RoutingExtension::TAG, 20) << "bundle " << meta.toString() << " queued for " << destination.getString() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(RoutingExtension::TAG, 20) << "bundle " << meta.toString() << " queued for " << destination.getString() << " via protocol " << dtn::core::Node::toString(p) << IBRCOMMON_LOGGER_ENDL;
 			} catch (const dtn::core::P2PDialupException&) {
 				// the bundle transfer queues the bundle for retransmission, thus abort the query here
 				throw NeighborDatabase::NeighborNotAvailableException();

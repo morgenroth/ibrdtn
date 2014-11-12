@@ -79,7 +79,7 @@ namespace dtn
 
 						try {
 							// create a new bundle transfer
-							dtn::net::BundleTransfer transfer(data.destination, meta);
+							dtn::net::BundleTransfer transfer(data.destination, meta, data.protocol);
 
 							// re-queue the bundle
 							dtn::core::BundleCore::getInstance().getConnectionManager().queue(transfer);
@@ -106,7 +106,7 @@ namespace dtn
 
 		void RetransmissionExtension::raiseEvent(const dtn::routing::RequeueBundleEvent &requeue) throw ()
 		{
-			const RetransmissionData data(requeue.getBundle(), requeue.getPeer());
+			const RetransmissionData data(requeue.getBundle(), requeue.getPeer(), requeue.getProtocol());
 
 			ibrcommon::MutexLock l(_mutex);
 			std::set<RetransmissionData>::const_iterator iter = _set.find(data);
@@ -214,8 +214,8 @@ namespace dtn
 			return (*this);
 		}
 
-		RetransmissionExtension::RetransmissionData::RetransmissionData(const dtn::data::BundleID &id, const dtn::data::EID &d, const dtn::data::Size r)
-		 : dtn::data::BundleID(id), destination(d), _timestamp(0), _count(0), retry(r)
+		RetransmissionExtension::RetransmissionData::RetransmissionData(const dtn::data::BundleID &id, const dtn::data::EID &d, dtn::core::Node::Protocol p, const dtn::data::Size r)
+		 : dtn::data::BundleID(id), destination(d), protocol(p), _timestamp(0), _count(0), retry(r)
 		{
 			(*this)++;
 		}

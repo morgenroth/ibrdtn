@@ -53,6 +53,8 @@ namespace dtn
 			EpidemicRoutingExtension();
 			virtual ~EpidemicRoutingExtension();
 
+			virtual const std::string getTag() const throw ();
+
 			virtual void eventDataChanged(const dtn::data::EID &peer) throw ();
 
 			virtual void eventBundleQueued(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ();

@@ -73,8 +73,8 @@ namespace dtn
 #endif
 			{
 			public:
-				BundleFilter(NeighborRoutingExtension &e, const NeighborDatabase::NeighborEntry &entry)
-				 : _extension(e), _entry(entry)
+				BundleFilter(NeighborRoutingExtension &e, const NeighborDatabase::NeighborEntry &entry, const dtn::net::ConnectionManager::protocol_list &plist)
+				 : _extension(e), _entry(entry), _plist(plist)
 				{};
 
 				virtual ~BundleFilter() {};
@@ -84,7 +84,7 @@ namespace dtn
 				virtual bool addIfSelected(dtn::storage::BundleResult &result, const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
 					// check if the considered bundle should get routed
-					std::pair<bool, std::string> ret = _extension.shouldRouteTo(meta, _entry);
+					std::pair<bool, dtn::core::Node::Protocol> ret = _extension.shouldRouteTo(meta, _entry, _plist);
 
 					// put the considered bundle into the result-set if it should get routed
 					if (ret.first) static_cast<RoutingResult&>(result).put(meta, ret.second);
@@ -110,6 +110,7 @@ namespace dtn
 			private:
 				NeighborRoutingExtension &_extension;
 				const NeighborDatabase::NeighborEntry &_entry;
+				const dtn::net::ConnectionManager::protocol_list &_plist;
 			};
 
 			RoutingResult list;
@@ -142,8 +143,12 @@ namespace dtn
 							if (!entry.isTransferThresholdReached())
 								throw NeighborDatabase::NoMoreTransfersAvailable();
 
+							// get a list of protocols supported by both, the local BPA and the remote peer
+							const dtn::net::ConnectionManager::protocol_list plist =
+									dtn::core::BundleCore::getInstance().getConnectionManager().getSupportedProtocols(entry.eid);
+
 							// create a new bundle filter
-							BundleFilter filter(*this, entry);
+							BundleFilter filter(*this, entry, plist);
 
 							// query an unknown bundle from the storage, the list contains max. 10 items.
 							list.clear();
@@ -157,7 +162,7 @@ namespace dtn
 						{
 							try {
 								// transfer the bundle to the neighbor
-								transferTo(task.eid, (*iter).first);
+								transferTo(task.eid, (*iter).first, (*iter).second);
 							} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 						}
 					} catch (const NeighborDatabase::NoMoreTransfersAvailable &ex) {
@@ -175,7 +180,11 @@ namespace dtn
 						const ProcessBundleTask &task = dynamic_cast<ProcessBundleTask&>(*t);
 
 						// variable to store the result of shouldRouteTo()
-						std::pair<bool, std::string> ret;
+						std::pair<bool, dtn::core::Node::Protocol> ret;
+
+						// get a list of protocols supported by both, the local BPA and the remote peer
+						const dtn::net::ConnectionManager::protocol_list plist =
+								dtn::core::BundleCore::getInstance().getConnectionManager().getSupportedProtocols(task.nexthop);
 
 						// lock the neighbor database while searching for bundles
 						{
@@ -183,12 +192,12 @@ namespace dtn
 							ibrcommon::MutexLock l(db);
 							NeighborDatabase::NeighborEntry &entry = db.get(task.nexthop, true);
 
-							ret = shouldRouteTo(task.bundle, entry);
+							ret = shouldRouteTo(task.bundle, entry, plist);
 							if (!ret.first) throw NeighborDatabase::NoRouteKnownException();
 						}
 
 						// transfer the bundle to the neighbor
-						transferTo(task.nexthop, task.bundle);
+						transferTo(task.nexthop, task.bundle, ret.second);
 					} catch (const NeighborDatabase::AlreadyInTransitException &ex) {
 						IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					} catch (const NeighborDatabase::NoMoreTransfersAvailable &ex) {
@@ -207,12 +216,12 @@ namespace dtn
 			}
 		}
 
-		std::pair<bool, std::string> NeighborRoutingExtension::shouldRouteTo(const dtn::data::MetaBundle &meta, const NeighborDatabase::NeighborEntry &n) const
+		std::pair<bool, dtn::core::Node::Protocol> NeighborRoutingExtension::shouldRouteTo(const dtn::data::MetaBundle &meta, const NeighborDatabase::NeighborEntry &n, const dtn::net::ConnectionManager::protocol_list &plist) const
 		{
 			// check Scope Control Block - do not forward bundles with hop limit == 0
 			if (meta.hopcount == 0)
 			{
-				return make_pair(false, "");
+				return make_pair(false, dtn::core::Node::CONN_UNDEFINED);
 			}
 
 			if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
@@ -220,28 +229,52 @@ namespace dtn
 				// do not forward local bundles
 				if (meta.destination.sameHost(dtn::core::BundleCore::local))
 				{
-					return make_pair(false, "");
+					return make_pair(false, dtn::core::Node::CONN_UNDEFINED);
 				}
 
 				// do not forward bundles for other nodes
 				if (!meta.destination.sameHost(n.eid))
 				{
-					return make_pair(false, "");
+					return make_pair(false, dtn::core::Node::CONN_UNDEFINED);
 				}
 			}
 			else
 			{
 				// do not forward non-singleton bundles
-				return make_pair(false, "");
+				return make_pair(false, dtn::core::Node::CONN_UNDEFINED);
 			}
 
 			// do not forward bundles already known by the destination
 			if (n.has(meta))
 			{
-				return make_pair(false, "");
+				return make_pair(false, dtn::core::Node::CONN_UNDEFINED);
 			}
 
-			return make_pair(true, "<insert-iface>");
+			// update filter context
+			dtn::core::FilterContext context;
+			context.setPeer(n.eid);
+			context.setRouting(*this);
+			context.setMetaBundle(meta);
+
+			// check bundle filter for each possible path
+			for (dtn::net::ConnectionManager::protocol_list::const_iterator it = plist.begin(); it != plist.end(); ++it)
+			{
+				const dtn::core::Node::Protocol &p = (*it);
+
+				// update context with current protocol
+				context.setProtocol(p);
+
+				// execute filtering
+				dtn::core::BundleFilter::ACTION ret = dtn::core::BundleCore::getInstance().evaluate(dtn::core::BundleFilter::ROUTING, context);
+
+				if (ret == dtn::core::BundleFilter::ACCEPT)
+				{
+					// put the selected bundle with targeted interface into the result-set
+					return make_pair(true, p);
+				}
+			}
+
+			return make_pair(false, dtn::core::Node::CONN_UNDEFINED);
 		}
 
 		void NeighborRoutingExtension::eventDataChanged(const dtn::data::EID &peer) throw ()
@@ -290,6 +323,11 @@ namespace dtn
 			} catch (const ibrcommon::ThreadException &ex) {
 				IBRCOMMON_LOGGER_TAG(NeighborRoutingExtension::TAG, error) << "componentDown failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
+		}
+
+		const std::string NeighborRoutingExtension::getTag() const throw ()
+		{
+			return "neighbor";
 		}
 
 		/****************************************/

@@ -133,6 +133,11 @@ namespace dtn
 			}
 		}
 
+		const std::string EpidemicRoutingExtension::getTag() const throw ()
+		{
+			return "epidemic";
+		}
+
 		void EpidemicRoutingExtension::__cancellation() throw ()
 		{
 			_taskqueue.abort();
@@ -143,8 +148,8 @@ namespace dtn
 			class BundleFilter : public dtn::storage::BundleSelector
 			{
 			public:
-				BundleFilter(const NeighborDatabase::NeighborEntry &entry, const std::set<dtn::core::Node> &neighbors)
-				 : _entry(entry), _neighbors(neighbors)
+				BundleFilter(const NeighborDatabase::NeighborEntry &entry, const std::set<dtn::core::Node> &neighbors, const dtn::core::FilterContext &context, const dtn::net::ConnectionManager::protocol_list &plist)
+				 : _entry(entry), _neighbors(neighbors), _plist(plist), _context(context)
 				{};
 
 				virtual ~BundleFilter() {};
@@ -203,15 +208,37 @@ namespace dtn
 						throw dtn::storage::BundleSelectorException();
 					}
 
-					// put the selected bundle with targeted interface into the result-set
-					static_cast<RoutingResult&>(result).put(meta, "<insert-iface>");
+					// update filter context
+					dtn::core::FilterContext context = _context;
+					context.setMetaBundle(meta);
 
-					return true;
+					// check bundle filter for each possible path
+					for (dtn::net::ConnectionManager::protocol_list::const_iterator it = _plist.begin(); it != _plist.end(); ++it)
+					{
+						const dtn::core::Node::Protocol &p = (*it);
+
+						// update context with current protocol
+						context.setProtocol(p);
+
+						// execute filtering
+						dtn::core::BundleFilter::ACTION ret = dtn::core::BundleCore::getInstance().evaluate(dtn::core::BundleFilter::ROUTING, context);
+
+						if (ret == dtn::core::BundleFilter::ACCEPT)
+						{
+							// put the selected bundle with targeted interface into the result-set
+							static_cast<RoutingResult&>(result).put(meta, p);
+							return true;
+						}
+					}
+
+					return false;
 				};
 
 			private:
 				const NeighborDatabase::NeighborEntry &_entry;
 				const std::set<dtn::core::Node> &_neighbors;
+				const dtn::net::ConnectionManager::protocol_list &_plist;
+				const dtn::core::FilterContext &_context;
 			};
 
 			// list for bundles
@@ -255,8 +282,17 @@ namespace dtn
 									neighbors.clear();
 								}
 
+								// get a list of protocols supported by both, the local BPA and the remote peer
+								const dtn::net::ConnectionManager::protocol_list plist =
+										dtn::core::BundleCore::getInstance().getConnectionManager().getSupportedProtocols(entry.eid);
+
+								// create a filter context
+								dtn::core::FilterContext context;
+								context.setPeer(entry.eid);
+								context.setRouting(*this);
+
 								// get the bundle filter of the neighbor
-								const BundleFilter filter(entry, neighbors);
+								const BundleFilter filter(entry, neighbors, context, plist);
 
 								// some debug output
 								IBRCOMMON_LOGGER_DEBUG_TAG(EpidemicRoutingExtension::TAG, 40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
@@ -274,7 +310,7 @@ namespace dtn
 							{
 								try {
 									// transfer the bundle to the neighbor
-									transferTo(task.eid, (*iter).first);
+									transferTo(task.eid, (*iter).first, (*iter).second);
 								} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 							}
 						} catch (const NeighborDatabase::NoMoreTransfersAvailable &ex) {

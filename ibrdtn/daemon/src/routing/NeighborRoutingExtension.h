@@ -26,6 +26,7 @@
 #include "routing/RoutingExtension.h"
 #include "routing/NeighborDatabase.h"
 #include "core/Node.h"
+#include "net/ConnectionManager.h"
 
 #include <ibrdtn/data/MetaBundle.h>
 #include "ibrdtn/data/EID.h"
@@ -45,6 +46,8 @@ namespace dtn
 		public:
 			NeighborRoutingExtension();
 			virtual ~NeighborRoutingExtension();
+
+			virtual const std::string getTag() const throw ();
 
 			virtual void eventDataChanged(const dtn::data::EID &peer) throw ();
 
@@ -89,7 +92,7 @@ namespace dtn
 				const dtn::data::EID nexthop;
 			};
 
-			std::pair<bool, std::string> shouldRouteTo(const dtn::data::MetaBundle &meta, const NeighborDatabase::NeighborEntry &n) const;
+			std::pair<bool, dtn::core::Node::Protocol> shouldRouteTo(const dtn::data::MetaBundle &meta, const NeighborDatabase::NeighborEntry &n, const dtn::net::ConnectionManager::protocol_list &plist) const;
 
 			/**
 			 * hold queued tasks for later processing
