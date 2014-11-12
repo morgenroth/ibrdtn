@@ -40,7 +40,8 @@ namespace dtn
 				REASON_CONNECTION_DOWN = 1,
 				REASON_REFUSED = 2,
 				REASON_RETRY_LIMIT_REACHED = 3,
-				REASON_BUNDLE_DELETED = 4
+				REASON_BUNDLE_DELETED = 4,
+				REASON_REFUSED_BY_FILTER = 5
 			};
 
 			virtual ~TransferAbortedEvent();

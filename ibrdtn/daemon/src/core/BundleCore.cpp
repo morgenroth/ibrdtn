@@ -417,6 +417,12 @@ namespace dtn
 						throw dtn::data::Validator::RejectedException("timestamp is too far in the future");
 					}
 			}
+
+			// use validation filter for further evaluation
+			dtn::core::FilterContext context;
+			context.setMetaBundle(obj);
+			if (_validation_filter.evaluate(context) != BundleFilter::ACCEPT)
+				throw dtn::data::Validator::RejectedException("rejected by filter");
 		}
 
 		void BundleCore::validate(const dtn::data::PrimaryBlock &p) const throw (dtn::data::Validator::RejectedException)
@@ -469,9 +475,15 @@ namespace dtn
 			{
 				throw dtn::data::Validator::RejectedException("duplicate detected");
 			}
+
+			// use validation filter for further evaluation
+			dtn::core::FilterContext context;
+			context.setPrimaryBlock(p);
+			if (_validation_filter.evaluate(context) != BundleFilter::ACCEPT)
+				throw dtn::data::Validator::RejectedException("rejected by filter");
 		}
 
-		void BundleCore::validate(const dtn::data::Block&, const dtn::data::Number& size) const throw (dtn::data::Validator::RejectedException)
+		void BundleCore::validate(const dtn::data::Block& block, const dtn::data::Number& size) const throw (dtn::data::Validator::RejectedException)
 		{
 			// check for the size of the block
 			// reject a block if it exceeds the payload limit
@@ -480,9 +492,15 @@ namespace dtn
 				IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "bundle rejected: block size of " << size.toString() << " is too big" << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::data::Validator::RejectedException("block size is too big");
 			}
+
+			// use validation filter for further evaluation
+			dtn::core::FilterContext context;
+			context.setBlock(block, size);
+			if (_validation_filter.evaluate(context) != BundleFilter::ACCEPT)
+				throw dtn::data::Validator::RejectedException("rejected by filter");
 		}
 
-		void BundleCore::validate(const dtn::data::PrimaryBlock &bundle, const dtn::data::Block&, const dtn::data::Number& size) const throw (RejectedException)
+		void BundleCore::validate(const dtn::data::PrimaryBlock &bundle, const dtn::data::Block& block, const dtn::data::Number& size) const throw (RejectedException)
 		{
 			// check for the size of the foreign block
 			// reject a block if it exceeds the payload limit
@@ -507,6 +525,13 @@ namespace dtn
 					throw dtn::data::Validator::RejectedException("block size is too big");
 				}
 			}
+
+			// use validation filter for further evaluation
+			dtn::core::FilterContext context;
+			context.setPrimaryBlock(bundle);
+			context.setBlock(block, size);
+			if (_validation_filter.evaluate(context) != BundleFilter::ACCEPT)
+				throw dtn::data::Validator::RejectedException("rejected by filter");
 		}
 
 		void BundleCore::validate(const dtn::data::Bundle &b) const throw (dtn::data::Validator::RejectedException)
@@ -554,6 +579,46 @@ namespace dtn
 					}
 				} catch (const std::bad_cast&) { }
 			}
+
+			// use validation filter for further evaluation
+			dtn::core::FilterContext context;
+			context.setBundle(b);
+			if (_validation_filter.evaluate(context) != BundleFilter::ACCEPT)
+				throw dtn::data::Validator::RejectedException("rejected by filter");
+		}
+
+		BundleFilter::ACTION BundleCore::filter(BundleFilter::TABLE table, const FilterContext &context, dtn::data::Bundle &bundle) const
+		{
+			switch (table)
+			{
+				case BundleFilter::INPUT:
+					break;
+
+				case BundleFilter::OUTPUT:
+					break;
+
+				case BundleFilter::ROUTING:
+					break;
+			}
+
+			return BundleFilter::ACCEPT;
+		}
+
+		BundleFilter::ACTION BundleCore::evaluate(BundleFilter::TABLE table, const FilterContext &context) const
+		{
+			switch (table)
+			{
+				case BundleFilter::INPUT:
+					break;
+
+				case BundleFilter::OUTPUT:
+					break;
+
+				case BundleFilter::ROUTING:
+					break;
+			}
+
+			return BundleFilter::ACCEPT;
 		}
 
 		const std::string BundleCore::getName() const

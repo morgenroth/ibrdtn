@@ -30,6 +30,7 @@
 #include "storage/BundleStorage.h"
 #include "core/WallClock.h"
 #include "routing/BaseRouter.h"
+#include "core/BundleFilter.h"
 
 #include "net/ConnectionManager.h"
 #include "net/ConvergenceLayer.h"
@@ -134,6 +135,17 @@ namespace dtn
 			virtual void validate(const dtn::data::MetaBundle &obj) const throw (RejectedException);
 
 			/**
+			 * Pass a bundle with a context through the desired table. The bundle may be modified during
+			 * the processing.
+			 */
+			BundleFilter::ACTION filter(BundleFilter::TABLE table, const FilterContext &context, dtn::data::Bundle &bundle) const;
+
+			/**
+			 * Pass a context through the desired table
+			 */
+			BundleFilter::ACTION evaluate(BundleFilter::TABLE table, const FilterContext &context) const;
+
+			/**
 			 * Define a global block size limit. This is used in the validator to reject bundles while receiving.
 			 */
 			static dtn::data::Length blocksizelimit;
@@ -229,6 +241,8 @@ namespace dtn
 			 * The variable is true if we are connected via a global address.
 			 */
 			bool _globally_connected;
+
+			dtn::core::BundleFilter _validation_filter;
 		};
 	}
 }

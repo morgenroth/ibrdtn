@@ -75,8 +75,10 @@ namespace dtn
 
 			case REASON_BUNDLE_DELETED:
 				return "bundle has been deleted";
-			}
 
+			case REASON_REFUSED_BY_FILTER:
+				return "bundle has been rejected by filtering directives";
+			}
 			return "undefined";
 		}
 

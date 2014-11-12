@@ -29,8 +29,8 @@ namespace dtn
 {
 	namespace net
 	{
-		BundleTransfer::BundleTransfer(const dtn::data::EID &neighbor, const dtn::data::MetaBundle &bundle)
-		 : _slot(new Slot(neighbor, bundle))
+		BundleTransfer::BundleTransfer(const dtn::data::EID &neighbor, const dtn::data::MetaBundle &bundle, dtn::core::Node::Protocol p)
+		 : _slot(new Slot(neighbor, bundle, p))
 		{
 		}
 
@@ -38,8 +38,8 @@ namespace dtn
 		{
 		}
 
-		BundleTransfer::Slot::Slot(const dtn::data::EID &n, const dtn::data::MetaBundle &b)
-		 : neighbor(n), bundle(b), _completed(false), _aborted(false), _abort_reason(TransferAbortedEvent::REASON_UNDEFINED)
+		BundleTransfer::Slot::Slot(const dtn::data::EID &n, const dtn::data::MetaBundle &b, dtn::core::Node::Protocol p)
+		 : neighbor(n), bundle(b), protocol(p), _completed(false), _aborted(false), _abort_reason(TransferAbortedEvent::REASON_UNDEFINED)
 		{
 		}
 
@@ -52,7 +52,7 @@ namespace dtn
 				dtn::net::TransferCompletedEvent::raise(neighbor, bundle);
 				dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
 			} else {
-				dtn::routing::RequeueBundleEvent::raise(neighbor, bundle);
+				dtn::routing::RequeueBundleEvent::raise(neighbor, bundle, protocol);
 			}
 		}
 
@@ -64,6 +64,10 @@ namespace dtn
 		const dtn::data::MetaBundle& BundleTransfer::getBundle() const
 		{
 			return _slot->bundle;
+		}
+
+		dtn::core::Node::Protocol BundleTransfer::getProtocol() const{
+			return _slot->protocol;
 		}
 
 		void BundleTransfer::Slot::abort(const TransferAbortedEvent::AbortReason reason)
