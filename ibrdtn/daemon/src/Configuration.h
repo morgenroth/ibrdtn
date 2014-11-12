@@ -410,11 +410,6 @@ namespace dtn
 				std::set<ibrcommon::vinterface> getInternetDevices() const;
 
 				/**
-				 * @return True, if the connectivity state is managed externally
-				 */
-				bool hasManagedConnectivity() const;
-
-				/**
 				 * @return Number of milliseconds between two linkstate-requests (as netlink-fallback)
 				 */
 				size_t getLinkRequestInterval() const;

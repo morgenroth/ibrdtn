@@ -720,16 +720,9 @@ namespace dtn
 
 		void BundleCore::check_connection_state() throw ()
 		{
-			// do not execute checks if the connectivity is managed externally
-			if (dtn::daemon::Configuration::getInstance().getNetwork().hasManagedConnectivity()) return;
-
 			const std::set<ibrcommon::vinterface> &global_nets = dtn::daemon::Configuration::getInstance().getNetwork().getInternetDevices();
 
-			if (global_nets.empty()) {
-				// no configured internet devices
-				// assume we are connected globally
-				setGloballyConnected(true);
-			} else {
+			if (!global_nets.empty()) {
 				bool found = false;
 				for (std::set<ibrcommon::vinterface>::const_iterator iter = global_nets.begin(); iter != global_nets.end(); ++iter)
 				{

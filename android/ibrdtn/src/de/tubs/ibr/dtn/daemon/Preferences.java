@@ -909,18 +909,13 @@ public class Preferences extends PreferenceActivity {
 
 			p.println("net_interfaces = " + ifaces);
 
-			if (!"off".equals(preferences.getString(KEY_UPLINK_MODE, "wifi"))) {
-				// disable globally connected by default
-				p.println("net_managed = yes");
-				
-				// add static host
-				p.println("static1_address = " + __CLOUD_ADDRESS__);
-				p.println("static1_port = " + __CLOUD_PORT__);
-				p.println("static1_uri = " + __CLOUD_EID__);
-				p.println("static1_proto = " + __CLOUD_PROTOCOL__);
-				p.println("static1_immediately = yes");
-				p.println("static1_global = yes");
-			}
+			// add static host for cloud uplink
+			p.println("static1_address = " + __CLOUD_ADDRESS__);
+			p.println("static1_port = " + __CLOUD_PORT__);
+			p.println("static1_uri = " + __CLOUD_EID__);
+			p.println("static1_proto = " + __CLOUD_PROTOCOL__);
+			p.println("static1_immediately = yes");
+			p.println("static1_global = yes");
 
 			String storage_mode = preferences.getString(KEY_STORAGE_MODE, "disk-persistent");
 			if ("disk".equals(storage_mode) || "disk-persistent".equals(storage_mode)) {
