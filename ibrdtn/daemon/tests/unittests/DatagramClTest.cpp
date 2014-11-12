@@ -185,7 +185,7 @@ void DatagramClTest::queueTest() {
 	// are destroyed
 	{
 		// create a job
-		const dtn::net::BundleTransfer job(n.getEID(), id);
+		const dtn::net::BundleTransfer job(n.getEID(), id, dtn::core::Node::CONN_UNDEFINED);
 
 		// send fake discovery beacon
 		_fake_cl->queue(n, job);

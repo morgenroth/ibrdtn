@@ -111,7 +111,7 @@ void BaseRouterTest::testTransferTo()
 
 		void testTransfer(const dtn::data::EID &destination, const dtn::data::MetaBundle &meta)
 		{
-			transferTo(destination, meta);
+			transferTo(destination, meta, dtn::core::Node::CONN_UNDEFINED);
 		}
 	};
 
