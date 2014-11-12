@@ -592,10 +592,33 @@ namespace dtn
 			switch (table)
 			{
 				case BundleFilter::INPUT:
+				{
+#ifdef IBRDTN_SUPPORT_BSP
+					// lets see if signatures and hashes are correct and remove them if possible
+					dtn::security::SecurityManager::getInstance().verify(bundle);
+#endif
+
 					break;
+				}
 
 				case BundleFilter::OUTPUT:
+				{
+#ifdef IBRDTN_SUPPORT_BSP
+					// apply authentication according to the security level
+					const int seclevel = dtn::daemon::Configuration::getInstance().getSecurity().getLevel();
+
+					if (seclevel & dtn::daemon::Configuration::Security::SECURITY_LEVEL_AUTHENTICATED)
+					{
+						try {
+							dtn::security::SecurityManager::getInstance().auth(bundle);
+						} catch (const dtn::security::SecurityManager::KeyMissingException&) {
+							// sign requested, but no key is available
+							IBRCOMMON_LOGGER_TAG(TAG, warning) << "No key available for sign process." << IBRCOMMON_LOGGER_ENDL;
+						}
+					}
+#endif
 					break;
+				}
 
 				case BundleFilter::ROUTING:
 					break;

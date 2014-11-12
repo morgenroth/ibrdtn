@@ -68,8 +68,15 @@ namespace dtn
 						// deserialize the next bundle
 						deserializer >> b;
 
-						// raise default bundle received event
-						dtn::net::BundleReceivedEvent::raise(capsule.source, b, false);
+						// pass extracted bundle through the filter
+						FilterContext context;
+						context.setBundle(b);
+						context.setPeer(capsule.source.getNode());
+						if (BundleCore::getInstance().filter(BundleFilter::INPUT, context, b) == BundleFilter::ACCEPT)
+						{
+							// raise default bundle received event
+							dtn::net::BundleReceivedEvent::raise(capsule.source, b, false);
+						}
 					}
 				}
 				catch (const dtn::InvalidDataException &ex) {

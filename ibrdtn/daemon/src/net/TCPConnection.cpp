@@ -49,11 +49,6 @@
 #include <ibrcommon/ssl/TLSStream.h>
 #endif
 
-#include <ibrdtn/ibrdtn.h>
-#ifdef IBRDTN_SUPPORT_BSP
-#include "security/SecurityManager.h"
-#endif
-
 namespace dtn
 {
 	namespace net
@@ -696,19 +691,6 @@ namespace dtn
 								transfer.abort(dtn::net::TransferAbortedEvent::REASON_REFUSED_BY_FILTER);
 								continue;
 						}
-#ifdef IBRDTN_SUPPORT_BSP
-						const int seclevel = dtn::daemon::Configuration::getInstance().getSecurity().getLevel();
-
-						if (seclevel & dtn::daemon::Configuration::Security::SECURITY_LEVEL_AUTHENTICATED)
-						{
-							try {
-								dtn::security::SecurityManager::getInstance().auth(bundle);
-							} catch (const dtn::security::SecurityManager::KeyMissingException&) {
-								// sign requested, but no key is available
-								IBRCOMMON_LOGGER_TAG(TCPConnection::TAG, warning) << "No key available for sign process." << IBRCOMMON_LOGGER_ENDL;
-							}
-						}
-#endif
 
 						// send bundle
 						// get the offset, if this bundle has been reactively fragmented before

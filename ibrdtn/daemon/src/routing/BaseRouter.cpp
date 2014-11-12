@@ -28,7 +28,6 @@
 #include "storage/BundleStorage.h"
 #include "core/BundleEvent.h"
 
-#include <ibrdtn/data/AgeBlock.h>
 #include <ibrdtn/data/TrackingBlock.h>
 #include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <ibrdtn/utils/Clock.h>
@@ -298,11 +297,6 @@ namespace dtn
 				{
 					// security methods modifies the bundle, thus we need a copy of it
 					dtn::data::Bundle bundle = event.bundle;
-
-#ifdef IBRDTN_SUPPORT_BSP
-					// lets see if signatures and hashes are correct and remove them if possible
-					dtn::security::SecurityManager::getInstance().verify(bundle);
-#endif
 
 					// increment value in the scope control hop limit block
 					try {
