@@ -418,6 +418,7 @@ dnl -----------------------------------------------
 AC_CONFIG_FILES([Makefile \
 	src/Makefile \
 	src/core/Makefile \
+	src/core/filter/Makefile \
 	src/net/Makefile \
 	src/storage/Makefile \
 	src/routing/Makefile \
