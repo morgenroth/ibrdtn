@@ -20,7 +20,6 @@
  */
 
 #include "core/BundleFilter.h"
-#include <ibrcommon/thread/RWMutex.h>
 #include <list>
 
 #ifndef BUNDLEFILTERTABLE_H_
@@ -63,7 +62,6 @@ namespace dtn
 			virtual ACTION filter(const FilterContext &context, dtn::data::Bundle &bundle) const throw ();
 
 		private:
-			mutable ibrcommon::RWMutex _chain_mutex;
 			typedef std::list<BundleFilter*> chain;
 			chain _chain;
 		};

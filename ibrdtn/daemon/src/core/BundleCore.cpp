@@ -38,6 +38,8 @@
 #include <ibrdtn/data/EID.h>
 #include <ibrdtn/utils/Clock.h>
 #include <ibrcommon/Logger.h>
+#include <ibrcommon/thread/RWLock.h>
+#include <ibrcommon/thread/MutexLock.h>
 
 #include "core/filter/LogFilter.h"
 #include "core/filter/SecurityFilter.h"
@@ -204,62 +206,7 @@ namespace dtn
 			check_connection_state();
 
 			// reload all tables
-			_table_input.clear();
-			_table_output.clear();
-			_table_routing.clear();
-			_table_validation.clear();
-
-			/**
-			 * Add security checks according to the configured security level
-			 */
-			const dtn::daemon::Configuration::Security &secconf = dtn::daemon::Configuration::getInstance().getSecurity();
-
-			if (secconf.getLevel() & dtn::daemon::Configuration::Security::SECURITY_LEVEL_ENCRYPTED)
-			{
-				_table_validation.append(
-						(new SecurityFilter(SecurityFilter::VERIFY_CONFIDENTIALITY, BundleFilter::SKIP))->append(
-						(new LogFilter(ibrcommon::LogLevel::warning, "[bundle rejected] bundle is not encrypted"))->append(
-						(new RejectFilter())
-				)));
-			}
-
-			if (secconf.getLevel() & dtn::daemon::Configuration::Security::SECURITY_LEVEL_SIGNED)
-			{
-				_table_validation.append(
-						(new SecurityFilter(SecurityFilter::VERIFY_INTEGRITY, BundleFilter::SKIP))->append(
-						(new LogFilter(ibrcommon::LogLevel::warning, "[bundle rejected] bundle is not signed"))->append(
-						(new RejectFilter())
-				)));
-			}
-
-			if (secconf.getLevel() & dtn::daemon::Configuration::Security::SECURITY_LEVEL_AUTHENTICATED)
-			{
-				_table_validation.append(
-						(new SecurityFilter(SecurityFilter::VERIFY_AUTH, BundleFilter::SKIP))->append(
-						(new LogFilter(ibrcommon::LogLevel::warning, "[bundle rejected] bundle is not authenticated"))->append(
-						(new RejectFilter())
-				)));
-
-				_table_output.append(
-						(new SecurityFilter(SecurityFilter::APPLY_AUTH, BundleFilter::SKIP))->append(
-						(new LogFilter(ibrcommon::LogLevel::warning, "No key available for sign process."))
-					));
-			}
-
-			/**
-			 * verify integrity and authentication of incoming bundles
-			 */
-			_table_input.append(
-					(new SecurityFilter(SecurityFilter::VERIFY_AUTH, BundleFilter::SKIP))->append(
-					(new LogFilter(ibrcommon::LogLevel::warning, "[bundle rejected] authentication failed"))->append(
-					(new RejectFilter())
-			)));
-
-			_table_input.append(
-					(new SecurityFilter(SecurityFilter::VERIFY_INTEGRITY, BundleFilter::SKIP))->append(
-					(new LogFilter(ibrcommon::LogLevel::warning, "[bundle rejected] integrity invalid"))->append(
-					(new RejectFilter())
-			)));
+			reload_filter_tables();
 		}
 
 		void BundleCore::setStorage(dtn::storage::BundleStorage *storage)
@@ -482,6 +429,8 @@ namespace dtn
 			// use validation filter for further evaluation
 			dtn::core::FilterContext context;
 			context.setMetaBundle(obj);
+
+			ibrcommon::MutexLock l(_filter_mutex);
 			if (_table_validation.evaluate(context) != BundleFilter::ACCEPT)
 				throw dtn::data::Validator::RejectedException("rejected by filter");
 		}
@@ -540,6 +489,8 @@ namespace dtn
 			// use validation filter for further evaluation
 			dtn::core::FilterContext context;
 			context.setPrimaryBlock(p);
+
+			ibrcommon::MutexLock l(_filter_mutex);
 			if (_table_validation.evaluate(context) != BundleFilter::ACCEPT)
 				throw dtn::data::Validator::RejectedException("rejected by filter");
 		}
@@ -557,6 +508,8 @@ namespace dtn
 			// use validation filter for further evaluation
 			dtn::core::FilterContext context;
 			context.setBlock(block, size);
+
+			ibrcommon::MutexLock l(_filter_mutex);
 			if (_table_validation.evaluate(context) != BundleFilter::ACCEPT)
 				throw dtn::data::Validator::RejectedException("rejected by filter");
 		}
@@ -591,6 +544,8 @@ namespace dtn
 			dtn::core::FilterContext context;
 			context.setPrimaryBlock(bundle);
 			context.setBlock(block, size);
+
+			ibrcommon::MutexLock l(_filter_mutex);
 			if (_table_validation.evaluate(context) != BundleFilter::ACCEPT)
 				throw dtn::data::Validator::RejectedException("rejected by filter");
 		}
@@ -634,12 +589,16 @@ namespace dtn
 			// use validation filter for further evaluation
 			dtn::core::FilterContext context;
 			context.setBundle(b);
+
+			ibrcommon::MutexLock l(_filter_mutex);
 			if (_table_validation.evaluate(context) != BundleFilter::ACCEPT)
 				throw dtn::data::Validator::RejectedException("rejected by filter");
 		}
 
 		BundleFilter::ACTION BundleCore::filter(BundleFilter::TABLE table, const FilterContext &context, dtn::data::Bundle &bundle) const
 		{
+			ibrcommon::MutexLock l(_filter_mutex);
+
 			switch (table)
 			{
 				case BundleFilter::INPUT:
@@ -657,6 +616,8 @@ namespace dtn
 
 		BundleFilter::ACTION BundleCore::evaluate(BundleFilter::TABLE table, const FilterContext &context) const
 		{
+			ibrcommon::MutexLock l(_filter_mutex);
+
 			switch (table)
 			{
 				case BundleFilter::INPUT:
@@ -849,6 +810,68 @@ namespace dtn
 				}
 				setGloballyConnected(found);
 			}
+		}
+
+		void BundleCore::reload_filter_tables() throw ()
+		{
+			ibrcommon::RWLock l(_filter_mutex);
+
+			_table_input.clear();
+			_table_output.clear();
+			_table_routing.clear();
+			_table_validation.clear();
+
+			/**
+			 * Add security checks according to the configured security level
+			 */
+			const dtn::daemon::Configuration::Security &secconf = dtn::daemon::Configuration::getInstance().getSecurity();
+
+			if (secconf.getLevel() & dtn::daemon::Configuration::Security::SECURITY_LEVEL_ENCRYPTED)
+			{
+				_table_validation.append(
+						(new SecurityFilter(SecurityFilter::VERIFY_CONFIDENTIALITY, BundleFilter::SKIP))->append(
+						(new LogFilter(ibrcommon::LogLevel::warning, "[bundle rejected] bundle is not encrypted"))->append(
+						(new RejectFilter())
+				)));
+			}
+
+			if (secconf.getLevel() & dtn::daemon::Configuration::Security::SECURITY_LEVEL_SIGNED)
+			{
+				_table_validation.append(
+						(new SecurityFilter(SecurityFilter::VERIFY_INTEGRITY, BundleFilter::SKIP))->append(
+						(new LogFilter(ibrcommon::LogLevel::warning, "[bundle rejected] bundle is not signed"))->append(
+						(new RejectFilter())
+				)));
+			}
+
+			if (secconf.getLevel() & dtn::daemon::Configuration::Security::SECURITY_LEVEL_AUTHENTICATED)
+			{
+				_table_validation.append(
+						(new SecurityFilter(SecurityFilter::VERIFY_AUTH, BundleFilter::SKIP))->append(
+						(new LogFilter(ibrcommon::LogLevel::warning, "[bundle rejected] bundle is not authenticated"))->append(
+						(new RejectFilter())
+				)));
+
+				_table_output.append(
+						(new SecurityFilter(SecurityFilter::APPLY_AUTH, BundleFilter::SKIP))->append(
+						(new LogFilter(ibrcommon::LogLevel::warning, "No key available for sign process."))
+					));
+			}
+
+			/**
+			 * verify integrity and authentication of incoming bundles
+			 */
+			_table_input.append(
+					(new SecurityFilter(SecurityFilter::VERIFY_AUTH, BundleFilter::SKIP))->append(
+					(new LogFilter(ibrcommon::LogLevel::warning, "[bundle rejected] authentication failed"))->append(
+					(new RejectFilter())
+			)));
+
+			_table_input.append(
+					(new SecurityFilter(SecurityFilter::VERIFY_INTEGRITY, BundleFilter::SKIP))->append(
+					(new LogFilter(ibrcommon::LogLevel::warning, "[bundle rejected] integrity invalid"))->append(
+					(new RejectFilter())
+			)));
 		}
 	}
 }

@@ -44,6 +44,7 @@
 #include <ibrdtn/data/Serializer.h>
 #include <ibrdtn/data/EID.h>
 
+#include <ibrcommon/thread/RWMutex.h>
 #include <ibrcommon/link/LinkManager.h>
 
 #include <vector>
@@ -214,6 +215,11 @@ namespace dtn
 			void check_connection_state() throw ();
 
 			/**
+			 * reload filtering tables
+			 */
+			void reload_filter_tables() throw ();
+
+			/**
 			 * Forbidden copy constructor
 			 */
 			BundleCore operator=(const BundleCore &k)
@@ -247,6 +253,8 @@ namespace dtn
 			BundleFilterTable _table_input;
 			BundleFilterTable _table_output;
 			BundleFilterTable _table_routing;
+
+			mutable ibrcommon::RWMutex _filter_mutex;
 		};
 	}
 }

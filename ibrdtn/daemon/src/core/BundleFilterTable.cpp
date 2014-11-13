@@ -20,8 +20,6 @@
  */
 
 #include "core/BundleFilterTable.h"
-#include <ibrcommon/thread/RWLock.h>
-#include <ibrcommon/thread/MutexLock.h>
 
 namespace dtn
 {
@@ -33,7 +31,6 @@ namespace dtn
 
 		BundleFilterTable::~BundleFilterTable()
 		{
-			ibrcommon::RWLock l(_chain_mutex);
 			// clean-up filter in chain
 			for (chain::const_iterator it = _chain.begin(); it != _chain.end(); ++it)
 			{
@@ -43,13 +40,11 @@ namespace dtn
 
 		void BundleFilterTable::append(BundleFilter *filter)
 		{
-			ibrcommon::RWLock l(_chain_mutex);
 			_chain.push_back(filter);
 		}
 
 		void BundleFilterTable::insert(unsigned int position, BundleFilter *filter)
 		{
-			ibrcommon::RWLock l(_chain_mutex);
 			chain::iterator it = _chain.begin();
 
 			// move iterator to the right position
@@ -61,7 +56,6 @@ namespace dtn
 
 		void BundleFilterTable::clear()
 		{
-			ibrcommon::RWLock l(_chain_mutex);
 			// clean-up filter in chain
 			for (chain::const_iterator it = _chain.begin(); it != _chain.end(); ++it)
 			{
@@ -72,7 +66,6 @@ namespace dtn
 
 		BundleFilter::ACTION BundleFilterTable::evaluate(const FilterContext &context) const throw ()
 		{
-			ibrcommon::MutexLock l(_chain_mutex);
 			for (chain::const_iterator it = _chain.begin(); it != _chain.end(); ++it)
 			{
 				const BundleFilter &f = (**it);
@@ -84,7 +77,6 @@ namespace dtn
 
 		BundleFilter::ACTION BundleFilterTable::filter(const FilterContext &context, dtn::data::Bundle &bundle) const throw ()
 		{
-			ibrcommon::MutexLock l(_chain_mutex);
 			for (chain::const_iterator it = _chain.begin(); it != _chain.end(); ++it)
 			{
 				const BundleFilter &f = (**it);
