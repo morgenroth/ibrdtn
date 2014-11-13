@@ -39,6 +39,9 @@
 #include <ibrdtn/utils/Clock.h>
 #include <ibrcommon/Logger.h>
 
+#include "core/filter/LogFilter.h"
+#include "core/filter/SecurityFilter.h"
+
 #include "limits.h"
 #include <iostream>
 #include <typeinfo>
@@ -199,6 +202,64 @@ namespace dtn
 
 			// check connection state
 			check_connection_state();
+
+			// reload all tables
+			_table_input.clear();
+			_table_output.clear();
+			_table_routing.clear();
+			_table_validation.clear();
+
+			/**
+			 * Add security checks according to the configured security level
+			 */
+			const dtn::daemon::Configuration::Security &secconf = dtn::daemon::Configuration::getInstance().getSecurity();
+
+			if (secconf.getLevel() & dtn::daemon::Configuration::Security::SECURITY_LEVEL_ENCRYPTED)
+			{
+				_table_validation.append(
+						(new SecurityFilter(SecurityFilter::VERIFY_CONFIDENTIALITY, BundleFilter::SKIP))->append(
+						(new LogFilter(ibrcommon::LogLevel::warning, "[bundle rejected] bundle is not encrypted"))->append(
+						(new RejectFilter())
+				)));
+			}
+
+			if (secconf.getLevel() & dtn::daemon::Configuration::Security::SECURITY_LEVEL_SIGNED)
+			{
+				_table_validation.append(
+						(new SecurityFilter(SecurityFilter::VERIFY_INTEGRITY, BundleFilter::SKIP))->append(
+						(new LogFilter(ibrcommon::LogLevel::warning, "[bundle rejected] bundle is not signed"))->append(
+						(new RejectFilter())
+				)));
+			}
+
+			if (secconf.getLevel() & dtn::daemon::Configuration::Security::SECURITY_LEVEL_AUTHENTICATED)
+			{
+				_table_validation.append(
+						(new SecurityFilter(SecurityFilter::VERIFY_AUTH, BundleFilter::SKIP))->append(
+						(new LogFilter(ibrcommon::LogLevel::warning, "[bundle rejected] bundle is not authenticated"))->append(
+						(new RejectFilter())
+				)));
+
+				_table_output.append(
+						(new SecurityFilter(SecurityFilter::APPLY_AUTH, BundleFilter::SKIP))->append(
+						(new LogFilter(ibrcommon::LogLevel::warning, "No key available for sign process."))
+					));
+			}
+
+			/**
+			 * verify integrity and authentication of incoming bundles
+			 */
+			_table_input.append(
+					(new SecurityFilter(SecurityFilter::VERIFY_AUTH, BundleFilter::SKIP))->append(
+					(new LogFilter(ibrcommon::LogLevel::warning, "[bundle rejected] authentication failed"))->append(
+					(new RejectFilter())
+			)));
+
+			_table_input.append(
+					(new SecurityFilter(SecurityFilter::VERIFY_INTEGRITY, BundleFilter::SKIP))->append(
+					(new LogFilter(ibrcommon::LogLevel::warning, "[bundle rejected] integrity invalid"))->append(
+					(new RejectFilter())
+			)));
 		}
 
 		void BundleCore::setStorage(dtn::storage::BundleStorage *storage)
@@ -550,16 +611,6 @@ namespace dtn
 				throw dtn::data::Validator::RejectedException("bundle is expired");
 			}
 
-#ifdef IBRDTN_SUPPORT_BSP
-			// do a fast security check
-			try {
-				dtn::security::SecurityManager::getInstance().fastverify(b);
-			} catch (const dtn::security::VerificationFailedException &ex) {
-				IBRCOMMON_LOGGER_DEBUG_TAG("BundleCore", 5) << "[bundle rejected] security checks failed, reason: " << ex.what() << ", bundle: " << b.toString() << IBRCOMMON_LOGGER_ENDL;
-				throw dtn::data::Validator::RejectedException("security checks failed");
-			}
-#endif
-
 			// check for invalid blocks
 			for (dtn::data::Bundle::const_iterator iter = b.begin(); iter != b.end(); ++iter)
 			{
@@ -592,33 +643,10 @@ namespace dtn
 			switch (table)
 			{
 				case BundleFilter::INPUT:
-				{
-#ifdef IBRDTN_SUPPORT_BSP
-					// lets see if signatures and hashes are correct and remove them if possible
-					dtn::security::SecurityManager::getInstance().verify(bundle);
-#endif
-
 					return _table_input.filter(context, bundle);
-				}
 
 				case BundleFilter::OUTPUT:
-				{
-#ifdef IBRDTN_SUPPORT_BSP
-					// apply authentication according to the security level
-					const int seclevel = dtn::daemon::Configuration::getInstance().getSecurity().getLevel();
-
-					if (seclevel & dtn::daemon::Configuration::Security::SECURITY_LEVEL_AUTHENTICATED)
-					{
-						try {
-							dtn::security::SecurityManager::getInstance().auth(bundle);
-						} catch (const dtn::security::SecurityManager::KeyMissingException&) {
-							// sign requested, but no key is available
-							IBRCOMMON_LOGGER_TAG(TAG, warning) << "No key available for sign process." << IBRCOMMON_LOGGER_ENDL;
-						}
-					}
-#endif
 					return _table_output.filter(context, bundle);
-				}
 
 				case BundleFilter::ROUTING:
 					return _table_routing.filter(context, bundle);

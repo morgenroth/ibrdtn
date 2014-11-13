@@ -2,7 +2,9 @@
 
 filter_SOURCES = \
 	LogFilter.cpp \
-	LogFilter.h
+	LogFilter.h \
+	SecurityFilter.cpp \
+	SecurityFilter.h
 
 AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS)
 AM_LDFLAGS = $(ibrdtn_LIBS)

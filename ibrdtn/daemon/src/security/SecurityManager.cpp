@@ -23,7 +23,10 @@
 #include "security/SecurityKeyManager.h"
 #include "core/BundleCore.h"
 #include "routing/QueueBundleEvent.h"
+#include <ibrdtn/security/BundleAuthenticationBlock.h>
 #include <ibrdtn/security/PayloadIntegrityBlock.h>
+#include <ibrdtn/security/PayloadConfidentialBlock.h>
+#include <ibrdtn/security/ExtensionSecurityBlock.h>
 #include <ibrcommon/Logger.h>
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
@@ -79,13 +82,7 @@ namespace dtn
 			}
 		}
 
-		void SecurityManager::verify(dtn::data::Bundle &bundle) const throw (VerificationFailedException)
-		{
-			verifyBAB(bundle);
-			verifyPIB(bundle);
-		}
-
-		void SecurityManager::verifyPIB(dtn::data::Bundle &bundle) const throw (VerificationFailedException)
+		void SecurityManager::verifyIntegrity(dtn::data::Bundle &bundle) const throw (VerificationFailedException)
 		{
 			IBRCOMMON_LOGGER_DEBUG_TAG("SecurityManager", 10) << "verify signed bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
@@ -134,7 +131,7 @@ namespace dtn
 			}
 		}
 
-		void SecurityManager::verifyBAB(dtn::data::Bundle &bundle) const throw (VerificationFailedException)
+		void SecurityManager::verifyAuthentication(dtn::data::Bundle &bundle) const throw (VerificationFailedException)
 		{
 			IBRCOMMON_LOGGER_DEBUG_TAG("SecurityManager", 10) << "verify authenticated bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
@@ -165,42 +162,6 @@ namespace dtn
 				} catch (const SecurityKey::KeyNotFoundException&) {
 					// no key for this node found
 				}
-			}
-		}
-
-		void SecurityManager::fastverify(const dtn::data::Bundle &bundle) const throw (VerificationFailedException)
-		{
-			// do a fast verify without manipulating the bundle
-			const dtn::daemon::Configuration::Security &secconf = dtn::daemon::Configuration::getInstance().getSecurity();
-
-			if (secconf.getLevel() & dtn::daemon::Configuration::Security::SECURITY_LEVEL_ENCRYPTED)
-			{
-				// check if the bundle is encrypted and throw an exception if not
-				//throw VerificationFailedException("Bundle is not encrypted");
-				IBRCOMMON_LOGGER_DEBUG_TAG("SecurityManager", 10) << "encryption required, verify bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
-
-				if (std::count(bundle.begin(), bundle.end(), dtn::security::PayloadConfidentialBlock::BLOCK_TYPE) == 0)
-					throw VerificationFailedException("No PCB available!");
-			}
-
-			if (secconf.getLevel() & dtn::daemon::Configuration::Security::SECURITY_LEVEL_SIGNED)
-			{
-				// check if the bundle is signed and throw an exception if not
-				//throw VerificationFailedException("Bundle is not signed");
-				IBRCOMMON_LOGGER_DEBUG_TAG("SecurityManager", 10) << "signature required, verify bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
-
-				if (std::count(bundle.begin(), bundle.end(), dtn::security::PayloadIntegrityBlock::BLOCK_TYPE) == 0)
-					throw VerificationFailedException("No PIB available!");
-			}
-
-			if (secconf.getLevel() & dtn::daemon::Configuration::Security::SECURITY_LEVEL_AUTHENTICATED)
-			{
-				// check if the bundle is signed and throw an exception if not
-				//throw VerificationFailedException("Bundle is not signed");
-				IBRCOMMON_LOGGER_DEBUG_TAG("SecurityManager", 10) << "authentication required, verify bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
-
-				if (std::count(bundle.begin(), bundle.end(), dtn::security::BundleAuthenticationBlock::BLOCK_TYPE) == 0)
-					throw VerificationFailedException("No BAB available!");
 			}
 		}
 
