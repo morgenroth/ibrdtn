@@ -826,36 +826,36 @@ namespace dtn
 			 */
 			const dtn::daemon::Configuration::Security &secconf = dtn::daemon::Configuration::getInstance().getSecurity();
 
-			if (secconf.getLevel() & dtn::daemon::Configuration::Security::SECURITY_LEVEL_ENCRYPTED)
+			if (secconf.getLevel() & dtn::daemon::Configuration::Security::SECURITY_LEVEL_AUTHENTICATED)
 			{
 				_table_validation.append(
-						(new SecurityFilter(SecurityFilter::VERIFY_CONFIDENTIALITY, BundleFilter::SKIP))->append(
-						(new LogFilter(ibrcommon::LogLevel::warning, "[bundle rejected] bundle is not encrypted"))->append(
+						(new SecurityFilter(SecurityFilter::VERIFY_AUTH, BundleFilter::SKIP))->append(
+						(new LogFilter(ibrcommon::LogLevel::warning, "bundle rejected due to missing authentication"))->append(
 						(new RejectFilter())
 				)));
+
+				_table_output.append(
+						(new SecurityFilter(SecurityFilter::APPLY_AUTH, BundleFilter::SKIP))->append(
+						(new LogFilter(ibrcommon::LogLevel::warning, "can not apply authentication due to missing key"))
+					));
 			}
 
 			if (secconf.getLevel() & dtn::daemon::Configuration::Security::SECURITY_LEVEL_SIGNED)
 			{
 				_table_validation.append(
 						(new SecurityFilter(SecurityFilter::VERIFY_INTEGRITY, BundleFilter::SKIP))->append(
-						(new LogFilter(ibrcommon::LogLevel::warning, "[bundle rejected] bundle is not signed"))->append(
+						(new LogFilter(ibrcommon::LogLevel::warning, "bundle rejected due to missing signature"))->append(
 						(new RejectFilter())
 				)));
 			}
 
-			if (secconf.getLevel() & dtn::daemon::Configuration::Security::SECURITY_LEVEL_AUTHENTICATED)
+			if (secconf.getLevel() & dtn::daemon::Configuration::Security::SECURITY_LEVEL_ENCRYPTED)
 			{
 				_table_validation.append(
-						(new SecurityFilter(SecurityFilter::VERIFY_AUTH, BundleFilter::SKIP))->append(
-						(new LogFilter(ibrcommon::LogLevel::warning, "[bundle rejected] bundle is not authenticated"))->append(
+						(new SecurityFilter(SecurityFilter::VERIFY_CONFIDENTIALITY, BundleFilter::SKIP))->append(
+						(new LogFilter(ibrcommon::LogLevel::warning, "bundle rejected due to missing encryption"))->append(
 						(new RejectFilter())
 				)));
-
-				_table_output.append(
-						(new SecurityFilter(SecurityFilter::APPLY_AUTH, BundleFilter::SKIP))->append(
-						(new LogFilter(ibrcommon::LogLevel::warning, "No key available for sign process."))
-					));
 			}
 
 			/**
@@ -863,13 +863,13 @@ namespace dtn
 			 */
 			_table_input.append(
 					(new SecurityFilter(SecurityFilter::VERIFY_AUTH, BundleFilter::SKIP))->append(
-					(new LogFilter(ibrcommon::LogLevel::warning, "[bundle rejected] authentication failed"))->append(
+					(new LogFilter(ibrcommon::LogLevel::warning, "bundle rejected due to invalid authentication"))->append(
 					(new RejectFilter())
 			)));
 
 			_table_input.append(
 					(new SecurityFilter(SecurityFilter::VERIFY_INTEGRITY, BundleFilter::SKIP))->append(
-					(new LogFilter(ibrcommon::LogLevel::warning, "[bundle rejected] integrity invalid"))->append(
+					(new LogFilter(ibrcommon::LogLevel::warning, "bundle rejected due to invalid signature"))->append(
 					(new RejectFilter())
 			)));
 		}

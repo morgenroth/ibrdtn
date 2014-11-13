@@ -47,6 +47,9 @@ namespace dtn
 #ifdef IBRDTN_SUPPORT_BSP
 			switch (_mode)
 			{
+				default:
+					break;
+
 				case VERIFY_AUTH:
 				{
 					try {
@@ -54,7 +57,7 @@ namespace dtn
 						const dtn::data::Bundle &bundle = context.getBundle();
 
 						// check if at least one BAB is present
-						if (std::count(bundle.begin(), bundle.end(), dtn::security::BundleAuthenticationBlock::BLOCK_TYPE) == 0)
+						if (std::count(bundle.begin(), bundle.end(), dtn::security::BundleAuthenticationBlock::BLOCK_TYPE) > 0)
 						{
 							if (_positive_action != BundleFilter::PASS) return _positive_action;
 						}
@@ -76,7 +79,7 @@ namespace dtn
 						const dtn::data::Bundle &bundle = context.getBundle();
 
 						// check if at least one PIB is present
-						if (std::count(bundle.begin(), bundle.end(), dtn::security::PayloadIntegrityBlock::BLOCK_TYPE) == 0)
+						if (std::count(bundle.begin(), bundle.end(), dtn::security::PayloadIntegrityBlock::BLOCK_TYPE) > 0)
 						{
 							if (_positive_action != BundleFilter::PASS) return _positive_action;
 						}
@@ -98,7 +101,7 @@ namespace dtn
 						const dtn::data::Bundle &bundle = context.getBundle();
 
 						// check if at least one PCB is present
-						if (std::count(bundle.begin(), bundle.end(), dtn::security::PayloadConfidentialBlock::BLOCK_TYPE) == 0)
+						if (std::count(bundle.begin(), bundle.end(), dtn::security::PayloadConfidentialBlock::BLOCK_TYPE) > 0)
 						{
 							if (_positive_action != BundleFilter::PASS) return _positive_action;
 						}
@@ -124,6 +127,9 @@ namespace dtn
 #ifdef IBRDTN_SUPPORT_BSP
 			switch (_mode)
 			{
+				default:
+					break;
+
 				case VERIFY_AUTH:
 				{
 					try {
