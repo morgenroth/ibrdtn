@@ -685,8 +685,8 @@ namespace dtn
 
 					dtn::core::FragmentManager::split(bundle, maxPayloadLength, fragments);
 
-					//for each fragment raise bundle received event
-					for(std::list<dtn::data::Bundle>::iterator it = fragments.begin(); it != fragments.end(); ++it)
+					// for each fragment raise bundle received event
+					for (std::list<dtn::data::Bundle>::iterator it = fragments.begin(); it != fragments.end(); ++it)
 					{
 						// raise default bundle received event
 						dtn::net::BundleReceivedEvent::raise(source, *it, true);

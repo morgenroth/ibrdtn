@@ -17,7 +17,7 @@ How to compile IBR-DTN for Android?
       Build it with "make all"
       Add androgenizer executable to your PATH variable
 
-   4. Install git and swig from your package manager: apt-get install git swig
+   4. Install git, swig, flex, and bison from your package manager: apt-get install git swig flex bison
 
    5. Run build.sh
 
