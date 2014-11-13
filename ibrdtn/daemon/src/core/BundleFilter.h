@@ -85,7 +85,8 @@ namespace dtn
 			enum ACTION {
 				ACCEPT,
 				REJECT,
-				DROP
+				DROP,
+				PASS
 			};
 
 			enum TABLE {
@@ -100,13 +101,45 @@ namespace dtn
 			/**
 			 * Evaluates a context and results in ACCEPT, REJECT, or DROP directive
 			 */
-			virtual ACTION evaluate(const FilterContext &context) const throw ();
+			virtual ACTION evaluate(const FilterContext &context) const throw () = 0;
 
 			/**
 			 * Filters a bundle with a context. The bundle may be modified during
 			 * the processing.
 			 */
-			virtual ACTION filter(const FilterContext &context, dtn::data::Bundle &bundle) const throw ();
+			virtual ACTION filter(const FilterContext &context, dtn::data::Bundle &bundle) const throw () = 0;
+
+			/**
+			 * append a bundle filter at the end of the chain
+			 */
+			void append(BundleFilter *filter);
+
+		private:
+			BundleFilter *_next;
+		};
+
+		class AcceptFilter : public BundleFilter
+		{
+		public:
+			virtual ~AcceptFilter() {};
+			virtual ACTION evaluate(const FilterContext&) const throw () { return ACCEPT; };
+			virtual ACTION filter(const FilterContext&, dtn::data::Bundle&) const throw () { return ACCEPT; };
+		};
+
+		class DropFilter : public BundleFilter
+		{
+		public:
+			virtual ~DropFilter() {};
+			virtual ACTION evaluate(const FilterContext&) const throw () { return DROP; };
+			virtual ACTION filter(const FilterContext&, dtn::data::Bundle&) const throw () { return DROP; };
+		};
+
+		class RejectFilter : public BundleFilter
+		{
+		public:
+			virtual ~RejectFilter() {};
+			virtual ACTION evaluate(const FilterContext&) const throw () { return REJECT; };
+			virtual ACTION filter(const FilterContext&, dtn::data::Bundle&) const throw () { return REJECT; };
 		};
 	} /* namespace core */
 } /* namespace dtn */

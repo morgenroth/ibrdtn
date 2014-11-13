@@ -40,7 +40,9 @@ core_SOURCES = \
 	TimeAdjustmentEvent.cpp \
 	EventDispatcher.h \
 	BundleFilter.h \
-	BundleFilter.cpp
+	BundleFilter.cpp \
+	BundleFilterTable.h \
+	BundleFilterTable.cpp
 
 if ANDROID
 noinst_DATA = Android.mk

@@ -123,23 +123,22 @@ namespace dtn
 		}
 
 		BundleFilter::BundleFilter()
+		 : _next(NULL)
 		{
 		}
 
 		BundleFilter::~BundleFilter()
 		{
+			if (_next != NULL) delete _next;
 		}
 
-		BundleFilter::ACTION BundleFilter::evaluate(const FilterContext &context) const throw ()
+		void BundleFilter::append(BundleFilter *filter)
 		{
-			// default action - accept all traffic
-			return BundleFilter::ACCEPT;
-		}
-
-		BundleFilter::ACTION BundleFilter::filter(const FilterContext &context, dtn::data::Bundle &bundle) const throw ()
-		{
-			// default action - accept all traffic
-			return BundleFilter::ACCEPT;
+			if (_next != NULL) {
+				_next->append(filter);
+				return;
+			}
+			_next = filter;
 		}
 	} /* namespace core */
 } /* namespace dtn */

@@ -49,6 +49,7 @@
 #include <vector>
 #include <set>
 #include <map>
+#include "BundleFilterTable.h"
 
 using namespace dtn::data;
 
@@ -242,7 +243,10 @@ namespace dtn
 			 */
 			bool _globally_connected;
 
-			dtn::core::BundleFilter _validation_filter;
+			BundleFilterTable _table_validation;
+			BundleFilterTable _table_input;
+			BundleFilterTable _table_output;
+			BundleFilterTable _table_routing;
 		};
 	}
 }

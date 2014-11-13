@@ -421,7 +421,7 @@ namespace dtn
 			// use validation filter for further evaluation
 			dtn::core::FilterContext context;
 			context.setMetaBundle(obj);
-			if (_validation_filter.evaluate(context) != BundleFilter::ACCEPT)
+			if (_table_validation.evaluate(context) != BundleFilter::ACCEPT)
 				throw dtn::data::Validator::RejectedException("rejected by filter");
 		}
 
@@ -479,7 +479,7 @@ namespace dtn
 			// use validation filter for further evaluation
 			dtn::core::FilterContext context;
 			context.setPrimaryBlock(p);
-			if (_validation_filter.evaluate(context) != BundleFilter::ACCEPT)
+			if (_table_validation.evaluate(context) != BundleFilter::ACCEPT)
 				throw dtn::data::Validator::RejectedException("rejected by filter");
 		}
 
@@ -496,7 +496,7 @@ namespace dtn
 			// use validation filter for further evaluation
 			dtn::core::FilterContext context;
 			context.setBlock(block, size);
-			if (_validation_filter.evaluate(context) != BundleFilter::ACCEPT)
+			if (_table_validation.evaluate(context) != BundleFilter::ACCEPT)
 				throw dtn::data::Validator::RejectedException("rejected by filter");
 		}
 
@@ -530,7 +530,7 @@ namespace dtn
 			dtn::core::FilterContext context;
 			context.setPrimaryBlock(bundle);
 			context.setBlock(block, size);
-			if (_validation_filter.evaluate(context) != BundleFilter::ACCEPT)
+			if (_table_validation.evaluate(context) != BundleFilter::ACCEPT)
 				throw dtn::data::Validator::RejectedException("rejected by filter");
 		}
 
@@ -583,7 +583,7 @@ namespace dtn
 			// use validation filter for further evaluation
 			dtn::core::FilterContext context;
 			context.setBundle(b);
-			if (_validation_filter.evaluate(context) != BundleFilter::ACCEPT)
+			if (_table_validation.evaluate(context) != BundleFilter::ACCEPT)
 				throw dtn::data::Validator::RejectedException("rejected by filter");
 		}
 
@@ -598,7 +598,7 @@ namespace dtn
 					dtn::security::SecurityManager::getInstance().verify(bundle);
 #endif
 
-					break;
+					return _table_input.filter(context, bundle);
 				}
 
 				case BundleFilter::OUTPUT:
@@ -617,11 +617,11 @@ namespace dtn
 						}
 					}
 #endif
-					break;
+					return _table_output.filter(context, bundle);
 				}
 
 				case BundleFilter::ROUTING:
-					break;
+					return _table_routing.filter(context, bundle);
 			}
 
 			return BundleFilter::ACCEPT;
@@ -632,13 +632,13 @@ namespace dtn
 			switch (table)
 			{
 				case BundleFilter::INPUT:
-					break;
+					return _table_input.evaluate(context);
 
 				case BundleFilter::OUTPUT:
-					break;
+					return _table_output.evaluate(context);
 
 				case BundleFilter::ROUTING:
-					break;
+					return _table_routing.evaluate(context);
 			}
 
 			return BundleFilter::ACCEPT;
