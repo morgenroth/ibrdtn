@@ -88,7 +88,8 @@ namespace dtn
 				ACCEPT,
 				REJECT,
 				DROP,
-				PASS
+				PASS,
+				SKIP
 			};
 
 			enum TABLE {

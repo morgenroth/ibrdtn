@@ -77,7 +77,7 @@ namespace dtn
 			{
 				const BundleFilter &f = (**it);
 				const BundleFilter::ACTION ret = f.evaluate(context);
-				if (ret != BundleFilter::PASS) return ret;
+				if (ret != BundleFilter::PASS && ret != BundleFilter::SKIP) return ret;
 			}
 			return ACCEPT;
 		}
@@ -89,7 +89,7 @@ namespace dtn
 			{
 				const BundleFilter &f = (**it);
 				const BundleFilter::ACTION ret = f.filter(context, bundle);
-				if (ret != BundleFilter::PASS) return ret;
+				if (ret != BundleFilter::PASS && ret != BundleFilter::SKIP) return ret;
 			}
 			return ACCEPT;
 		}
