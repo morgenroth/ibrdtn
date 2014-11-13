@@ -101,18 +101,18 @@ namespace dtn
 			/**
 			 * Evaluates a context and results in ACCEPT, REJECT, or DROP directive
 			 */
-			virtual ACTION evaluate(const FilterContext &context) const throw () = 0;
+			virtual ACTION evaluate(const FilterContext &context) const throw ();
 
 			/**
 			 * Filters a bundle with a context. The bundle may be modified during
 			 * the processing.
 			 */
-			virtual ACTION filter(const FilterContext &context, dtn::data::Bundle &bundle) const throw () = 0;
+			virtual ACTION filter(const FilterContext &context, dtn::data::Bundle &bundle) const throw ();
 
 			/**
 			 * append a bundle filter at the end of the chain
 			 */
-			void append(BundleFilter *filter);
+			BundleFilter* append(BundleFilter *filter);
 
 		private:
 			BundleFilter *_next;

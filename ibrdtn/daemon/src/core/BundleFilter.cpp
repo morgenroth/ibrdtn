@@ -132,13 +132,24 @@ namespace dtn
 			if (_next != NULL) delete _next;
 		}
 
-		void BundleFilter::append(BundleFilter *filter)
+		BundleFilter* BundleFilter::append(BundleFilter *filter)
 		{
 			if (_next != NULL) {
 				_next->append(filter);
-				return;
+				return this;
 			}
 			_next = filter;
+			return this;
+		}
+
+		BundleFilter::ACTION BundleFilter::evaluate(const FilterContext &context) const throw ()
+		{
+			return (_next == NULL) ? BundleFilter::PASS : _next->evaluate(context);
+		}
+
+		BundleFilter::ACTION BundleFilter::filter(const FilterContext &context, dtn::data::Bundle &bundle) const throw ()
+		{
+			return (_next == NULL) ? BundleFilter::PASS : _next->filter(context, bundle);
 		}
 	} /* namespace core */
 } /* namespace dtn */
