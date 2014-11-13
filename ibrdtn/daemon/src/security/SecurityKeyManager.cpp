@@ -154,7 +154,7 @@ namespace dtn
 			dtn::security::SecurityKey keydata;
 			keydata.reference = ref.getNode();
 			keydata.type = type;
-			keydata.file = getKeyFile(prefix, ref, type);
+			keydata.file = getKeyFile(prefix, keydata.reference, type);
 
 			// load security key
 			load(keydata);
@@ -169,14 +169,6 @@ namespace dtn
 			keydata.type = type;
 			keydata.file = getKeyFile(keydata.reference, type);
 
-			// load security key
-			load(keydata);
-
-			return keydata;
-		}
-
-		void SecurityKeyManager::load(dtn::security::SecurityKey &keydata) const
-		{
 			if ((keydata.type == SecurityKey::KEY_SHARED) && !keydata.file.exists())
 			{
 				// get the default shared key
@@ -187,6 +179,14 @@ namespace dtn
 				}
 			}
 
+			// load security key
+			load(keydata);
+
+			return keydata;
+		}
+
+		void SecurityKeyManager::load(dtn::security::SecurityKey &keydata) const
+		{
 			// throw exception if key-file does not exists
 			if (!keydata.file.exists())
 			{
