@@ -56,6 +56,8 @@ namespace dtn
 			void setPrimaryBlock(const dtn::data::PrimaryBlock &data);
 			const dtn::data::PrimaryBlock& getPrimaryBlock() const throw (FilterException);
 
+			const dtn::data::BundleID& getBundleID() const throw (FilterException);
+
 			void setBlock(const dtn::data::Block &block, const dtn::data::Number &size);
 			const dtn::data::Block& getBlock() const throw (FilterException);
 			dtn::data::Number getBlockLength() const throw (FilterException);

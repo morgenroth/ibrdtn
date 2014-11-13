@@ -60,6 +60,13 @@ namespace dtn
 			return *_bundle;
 		}
 
+		const dtn::data::BundleID& FilterContext::getBundleID() const throw (FilterException)
+		{
+			if (_metabundle != NULL) return *_metabundle;
+			if (_primaryblock != NULL) return *_primaryblock;
+			throw FilterException("attribute not present in this context");
+		}
+
 		void FilterContext::setPrimaryBlock(const dtn::data::PrimaryBlock &data)
 		{
 			_primaryblock = &data;
