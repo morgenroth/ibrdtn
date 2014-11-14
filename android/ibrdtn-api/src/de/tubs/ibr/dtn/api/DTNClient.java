@@ -307,9 +307,13 @@ public final class DTNClient {
 			if (mSession == null) return;
 
 			// send intent to destroy the session in the daemon
-			Intent registrationIntent = new Intent(de.tubs.ibr.dtn.Intent.UNREGISTER);
-			registrationIntent.putExtra("app", PendingIntent.getBroadcast(mContext, 0, new Intent(), 0)); // boilerplate
-			mContext.startService(registrationIntent);
+			try {
+				Intent registrationIntent = Services.SERVICE_APPLICATION.getIntent(mContext, de.tubs.ibr.dtn.Intent.UNREGISTER);
+				registrationIntent.putExtra("app", PendingIntent.getBroadcast(mContext, 0, new Intent(), 0)); // boilerplate
+				mContext.startService(registrationIntent);
+			} catch (ServiceNotAvailableException err) {
+				Log.e(TAG, "Service not available!", err);
+			}
 		}
 		
 		/**

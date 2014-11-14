@@ -50,4 +50,8 @@ public class Intent {
 	public static final String EXTRA_NODE = "de.tubs.ibr.dtn.NODE";
 	public static final String EXTRA_INTENT = "de.tubs.ibr.dtn.intent.INTENT";
 	public static final String EXTRA_PENDING_INTENT = "de.tubs.ibr.dtn.intent.PENDING_INTENT";
+	
+	public static final String PERMISSION_SERVER = "de.tubs.ibr.dtn.permission.DTN_SERVER";
+	public static final String PERMISSION_COMMUNICATION = "de.tubs.ibr.dtn.permission.DTN_COMMUNICATION";
+	public static final String PERMISSION_CONTROL = "de.tubs.ibr.dtn.permission.DTN_CONTROL";
 }
