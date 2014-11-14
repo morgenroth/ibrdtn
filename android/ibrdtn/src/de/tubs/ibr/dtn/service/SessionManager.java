@@ -188,7 +188,7 @@ public class SessionManager {
 			}
 	
 			// send notification intent
-			mContext.sendBroadcast(broadcastIntent);
+			mContext.sendBroadcast(broadcastIntent, de.tubs.ibr.dtn.Intent.PERMISSION_COMMUNICATION);
 		} catch (NativeSessionException e) {
 			Log.e(TAG, "failure while registering a session", e);
 		}

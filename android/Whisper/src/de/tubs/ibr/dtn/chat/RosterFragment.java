@@ -12,7 +12,6 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
-import android.support.v4.view.MenuItemCompat;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
@@ -71,13 +70,7 @@ public class RosterFragment extends ListFragment implements LoaderManager.Loader
 	    inflater.inflate(R.menu.buddy_menu, menu);
 	    
 	    if (0 != (getActivity().getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
-	    	menu.findItem(R.id.itemDebugNotification).setVisible(true);
-	    	menu.findItem(R.id.itemDebugBuddyAdd).setVisible(true);
-	    	menu.findItem(R.id.itemDebugSendPresence).setVisible(true);
-	    } else {
-	    	menu.findItem(R.id.itemDebugNotification).setVisible(false);
-	    	menu.findItem(R.id.itemDebugBuddyAdd).setVisible(false);
-	    	menu.findItem(R.id.itemDebugSendPresence).setVisible(false);
+	    	inflater.inflate(R.menu.debug_menu, menu);
 	    }
 	}
 
@@ -106,6 +99,12 @@ public class RosterFragment extends ListFragment implements LoaderManager.Loader
 	    case R.id.itemDebugSendPresence:
             if (mService != null)
                 mService.startDebug(ChatService.Debug.SEND_PRESENCE);
+	        return true;
+	        
+	    case R.id.itemDebugUnregister:
+            if (mService != null)
+                mService.startDebug(ChatService.Debug.UNREGISTER);
+            getActivity().finish();
 	        return true;
     
 	    default:

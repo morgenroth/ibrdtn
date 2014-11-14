@@ -41,6 +41,7 @@
     <string name="debug_notification">Debug Notification</string>
     <string name="debug_buddy_add">Add buddy</string>
     <string name="debug_send_presence">Send presence</string>
+    <string name="debug_unregister">Unregister</string>
     <string name="image_contact_symbol">Contact symbol</string>
     <string name="type_to_compose_text_enter_to_send">Type message</string>
     <string name="action_keyinfo">Key information</string>

@@ -92,7 +92,7 @@ public class ClientSession {
 	        notify.putExtra("bundleid", toAndroid(swigId));
 
 	        // send notification intent
-	        mManager.getContext().sendBroadcast(notify);
+	        mManager.getContext().sendBroadcast(notify, de.tubs.ibr.dtn.Intent.PERMISSION_COMMUNICATION);
 
 	        Log.d(TAG, "RECEIVE intent (" + swigId.toString() + ") sent to " + mSession.getPackageName());
 		}
@@ -137,7 +137,7 @@ public class ClientSession {
             }
             
             // send notification intent
-            mManager.getContext().sendBroadcast(notify);
+            mManager.getContext().sendBroadcast(notify, de.tubs.ibr.dtn.Intent.PERMISSION_COMMUNICATION);
 
             Log.d(TAG, "STATUS_REPORT intent [" + swigId.toString() + "] sent to " + mSession.getPackageName());
 		}
@@ -160,7 +160,7 @@ public class ClientSession {
             notify.putExtra("timeofsignal", toAndroid(swigCustody.getTimeofsignal()));
 
             // send notification intent
-            mManager.getContext().sendBroadcast(notify);
+            mManager.getContext().sendBroadcast(notify, de.tubs.ibr.dtn.Intent.PERMISSION_COMMUNICATION);
 
             Log.d(TAG, "CUSTODY_SIGNAL intent [" + swigId.toString() + "] sent to " + mSession.getPackageName());
 		}
@@ -295,7 +295,9 @@ public class ClientSession {
                     ClientSession.this.mNativeSession.receive();
                 }
             } catch (NativeSessionException e) {
-                Log.e(TAG, "Receiver thread terminated.", e);
+                if (!e.getMessage().startsWith("loop aborted")) {
+                    Log.e(TAG, "Receiver thread terminated.", e);
+                }
             }
         }
 	    

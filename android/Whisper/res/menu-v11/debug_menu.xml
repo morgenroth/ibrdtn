@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+	<item android:id="@+id/itemDebugNotification" android:title="@string/debug_notification" android:showAsAction="never"></item>
+	<item android:id="@+id/itemDebugBuddyAdd" android:title="@string/debug_buddy_add" android:showAsAction="never"></item>
+	<item android:id="@+id/itemDebugSendPresence" android:title="@string/debug_send_presence" android:showAsAction="never"></item>
+	<item android:id="@+id/itemDebugUnregister" android:title="@string/debug_unregister" android:showAsAction="never"></item>
+</menu>

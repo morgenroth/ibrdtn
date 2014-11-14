@@ -9,4 +9,5 @@
     <string name="enable_streaming">Streaming</string>
     <string name="switch_streaming">Switch Group</string>
     <string name="switch_service">DTN service</string>
+    <string name="unregister">Unregister</string>
 </resources>

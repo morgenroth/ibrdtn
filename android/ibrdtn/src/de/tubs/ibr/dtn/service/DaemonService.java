@@ -949,7 +949,7 @@ public class DaemonService extends Service {
 			}
 
 			// broadcast state change
-			sendBroadcast(broadcastIntent);
+			sendBroadcast(broadcastIntent, de.tubs.ibr.dtn.Intent.PERMISSION_COMMUNICATION);
 		}
 
 		@Override
@@ -963,7 +963,7 @@ public class DaemonService extends Service {
 				sendOrderedBroadcast(intent, null);
 			}
 			else {
-				sendBroadcast(intent);
+				sendBroadcast(intent, de.tubs.ibr.dtn.Intent.PERMISSION_CONTROL);
 			}
 		}
 

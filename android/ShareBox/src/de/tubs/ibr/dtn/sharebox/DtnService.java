@@ -9,7 +9,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
-import android.app.IntentService;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -27,12 +26,12 @@ import de.tubs.ibr.dtn.api.Bundle;
 import de.tubs.ibr.dtn.api.BundleID;
 import de.tubs.ibr.dtn.api.DTNClient;
 import de.tubs.ibr.dtn.api.DTNClient.Session;
+import de.tubs.ibr.dtn.api.DTNIntentService;
 import de.tubs.ibr.dtn.api.DataHandler;
 import de.tubs.ibr.dtn.api.EID;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
-import de.tubs.ibr.dtn.api.SessionConnection;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.api.TransferMode;
@@ -42,7 +41,7 @@ import de.tubs.ibr.dtn.sharebox.data.Download.State;
 import de.tubs.ibr.dtn.sharebox.data.TruncatedInputStream;
 import de.tubs.ibr.dtn.sharebox.data.Utils;
 
-public class DtnService extends IntentService {
+public class DtnService extends DTNIntentService {
 
     // This TAG is used to identify this class (e.g. for debugging)
     private static final String TAG = "DtnService";
@@ -72,9 +71,7 @@ public class DtnService extends IntentService {
     private final IBinder mBinder = new LocalBinder();
     
     // The communication with the DTN service is done using the DTNClient
-    private DTNClient mClient = null;
     private DTNClient.Session mSession = null;
-    private Object mWaitLock = new Object();
     
     // should be set to true if a download is requested 
     private Boolean mIsDownloading = false;
@@ -116,22 +113,8 @@ public class DtnService extends IntentService {
     }
     
     public PendingIntent getSelectNeighborIntent() {
-        try {
-            // wait until the session is available
-            synchronized(mWaitLock) {
-                while (mSession == null) {
-                    if (mClient.isDisconnected()) return null;
-                    mWaitLock.wait();
-                }
-            }
-            
-            // get pending intent for neighbor list
-            return mClient.getSelectNeighborIntent();
-        } catch (InterruptedException e) {
-            Log.e(TAG, "can not query for neighbors", e);
-        }
-        
-        return null;
+        // get pending intent for neighbor list
+        return getClient().getSelectNeighborIntent();
     }
     
     @Override
@@ -142,21 +125,11 @@ public class DtnService extends IntentService {
         {
             // Receive bundle info from the DTN service here
             try {
-                // wait until the session is available
-                synchronized(mWaitLock) {
-                    while (mSession == null) {
-                        if (mClient.isDisconnected()) return;
-                        mWaitLock.wait();
-                    }
-                }
-                
                 // We loop here until no more bundles are available
                 // (queryNext() returns false)
                 mIsDownloading = false;
                 while (mSession.queryInfoNext());
             } catch (SessionDestroyedException e) {
-                Log.e(TAG, "Can not query for bundle", e);
-            } catch (InterruptedException e) {
                 Log.e(TAG, "Can not query for bundle", e);
             }
         }
@@ -166,14 +139,6 @@ public class DtnService extends IntentService {
             BundleID bundleid = intent.getParcelableExtra(EXTRA_KEY_BUNDLE_ID);
             
             try {
-                // wait until the session is available
-                synchronized(mWaitLock) {
-                    while (mSession == null) {
-                        if (mClient.isDisconnected()) return;
-                        mWaitLock.wait();
-                    }
-                }
-                
                 // mark the bundle ID as delivered
                 mSession.delivered(bundleid);
             } catch (Exception e) {
@@ -225,14 +190,6 @@ public class DtnService extends IntentService {
             mNotificationFactory.showDownload(d);
             
             try {
-                // wait until the session is available
-                synchronized(mWaitLock) {
-                    while (mSession == null) {
-                        if (mClient.isDisconnected()) return;
-                        mWaitLock.wait();
-                    }
-                }
-                
                 mIsDownloading = true;
                 if (mSession.query(bundleid)) {
                     mNotificationFactory.showDownloadCompleted(d);
@@ -243,10 +200,6 @@ public class DtnService extends IntentService {
                     mNotificationFactory.showDownloadAborted(d);
                 }
             } catch (SessionDestroyedException e) {
-                Log.e(TAG, "Can not query for bundle", e);
-                
-                mNotificationFactory.showDownloadAborted(d);
-            } catch (InterruptedException e) {
                 Log.e(TAG, "Can not query for bundle", e);
                 
                 mNotificationFactory.showDownloadAborted(d);
@@ -300,14 +253,6 @@ public class DtnService extends IntentService {
         mNotificationFactory.showUpload(destination, uris.size());
         
         try {
-            // wait until the session is available
-            synchronized(mWaitLock) {
-                while (mSession == null) {
-                    if (mClient.isDisconnected()) return;
-                    mWaitLock.wait();
-                }
-            }
-            
             // create a pipe
             final ParcelFileDescriptor[] pipe = ParcelFileDescriptor.createPipe();
             
@@ -395,32 +340,22 @@ public class DtnService extends IntentService {
         }
     }
     
-    SessionConnection mSessionListener = new SessionConnection() {
-
-        @Override
-        public void onSessionConnected(Session session) {
-            Log.d(TAG, "Session connected");
-            
-            // register own data handler for incoming bundles
-            session.setDataHandler(mDataHandler);
-            
-            synchronized(mWaitLock) {
-            	mSession = session;
-            	mWaitLock.notifyAll();
-            }
-        }
-
-        @Override
-        public void onSessionDisconnected() {
-            Log.d(TAG, "Session disconnected");
-            
-            synchronized(mWaitLock) {
-            	mSession = null;
-            	mWaitLock.notifyAll();
-            }
-        }
+    @Override
+    public void onSessionConnected(Session session) {
+        Log.d(TAG, "Session connected");
         
-    };
+        // register own data handler for incoming bundles
+        session.setDataHandler(mDataHandler);
+        
+        mSession = session;
+    }
+
+    @Override
+    public void onSessionDisconnected() {
+        Log.d(TAG, "Session disconnected");
+        
+        mSession = null;
+    }
 
     @Override
     public void onCreate() {
@@ -432,9 +367,6 @@ public class DtnService extends IntentService {
         // create message database
         mDatabase = new Database(this);
         
-        // create a new DTN client
-        mClient = new DTNClient(mSessionListener);
-        
         // create registration with "sharebox" as endpoint
         // if the EID of this device is "dtn://device" then the
         // address of this app will be "dtn://device/sharebox"
@@ -445,7 +377,7 @@ public class DtnService extends IntentService {
         
         try {
             // initialize the connection to the DTN service
-            mClient.initialize(this, registration);
+            initialize(registration);
             Log.d(TAG, "Connection to DTN service established.");
         } catch (ServiceNotAvailableException e) {
             // The DTN service has not been found
@@ -458,10 +390,6 @@ public class DtnService extends IntentService {
 
     @Override
     public void onDestroy() {
-        // terminate the DTN service
-        mClient.terminate();
-        mClient = null;
-        
         // close the database
         mDatabase.close();
         
