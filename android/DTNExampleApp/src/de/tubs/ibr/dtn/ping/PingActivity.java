@@ -96,10 +96,20 @@ public class PingActivity extends Activity {
                 return true;
                 
             case R.id.itemSwitchStreaming:
+            {
                 Intent i = new Intent(this, PingService.class);
                 i.setAction(PingService.STREAM_SWITCH_GROUP);
                 startService(i);
                 return true;
+            }
+            
+            case R.id.itemUnregister:
+            {
+                Intent i = new Intent(this, PingService.class);
+                i.setAction(PingService.UNREGISTER);
+                startService(i);
+                return true;
+            }
             
             default:
                 return super.onOptionsItemSelected(item);

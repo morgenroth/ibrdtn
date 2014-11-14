@@ -9,7 +9,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import android.app.IntentService;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.os.Binder;
@@ -22,12 +21,12 @@ import de.tubs.ibr.dtn.api.Bundle.ProcFlags;
 import de.tubs.ibr.dtn.api.BundleID;
 import de.tubs.ibr.dtn.api.DTNClient;
 import de.tubs.ibr.dtn.api.DTNClient.Session;
+import de.tubs.ibr.dtn.api.DTNIntentService;
 import de.tubs.ibr.dtn.api.DataHandler;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.Node;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
-import de.tubs.ibr.dtn.api.SessionConnection;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.api.TransferMode;
@@ -38,7 +37,7 @@ import de.tubs.ibr.dtn.streaming.MediaType;
 import de.tubs.ibr.dtn.streaming.StreamFilter;
 import de.tubs.ibr.dtn.streaming.StreamId;
 
-public class PingService extends IntentService {
+public class PingService extends DTNIntentService {
     
     // This TAG is used to identify this class (e.g. for debugging)
     private static final String TAG = "PingService";
@@ -55,6 +54,7 @@ public class PingService extends IntentService {
     public static final String STREAM_START_INTENT = "de.tubs.ibr.dtn.example.STREAM_START";
     public static final String STREAM_STOP_INTENT = "de.tubs.ibr.dtn.example.STREAM_STOP";
     public static final String STREAM_SWITCH_GROUP = "de.tubs.ibr.dtn.example.STREAM_SWITCH";
+    public static final String UNREGISTER = "de.tubs.ibr.dtn.example.UNREGISTER";
 
     // indicates updated data to other components
     public static final String DATA_UPDATED = "de.tubs.ibr.dtn.example.DATA_UPDATED";
@@ -71,12 +71,12 @@ public class PingService extends IntentService {
     private final IBinder mBinder = new LocalBinder();
     
     // The communication with the DTN service is done using the DTNClient
-    private DTNClient mClient = null;
     private DTNClient.Session mSession = null;
-    private Object mWaitLock = new Object();
     
     private DtnStreamReceiver mReceiver = null;
     private DtnStreamTransmitter mTransmitter = null;
+    
+    private boolean mDestroySessionOnExit = false;
     
     // Hold the last ping result
     private Double mLastMeasurement = 0.0;
@@ -112,43 +112,19 @@ public class PingService extends IntentService {
     }
     
     private String getLocalEndpoint() {
-        return mClient.getEndpoint();
+        return getClient().getEndpoint();
     }
     
     public PendingIntent getSelectNeighborIntent() {
-		// wait until the session is available
-		try {
-			synchronized (mWaitLock) {
-				while (mSession == null) {
-					if (mClient.isDisconnected()) return null;
-					mWaitLock.wait();
-				}
-			}
-		} catch (InterruptedException e) {
-			return null;
-		}
-        
-        // get pending intent for neighbor list
-        return mClient.getSelectNeighborIntent();
+		// get pending intent for neighbor list
+		return getClient().getSelectNeighborIntent();
     }
     
     public List<Node> getNeighbors() {
-		// wait until the session is available
-		try {
-			synchronized (mWaitLock) {
-				while (mSession == null) {
-					if (mClient.isDisconnected()) return new LinkedList<Node>();
-					mWaitLock.wait();
-				}
-			}
-		} catch (InterruptedException e) {
-			return new LinkedList<Node>();
-		}
-        
-        // query all neighbors
-        List<Node> ret = mClient.getNeighbors();
-        
-        return (ret != null) ? ret : new LinkedList<Node>();
+		// query all neighbors
+		List<Node> ret = getClient().getNeighbors();
+
+		return (ret != null) ? ret : new LinkedList<Node>();
     }
     
     private void doPing(SingletonEndpoint destination) {
@@ -193,18 +169,6 @@ public class PingService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         String action = intent.getAction();
-        
-		// wait until the session is available
-		try {
-			synchronized (mWaitLock) {
-				while (mSession == null) {
-					if (mClient.isDisconnected()) return;
-					mWaitLock.wait();
-				}
-			}
-		} catch (InterruptedException e) {
-			return;
-		}
         
         if (de.tubs.ibr.dtn.Intent.RECEIVE.equals(action))
         {
@@ -303,6 +267,10 @@ public class PingService extends IntentService {
                 Log.e(TAG, "session destroyed", e);
             }
         }
+        else if (UNREGISTER.equals(action))
+        {
+        	mDestroySessionOnExit = true;
+        }
     }
     
     DtnStreamReceiver.StreamListener mStreamListener = new DtnStreamReceiver.StreamListener() {
@@ -327,71 +295,12 @@ public class PingService extends IntentService {
         }
     };
     
-    SessionConnection mSessionConnection = new SessionConnection() {
-
-        @Override
-        public void onSessionConnected(Session session) {
-            Log.d(TAG, "Session connected");
-            
-            try {
-                // list all registered endpoints
-               for (GroupEndpoint group : session.getGroups()) {
-                    Log.d(TAG, "Group: " + group);
-                }
-            } catch (SessionDestroyedException e) {
-                Log.e(TAG, "can not get group list", e);
-            }
-            
-            // create streaming endpoint with own data handler as fallback
-            mReceiver = new DtnStreamReceiver(PingService.this, session, mStreamListener, mDataHandler);
-            
-            StreamFilter filter = new StreamFilter() {
-                @Override
-                public boolean onHandleStream(Bundle bundle) {
-                    return bundle.getDestination().toString().contains("stream");
-                }
-            };
-            
-            // set filter to decide with bundles are handles as stream
-            mReceiver.setFilter(filter);
-            
-            String localeid = getLocalEndpoint();
-            if (localeid != null) {
-                // notify other components of the updated EID
-                Intent i = new Intent(DATA_UPDATED);
-                i.putExtra("localeid", localeid);
-                sendBroadcast(i);
-            }
-            
-            // notify waiting threads
-            synchronized (mWaitLock) {
-                mSession = session;
-                mWaitLock.notifyAll();
-            }
-        }
-
-        @Override
-        public void onSessionDisconnected() {
-            Log.d(TAG, "Session disconnected");
-            
-            // notify waiting threads
-            synchronized (mWaitLock) {
-                mSession = null;
-	            mWaitLock.notifyAll();
-            }
-        }
-        
-    };
-    
     @Override
     public void onCreate() {
         super.onCreate();
         
         // get new executor
         mExecutor = Executors.newScheduledThreadPool(1);
-        
-        // create a new DTN client
-        mClient = new DTNClient(mSessionConnection);
         
         // create registration with "ping" as endpoint
         // if the EID of this device is "dtn://device" then the
@@ -407,7 +316,7 @@ public class PingService extends IntentService {
         
         try {
             // initialize the connection to the DTN service
-            mClient.initialize(this, registration);
+            initialize(registration);
             Log.d(TAG, "Connection to DTN service established.");
         } catch (ServiceNotAvailableException e) {
             // The DTN service has not been found
@@ -425,9 +334,7 @@ public class PingService extends IntentService {
             mReceiver.release();
         }
         
-        // terminate the DTN service
-        mClient.terminate();
-        mClient = null;
+        if (mDestroySessionOnExit) mSession.destroy();
         
         if (mStreamJob != null) {
             mStreamJob.cancel(false);
@@ -523,4 +430,45 @@ public class PingService extends IntentService {
             Log.d(TAG, offset + " of " + length + " bytes received");
         }
     };
+
+    @Override
+    protected void onSessionConnected(Session session) {
+        Log.d(TAG, "Session connected");
+        mSession = session;
+        
+        try {
+            // list all registered endpoints
+           for (GroupEndpoint group : session.getGroups()) {
+                Log.d(TAG, "Group: " + group);
+            }
+        } catch (SessionDestroyedException e) {
+            Log.e(TAG, "can not get group list", e);
+        }
+        
+        // create streaming endpoint with own data handler as fallback
+        mReceiver = new DtnStreamReceiver(PingService.this, session, mStreamListener, mDataHandler);
+        
+        StreamFilter filter = new StreamFilter() {
+            @Override
+            public boolean onHandleStream(Bundle bundle) {
+                return bundle.getDestination().toString().contains("stream");
+            }
+        };
+        
+        // set filter to decide with bundles are handles as stream
+        mReceiver.setFilter(filter);
+        
+        String localeid = getLocalEndpoint();
+        if (localeid != null) {
+            // notify other components of the updated EID
+            Intent i = new Intent(DATA_UPDATED);
+            i.putExtra("localeid", localeid);
+            sendBroadcast(i);
+        }
+	}
+
+	@Override
+	protected void onSessionDisconnected() {
+        Log.d(TAG, "Session disconnected");
+	}
 }
