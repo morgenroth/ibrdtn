@@ -28,7 +28,6 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
-import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -53,6 +52,7 @@ import de.tubs.ibr.dtn.api.Bundle.ProcFlags;
 import de.tubs.ibr.dtn.api.BundleID;
 import de.tubs.ibr.dtn.api.DTNClient;
 import de.tubs.ibr.dtn.api.DTNClient.Session;
+import de.tubs.ibr.dtn.api.DTNIntentService;
 import de.tubs.ibr.dtn.api.DataHandler;
 import de.tubs.ibr.dtn.api.EID;
 import de.tubs.ibr.dtn.api.Registration;
@@ -66,7 +66,7 @@ import de.tubs.ibr.dtn.dtalkie.db.Message;
 import de.tubs.ibr.dtn.dtalkie.db.MessageDatabase;
 import de.tubs.ibr.dtn.dtalkie.db.MessageDatabase.Folder;
 
-public class TalkieService extends IntentService {
+public class TalkieService extends DTNIntentService {
 	
 	private static final String TAG = "TalkieService";
 
@@ -98,34 +98,26 @@ public class TalkieService extends IntentService {
     private final IBinder mBinder = new LocalBinder();
     
     // basic dtn client
-    private DTNClient mClient = null;
     private DTNClient.Session mSession = null;
-    private Object mWaitLock = new Object();
     
     public TalkieService() {
         super(TAG);
     }
 	
-	private SessionConnection _session_listener = new SessionConnection() {
-		public void onSessionConnected(Session session) {
-			Log.d(TAG, "DTN session connected");
-			
-			// register own data handler for incoming bundles
-			session.setDataHandler(_data_handler);
-			
-			synchronized(mWaitLock) {
-				mSession = session;
-				mWaitLock.notifyAll();
-			}
-		}
+	@Override
+	public void onSessionConnected(Session session) {
+		Log.d(TAG, "DTN session connected");
+		
+		// register own data handler for incoming bundles
+		session.setDataHandler(_data_handler);
+		
+		mSession = session;
+	}
 
-		public void onSessionDisconnected() {
-			synchronized(mWaitLock) {
-				mSession = null;
-				mWaitLock.notifyAll();
-			}
-		}
-	};
+	@Override
+	public void onSessionDisconnected() {
+		mSession = null;
+	}
 
     private DataHandler _data_handler = new DataHandler()
     {
@@ -283,11 +275,8 @@ public class TalkieService extends IntentService {
     	Registration reg = new Registration("dtalkie");
     	reg.add(RecorderService.TALKIE_GROUP_EID);
 		
-		// register own data handler for incoming bundles
-    	mClient = new DTNClient(_session_listener);
-		
 		try {
-		    mClient.initialize(this, reg);
+		    initialize(reg);
 			mServiceError = ServiceError.NO_ERROR;
 		} catch (ServiceNotAvailableException e) {
 		    mServiceError = ServiceError.SERVICE_NOT_FOUND;
@@ -314,9 +303,6 @@ public class TalkieService extends IntentService {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         prefs.unregisterOnSharedPreferenceChangeListener(mPrefListener);
         
-        mClient.terminate();
-	    mClient = null;
-	    
 	    mPlayer.release();
 	    
 	    // close the database
@@ -413,13 +399,6 @@ public class TalkieService extends IntentService {
         if (de.tubs.ibr.dtn.Intent.RECEIVE.equals(action)) {
 
             try {
-                synchronized(mWaitLock) {
-                    while (mSession == null) {
-                        if (mClient.isDisconnected()) return;
-                        mWaitLock.wait();
-                    }
-                }
-                
                 while (mSession.queryNext());
             } catch (Exception e) { };
         }
@@ -427,13 +406,6 @@ public class TalkieService extends IntentService {
             final BundleID received = intent.getParcelableExtra("bundleid");
             
             try {
-                synchronized(mWaitLock) {
-                    while (mSession == null) {
-                        if (mClient.isDisconnected()) return;
-                        mWaitLock.wait();
-                    }
-                }
-                
                 mSession.delivered(received);
             } catch (Exception e) {
                 Log.e(TAG, "Can not mark bundle as delivered.", e);
@@ -521,13 +493,6 @@ public class TalkieService extends IntentService {
             b.set(ProcFlags.DTNSEC_REQUEST_ENCRYPT, true);
             
             try {
-                synchronized(mWaitLock) {
-                    while (mSession == null) {
-                        if (mClient.isDisconnected()) return;
-                        mWaitLock.wait();
-                    }
-                }
-                
                 ParcelFileDescriptor fd = ParcelFileDescriptor.open(recfile, ParcelFileDescriptor.MODE_READ_ONLY);
                 BundleID ret = mSession.send(b, fd);
                 
