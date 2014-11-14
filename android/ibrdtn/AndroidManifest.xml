@@ -35,8 +35,11 @@
 	<!-- Custom permission to send/received bundles using the DTN services -->
 	<uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION" />
 
-	<!-- Custom permission to control the DTN services -->
+	<!-- Custom permission to provide DTN services -->
 	<uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_SERVER" />
+	
+	<!-- Custom permission to control the DTN services -->
+	<uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_CONTROL" />
 
 	<!-- This app require access to NFC to verify the hash of the security key -->
 	<uses-permission android:name="android.permission.NFC" />
