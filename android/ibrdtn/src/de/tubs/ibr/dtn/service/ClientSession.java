@@ -295,7 +295,9 @@ public class ClientSession {
                     ClientSession.this.mNativeSession.receive();
                 }
             } catch (NativeSessionException e) {
-                Log.e(TAG, "Receiver thread terminated.", e);
+                if (!e.getMessage().startsWith("loop aborted")) {
+                    Log.e(TAG, "Receiver thread terminated.", e);
+                }
             }
         }
 	    
