@@ -27,7 +27,6 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.StringTokenizer;
 
-import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -53,11 +52,11 @@ import de.tubs.ibr.dtn.api.Bundle.ProcFlags;
 import de.tubs.ibr.dtn.api.BundleID;
 import de.tubs.ibr.dtn.api.DTNClient;
 import de.tubs.ibr.dtn.api.DTNClient.Session;
+import de.tubs.ibr.dtn.api.DTNIntentService;
 import de.tubs.ibr.dtn.api.DataHandler;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
-import de.tubs.ibr.dtn.api.SessionConnection;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.api.TransferMode;
@@ -68,7 +67,7 @@ import de.tubs.ibr.dtn.chat.core.Buddy;
 import de.tubs.ibr.dtn.chat.core.Message;
 import de.tubs.ibr.dtn.chat.core.Roster;
 
-public class ChatService extends IntentService {
+public class ChatService extends DTNIntentService {
 	
 	public enum Debug {
 		NOTIFICATION,
@@ -99,7 +98,6 @@ public class ChatService extends IntentService {
 	public static final String ACTION_OPENCHAT = "de.tubs.ibr.dtn.chat.OPENCHAT";
 	public static final GroupEndpoint PRESENCE_GROUP_EID = new GroupEndpoint("dtn://chat.dtn/presence");
 	
-	private Registration _registration = null;
 	private ServiceError _service_error = ServiceError.NO_ERROR;
 	private boolean _unregister_on_destroy = false;
 	
@@ -113,9 +111,7 @@ public class ChatService extends IntentService {
 	private Roster roster = null;
 	
 	// DTN client to talk with the DTN service
-	private DTNClient _client = null;
 	private DTNClient.Session _session = null;
-	private Object _waitLock = new Object();
 	
 	public ChatService() {
 		super(TAG);
@@ -300,47 +296,16 @@ public class ChatService extends IntentService {
 		// call onCreate of the super-class
 		super.onCreate();
 		
-		// create a new client object
-		_client = new DTNClient(new SessionConnection() {
-			@Override
-			public void onSessionConnected(Session session) {
-				// respect user settings
-				if (PreferenceManager.getDefaultSharedPreferences(ChatService.this).getBoolean("checkBroadcastPresence", false))
-				{
-					// register scheduled presence update
-					PresenceGenerator.activate(ChatService.this);
-				}
-				
-				// register own data handler for incoming bundles
-				session.setDataHandler(_data_handler);
-
-				synchronized (_waitLock) {
-					// store session locally
-					_session = session;
-					_waitLock.notifyAll();
-				}
-			}
-
-			@Override
-			public void onSessionDisconnected() {
-				synchronized (_waitLock) {
-					// free session object
-					_session = null;
-					_waitLock.notifyAll();
-				}
-			}
-		});
-
 		// create a roster object
 		this.roster = new Roster();
 		this.roster.open(this);
 		
 		// create registration
-		_registration = new Registration("chat");
-		_registration.add(PRESENCE_GROUP_EID);
+		Registration registration = new Registration("chat");
+		registration.add(PRESENCE_GROUP_EID);
 		
 		try {
-			_client.initialize(this, _registration);
+			initialize(registration);
 			_service_error = ServiceError.NO_ERROR;
 		} catch (ServiceNotAvailableException e) {
 			_service_error = ServiceError.SERVICE_NOT_FOUND;
@@ -364,12 +329,8 @@ public class ChatService extends IntentService {
 		// destroy the session if the unregister option is enabled
 		if (_unregister_on_destroy && _session != null) _session.destroy();
 		
-		// destroy DTN client
-		_client.terminate();
-		
 		// clear all variables
 		this.roster = null;
-		_client = null;
 
 		super.onDestroy();
 		
@@ -383,24 +344,12 @@ public class ChatService extends IntentService {
 	
 	public synchronized String getLocalNickname()
 	{
-		// wait until connected
-		try {
-			synchronized(_waitLock) {
-				while (_session == null) {
-					if (_client.isDisconnected()) return FALLBACK_NICKNAME;
-					_waitLock.wait();
-				}
-			}
-		} catch (InterruptedException e) {
-			return FALLBACK_NICKNAME;
-		}
-		
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(ChatService.this);
 		String presence_nick = preferences.getString("editNickname", "");
 		
 		if (presence_nick.length() == 0)
 		{
-			String endpoint = _client.getEndpoint();
+			String endpoint = getClient().getEndpoint();
 			Log.d(TAG, "Endpoint: " + endpoint);
 			
 			if (endpoint == null) return FALLBACK_NICKNAME;
@@ -538,27 +487,39 @@ public class ChatService extends IntentService {
 		{
 			// wait until connected
 			try {
-				synchronized(_waitLock) {
-					while (_session == null) {
-						if (_client.isDisconnected()) throw new InterruptedException();
-						_waitLock.wait();
-					}
-				}
-				
 				while (_session.queryNext());
-			} catch (InterruptedException e) {
-				Log.e(TAG, "Can not query for bundle", e);
 			} catch (SessionDestroyedException e) {
 				Log.e(TAG, "Can not query for bundle", e);
 			}
 		}
 		else if (MARK_DELIVERED_INTENT.equals(action))
 		{
-			actionMarkDelivered(intent);
+			BundleID bundleid = intent.getParcelableExtra("bundleid");
+			if (bundleid == null) {
+				Log.e(TAG, "Intent to mark a bundle as delivered, but no bundle ID given");
+				return;
+			}
+			
+			try {
+				_session.delivered(bundleid);
+			} catch (Exception e) {
+				Log.e(TAG, "Can not mark bundle as delivered.", e);
+			}
 		}
 		else if (REPORT_DELIVERED_INTENT.equals(action))
 		{
-			actionReportDelivered(intent);
+			SingletonEndpoint source = intent.getParcelableExtra("source");
+			BundleID bundleid = intent.getParcelableExtra("bundleid");
+			
+			if (bundleid == null) {
+				Log.e(TAG, "Intent to mark a bundle as delivered, but no bundle ID given");
+				return;
+			}
+			
+			synchronized(this.roster) {
+				// report delivery to the roster
+				getRoster().reportDelivery(source, bundleid);
+			}
 		}
 		else if (ACTION_SEND_MESSAGE.equals(action))
 		{
@@ -580,45 +541,6 @@ public class ChatService extends IntentService {
 		}
 		else if (ACTION_NEW_MESSAGE.equals(action)) {
 			showNotification(intent);
-		}
-	}
-	
-	private void actionMarkDelivered(Intent intent) {
-		BundleID bundleid = intent.getParcelableExtra("bundleid");
-		if (bundleid == null) {
-			Log.e(TAG, "Intent to mark a bundle as delivered, but no bundle ID given");
-			return;
-		}
-		
-		try {
-			// wait until connected
-			synchronized(_waitLock) {
-				while (_session == null) {
-					if (_client.isDisconnected()) new InterruptedException();
-					_waitLock.wait();
-				}
-			}
-
-			_session.delivered(bundleid);
-		} catch (InterruptedException e) {
-			Log.e(TAG, "Can not mark bundle as delivered.", e);
-		} catch (Exception e) {
-			Log.e(TAG, "Can not mark bundle as delivered.", e);
-		}	
-	}
-	
-	private void actionReportDelivered(Intent intent) {
-		SingletonEndpoint source = intent.getParcelableExtra("source");
-		BundleID bundleid = intent.getParcelableExtra("bundleid");
-		
-		if (bundleid == null) {
-			Log.e(TAG, "Intent to mark a bundle as delivered, but no bundle ID given");
-			return;
-		}
-		
-		synchronized(this.roster) {
-			// report delivery to the roster
-			getRoster().reportDelivery(source, bundleid);
 		}
 	}
 	
@@ -647,14 +569,6 @@ public class ChatService extends IntentService {
 			// request signing of the message
 			b.set(ProcFlags.DTNSEC_REQUEST_SIGN, true);
 			
-			// wait until connected
-			synchronized(_waitLock) {
-				while (_session == null) {
-					if (_client.isDisconnected()) throw new InterruptedException();
-					_waitLock.wait();
-				}
-			}
-			
 			synchronized(this.roster) {
 				// send out the message
 				BundleID ret = _session.send(b, text.getBytes());
@@ -673,8 +587,6 @@ public class ChatService extends IntentService {
 			}
 		} catch (SessionDestroyedException e) {
 			Log.e(TAG, "Can not send message", e);
-		} catch (InterruptedException e) {
-			Log.e(TAG, "Can not send message", e);
 		}
 	}
 	
@@ -687,7 +599,7 @@ public class ChatService extends IntentService {
 					"Country: " + Locale.getDefault().getCountry();
 			
 			if (Utils.isVoiceRecordingSupported(this)) {
-				String endpoint = _client.getEndpoint();
+				String endpoint = getClient().getEndpoint();
 				if (endpoint != null) {
 					presence_message += "\n" + "Voice: " + endpoint + "/dtalkie";
 				}
@@ -705,14 +617,6 @@ public class ChatService extends IntentService {
 			// request signing of the message
 			b.set(ProcFlags.DTNSEC_REQUEST_SIGN, true);
 			
-			// wait until connected
-			synchronized(_waitLock) {
-				while (_session == null) {
-					if (_client.isDisconnected()) new InterruptedException();
-					_waitLock.wait();
-				}
-			}
-			
 			BundleID ret = _session.send(b, presence_message.getBytes());
 			
 			if (ret == null)
@@ -724,8 +628,6 @@ public class ChatService extends IntentService {
 				Log.d(TAG, "Presence sent, BundleID: " + ret.toString());
 			}
 		} catch (SessionDestroyedException e) {
-			Log.e(TAG, "Can not send presence", e);
-		} catch (InterruptedException e) {
 			Log.e(TAG, "Can not send presence", e);
 		}
 	}
@@ -762,5 +664,26 @@ public class ChatService extends IntentService {
 			_unregister_on_destroy = true;
 			break;
 		}
+	}
+
+	@Override
+	protected void onSessionConnected(Session session) {
+		// respect user settings
+		if (PreferenceManager.getDefaultSharedPreferences(ChatService.this).getBoolean("checkBroadcastPresence", false))
+		{
+			// register scheduled presence update
+			PresenceGenerator.activate(ChatService.this);
+		}
+		
+		// register own data handler for incoming bundles
+		session.setDataHandler(_data_handler);
+
+		// store session locally
+		_session = session;
+	}
+
+	@Override
+	protected void onSessionDisconnected() {
+		_session = null;
 	}
 }
