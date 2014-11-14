@@ -73,7 +73,8 @@ public class ChatService extends IntentService {
 	public enum Debug {
 		NOTIFICATION,
 		BUDDY_ADD,
-		SEND_PRESENCE
+		SEND_PRESENCE,
+		UNREGISTER
 	}
 	
 	private static final String TAG = "ChatService";
@@ -100,6 +101,7 @@ public class ChatService extends IntentService {
 	
 	private Registration _registration = null;
 	private ServiceError _service_error = ServiceError.NO_ERROR;
+	private boolean _unregister_on_destroy = false;
 	
 	private final static String FALLBACK_NICKNAME = "Nobody";
 
@@ -358,6 +360,9 @@ public class ChatService extends IntentService {
 	{
 		// close the roster (plus db connection)
 		this.roster.close();
+		
+		// destroy the session if the unregister option is enabled
+		if (_unregister_on_destroy && _session != null) _session.destroy();
 		
 		// destroy DTN client
 		_client.terminate();
@@ -751,6 +756,10 @@ public class ChatService extends IntentService {
 			Intent i = new Intent(this, ChatService.class);
 			i.setAction(ACTION_PRESENCE_ALARM);
 			startService(i);
+			break;
+			
+		case UNREGISTER:
+			_unregister_on_destroy = true;
 			break;
 		}
 	}
