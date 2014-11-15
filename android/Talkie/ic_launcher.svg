@@ -11,8 +11,8 @@
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    id="svg3767"
-   height="1024"
-   width="1024"
+   height="48"
+   width="48"
    version="1.1"
    inkscape:version="0.48.4 r9939"
    sodipodi:docname="ic_launcher.svg"
@@ -44,13 +44,32 @@
      inkscape:window-height="1014"
      id="namedview3031"
      showgrid="false"
-     inkscape:zoom="0.5"
-     inkscape:cx="479.73961"
-     inkscape:cy="257.24439"
+     inkscape:zoom="11.313708"
+     inkscape:cx="39.216207"
+     inkscape:cy="23.333778"
      inkscape:window-x="0"
      inkscape:window-y="27"
      inkscape:window-maximized="1"
-     inkscape:current-layer="svg3767" />
+     inkscape:current-layer="svg3767"
+     showguides="true"
+     inkscape:guide-bbox="true">
+    <sodipodi:guide
+       orientation="0,1"
+       position="20.152543,46"
+       id="guide3048" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="33.057242,2"
+       id="guide3050" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="2,35.620504"
+       id="guide3054" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="46,32.792077"
+       id="guide3056" />
+  </sodipodi:namedview>
   <defs
      id="defs3769">
     <linearGradient
@@ -351,7 +370,7 @@
   </defs>
   <g
      id="g3048"
-     transform="matrix(23.511448,0,0,23.511448,-7575.9382,-12854.254)">
+     transform="matrix(1.043468,0,0,1.043468,-334.87598,-568.75412)">
     <rect
        style="color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:#404040;stroke-width:0.52746934;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;visibility:visible;display:inline;overflow:visible;filter:url(#filter3911);enable-background:accumulate"
        id="rect4704"
