@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">MinimalExample</string>
+    <string name="title_activity_example">ExampleActivity</string>
+    <string name="destination_label">Destination</string>
+    <string name="destination_value">dtn://host.dtn/minimal-example</string>
+    <string name="message_label">Message</string>
+    <string name="message_value">Hello World!</string>
+    <string name="send_label">Send</string>
+
+</resources>
