@@ -66,6 +66,7 @@ public class DaemonProcess {
 	private Boolean mDiscoveryActive = null;
 	private Boolean mLeModeEnabled = false;
 	private ConnectivityManager mConnManager = null;
+	private boolean mGlobalConnected = false;
 	
 	private WifiManager.MulticastLock mMcastLock = null;
 
@@ -137,24 +138,33 @@ public class DaemonProcess {
 			SharedPreferences prefs = context.getSharedPreferences("dtnd", Context.MODE_PRIVATE);
 			String cloud_mode = prefs.getString(Preferences.KEY_UPLINK_MODE, "wifi");
 			
+			boolean newState = false;
+			
 			if (info != null && info.isConnected()) {
 				if ("on".equals(cloud_mode)) {
-					mDaemon.setGloballyConnected(true);
-					return;
+					newState = true;
 				}
 				else if ("wifi".equals(cloud_mode) && info.getType() == ConnectivityManager.TYPE_WIFI) {
 					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-						mDaemon.setGloballyConnected(!mConnManager.isActiveNetworkMetered());
-						return;
+						newState = !mConnManager.isActiveNetworkMetered();
 					}
 					else {
-						mDaemon.setGloballyConnected(true);
-						return;
+						newState = true;
 					}
 				}
 			}
 			
-			mDaemon.setGloballyConnected(false);
+			// do not change anything if the state has not changed
+			if (mGlobalConnected == newState) return;
+			
+			// set new connected state
+			mDaemon.setGloballyConnected(newState);
+			mGlobalConnected = newState;
+			
+			if (!newState) {
+				// new state is down - need a reload of convergence layers
+				restart(DaemonRunLevel.RUNLEVEL_NETWORK.swigValue() - 1, null);
+			}
 		}
 	};
 
