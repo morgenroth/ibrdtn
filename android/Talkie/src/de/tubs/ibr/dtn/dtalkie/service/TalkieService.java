@@ -135,20 +135,26 @@ public class TalkieService extends DTNIntentService {
 				Log.i(TAG, "New message received.");
 				
 				// process the file using the service
-	            Intent recv_intent = new Intent(TalkieService.this, TalkieService.class);
-	            recv_intent.setAction(ACTION_RECEIVED);
-	            recv_intent.putExtra("source", bundle.getSource().toString());
-	            recv_intent.putExtra("destination", bundle.getDestination().toString());
-	            recv_intent.putExtra("created", (Serializable)bundle.getTimestamp().getDate());
-	            recv_intent.putExtra("received", (Serializable)new Date());
-	            recv_intent.putExtra("file", (Serializable)file);
-	            startService(recv_intent);
-	            
-	            // mark the bundle as delivered
-                Intent delivered_intent = new Intent(TalkieService.this, TalkieService.class);
-                delivered_intent.setAction(ACTION_MARK_DELIVERED);
-                delivered_intent.putExtra("bundleid", new BundleID(bundle));
-                startService(delivered_intent);
+				Intent recv_intent = new Intent(TalkieService.this, TalkieService.class);
+				recv_intent.setAction(ACTION_RECEIVED);
+				recv_intent.putExtra("source", bundle.getSource().toString());
+				recv_intent.putExtra("destination", bundle.getDestination().toString());
+
+				if (bundle.getTimestamp().isValid()) {
+					recv_intent.putExtra("created", (Serializable)bundle.getTimestamp().getDate());
+				} else {
+					recv_intent.putExtra("created", (Serializable)new Date());
+				}
+				
+				recv_intent.putExtra("received", (Serializable)new Date());
+				recv_intent.putExtra("file", (Serializable)file);
+				startService(recv_intent);
+
+				// mark the bundle as delivered
+				Intent delivered_intent = new Intent(TalkieService.this, TalkieService.class);
+				delivered_intent.setAction(ACTION_MARK_DELIVERED);
+				delivered_intent.putExtra("bundleid", new BundleID(bundle));
+				startService(delivered_intent);
 
 				file = null;
 			}
