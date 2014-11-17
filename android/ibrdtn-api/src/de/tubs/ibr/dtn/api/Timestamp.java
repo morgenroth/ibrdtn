@@ -51,18 +51,18 @@ public class Timestamp implements Comparable<Timestamp> {
 		return (getDate().getTime() / 1000) - Timestamp.TIMEVAL_CONVERSION;
 	}
 
-    @Override
-    public boolean equals(Object o) {
-        if (o instanceof Timestamp) {
-            if (calendar != null) {
-                return calendar.equals(((Timestamp)o).calendar);
-            }
-        }
-        return super.equals(o);
-    }
+	@Override
+	public boolean equals(Object o) {
+		if (o instanceof Timestamp) {
+			if (calendar != null) {
+				return calendar.equals(((Timestamp)o).calendar);
+			}
+		}
+		return super.equals(o);
+	}
 
-    @Override
-    public int compareTo(Timestamp another) {
-        return calendar.compareTo(another.calendar);
-    }
+	@Override
+	public int compareTo(Timestamp another) {
+		return calendar.compareTo(another.calendar);
+	}
 }
