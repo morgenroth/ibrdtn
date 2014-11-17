@@ -175,7 +175,7 @@ public class Database {
         try {
             Cursor cur = mDatabase.query(Database.TABLE_NAMES[1], PackageFileAdapter.PROJECTION, PackageFile.DOWNLOAD + " = ?", new String[] { downloadId.toString() }, null, null, null);
             
-            if (cur.moveToNext())
+            while (cur.moveToNext())
             {
                 files.add( new PackageFile(mContext, cur, new PackageFileAdapter.ColumnsMap()) );
             }
