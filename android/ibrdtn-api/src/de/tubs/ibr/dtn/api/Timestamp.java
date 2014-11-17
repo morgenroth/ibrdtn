@@ -50,6 +50,10 @@ public class Timestamp implements Comparable<Timestamp> {
 	{
 		return (getDate().getTime() / 1000) - Timestamp.TIMEVAL_CONVERSION;
 	}
+	
+	public boolean isValid() {
+		return getDate().getTime() > (Timestamp.TIMEVAL_CONVERSION * 1000L);
+	}
 
 	@Override
 	public boolean equals(Object o) {
