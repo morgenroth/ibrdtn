@@ -75,6 +75,10 @@ namespace dtn
 		void LOWPANConnection::run() throw ()
 		{
 			try {
+				// create a filter context
+				dtn::core::FilterContext context;
+				context.setProtocol(_cl.getDiscoveryProtocol());
+
 				while(_stream.good())
 				{
 					try {
@@ -88,9 +92,15 @@ namespace dtn
 						std::stringstream ss; ss << "lowpan:" << _address.address() << "." << _address.service();
 						EID sender(ss.str());
 
-						// raise default bundle received event
-						dtn::net::BundleReceivedEvent::raise(sender, bundle, false);
+						// push bundle through the filter routines
+						context.setBundle(bundle);
+						context.setPeer(sender);
+						BundleFilter::ACTION ret = dtn::core::BundleCore::getInstance().filter(dtn::core::BundleFilter::INPUT, context, bundle);
 
+						if (ret == BundleFilter::ACCEPT) {
+							// raise default bundle received event
+							dtn::net::BundleReceivedEvent::raise(sender, bundle, false);
+						}
 					} catch (const dtn::InvalidDataException &ex) {
 						IBRCOMMON_LOGGER_DEBUG_TAG("LOWPANConnection", 10) << "Received a invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					} catch (const ibrcommon::IOException &ex) {
@@ -126,6 +136,10 @@ namespace dtn
 		void LOWPANConnectionSender::run() throw ()
 		{
 			try {
+				// create a filter context
+				dtn::core::FilterContext context;
+				context.setProtocol(dtn::core::Node::CONN_LOWPAN);
+
 				while(_stream.good())
 				{
 					dtn::net::BundleTransfer job = _queue.poll();
@@ -136,7 +150,17 @@ namespace dtn
 					dtn::storage::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 
 					// read the bundle out of the storage
-					const dtn::data::Bundle bundle = storage.get(job.getBundle());
+					dtn::data::Bundle bundle = storage.get(job.getBundle());
+
+					// push bundle through the filter routines
+					context.setPeer(job.getNeighbor());
+					context.setBundle(bundle);
+					BundleFilter::ACTION ret = dtn::core::BundleCore::getInstance().filter(dtn::core::BundleFilter::OUTPUT, context, bundle);
+
+					if (ret != BundleFilter::ACCEPT) {
+						job.abort(dtn::net::TransferAbortedEvent::REASON_REFUSED_BY_FILTER);
+						continue;
+					}
 
 					// Put bundle into stringstream
 					serializer << bundle; _stream.flush();

@@ -184,7 +184,26 @@ namespace dtn
 
 			try {
 				// read the bundle out of the storage
-				const dtn::data::Bundle bundle = storage.get(job.getBundle());
+				dtn::data::Bundle bundle = storage.get(job.getBundle());
+
+				// create a filter context
+				dtn::core::FilterContext context;
+				context.setPeer(node.getEID());
+				context.setProtocol(getDiscoveryProtocol());
+
+				// push bundle through the filter routines
+				context.setBundle(bundle);
+				BundleFilter::ACTION ret = dtn::core::BundleCore::getInstance().filter(dtn::core::BundleFilter::OUTPUT, context, bundle);
+
+				switch (ret) {
+					case BundleFilter::ACCEPT:
+						break;
+					case BundleFilter::REJECT:
+					case BundleFilter::DROP:
+						dtn::net::BundleTransfer local_job = job;
+						local_job.abort(dtn::net::TransferAbortedEvent::REASON_REFUSED_BY_FILTER);
+						return;
+				}
 
 				// build the dictionary for EID lookup
 				const dtn::data::Dictionary dict(bundle);
@@ -428,6 +447,10 @@ namespace dtn
 		{
 			_running = true;
 
+			// create a filter context
+			dtn::core::FilterContext context;
+			context.setProtocol(getDiscoveryProtocol());
+
 			while (_running)
 			{
 				try {
@@ -436,8 +459,20 @@ namespace dtn
 
 					receive(bundle, sender);
 
-					// raise default bundle received event
-					dtn::net::BundleReceivedEvent::raise(sender, bundle, false);
+					// push bundle through the filter routines
+					context.setBundle(bundle);
+					BundleFilter::ACTION ret = dtn::core::BundleCore::getInstance().filter(dtn::core::BundleFilter::INPUT, context, bundle);
+
+					switch (ret) {
+						case BundleFilter::ACCEPT:
+							// raise default bundle received event
+							dtn::net::BundleReceivedEvent::raise(sender, bundle, false);
+							break;
+
+						case BundleFilter::REJECT:
+						case BundleFilter::DROP:
+							break;
+					}
 
 				} catch (const dtn::InvalidDataException &ex) {
 					IBRCOMMON_LOGGER_DEBUG_TAG("UDPConvergenceLayer", 2) << "Received a invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;

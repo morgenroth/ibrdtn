@@ -103,11 +103,7 @@ namespace dtn
 				// skip expired bundles
 				if ( dtn::utils::Clock::isExpired( bundle ) ) continue;
 
-				if ( cb.shouldAdd(bundle) )
-				{
-					result.put(bundle);
-					items_added++;
-				}
+				if ( cb.addIfSelected(result, bundle) ) items_added++;
 			}
 
 			if (items_added == 0) throw NoBundleFoundException();

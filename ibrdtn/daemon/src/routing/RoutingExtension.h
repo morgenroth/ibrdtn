@@ -22,9 +22,11 @@
 #ifndef ROUTINGEXTENSION_H_
 #define ROUTINGEXTENSION_H_
 
+#include "storage/BundleResult.h"
 #include "routing/NeighborDatabase.h"
 #include "routing/NodeHandshake.h"
 #include "core/Event.h"
+#include "core/Node.h"
 #include <ibrdtn/data/BundleID.h>
 #include <ibrdtn/data/EID.h>
 
@@ -33,6 +35,17 @@ namespace dtn
 	namespace routing
 	{
 		class BaseRouter;
+
+		class RoutingResult
+		 : public dtn::storage::BundleResult, public std::list<std::pair<dtn::data::MetaBundle, dtn::core::Node::Protocol> >
+		{
+		public:
+			RoutingResult();
+			virtual ~RoutingResult();
+
+			virtual void put(const dtn::data::MetaBundle &bundle) throw ();
+			virtual void put(const dtn::data::MetaBundle &bundle, const dtn::core::Node::Protocol p) throw ();
+		};
 
 		class RoutingExtension
 		{
@@ -44,6 +57,11 @@ namespace dtn
 
 			virtual void componentUp() throw () = 0;
 			virtual void componentDown() throw () = 0;
+
+			/**
+			 * Returns a tag used to identify the routing extension in filtering rules
+			 */
+			virtual const std::string getTag() const throw () { return "default"; }
 
 			/**
 			 * This method is called every time something has changed. The module
@@ -92,7 +110,7 @@ namespace dtn
 			 * @param destination The EID of the other node.
 			 * @param id The ID of the bundle to transfer. This bundle must be stored in the storage.
 			 */
-			void transferTo(const dtn::data::EID &destination, const dtn::data::MetaBundle &meta);
+			void transferTo(const dtn::data::EID &destination, const dtn::data::MetaBundle &meta, const dtn::core::Node::Protocol);
 
 			BaseRouter& operator*();
 		};

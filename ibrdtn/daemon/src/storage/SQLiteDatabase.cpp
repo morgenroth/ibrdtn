@@ -547,12 +547,11 @@ namespace dtn
 				if ( !dtn::utils::Clock::isExpired( m ) )
 				{
 					// ask the filter if this bundle should be added to the return list
-					if (cb.shouldAdd(m))
+					if (cb.addIfSelected(ret, m))
 					{
 						IBRCOMMON_LOGGER_DEBUG_TAG("SQLiteDatabase", 40) << "add bundle to query selection list: " << m.toString() << IBRCOMMON_LOGGER_ENDL;
 
-						// add the bundle to the list
-						ret.put(m);
+						// bundle has been added - increment counter
 						items_added++;
 					}
 				}

@@ -23,6 +23,7 @@
 #include <ibrdtn/data/Number.h>
 #include <ibrdtn/data/EID.h>
 #include <ibrdtn/data/MetaBundle.h>
+#include "core/Node.h"
 
 #include <ibrcommon/thread/Mutex.h>
 #include <map>
@@ -36,11 +37,12 @@ namespace dtn
 	{
 		class BundleTransfer {
 		public:
-			BundleTransfer(const dtn::data::EID &neighbor, const dtn::data::MetaBundle &bundle);
+			BundleTransfer(const dtn::data::EID &neighbor, const dtn::data::MetaBundle &bundle, dtn::core::Node::Protocol p);
 			virtual ~BundleTransfer();
 
 			const dtn::data::EID& getNeighbor() const;
 			const dtn::data::MetaBundle& getBundle() const;
+			dtn::core::Node::Protocol getProtocol() const;
 
 			/**
 			 * Mark this transmission as aborted
@@ -55,11 +57,12 @@ namespace dtn
 		private:
 			class Slot {
 			public:
-				Slot(const dtn::data::EID &neighbor, const dtn::data::MetaBundle &bundle);
+				Slot(const dtn::data::EID &neighbor, const dtn::data::MetaBundle &bundle, dtn::core::Node::Protocol p);
 				virtual ~Slot();
 
 				const dtn::data::EID neighbor;
 				const dtn::data::MetaBundle bundle;
+				const dtn::core::Node::Protocol protocol;
 
 				/**
 				 * Mark this transmission as aborted

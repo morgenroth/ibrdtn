@@ -94,7 +94,7 @@ namespace dtn
 
 			static ibrcommon::File getPath(const dtn::core::Node&);
 			static std::list<dtn::data::MetaBundle> scan(const ibrcommon::File &path);
-			static void load(const dtn::core::Node&);
+			void load(const dtn::core::Node&);
 
 		};
 

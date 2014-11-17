@@ -22,6 +22,7 @@
 #ifndef REQUEUEBUNDLEEVENT_H_
 #define REQUEUEBUNDLEEVENT_H_
 
+#include "core/Node.h"
 #include "core/Event.h"
 #include "ibrdtn/data/BundleID.h"
 #include "ibrdtn/data/EID.h"
@@ -43,13 +44,16 @@ namespace dtn
 
 			const dtn::data::BundleID& getBundle() const;
 
-			static void raise(const dtn::data::EID peer, const dtn::data::BundleID &id);
+			dtn::core::Node::Protocol getProtocol() const;
+
+			static void raise(const dtn::data::EID peer, const dtn::data::BundleID &id, dtn::core::Node::Protocol p);
 
 		private:
-			RequeueBundleEvent(const dtn::data::EID peer, const dtn::data::BundleID &id);
+			RequeueBundleEvent(const dtn::data::EID peer, const dtn::data::BundleID &id, dtn::core::Node::Protocol p);
 
 			dtn::data::EID _peer;
 			dtn::data::BundleID _bundle;
+			dtn::core::Node::Protocol _protocol;
 		};
 	}
 }

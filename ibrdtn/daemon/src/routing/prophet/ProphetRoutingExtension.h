@@ -68,6 +68,8 @@ namespace dtn
 						dtn::data::Timestamp next_exchange_timeout);
 			virtual ~ProphetRoutingExtension();
 
+			virtual const std::string getTag() const throw ();
+
 			/* virtual methods from BaseRouter::Extension */
 			virtual void requestHandshake(const dtn::data::EID&, NodeHandshake&) const; ///< \see BaseRouter::Extension::requestHandshake
 			virtual void responseHandshake(const dtn::data::EID&, const NodeHandshake&, NodeHandshake&); ///< \see BaseRouter::Extension::responseHandshake

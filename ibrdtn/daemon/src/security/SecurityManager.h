@@ -25,10 +25,7 @@
 #include "Configuration.h"
 #include <ibrdtn/data/EID.h>
 #include <ibrdtn/data/Bundle.h>
-#include <ibrdtn/security/BundleAuthenticationBlock.h>
-#include <ibrdtn/security/PayloadIntegrityBlock.h>
-#include <ibrdtn/security/PayloadConfidentialBlock.h>
-#include <ibrdtn/security/ExtensionSecurityBlock.h>
+#include <ibrdtn/security/SecurityBlock.h>
 #include <map>
 
 namespace dtn
@@ -72,18 +69,8 @@ namespace dtn
 				 * if they could validated.
 				 * @param bundle The bundle to verify.
 				 */
-				void verify(dtn::data::Bundle &bundle) const throw (VerificationFailedException);
-				void verifyBAB(dtn::data::Bundle &bundle) const throw (VerificationFailedException);
-				void verifyPIB(dtn::data::Bundle &bundle) const throw (VerificationFailedException);
-
-				/**
-				 * This method do a fast verify with the bundle. It do not change anything in it.
-				 * A missing key should not lead to an exception, because this method is
-				 * called on each received and we need to support multihop without key
-				 * knowledge too.
-				 * @param bundle The bundle to verify.
-				 */
-				void fastverify(const dtn::data::Bundle &bundle) const throw (VerificationFailedException);
+				void verifyAuthentication(dtn::data::Bundle &bundle) const throw (VerificationFailedException);
+				void verifyIntegrity(dtn::data::Bundle &bundle) const throw (VerificationFailedException);
 
 				/**
 				 * This method decrypts encrypted payload of a bundle. It is necessary to

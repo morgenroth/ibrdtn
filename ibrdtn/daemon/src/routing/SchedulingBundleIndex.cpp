@@ -47,8 +47,7 @@ namespace dtn
 			for (priority_index::const_iterator iter = _priority_index.begin(); iter != _priority_index.end(); ++iter)
 			{
 				const dtn::data::MetaBundle &b = (*iter);
-				if (cb.shouldAdd(b)) {
-					result.put(b);
+				if (cb.addIfSelected(result, b)) {
 					added++;
 				}
 

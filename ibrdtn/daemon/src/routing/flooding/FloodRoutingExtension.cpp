@@ -110,6 +110,11 @@ namespace dtn
 			}
 		}
 
+		const std::string FloodRoutingExtension::getTag() const throw ()
+		{
+			return "flooding";
+		}
+
 		void FloodRoutingExtension::__cancellation() throw ()
 		{
 			_taskqueue.abort();
@@ -120,15 +125,15 @@ namespace dtn
 			class BundleFilter : public dtn::storage::BundleSelector
 			{
 			public:
-				BundleFilter(const NeighborDatabase::NeighborEntry &entry, const std::set<dtn::core::Node> &neighbors)
-				 : _entry(entry), _neighbors(neighbors)
+				BundleFilter(const NeighborDatabase::NeighborEntry &entry, const std::set<dtn::core::Node> &neighbors, const dtn::core::FilterContext &context, const dtn::net::ConnectionManager::protocol_list &plist)
+				 : _entry(entry), _neighbors(neighbors), _plist(plist), _context(context)
 				{};
 
 				virtual ~BundleFilter() {};
 
 				virtual dtn::data::Size limit() const throw () { return _entry.getFreeTransferSlots(); };
 
-				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
+				virtual bool addIfSelected(dtn::storage::BundleResult &result, const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
 					// check Scope Control Block - do not forward bundles with hop limit == 0
 					if (meta.hopcount == 0)
@@ -175,16 +180,41 @@ namespace dtn
 						return false;
 					}
 
-					return true;
+					// update filter context
+					dtn::core::FilterContext context = _context;
+					context.setMetaBundle(meta);
+
+					// check bundle filter for each possible path
+					for (dtn::net::ConnectionManager::protocol_list::const_iterator it = _plist.begin(); it != _plist.end(); ++it)
+					{
+						const dtn::core::Node::Protocol &p = (*it);
+
+						// update context with current protocol
+						context.setProtocol(p);
+
+						// execute filtering
+						dtn::core::BundleFilter::ACTION ret = dtn::core::BundleCore::getInstance().evaluate(dtn::core::BundleFilter::ROUTING, context);
+
+						if (ret == dtn::core::BundleFilter::ACCEPT)
+						{
+							// put the selected bundle with targeted interface into the result-set
+							static_cast<RoutingResult&>(result).put(meta, p);
+							return true;
+						}
+					}
+
+					return false;
 				};
 
 			private:
 				const NeighborDatabase::NeighborEntry &_entry;
 				const std::set<dtn::core::Node> &_neighbors;
+				const dtn::net::ConnectionManager::protocol_list &_plist;
+				const dtn::core::FilterContext &_context;
 			};
 
 			// list for bundles
-			dtn::storage::BundleResultList list;
+			RoutingResult list;
 
 			// set of known neighbors
 			std::set<dtn::core::Node> neighbors;
@@ -220,8 +250,17 @@ namespace dtn
 									neighbors.clear();
 								}
 
+								// get a list of protocols supported by both, the local BPA and the remote peer
+								const dtn::net::ConnectionManager::protocol_list plist =
+										dtn::core::BundleCore::getInstance().getConnectionManager().getSupportedProtocols(entry.eid);
+
+								// create a filter context
+								dtn::core::FilterContext context;
+								context.setPeer(entry.eid);
+								context.setRouting(*this);
+
 								// get the bundle filter of the neighbor
-								BundleFilter filter(entry, neighbors);
+								BundleFilter filter(entry, neighbors, context, plist);
 
 								// some debug
 								IBRCOMMON_LOGGER_DEBUG_TAG(FloodRoutingExtension::TAG, 40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
@@ -232,11 +271,11 @@ namespace dtn
 							}
 
 							// send the bundles as long as we have resources
-							for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
+							for (RoutingResult::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 							{
 								try {
 									// transfer the bundle to the neighbor
-									transferTo(task.eid, *iter);
+									transferTo(task.eid, (*iter).first, (*iter).second);
 								} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 							}
 						} catch (const NeighborDatabase::NoMoreTransfersAvailable &ex) {

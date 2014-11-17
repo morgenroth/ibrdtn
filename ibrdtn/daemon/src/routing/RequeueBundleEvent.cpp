@@ -27,8 +27,8 @@ namespace dtn
 {
 	namespace routing
 	{
-		RequeueBundleEvent::RequeueBundleEvent(const dtn::data::EID peer, const dtn::data::BundleID &id)
-		 : _peer(peer), _bundle(id)
+		RequeueBundleEvent::RequeueBundleEvent(const dtn::data::EID peer, const dtn::data::BundleID &id, dtn::core::Node::Protocol p)
+		 : _peer(peer), _bundle(id), _protocol(p)
 		{
 
 		}
@@ -38,10 +38,10 @@ namespace dtn
 
 		}
 
-		void RequeueBundleEvent::raise(const dtn::data::EID peer, const dtn::data::BundleID &id)
+		void RequeueBundleEvent::raise(const dtn::data::EID peer, const dtn::data::BundleID &id, dtn::core::Node::Protocol p)
 		{
 			// raise the new event
-			dtn::core::EventDispatcher<RequeueBundleEvent>::queue( new RequeueBundleEvent(peer, id) );
+			dtn::core::EventDispatcher<RequeueBundleEvent>::queue( new RequeueBundleEvent(peer, id, p) );
 		}
 
 		const string RequeueBundleEvent::getName() const
@@ -62,6 +62,11 @@ namespace dtn
 		const dtn::data::BundleID& RequeueBundleEvent::getBundle() const
 		{
 			return _bundle;
+		}
+
+		dtn::core::Node::Protocol RequeueBundleEvent::getProtocol() const
+		{
+			return _protocol;
 		}
 	}
 }

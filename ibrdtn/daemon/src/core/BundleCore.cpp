@@ -38,6 +38,11 @@
 #include <ibrdtn/data/EID.h>
 #include <ibrdtn/utils/Clock.h>
 #include <ibrcommon/Logger.h>
+#include <ibrcommon/thread/RWLock.h>
+#include <ibrcommon/thread/MutexLock.h>
+
+#include "core/filter/LogFilter.h"
+#include "core/filter/SecurityFilter.h"
 
 #include "limits.h"
 #include <iostream>
@@ -199,6 +204,9 @@ namespace dtn
 
 			// check connection state
 			check_connection_state();
+
+			// reload all tables
+			reload_filter_tables();
 		}
 
 		void BundleCore::setStorage(dtn::storage::BundleStorage *storage)
@@ -417,6 +425,14 @@ namespace dtn
 						throw dtn::data::Validator::RejectedException("timestamp is too far in the future");
 					}
 			}
+
+			// use validation filter for further evaluation
+			dtn::core::FilterContext context;
+			context.setMetaBundle(obj);
+
+			ibrcommon::MutexLock l(_filter_mutex);
+			if (_table_validation.evaluate(context) != BundleFilter::ACCEPT)
+				throw dtn::data::Validator::RejectedException("rejected by filter");
 		}
 
 		void BundleCore::validate(const dtn::data::PrimaryBlock &p) const throw (dtn::data::Validator::RejectedException)
@@ -469,9 +485,17 @@ namespace dtn
 			{
 				throw dtn::data::Validator::RejectedException("duplicate detected");
 			}
+
+			// use validation filter for further evaluation
+			dtn::core::FilterContext context;
+			context.setPrimaryBlock(p);
+
+			ibrcommon::MutexLock l(_filter_mutex);
+			if (_table_validation.evaluate(context) != BundleFilter::ACCEPT)
+				throw dtn::data::Validator::RejectedException("rejected by filter");
 		}
 
-		void BundleCore::validate(const dtn::data::Block&, const dtn::data::Number& size) const throw (dtn::data::Validator::RejectedException)
+		void BundleCore::validate(const dtn::data::Block& block, const dtn::data::Number& size) const throw (dtn::data::Validator::RejectedException)
 		{
 			// check for the size of the block
 			// reject a block if it exceeds the payload limit
@@ -480,9 +504,17 @@ namespace dtn
 				IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "bundle rejected: block size of " << size.toString() << " is too big" << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::data::Validator::RejectedException("block size is too big");
 			}
+
+			// use validation filter for further evaluation
+			dtn::core::FilterContext context;
+			context.setBlock(block, size);
+
+			ibrcommon::MutexLock l(_filter_mutex);
+			if (_table_validation.evaluate(context) != BundleFilter::ACCEPT)
+				throw dtn::data::Validator::RejectedException("rejected by filter");
 		}
 
-		void BundleCore::validate(const dtn::data::PrimaryBlock &bundle, const dtn::data::Block&, const dtn::data::Number& size) const throw (RejectedException)
+		void BundleCore::validate(const dtn::data::PrimaryBlock &bundle, const dtn::data::Block& block, const dtn::data::Number& size) const throw (RejectedException)
 		{
 			// check for the size of the foreign block
 			// reject a block if it exceeds the payload limit
@@ -507,6 +539,15 @@ namespace dtn
 					throw dtn::data::Validator::RejectedException("block size is too big");
 				}
 			}
+
+			// use validation filter for further evaluation
+			dtn::core::FilterContext context;
+			context.setPrimaryBlock(bundle);
+			context.setBlock(block, size);
+
+			ibrcommon::MutexLock l(_filter_mutex);
+			if (_table_validation.evaluate(context) != BundleFilter::ACCEPT)
+				throw dtn::data::Validator::RejectedException("rejected by filter");
 		}
 
 		void BundleCore::validate(const dtn::data::Bundle &b) const throw (dtn::data::Validator::RejectedException)
@@ -524,16 +565,6 @@ namespace dtn
 				IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "bundle rejected: bundle has expired (" << b.toString() << ")" << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::data::Validator::RejectedException("bundle is expired");
 			}
-
-#ifdef IBRDTN_SUPPORT_BSP
-			// do a fast security check
-			try {
-				dtn::security::SecurityManager::getInstance().fastverify(b);
-			} catch (const dtn::security::VerificationFailedException &ex) {
-				IBRCOMMON_LOGGER_DEBUG_TAG("BundleCore", 5) << "[bundle rejected] security checks failed, reason: " << ex.what() << ", bundle: " << b.toString() << IBRCOMMON_LOGGER_ENDL;
-				throw dtn::data::Validator::RejectedException("security checks failed");
-			}
-#endif
 
 			// check for invalid blocks
 			for (dtn::data::Bundle::const_iterator iter = b.begin(); iter != b.end(); ++iter)
@@ -554,6 +585,52 @@ namespace dtn
 					}
 				} catch (const std::bad_cast&) { }
 			}
+
+			// use validation filter for further evaluation
+			dtn::core::FilterContext context;
+			context.setBundle(b);
+
+			ibrcommon::MutexLock l(_filter_mutex);
+			if (_table_validation.evaluate(context) != BundleFilter::ACCEPT)
+				throw dtn::data::Validator::RejectedException("rejected by filter");
+		}
+
+		BundleFilter::ACTION BundleCore::filter(BundleFilter::TABLE table, const FilterContext &context, dtn::data::Bundle &bundle) const
+		{
+			ibrcommon::MutexLock l(_filter_mutex);
+
+			switch (table)
+			{
+				case BundleFilter::INPUT:
+					return _table_input.filter(context, bundle);
+
+				case BundleFilter::OUTPUT:
+					return _table_output.filter(context, bundle);
+
+				case BundleFilter::ROUTING:
+					return _table_routing.filter(context, bundle);
+			}
+
+			return BundleFilter::ACCEPT;
+		}
+
+		BundleFilter::ACTION BundleCore::evaluate(BundleFilter::TABLE table, const FilterContext &context) const
+		{
+			ibrcommon::MutexLock l(_filter_mutex);
+
+			switch (table)
+			{
+				case BundleFilter::INPUT:
+					return _table_input.evaluate(context);
+
+				case BundleFilter::OUTPUT:
+					return _table_output.evaluate(context);
+
+				case BundleFilter::ROUTING:
+					return _table_routing.evaluate(context);
+			}
+
+			return BundleFilter::ACCEPT;
 		}
 
 		const std::string BundleCore::getName() const
@@ -733,6 +810,68 @@ namespace dtn
 				}
 				setGloballyConnected(found);
 			}
+		}
+
+		void BundleCore::reload_filter_tables() throw ()
+		{
+			ibrcommon::RWLock l(_filter_mutex);
+
+			_table_input.clear();
+			_table_output.clear();
+			_table_routing.clear();
+			_table_validation.clear();
+
+			/**
+			 * Add security checks according to the configured security level
+			 */
+			const dtn::daemon::Configuration::Security &secconf = dtn::daemon::Configuration::getInstance().getSecurity();
+
+			if (secconf.getLevel() & dtn::daemon::Configuration::Security::SECURITY_LEVEL_AUTHENTICATED)
+			{
+				_table_validation.append(
+						(new SecurityFilter(SecurityFilter::VERIFY_AUTH, BundleFilter::SKIP))->append(
+						(new LogFilter(ibrcommon::LogLevel::warning, "bundle rejected due to missing authentication"))->append(
+						(new RejectFilter())
+				)));
+
+				_table_output.append(
+						(new SecurityFilter(SecurityFilter::APPLY_AUTH, BundleFilter::SKIP))->append(
+						(new LogFilter(ibrcommon::LogLevel::warning, "can not apply authentication due to missing key"))
+					));
+			}
+
+			if (secconf.getLevel() & dtn::daemon::Configuration::Security::SECURITY_LEVEL_SIGNED)
+			{
+				_table_validation.append(
+						(new SecurityFilter(SecurityFilter::VERIFY_INTEGRITY, BundleFilter::SKIP))->append(
+						(new LogFilter(ibrcommon::LogLevel::warning, "bundle rejected due to missing signature"))->append(
+						(new RejectFilter())
+				)));
+			}
+
+			if (secconf.getLevel() & dtn::daemon::Configuration::Security::SECURITY_LEVEL_ENCRYPTED)
+			{
+				_table_validation.append(
+						(new SecurityFilter(SecurityFilter::VERIFY_CONFIDENTIALITY, BundleFilter::SKIP))->append(
+						(new LogFilter(ibrcommon::LogLevel::warning, "bundle rejected due to missing encryption"))->append(
+						(new RejectFilter())
+				)));
+			}
+
+			/**
+			 * verify integrity and authentication of incoming bundles
+			 */
+			_table_input.append(
+					(new SecurityFilter(SecurityFilter::VERIFY_AUTH, BundleFilter::SKIP))->append(
+					(new LogFilter(ibrcommon::LogLevel::warning, "bundle rejected due to invalid authentication"))->append(
+					(new RejectFilter())
+			)));
+
+			_table_input.append(
+					(new SecurityFilter(SecurityFilter::VERIFY_INTEGRITY, BundleFilter::SKIP))->append(
+					(new LogFilter(ibrcommon::LogLevel::warning, "bundle rejected due to invalid signature"))->append(
+					(new RejectFilter())
+			)));
 		}
 	}
 }

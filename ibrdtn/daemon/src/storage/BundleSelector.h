@@ -46,12 +46,24 @@ namespace dtn
 			virtual dtn::data::Size limit() const throw () { return 1; };
 
 			/**
-			 * This method is called by the storage to determine if one bundle
+			 * This method is called by addIfSelected() to determine if one bundle
 			 * should added to a set or not.
 			 * @param id The bundle id of the bundle to select.
 			 * @return True, if the bundle should be added to the set.
 			 */
 			virtual bool shouldAdd(const dtn::data::MetaBundle&) const throw (BundleSelectorException) { return false; };
+
+			/**
+			 * This method is called by the storage to add a bundle to the result
+			 * if it has been selected by the shouldAdd method
+			 */
+			virtual bool addIfSelected(BundleResult &result, const dtn::data::MetaBundle &bundle) const throw (BundleSelectorException) {
+				if (shouldAdd(bundle)) {
+					result.put(bundle);
+					return true;
+				}
+				return false;
+			};
 		};
 	}
 }

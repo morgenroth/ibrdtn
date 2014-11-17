@@ -30,6 +30,7 @@
 #include "storage/BundleStorage.h"
 #include "core/WallClock.h"
 #include "routing/BaseRouter.h"
+#include "core/BundleFilter.h"
 
 #include "net/ConnectionManager.h"
 #include "net/ConvergenceLayer.h"
@@ -43,11 +44,13 @@
 #include <ibrdtn/data/Serializer.h>
 #include <ibrdtn/data/EID.h>
 
+#include <ibrcommon/thread/RWMutex.h>
 #include <ibrcommon/link/LinkManager.h>
 
 #include <vector>
 #include <set>
 #include <map>
+#include "BundleFilterTable.h"
 
 using namespace dtn::data;
 
@@ -134,6 +137,17 @@ namespace dtn
 			virtual void validate(const dtn::data::MetaBundle &obj) const throw (RejectedException);
 
 			/**
+			 * Pass a bundle with a context through the desired table. The bundle may be modified during
+			 * the processing.
+			 */
+			BundleFilter::ACTION filter(BundleFilter::TABLE table, const FilterContext &context, dtn::data::Bundle &bundle) const;
+
+			/**
+			 * Pass a context through the desired table
+			 */
+			BundleFilter::ACTION evaluate(BundleFilter::TABLE table, const FilterContext &context) const;
+
+			/**
 			 * Define a global block size limit. This is used in the validator to reject bundles while receiving.
 			 */
 			static dtn::data::Length blocksizelimit;
@@ -201,6 +215,11 @@ namespace dtn
 			void check_connection_state() throw ();
 
 			/**
+			 * reload filtering tables
+			 */
+			void reload_filter_tables() throw ();
+
+			/**
 			 * Forbidden copy constructor
 			 */
 			BundleCore operator=(const BundleCore &k)
@@ -229,6 +248,13 @@ namespace dtn
 			 * The variable is true if we are connected via a global address.
 			 */
 			bool _globally_connected;
+
+			BundleFilterTable _table_validation;
+			BundleFilterTable _table_input;
+			BundleFilterTable _table_output;
+			BundleFilterTable _table_routing;
+
+			mutable ibrcommon::RWMutex _filter_mutex;
 		};
 	}
 }

@@ -1,4 +1,5 @@
 ## sub directory
+SUBDIRS = filter
 
 AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS)
 AM_LDFLAGS = $(ibrdtn_LIBS)
@@ -38,7 +39,13 @@ core_SOURCES = \
 	BundlePurgeEvent.cpp \
 	TimeAdjustmentEvent.h \
 	TimeAdjustmentEvent.cpp \
-	EventDispatcher.h
+	EventDispatcher.h \
+	BundleFilter.h \
+	BundleFilter.cpp \
+	BundleFilterTable.h \
+	BundleFilterTable.cpp
+	
+libcore_la_LIBADD = filter/libcorefilter.la
 
 if ANDROID
 noinst_DATA = Android.mk
@@ -54,5 +61,8 @@ Android.mk: Makefile.am
 		-:STATIC libdtnd_core \
 		-:SOURCES $(core_SOURCES) \
 		-:CPPFLAGS $(CPPFLAGS) $(AM_CPPFLAGS) \
-		-:LDFLAGS $(AM_LDFLAGS) \
+		-:LDFLAGS $(AM_LDFLAGS)  \
+			$(subst lib,libdtnd_, $(libcore_la_LIBADD)) \
+		-:LIBFILTER_WHOLE dtnd_corefilter \
+		-:SUBDIR $(patsubst %,src/core/%, $(SUBDIRS)) \
 		> $@

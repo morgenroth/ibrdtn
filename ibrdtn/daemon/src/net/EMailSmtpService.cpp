@@ -281,8 +281,25 @@ namespace dtn
 			if(!isConnected())
 				connect();
 
-			const dtn::data::Bundle bundle = _storage.get(t->getJob().getBundle());
+			// create a filter context
+			dtn::core::FilterContext context;
+			context.setPeer(t->getNode().getEID());
+			context.setProtocol(dtn::core::Node::CONN_EMAIL);
+
+			dtn::data::Bundle bundle = _storage.get(t->getJob().getBundle());
 			const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(bundle);
+
+			// push bundle through the filter routines
+			context.setBundle(bundle);
+			BundleFilter::ACTION ret = dtn::core::BundleCore::getInstance().filter(dtn::core::BundleFilter::OUTPUT, context, bundle);
+
+			if (ret != BundleFilter::ACCEPT)
+			{
+				IBRCOMMON_LOGGER_DEBUG(1) << "BPTables: OUTPUT table prohibits sending" << IBRCOMMON_LOGGER_ENDL;
+				BundleTransfer job = t->getJob();
+				job.abort(dtn::net::TransferAbortedEvent::REASON_REFUSED_BY_FILTER);
+				return;
+			}
 
 			// Create new email
 			vmime::ref<vmime::message> msg = vmime::create <vmime::message>();

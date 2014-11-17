@@ -37,6 +37,7 @@
 #include "net/ConnectionEvent.h"
 
 #include <set>
+#include <list>
 
 namespace dtn
 {
@@ -111,6 +112,18 @@ namespace dtn
 			};
 
 			void open(const dtn::core::Node &node) throw (ibrcommon::Exception);
+
+			typedef std::list<dtn::core::Node::Protocol> protocol_list;
+
+			/**
+			 * Returns a list of all supported protocols
+			 */
+			const protocol_list getSupportedProtocols();
+
+			/**
+			 * Returns a list of protocol supported by both, local BPA and the peer
+			 */
+			const protocol_list getSupportedProtocols(const dtn::data::EID &peer);
 
 			/**
 			 * get a set with all neighbors

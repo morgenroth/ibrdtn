@@ -465,28 +465,19 @@ namespace dtn
 
 		void ConnectionManager::queue(const dtn::core::Node &node, const dtn::net::BundleTransfer &job)
 		{
-			// get the list of all available URIs
-			std::list<Node::URI> uri_list = node.getAll();
+			// lock convergence layers while iterating over them
+			ibrcommon::MutexLock l(_cl_lock);
 
-			// search for a match between URI and available convergence layer
-			for (std::list<Node::URI>::const_iterator it = uri_list.begin(); it != uri_list.end(); ++it)
+			// search a matching convergence layer for the desired path
+			for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
 			{
-				const Node::URI &uri = (*it);
-
-				// lock convergence layers while iterating over them
-				ibrcommon::MutexLock l(_cl_lock);
-
-				// search a matching convergence layer for this URI
-				for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
+				ConvergenceLayer *cl = (*iter);
+				if (cl->getDiscoveryProtocol() == job.getProtocol())
 				{
-					ConvergenceLayer *cl = (*iter);
-					if (cl->getDiscoveryProtocol() == uri.protocol)
-					{
-						cl->queue(node, job);
+					cl->queue(node, job);
 
-						// stop here, we queued the bundle already
-						return;
-					}
+					// stop here, we queued the bundle already
+					return;
 				}
 			}
 
@@ -530,6 +521,44 @@ namespace dtn
 				// signal interruption of the transfer
 				job.abort(dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
 			}
+		}
+
+		const ConnectionManager::protocol_list ConnectionManager::getSupportedProtocols()
+		{
+			protocol_list ret;
+
+			// lock convergence layers while iterating over them
+			ibrcommon::MutexLock l(_cl_lock);
+
+			// search a matching convergence layer for the desired path
+			for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
+			{
+				const ConvergenceLayer &cl = (**iter);
+				ret.push_back(cl.getDiscoveryProtocol());
+			}
+
+			return ret;
+		}
+
+		const ConnectionManager::protocol_list ConnectionManager::getSupportedProtocols(const dtn::data::EID &peer)
+		{
+			protocol_list ret;
+
+			const dtn::core::Node node = getNeighbor(peer);
+
+			// lock convergence layers while iterating over them
+			ibrcommon::MutexLock l(_cl_lock);
+
+			// search a matching convergence layer for the desired path
+			for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
+			{
+				const ConvergenceLayer &cl = (**iter);
+				if (node.has(cl.getDiscoveryProtocol())) {
+					ret.push_back(cl.getDiscoveryProtocol());
+				}
+			}
+
+			return ret;
 		}
 
 		const std::set<dtn::core::Node> ConnectionManager::getNeighbors()

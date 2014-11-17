@@ -52,6 +52,8 @@ namespace dtn
 
 			virtual void reportSuccess(size_t retries, double rtt) { };
 			virtual void reportFailure() { };
+
+			virtual dtn::core::Node::Protocol getDiscoveryProtocol() const = 0;
 		};
 
 		class DatagramConnection : public ibrcommon::JoinableThread

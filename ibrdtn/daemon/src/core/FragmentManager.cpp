@@ -144,13 +144,14 @@ namespace dtn
 
 						IBRCOMMON_LOGGER_TAG(FragmentManager::TAG, notice) << "Bundle " << merged.toString() << " merged" << IBRCOMMON_LOGGER_ENDL;
 
-#ifdef IBRDTN_SUPPORT_BSP
-						// lets see if signatures and hashes are correct and remove them if possible
-						dtn::security::SecurityManager::getInstance().verify(merged);
-#endif
-
-						// raise default bundle received event
-						dtn::net::BundleReceivedEvent::raise(dtn::core::BundleCore::local, merged, true);
+						// pass merged bundle through the filter
+						FilterContext context;
+						context.setBundle(merged);
+						if (BundleCore::getInstance().filter(BundleFilter::INPUT, context, merged) == BundleFilter::ACCEPT)
+						{
+							// raise default bundle received event
+							dtn::net::BundleReceivedEvent::raise(dtn::core::BundleCore::local, merged, true);
+						}
 
 						// delete all fragments of the merged bundle
 						if (merged.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))

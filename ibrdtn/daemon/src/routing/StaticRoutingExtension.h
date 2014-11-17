@@ -45,6 +45,8 @@ namespace dtn
 			StaticRoutingExtension();
 			virtual ~StaticRoutingExtension();
 
+			virtual const std::string getTag() const throw ();
+
 			/**
 			 * This method is called every time something has changed. The module
 			 * should search again for bundles to transfer to the given peer.
