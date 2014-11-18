@@ -485,6 +485,9 @@ public class ChatService extends DTNIntentService {
 
 	@Override
 	protected void onHandleIntent(Intent intent) {
+		// stop processing if the session is not assigned
+		if (_session == null) return;
+		
 		String action = intent.getAction();
 		
 		// create a task to process concurrently
