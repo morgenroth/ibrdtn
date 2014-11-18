@@ -45,7 +45,7 @@ public class RosterLoader extends AsyncTaskLoader<Cursor> {
 			
 			// load online buddies
 			return db.query(Roster.TABLE_NAME_ROSTER, RosterAdapter.PROJECTION,
-					Buddy.LASTSEEN + " >= ? OR " + Buddy.PINNED + " > 0", new String[] { dateFormat.format(offline_limit) }, null, null, Buddy.NICKNAME);
+					"(" + Buddy.PRESENCE + " != ? AND " + Buddy.LASTSEEN + " >= ?) OR " + Buddy.PINNED + " > 0", new String[] { "unavailable", dateFormat.format(offline_limit) }, null, null, Buddy.NICKNAME);
 		} else {
 			// load all buddies
 			return db.query(Roster.TABLE_NAME_ROSTER, RosterAdapter.PROJECTION,
