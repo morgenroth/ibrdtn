@@ -1,9 +1,11 @@
 package de.tubs.ibr.dtn.chat;
 
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.IntentSender.SendIntentException;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
@@ -120,11 +122,17 @@ public class MeFragment extends Fragment implements View.OnClickListener {
 	@Override
 	public void onPause() {
 		super.onPause();
+		
+		getActivity().unregisterReceiver(mUpdateListener);
 	}
 
 	@Override
 	public void onResume() {
 		super.onResume();
+		
+		IntentFilter filter = new IntentFilter(ChatService.ACTION_USERINFO_UPDATED);
+		getActivity().registerReceiver(mUpdateListener, filter);
+		
 		onPreferencesChanged();
 	}
 	
@@ -164,7 +172,7 @@ public class MeFragment extends Fragment implements View.OnClickListener {
 	@Override
 	public void onClick(View v) {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-		String presence_tag = prefs.getString("presencetag", "auto");
+		String presence_tag = prefs.getString("presencetag", "unavailable");
 		String presence_text = prefs.getString("statustext", "");
 		
 		MeDialog dialog = MeDialog.newInstance(presence_tag, presence_text);
@@ -183,10 +191,19 @@ public class MeFragment extends Fragment implements View.OnClickListener {
 		
 		dialog.show(getActivity().getSupportFragmentManager(), "me");
 	}
+	
+	private BroadcastReceiver mUpdateListener = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (ChatService.ACTION_USERINFO_UPDATED.equals(intent.getAction())) {
+				onPreferencesChanged();
+			}
+		}
+	};
 
 	private void onPreferencesChanged() {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-		String presence_tag = prefs.getString("presencetag", "auto");
+		String presence_tag = prefs.getString("presencetag", "unavailable");
 		String presence_nick = (mChatService != null) ? mChatService.getLocalNickname() : "";
 		String presence_text = prefs.getString("statustext", "");
 		

@@ -11,8 +11,6 @@
     <string name="conversation_with">Gespräch mit</string>
     <string name="remove">Löschen</string>
     <string name="nickname">Rufname</string>
-    <string name="broadcast_presence">Status Broadcast</string>
-    <string name="broadcast_presence_desc">Verteile deinen Status bei Programmstart</string>
     <string name="preferences">Einstellungen</string>
     <string name="you">Du</string>
     <string name="new_message_from">Neue Nachricht von</string>

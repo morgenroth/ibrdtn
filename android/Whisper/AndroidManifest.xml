@@ -45,10 +45,6 @@
 		
 	    <receiver android:enabled="true" android:name=".service.EventReceiver" android:exported="true" android:permission="de.tubs.ibr.dtn.permission.DTN_SERVER">
 	        <intent-filter>
-	            <action android:name="de.tubs.ibr.dtn.intent.STATE" />
-	            <category android:name="android.intent.category.DEFAULT" />
-	        </intent-filter>
-	        <intent-filter>
 	            <action android:name="de.tubs.ibr.dtn.intent.RECEIVE" />
 	            <category android:name="de.tubs.ibr.dtn.chat" />
 	        </intent-filter>

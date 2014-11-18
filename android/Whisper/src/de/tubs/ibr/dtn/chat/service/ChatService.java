@@ -93,6 +93,7 @@ public class ChatService extends DTNIntentService {
 	public static final String ACTION_PRESENCE_ALARM = "de.tubs.ibr.dtn.chat.PRESENCE_ALARM";
 	public static final String ACTION_SEND_MESSAGE = "de.tubs.ibr.dtn.chat.SEND_MESSAGE";
 	public static final String ACTION_REFRESH_PRESENCE = "de.tubs.ibr.dtn.chat.REFRESH_PRESENCE";
+	public static final String ACTION_USERINFO_UPDATED = "de.tubs.ibr.dtn.chat.USERINFO_UPDATED";
 	
 	private static final int MESSAGE_NOTIFICATION = 1;
 	public static final String ACTION_OPENCHAT = "de.tubs.ibr.dtn.chat.OPENCHAT";
@@ -313,8 +314,41 @@ public class ChatService extends DTNIntentService {
 			_service_error = ServiceError.PERMISSION_NOT_GRANTED;
 		}
 		
+		// register to presence changes
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		prefs.registerOnSharedPreferenceChangeListener(mPrefListener);
+		
 		Log.i(TAG, "service created.");
 	}
+	
+	private SharedPreferences.OnSharedPreferenceChangeListener mPrefListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+		@Override
+		public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
+			if ("presencetag".equals(key)) {
+				String announced = prefs.getString("announced-presence", "unavailable");
+				String desired = prefs.getString(key, "unavailable");
+				
+				// if desired presence different to the announced
+				if (!announced.equals(desired)) {
+					if (desired.equals("unavailable")) {
+						// deactivate presence generator
+						PresenceGenerator.deactivate(ChatService.this);
+					} else {
+						// activate presence generator
+						PresenceGenerator.activate(ChatService.this);
+					}
+					
+					// set new presence as announced
+					prefs.edit().putString("announced-presence", desired).commit();
+					
+					// broadcast presence
+					Intent intent = new Intent(ChatService.this, ChatService.class);
+					intent.setAction(ChatService.ACTION_PRESENCE_ALARM);
+					startService(intent);
+				}
+			}
+		}
+	};
 	
 	public ServiceError getServiceError() {
 		return _service_error;
@@ -323,6 +357,10 @@ public class ChatService extends DTNIntentService {
 	@Override
 	public void onDestroy()
 	{
+		// unregister preference listener
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		prefs.unregisterOnSharedPreferenceChangeListener(mPrefListener);
+		
 		// close the roster (plus db connection)
 		this.roster.close();
 		
@@ -350,7 +388,6 @@ public class ChatService extends DTNIntentService {
 		if (presence_nick.length() == 0)
 		{
 			String endpoint = getClient().getEndpoint();
-			Log.d(TAG, "Endpoint: " + endpoint);
 			
 			if (endpoint == null) return FALLBACK_NICKNAME;
 			return Roster.generateNickname(endpoint);
@@ -459,7 +496,7 @@ public class ChatService extends DTNIntentService {
 			PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
 			Boolean screenOn = pm.isScreenOn();
 			
-			String presence_tag = preferences.getString("presencetag", "auto");
+			String presence_tag = preferences.getString("presencetag", "unavailable");
 			String presence_nick = getLocalNickname();
 			String presence_text = preferences.getString("statustext", "");
 			
@@ -668,18 +705,34 @@ public class ChatService extends DTNIntentService {
 
 	@Override
 	protected void onSessionConnected(Session session) {
-		// respect user settings
-		if (PreferenceManager.getDefaultSharedPreferences(ChatService.this).getBoolean("checkBroadcastPresence", false))
-		{
-			// register scheduled presence update
-			PresenceGenerator.activate(ChatService.this);
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		
+		/**
+		 * Upgrade from "checkBroadcastPresence" option
+		 */
+		if (prefs.contains("checkBroadcastPresence")) {
+			if (!prefs.getBoolean("checkBroadcastPresence", false)) {
+				prefs.edit().putString("presencetag", "unavailable").remove("checkBroadcastPresence").commit();
+			} else {
+				prefs.edit().remove("checkBroadcastPresence").commit();
+			}
 		}
+		
+		/**
+		 * Activate presence by default
+		 */
+		if (!prefs.contains("presencetag")) prefs.edit().putString("presencetag", "auto").commit();
+		mPrefListener.onSharedPreferenceChanged(prefs, "presencetag");
 		
 		// register own data handler for incoming bundles
 		session.setDataHandler(_data_handler);
 
 		// store session locally
 		_session = session;
+		
+		// signal updated user info
+		Intent i = new Intent(ACTION_USERINFO_UPDATED);
+		sendBroadcast(i);
 	}
 
 	@Override
