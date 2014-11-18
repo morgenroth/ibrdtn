@@ -30,50 +30,50 @@ import android.content.Intent;
 import android.util.Log;
 
 public class PresenceGenerator {
-    
-    private static final String TAG = "PresenceGenerator";
 
-    // activate alarm every 15 minutes
-    static public void activate(Context context)
-    {
-        // create a new wakeup intent
-        Intent intent = new Intent(context, ChatService.class);
-        intent.setAction(ChatService.ACTION_PRESENCE_ALARM);
-        
-        // check if the presence alarm is already active
-        PendingIntent pi = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_NO_CREATE);
-        
-        if (pi == null) {
-            // create pending intent
-            PendingIntent sender = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
-    
-            // Get the AlarmManager service
-            AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-            am.setInexactRepeating(AlarmManager.RTC_WAKEUP, new Date().getTime(), AlarmManager.INTERVAL_FIFTEEN_MINUTES, sender);
-            
-            Log.i(TAG, "Alarm set for every 15 minutes.");
-        } else {
-            Log.i(TAG, "Alarm already active.");
-        }
-    }
-    
-    // deactivate alarm every 15 minutes
-    static public void deactivate(Context context)
-    {
-        // create a new wakeup intent
-        Intent intent = new Intent(context, ChatService.class);
-        intent.setAction(ChatService.ACTION_PRESENCE_ALARM);
-        
-        // check if the presence alarm is already active
-        PendingIntent pi = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_NO_CREATE);
-        
-        if (pi != null) {
-            // Get the AlarmManager service
-            AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-            am.cancel(pi);
-            pi.cancel();
-            
-            Log.i(TAG, "Alarm canceled.");
-        }
-    }
+	private static final String TAG = "PresenceGenerator";
+
+	// activate alarm every 15 minutes
+	static public void activate(Context context)
+	{
+		// create a new wakeup intent
+		Intent intent = new Intent(context, ChatService.class);
+		intent.setAction(ChatService.ACTION_PRESENCE_ALARM);
+
+		// check if the presence alarm is already active
+		PendingIntent pi = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_NO_CREATE);
+
+		if (pi == null) {
+			// create pending intent
+			PendingIntent sender = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+
+			// Get the AlarmManager service
+			AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+			am.setInexactRepeating(AlarmManager.RTC_WAKEUP, new Date().getTime(), AlarmManager.INTERVAL_FIFTEEN_MINUTES, sender);
+
+			Log.i(TAG, "Alarm set for every 15 minutes.");
+		} else {
+			Log.i(TAG, "Alarm already active.");
+		}
+	}
+
+	// deactivate alarm every 15 minutes
+	static public void deactivate(Context context)
+	{
+		// create a new wakeup intent
+		Intent intent = new Intent(context, ChatService.class);
+		intent.setAction(ChatService.ACTION_PRESENCE_ALARM);
+
+		// check if the presence alarm is already active
+		PendingIntent pi = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_NO_CREATE);
+
+		if (pi != null) {
+			// Get the AlarmManager service
+			AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+			am.cancel(pi);
+			pi.cancel();
+
+			Log.i(TAG, "Alarm canceled.");
+		}
+	}
 }
