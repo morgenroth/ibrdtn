@@ -21,39 +21,14 @@
  */
 package de.tubs.ibr.dtn.chat;
 
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
-import android.preference.PreferenceManager;
-import de.tubs.ibr.dtn.chat.service.PresenceGenerator;
 
 public class Preferences extends PreferenceActivity {
 	@SuppressWarnings("deprecation")
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
-	    super.onCreate(savedInstanceState);
+		super.onCreate(savedInstanceState);
 		addPreferencesFromResource(R.xml.preferences);
-
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-		prefs.registerOnSharedPreferenceChangeListener(pref_listener);
 	}
-	
-	@Override
-	protected void onDestroy() {
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-		prefs.unregisterOnSharedPreferenceChangeListener(pref_listener);
-		super.onDestroy();
-	}
-
-	SharedPreferences.OnSharedPreferenceChangeListener pref_listener = new SharedPreferences.OnSharedPreferenceChangeListener() {
-		public void onSharedPreferenceChanged(SharedPreferences prefs, String text) {
-			if (text.equals("checkBroadcastPresence")) {
-				if (prefs.getBoolean(text, false)) {
-				    PresenceGenerator.activate(Preferences.this);
-				} else {
-				    PresenceGenerator.deactivate(Preferences.this);
-				}
-			}
-		}
-	};
 }

@@ -24,8 +24,6 @@ package de.tubs.ibr.dtn.chat.service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.preference.PreferenceManager;
-import android.util.Log;
 
 public class EventReceiver extends BroadcastReceiver {
 	
@@ -33,26 +31,7 @@ public class EventReceiver extends BroadcastReceiver {
 	public void onReceive(Context context, Intent intent) {
 		String action = intent.getAction();
 		
-		if (action.equals(de.tubs.ibr.dtn.Intent.STATE))
-		{
-			String state = intent.getStringExtra("state");
-			Log.d("EventReceiver", "State: " + state);
-			if (state.equals("ONLINE"))
-			{
-				// respect user settings
-				if (PreferenceManager.getDefaultSharedPreferences(context).getBoolean("checkBroadcastPresence", false))
-				{
-					// register scheduled presence update
-					PresenceGenerator.activate(context);
-				}
-			}
-			else if (state.equals("OFFLINE"))
-			{
-				// unregister scheduled presence update
-			    PresenceGenerator.deactivate(context);
-			}
-		}
-		else if (action.equals(de.tubs.ibr.dtn.Intent.RECEIVE))
+		if (action.equals(de.tubs.ibr.dtn.Intent.RECEIVE))
 		{
 			// start receiving service
 			Intent i = new Intent(context, ChatService.class);
