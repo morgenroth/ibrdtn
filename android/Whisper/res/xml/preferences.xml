@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" android:defaultValue="">
-    <EditTextPreference android:title="@string/nickname" android:key="editNickname"/>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:key="personalSettings" android:title="@string/personal_settings">
+        <EditTextPreference android:title="@string/nickname" android:key="editNickname"/>
+    </PreferenceCategory>
     <PreferenceCategory android:key="messageSettings" android:title="@string/message_settings">
         <ListPreference android:entries="@array/message_duration_names" android:entryValues="@array/message_duration_values" android:key="messageduration" android:title="@string/messageduration" android:defaultValue="259200" />
     </PreferenceCategory>
