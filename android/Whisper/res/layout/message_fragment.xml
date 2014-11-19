@@ -118,7 +118,7 @@
 			android:background="@drawable/button"
 			android:contentDescription="@string/desc_send_button"
 			android:onClick="sendMessage"
-			android:src="@drawable/ic_send"
+			android:src="@drawable/ic_action_send"
 			android:nextFocusLeft="@+id/textMessage" />
 	
 	</de.tubs.ibr.dtn.chat.MessageComposer>
