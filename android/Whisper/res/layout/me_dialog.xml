@@ -3,12 +3,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical" >
-
+    android:orientation="vertical"
+    android:paddingTop="4dp"
+    android:paddingLeft="24dp"
+    android:paddingRight="24dp" >
+    
     <Spinner
         android:id="@+id/spinnerPresence"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp" />
 
     <EditText
         android:id="@+id/editTextStatus"
@@ -16,7 +20,8 @@
         android:layout_height="wrap_content"
         android:ems="10"
         android:inputType="textMultiLine|textAutoCorrect|textCapSentences"
-        android:hint="@string/dialog_me_statushint" >
+        android:hint="@string/dialog_me_statushint"
+        android:layout_marginBottom="4dp" >
 
         <requestFocus />
     </EditText>

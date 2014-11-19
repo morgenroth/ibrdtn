@@ -9,6 +9,6 @@
         android:right="6dp"
         android:bottom="6dp"
         android:left="6dp">
-  		<bitmap android:src="@drawable/ic_person" android:gravity="center" />
+  		<bitmap android:tint="?android:color/white" android:src="@drawable/ic_person" android:gravity="center" />
 	</item>
 </layer-list> 

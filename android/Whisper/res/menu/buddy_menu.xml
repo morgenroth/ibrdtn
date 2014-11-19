@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item android:id="@+id/itemHideOffline" android:icon="@drawable/ic_action_hide" android:title="@string/hide_offline" android:checkable="true" android:checked="false"></item>
 	<item android:id="@+id/itemPreferences" android:icon="@drawable/ic_menu_settings" android:title="@string/preferences" android:orderInCategory="100"></item>
 </menu>

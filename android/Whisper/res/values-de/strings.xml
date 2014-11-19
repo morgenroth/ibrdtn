@@ -11,6 +11,8 @@
     <string name="conversation_with">Gespräch mit</string>
     <string name="remove">Löschen</string>
     <string name="nickname">Rufname</string>
+    <string name="show_offline">Zeige alle Kontakte</string>
+    <string name="hide_offline">Verstecke Offline-Kontakte</string>
     <string name="preferences">Einstellungen</string>
     <string name="you">Du</string>
     <string name="new_message_from">Neue Nachricht von</string>
@@ -24,6 +26,7 @@
     <string name="alert_no">Nein</string>
     <string name="dialog_me_title">Mein Status</string>
     <string name="dialog_me_statushint">Deine Statusmeldung</string>
+    <string name="personal_settings">Persönlich</string>
     <string name="message_settings">Nachrichten</string>
     <string name="notification_settings">Benachrichtigungen</string>
     <string name="vibrate_on_message">Vibrieren</string>
@@ -31,8 +34,6 @@
     <string name="no_buddy_selected">Kein Gesprächspartner ausgewählt</string>
     <string name="ringtone_on_message">Benachrichtungston</string>
     <string name="ringtone_on_message_desc">Wählen Sie einen Benachrichtigungston für eingehende Nachrichten.</string>
-    <string name="hide_offline_contacts">Verstecke Offline-Kontakte</string>
-    <string name="hide_offline_contacts_desc">Zeige nur Kontakte die als Online markiert sind.</string>
     <string name="question_delete_messages">Möchten Sie wirklich alle von diesem Kontakt empfangenen und an diesen gesendete Nachrichten löschen?</string>
     <string name="tts_when_on_headset">Nachricht vorlesen</string>
     <string name="tts_when_on_headset_desc">Spielt die Nachricht mittels TTS ab wenn ein Kopfhöhrer verbunden ist.</string>

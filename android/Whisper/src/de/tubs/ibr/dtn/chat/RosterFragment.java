@@ -4,10 +4,12 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
@@ -37,6 +39,8 @@ public class RosterFragment extends ListFragment implements LoaderManager.Loader
 
 	private ChatService mService = null;
 	private boolean mBound = false;
+	
+	private MenuItem mMenuShowOffline = null;
 	
 	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName name, IBinder service) {
@@ -72,6 +76,11 @@ public class RosterFragment extends ListFragment implements LoaderManager.Loader
 	    if (0 != (getActivity().getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
 	    	inflater.inflate(R.menu.debug_menu, menu);
 	    }
+	    
+	    mMenuShowOffline = menu.findItem(R.id.itemHideOffline);
+	    
+	    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+	    mMenuShowOffline.setChecked(prefs.getBoolean("hideOffline", false));
 	}
 
 	@Override
@@ -84,6 +93,15 @@ public class RosterFragment extends ListFragment implements LoaderManager.Loader
 			Intent i = new Intent(getActivity(), Preferences.class);
 			startActivity(i);
 	        return true;
+	    }
+	    
+	    case R.id.itemHideOffline:
+	    {
+		    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+		    boolean previousState = prefs.getBoolean("hideOffline", false);
+		    mMenuShowOffline.setChecked(!previousState);
+		    prefs.edit().putBoolean("hideOffline", !previousState).commit();
+	    	return true;
 	    }
 	    
 	    case R.id.itemDebugNotification:

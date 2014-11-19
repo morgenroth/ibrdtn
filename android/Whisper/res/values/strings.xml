@@ -12,6 +12,8 @@
     <string name="conversation_with">Conversation with</string>
     <string name="remove">Remove</string>
     <string name="nickname">Nickname</string>
+    <string name="show_offline">Show all contacts</string>
+    <string name="hide_offline">Hide offline contacts</string>
     <string name="preferences">Preferences</string>
     <string name="new_message_from">New message from</string>
     <string name="new_message">New message</string>
@@ -24,6 +26,7 @@
     <string name="alert_no">No</string>
     <string name="dialog_me_title">My state</string>
     <string name="dialog_me_statushint">Your state message</string>
+    <string name="personal_settings">Personal</string>
     <string name="message_settings">Messages</string>
     <string name="notification_settings">Notifications</string>
     <string name="vibrate_on_message">Vibrate</string>
@@ -31,8 +34,6 @@
     <string name="no_buddy_selected">No buddy selected</string>
     <string name="ringtone_on_message">Notification sound</string>
     <string name="ringtone_on_message_desc">Choose a notification sound for incoming messages.</string>
-    <string name="hide_offline_contacts">Hide offline contacts</string>
-    <string name="hide_offline_contacts_desc">Show only contacts recognized as online.</string>
     <string name="question_delete_messages">Do you really want to delete all messages sent to and received from this contact?</string>
     <string name="tts_when_on_headset">Read out the message</string>
     <string name="tts_when_on_headset_desc">Play messages via TTS when a headset is connected.</string>
