@@ -338,28 +338,32 @@ public class TalkieService extends DTNIntentService {
 			// AudioFocus changed
 			Log.d(TAG, "Audio Focus changed to " + focusChange);
 
-			if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
-				// focus lost
-				if (mPlayer.isPlaying()) {
-					mPlayer.pause();
-					mPaused = true;
+			try {
+				if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
+					// focus lost
+					if (mPlayer.isPlaying()) {
+						mPlayer.pause();
+						mPaused = true;
+					}
+				} else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
+					// focus lost
+					if (mPlayer.isPlaying()) {
+						mPlayer.pause();
+						mPaused = true;
+					}
+				} else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
+					// focus returned
+					if (mPaused) {
+						mPlayer.start();
+						mPaused = false;
+					}
+				} else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
+					if (mPlayer.isPlaying()) {
+						mPlayer.stop();
+					}
 				}
-			} else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
-				// focus lost
-				if (mPlayer.isPlaying()) {
-					mPlayer.pause();
-					mPaused = true;
-				}
-			} else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
-				// focus returned
-				if (mPaused) {
-					mPlayer.start();
-					mPaused = false;
-				}
-			} else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
-				if (mPlayer.isPlaying()) {
-					mPlayer.stop();
-				}
+			} catch (IllegalStateException e) {
+				Log.e(TAG, "Error while handling audio focus.", e);
 			}
 		}
 	};
@@ -390,11 +394,11 @@ public class TalkieService extends DTNIntentService {
         public void onCompletion(MediaPlayer mp) {
             playSound(Sound.CONFIRM);
             
-            // reset the player
-            mp.reset();
-
             // return audio focus
             mAudioManager.abandonAudioFocus(mAudioFocusChangeListener);
+            
+            // reset the player
+            mp.reset();
             
             // remove element from queue
             Message msg = mPlayQueue.pop();
@@ -464,6 +468,9 @@ public class TalkieService extends DTNIntentService {
                 
                 // play-back the message
                 play(msg);
+                
+                // prevent service from terminating
+                setOngoing(true);
             } else {
                 // enqueue the message
                 mPlayQueue.offer(msg);
@@ -487,6 +494,9 @@ public class TalkieService extends DTNIntentService {
             Intent state_i = new Intent(ACTION_PLAYING_STATE);
             state_i.putExtra(EXTRA_PLAYING, false);
             sendBroadcast(state_i);
+            
+            // allow service to get terminated
+            setOngoing(false);
         }
         else if (ACTION_STOP.equals(action)) {
             if (mPlayer.isPlaying()) {
@@ -501,6 +511,9 @@ public class TalkieService extends DTNIntentService {
             Intent state_i = new Intent(ACTION_PLAYING_STATE);
             state_i.putExtra(EXTRA_PLAYING, false);
             sendBroadcast(state_i);
+            
+            // allow service to get terminated
+            setOngoing(false);
         }
         else if (ACTION_RECORDED.equals(action)) {
             File recfile = (File)intent.getSerializableExtra("recfile");
