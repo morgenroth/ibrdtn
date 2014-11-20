@@ -546,6 +546,14 @@ namespace dtn
 
 			const dtn::core::Node node = getNeighbor(peer);
 
+			// add dial-up protocols
+			const std::list<Node::URI> dialupProtocols = node.get(Node::NODE_P2P_DIALUP);
+			for (std::list<Node::URI>::const_iterator iter = dialupProtocols.begin(); iter != dialupProtocols.end(); ++iter)
+			{
+				const Node::URI &uri = (*iter);
+				ret.push_back(uri.protocol);
+			}
+
 			// lock convergence layers while iterating over them
 			ibrcommon::MutexLock l(_cl_lock);
 
