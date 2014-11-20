@@ -222,15 +222,18 @@ namespace dtn
 				return;
 			}
 
+			// set the timer
+			timeval timeout;
+			timerclear(&timeout);
+
 			// set the incoming timer if set (> 0)
 			if (_peer._keepalive > 0)
 			{
-				// set the timer
-				timeval timeout;
-				timerclear(&timeout);
 				timeout.tv_sec = header._keepalive * 2;
-				_socket_stream->setTimeout(timeout);
 			}
+
+			// change time-out
+			_socket_stream->setTimeout(timeout);
 
 			try {
 				// enable idle timeout
@@ -403,6 +406,12 @@ namespace dtn
 			}
 
 			_socket_stream = new ibrcommon::socketstream(sock);
+
+			// set an initial time-out
+			timeval timeout;
+			timerclear(&timeout);
+			timeout.tv_sec = _timeout;
+			_socket_stream->setTimeout(timeout);
 
 #ifdef WITH_TLS
 			// initialize security layer if available
