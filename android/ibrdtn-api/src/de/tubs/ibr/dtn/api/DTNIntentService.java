@@ -23,6 +23,7 @@ public abstract class DTNIntentService extends Service {
 	
 	private DTNClient mClient = null;
 	private DTNClient.Session mSession = null;
+	private boolean mOngoing = false;
 
 	private LinkedList<PendingOperation> mQueue = new LinkedList<PendingOperation>();
 	
@@ -74,7 +75,7 @@ public abstract class DTNIntentService extends Service {
 			}
 			else {
 				onHandleIntent(intent);
-				stopSelf(msg.arg1);
+				if (!mOngoing) stopSelf(msg.arg1);
 			}
 		}
 	}
@@ -137,6 +138,10 @@ public abstract class DTNIntentService extends Service {
 		mServiceLooper.quit();
 		
 		super.onDestroy();
+	}
+	
+	protected void setOngoing(boolean ongoing) {
+		mOngoing = ongoing;
 	}
 	
 	SessionConnection mConnectionCallback = new SessionConnection() {
