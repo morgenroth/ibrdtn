@@ -28,16 +28,10 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-import android.annotation.TargetApi;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import de.tubs.ibr.dtn.DaemonState;
@@ -65,7 +59,6 @@ public class DaemonProcess {
 	private Boolean mDiscoveryEnabled = null;
 	private Boolean mDiscoveryActive = null;
 	private Boolean mLeModeEnabled = false;
-	private ConnectivityManager mConnManager = null;
 	private boolean mGlobalConnected = false;
 	
 	private WifiManager.MulticastLock mMcastLock = null;
@@ -124,50 +117,6 @@ public class DaemonProcess {
 		this.mDiscoveryActive = true;
 	}
 	
-	private BroadcastReceiver mConnectivityListener = new BroadcastReceiver() {
-		@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			// do not proceed without a connection manager
-			if (mConnManager == null) return;
-			
-			// get current network info
-			NetworkInfo info = mConnManager.getActiveNetworkInfo();
-			
-			// get preferences
-			SharedPreferences prefs = context.getSharedPreferences("dtnd", Context.MODE_PRIVATE);
-			String cloud_mode = prefs.getString(Preferences.KEY_UPLINK_MODE, "wifi");
-			
-			boolean newState = false;
-			
-			if (info != null && info.isConnected()) {
-				if ("on".equals(cloud_mode)) {
-					newState = true;
-				}
-				else if ("wifi".equals(cloud_mode) && info.getType() == ConnectivityManager.TYPE_WIFI) {
-					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-						newState = !mConnManager.isActiveNetworkMetered();
-					}
-					else {
-						newState = true;
-					}
-				}
-			}
-			
-			// do not change anything if the state has not changed
-			if (mGlobalConnected == newState) return;
-			
-			// set new connected state
-			mDaemon.setGloballyConnected(newState);
-			mGlobalConnected = newState;
-			
-			if (!newState) {
-				// new state is down - need a reload of convergence layers
-				restart(DaemonRunLevel.RUNLEVEL_NETWORK.swigValue() - 1, null);
-			}
-		}
-	};
-
 	public String[] getVersion() {
         StringVec version = mDaemon.getVersion();
         return new String[] { version.get(0), version.get(1) };
@@ -353,17 +302,6 @@ public class DaemonProcess {
         } catch (NativeDaemonException e) {
             Log.e(TAG, "error while initializing the daemon process", e);
         }
-        
-        
-        // get instance of the connectivity manager
-        mConnManager = (ConnectivityManager)mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-        
-        // listen to connectivity changes
-        IntentFilter connectivityfilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-        mContext.registerReceiver(mConnectivityListener, connectivityfilter);
-        
-        // initially check connectivity
-        mConnectivityListener.onReceive(mContext, null);
     }
 	
 	public synchronized void start() {
@@ -387,11 +325,6 @@ public class DaemonProcess {
 	}
 	
 	public synchronized void onPreferenceChanged(String prefkey, OnRestartListener listener) {
-		// check connectivity if uplink mode changes
-		if (Preferences.KEY_UPLINK_MODE.equals(prefkey)) {
-			mConnectivityListener.onReceive(mContext, null);
-		}
-
 		if (prefkey.startsWith("interface_")) prefkey = "interface_";
 		if (!mRestartMap.containsKey(prefkey)) return;
 		
@@ -430,10 +363,6 @@ public class DaemonProcess {
 	}
 	
     public synchronized void destroy() {
-    	// unlisten to connectivity changes
-    	mContext.unregisterReceiver(mConnectivityListener);
-    	mConnManager = null;
-    	
         // stop the running daemon
         try {
             mDaemon.init(DaemonRunLevel.RUNLEVEL_ZERO);
@@ -607,5 +536,19 @@ public class DaemonProcess {
         }
         
         mDiscoveryActive = false;
+	}
+	
+	public synchronized boolean getGloballyConnected() {
+		return mGlobalConnected;
+	}
+	
+	public synchronized void setGloballyConnected(boolean newState, OnRestartListener listener) {
+		if (mGlobalConnected == newState) return;
+		mDaemon.setGloballyConnected(newState);
+		mGlobalConnected = newState;
+		
+		if (!newState) {
+			restart(DaemonRunLevel.RUNLEVEL_NETWORK.swigValue() - 1, listener);
+		}
 	}
 }
