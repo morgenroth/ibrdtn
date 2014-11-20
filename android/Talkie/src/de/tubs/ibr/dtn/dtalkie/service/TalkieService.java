@@ -26,6 +26,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 
 import android.app.Notification;
@@ -57,7 +58,6 @@ import de.tubs.ibr.dtn.api.DataHandler;
 import de.tubs.ibr.dtn.api.EID;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
-import de.tubs.ibr.dtn.api.SessionConnection;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
 import de.tubs.ibr.dtn.api.TransferMode;
 import de.tubs.ibr.dtn.dtalkie.R;
@@ -84,9 +84,9 @@ public class TalkieService extends DTNIntentService {
 	
 	private MessageDatabase mDatabase = null;
 	
-	private Object mPlayerLock = new Object();
-	private Boolean mPlaying = false;
 	private MediaPlayer mPlayer = null;
+	private boolean mPaused = false;
+	private LinkedList<Message> mPlayQueue = new LinkedList<Message>();
 	
 	private SoundFXManager mSoundManager = null;
 	private NotificationManager mNotificationManager = null;
@@ -292,11 +292,10 @@ public class TalkieService extends DTNIntentService {
 		
 		Log.d(TAG, "Service created.");
 		
-        if (prefs.getBoolean("autoplay", false) || HeadsetService.ENABLED) {
-            Intent play_i = new Intent(TalkieService.this, TalkieService.class);
-            play_i.setAction(TalkieService.ACTION_PLAY_NEXT);
-            startService(play_i);
-        }
+		// enqueue the next audio file to play
+		Intent play_i = new Intent(TalkieService.this, TalkieService.class);
+		play_i.setAction(TalkieService.ACTION_PLAY_NEXT);
+		startService(play_i);
 	}
 	
 	public ServiceError getServiceError() {
@@ -329,32 +328,38 @@ public class TalkieService extends DTNIntentService {
 		mSoundManager.play(this, s);
 	}
 	
-    OnAudioFocusChangeListener mAudioFocusChangeListener = new OnAudioFocusChangeListener() {
+	OnAudioFocusChangeListener mAudioFocusChangeListener = new OnAudioFocusChangeListener() {
 		@Override
 		public void onAudioFocusChange(int focusChange) {
 			// AudioFocus changed
 			Log.d(TAG, "Audio Focus changed to " + focusChange);
 
-			synchronized(mPlayerLock) {
-				// do nothing if not playing
-				if (!mPlaying) return;
-				
-				if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
-		            // focus lost
+			if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
+				// focus lost
+				if (mPlayer.isPlaying()) {
 					mPlayer.pause();
-				} else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
-		            // focus lost
+					mPaused = true;
+				}
+			} else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
+				// focus lost
+				if (mPlayer.isPlaying()) {
 					mPlayer.pause();
-		        } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
-		            // focus returned
-		        	mPlayer.start();
-		        } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
-		        	mPlayer.stop();
-		        }
+					mPaused = true;
+				}
+			} else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
+				// focus returned
+				if (mPaused) {
+					mPlayer.start();
+					mPaused = false;
+				}
+			} else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
+				if (mPlayer.isPlaying()) {
+					mPlayer.stop();
+				}
 			}
 		}
-    };
-    
+	};
+
     private MediaPlayer.OnPreparedListener mPrepareListener = new MediaPlayer.OnPreparedListener() {
         public void onPrepared(MediaPlayer mp) {
     		// request audio focus
@@ -374,27 +379,34 @@ public class TalkieService extends DTNIntentService {
     };
     
     private MediaPlayer.OnCompletionListener mCompletionListener = new MediaPlayer.OnCompletionListener() {
-        public void onCompletion(MediaPlayer arg0) {
+        public void onCompletion(MediaPlayer mp) {
             playSound(Sound.CONFIRM);
             
-            synchronized(mPlayerLock) {
-                // reset the player
-                mPlayer.reset();
-                
-                // set the player to non-playing
-                mPlaying = false;
-                
-                // signal the change of the playback state
-                mPlayerLock.notifyAll();
-            }
-            
+            // reset the player
+            mp.reset();
+
             // return audio focus
             mAudioManager.abandonAudioFocus(mAudioFocusChangeListener);
             
-            // enqueue the next audio file if auto-playback is enabled
-            Intent play_i = new Intent(TalkieService.this, TalkieService.class);
-            play_i.setAction(ACTION_PLAY_NEXT);
-            startService(play_i);
+            // remove element from queue
+            Message msg = mPlayQueue.pop();
+            
+            // mark the message as played
+            mDatabase.mark(Folder.INBOX, msg.getId(), true);
+            
+            // remove notification if there are no more pending
+            // messages
+            removeNotification();
+            
+            if (mPlayQueue.isEmpty()) {
+                // enqueue the next audio file to play
+                Intent play_i = new Intent(TalkieService.this, TalkieService.class);
+                play_i.setAction(ACTION_PLAY_NEXT);
+                startService(play_i);
+            } else {
+                Message nextMessage = mPlayQueue.peek();
+                play(nextMessage);
+            }
         }
     };
 
@@ -435,36 +447,16 @@ public class TalkieService extends DTNIntentService {
             // unmark the message
             mDatabase.mark(f, msgid, false);
 
-            try {
-                // prepare player
-                Message msg = mDatabase.get(f, msgid);
-                if (msg != null) {
-                    mPlayer.setDataSource(msg.getFile().getAbsolutePath());
-                    mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                    mPlayer.prepareAsync();
-                    
-                    synchronized(mPlayerLock) {
-                        // set the player to playing
-                        mPlaying = true;
-                        
-                        // wait until the play-back is done
-                        while (mPlaying) {
-                            mPlayerLock.wait();
-                        }
-                    }
-                }
-            } catch (InterruptedException e) {
-                Log.e(TAG, null, e);
-            } catch (IOException e) {
-                Log.e(TAG, null, e);
+            // prepare player
+            Message msg = mDatabase.get(f, msgid);
+            
+            // enqueue the message
+            mPlayQueue.offer(msg);
+            
+            if (!mPlayer.isPlaying()) {
+                // play-back the message
+                play(msg);
             }
-            
-            // mark the message as played
-            mDatabase.mark(f, msgid, true);
-            
-            // remove notification if there are no more pending
-            // messages
-            removeNotification();
         }
         else if (ACTION_PLAY_NEXT.equals(action)) {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(TalkieService.this);
@@ -549,14 +541,26 @@ public class TalkieService extends DTNIntentService {
         @Override
         public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
             if ("autoplay".equals(key)) {
-                if (prefs.getBoolean(key, false)) {
-                    Intent play_i = new Intent(TalkieService.this, TalkieService.class);
-                    play_i.setAction(TalkieService.ACTION_PLAY_NEXT);
-                    startService(play_i);
-                }
+                // enqueue the next audio file to play
+                Intent play_i = new Intent(TalkieService.this, TalkieService.class);
+                play_i.setAction(TalkieService.ACTION_PLAY_NEXT);
+                startService(play_i);
             }
         }
     };
+    
+    private void play(Message msg) {
+        try {
+            // prepare player
+            if (msg != null) {
+                mPlayer.setDataSource(msg.getFile().getAbsolutePath());
+                mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                mPlayer.prepareAsync();
+            }
+        } catch (IOException e) {
+            Log.e(TAG, null, e);
+        }
+    }
     
     private void removeNotification() {
         // get the number of marked messages
