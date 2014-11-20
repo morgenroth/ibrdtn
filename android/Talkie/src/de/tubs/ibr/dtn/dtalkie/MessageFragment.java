@@ -1,8 +1,10 @@
 package de.tubs.ibr.dtn.dtalkie;
 
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -35,6 +37,8 @@ public class MessageFragment extends ListFragment implements LoaderManager.Loade
     private CursorAdapter mAdapter = null;
     private TalkieService mService = null;
     private Boolean mBound = false;
+    private MenuItem mStopMenu = null;
+    private MenuItem mPlayMenu = null;
     
     private ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -93,6 +97,8 @@ public class MessageFragment extends ListFragment implements LoaderManager.Loade
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.main_menu, menu);
+        mStopMenu = menu.findItem(R.id.itemStop);
+        mPlayMenu = menu.findItem(R.id.itemPlayAll);
     }
     
     @Override
@@ -101,6 +107,13 @@ public class MessageFragment extends ListFragment implements LoaderManager.Loade
             case R.id.itemClearList:
                 MessageDatabase db = mService.getDatabase();
                 db.clear(Folder.INBOX);
+                return true;
+                
+            case R.id.itemStop:
+                // stop playing
+                Intent stop_i = new Intent(getActivity(), TalkieService.class);
+                stop_i.setAction(TalkieService.ACTION_STOP);
+                getActivity().startService(stop_i);
                 return true;
                 
             case R.id.itemPlayAll:
@@ -173,10 +186,15 @@ public class MessageFragment extends ListFragment implements LoaderManager.Loade
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mBound = false;
+        
+        IntentFilter filter = new IntentFilter(TalkieService.ACTION_PLAYING_STATE);
+        getActivity().registerReceiver(mPlayingStateReceiver, filter);
     }
 
     @Override
     public void onDestroy() {
+        getActivity().unregisterReceiver(mPlayingStateReceiver);
+        
         if (mBound) {
             getLoaderManager().destroyLoader(MESSAGE_LOADER_ID);
             getActivity().unbindService(mConnection);
@@ -229,4 +247,13 @@ public class MessageFragment extends ListFragment implements LoaderManager.Loade
         // longer using it.
         mAdapter.swapCursor(null);
     }
+
+    private BroadcastReceiver mPlayingStateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            boolean playing = intent.getBooleanExtra(TalkieService.EXTRA_PLAYING, false);
+            mPlayMenu.setVisible(!playing);
+            mStopMenu.setVisible(playing);
+        }
+    };
 }

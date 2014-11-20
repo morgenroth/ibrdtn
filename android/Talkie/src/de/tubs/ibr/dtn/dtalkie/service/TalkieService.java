@@ -72,8 +72,12 @@ public class TalkieService extends DTNIntentService {
 
 	public static final String ACTION_RECORDED = "de.tubs.ibr.dtn.dtalkie.RECORDED";
 	public static final String ACTION_PLAY = "de.tubs.ibr.dtn.dtalkie.PLAY";
+	public static final String ACTION_STOP = "de.tubs.ibr.dtn.dtalkie.STOP";
 	public static final String ACTION_PLAY_ALL = "de.tubs.ibr.dtn.dtalkie.PLAY_ALL";
 	public static final String ACTION_PLAY_NEXT = "de.tubs.ibr.dtn.dtalkie.PLAY_NEXT";
+	public static final String ACTION_PLAYING_STATE = "de.tubs.ibr.dtn.dtalkie.PLAYING_STATE";
+	
+	public static final String EXTRA_PLAYING = "de.tubs.ibr.dtn.dtalkie.PLAYING";
 	
 	private static final String ACTION_RECEIVED = "de.tubs.ibr.dtn.dtalkie.RECEIVED";
 	private static final String ACTION_MARK_DELIVERED = "de.tubs.ibr.dtn.dtalkie.MARK_DELIVERED";
@@ -360,24 +364,28 @@ public class TalkieService extends DTNIntentService {
 		}
 	};
 
-    private MediaPlayer.OnPreparedListener mPrepareListener = new MediaPlayer.OnPreparedListener() {
-        public void onPrepared(MediaPlayer mp) {
-    		// request audio focus
-    		int result = mAudioManager.requestAudioFocus(mAudioFocusChangeListener,
-                    AudioManager.STREAM_MUSIC,
-                    // Request transient focus.
-                    AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
+	private MediaPlayer.OnPreparedListener mPrepareListener = new MediaPlayer.OnPreparedListener() {
+		public void onPrepared(MediaPlayer mp) {
+			// request audio focus
+			int result = mAudioManager.requestAudioFocus(mAudioFocusChangeListener,
+					AudioManager.STREAM_MUSIC,
+					// Request transient focus.
+					AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
 
 			if (result != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
 				// focus not granted
 				return;
 			}
 			
-            playSound(Sound.BEEP);
-            mp.start();
-        }
-    };
-    
+			Intent state_i = new Intent(ACTION_PLAYING_STATE);
+			state_i.putExtra(EXTRA_PLAYING, true);
+			sendBroadcast(state_i);
+
+			playSound(Sound.BEEP);
+			mp.start();
+		}
+	};
+
     private MediaPlayer.OnCompletionListener mCompletionListener = new MediaPlayer.OnCompletionListener() {
         public void onCompletion(MediaPlayer mp) {
             playSound(Sound.CONFIRM);
@@ -450,12 +458,15 @@ public class TalkieService extends DTNIntentService {
             // prepare player
             Message msg = mDatabase.get(f, msgid);
             
-            // enqueue the message
-            mPlayQueue.offer(msg);
-            
-            if (!mPlayer.isPlaying()) {
+            if (mPlayQueue.isEmpty()) {
+                // enqueue the message
+                mPlayQueue.offer(msg);
+                
                 // play-back the message
                 play(msg);
+            } else {
+                // enqueue the message
+                mPlayQueue.offer(msg);
             }
         }
         else if (ACTION_PLAY_NEXT.equals(action)) {
@@ -469,8 +480,27 @@ public class TalkieService extends DTNIntentService {
                     play_i.putExtra("folder", Folder.INBOX.toString());
                     play_i.putExtra("message", next.getId());
                     startService(play_i);
+                    return;
                 }
             }
+            
+            Intent state_i = new Intent(ACTION_PLAYING_STATE);
+            state_i.putExtra(EXTRA_PLAYING, false);
+            sendBroadcast(state_i);
+        }
+        else if (ACTION_STOP.equals(action)) {
+            if (mPlayer.isPlaying()) {
+                // stop the player
+                mPlayer.stop();
+                mPlayer.reset();
+                
+                // clear the queue
+                mPlayQueue.clear();
+            }
+            
+            Intent state_i = new Intent(ACTION_PLAYING_STATE);
+            state_i.putExtra(EXTRA_PLAYING, false);
+            sendBroadcast(state_i);
         }
         else if (ACTION_RECORDED.equals(action)) {
             File recfile = (File)intent.getSerializableExtra("recfile");
