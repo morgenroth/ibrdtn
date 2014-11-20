@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
-    <item android:id="@+id/itemHeadsetMode" android:icon="@drawable/ic_action_headset" android:title="@string/headset_mode" android:showAsAction="ifRoom"></item>
+    <item android:id="@+id/itemHeadsetMode" android:icon="@drawable/ic_action_headset" android:title="@string/headset_mode" android:showAsAction="never" android:orderInCategory="90"></item>
     <item android:id="@+id/itemPreferences" android:icon="@drawable/ic_action_settings" android:title="@string/preferences" android:showAsAction="never" android:orderInCategory="100"></item>
 </menu>

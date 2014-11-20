@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
-    <item android:id="@+id/itemPlayAll" android:title="@string/play_all" android:icon="@drawable/ic_menu_playall"></item>
-    <item android:id="@+id/itemStop" android:title="@string/stop_playing" android:icon="@drawable/ic_menu_stop" android:visible="false"></item>
-    <item android:id="@+id/itemClearList" android:title="@string/clear_list" android:icon="@drawable/ic_menu_discard"></item>
+    <item android:id="@+id/itemPlayAll" android:title="@string/play_all" android:icon="@drawable/ic_menu_playall" android:orderInCategory="1"></item>
+    <item android:id="@+id/itemStop" android:title="@string/stop_playing" android:icon="@drawable/ic_menu_stop" android:orderInCategory="2" android:visible="false"></item>
 </menu>

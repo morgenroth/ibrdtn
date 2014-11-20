@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">Talkie</string>
     <string name="remove">Remove</string>
-    <string name="clear_list">Clear list</string>
+    <string name="remove_all">Remove all</string>
     <string name="play_all">Play unread</string>
     <string name="stop_playing">Stop playing</string>
     <string name="sending">Sending</string>

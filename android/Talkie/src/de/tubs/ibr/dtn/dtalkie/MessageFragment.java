@@ -104,11 +104,6 @@ public class MessageFragment extends ListFragment implements LoaderManager.Loade
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.itemClearList:
-                MessageDatabase db = mService.getDatabase();
-                db.clear(Folder.INBOX);
-                return true;
-                
             case R.id.itemStop:
                 // stop playing
                 Intent stop_i = new Intent(getActivity(), TalkieService.class);
@@ -159,6 +154,11 @@ public class MessageFragment extends ListFragment implements LoaderManager.Loade
                 i.putExtra("destination", m.getSource());
                 i.putExtra("singleton", true);
                 startActivity(i);
+                return true;
+                
+            case R.id.itemDeleteAll:
+                MessageDatabase db = mService.getDatabase();
+                db.clear(Folder.INBOX);
                 return true;
                 
             default:
