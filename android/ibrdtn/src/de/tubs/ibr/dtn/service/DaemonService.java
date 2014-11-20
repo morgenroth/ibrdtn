@@ -39,6 +39,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.os.Binder;
 import android.os.Build;
@@ -84,6 +85,9 @@ public class DaemonService extends Service {
 	public static final String ACTION_PREFERENCE_CHANGED = "de.tubs.ibr.dtn.action.PREFERENCE_CHANGED";
 
 	public static final String ACTION_NETWORK_CHANGED = "de.tubs.ibr.dtn.action.NETWORK_CHANGED";
+	
+	public static final String ACTION_CONNECTIVITY_CHANGED = "de.tubs.ibr.dtn.action.CONNECTIVITY_CHANGED";
+	public static final String EXTRA_CONNECTIVITY_STATE = "de.tubs.ibr.dtn.action.CONNECTIVITY_STATE";
 
 	public static final String ACTION_UPDATE_NOTIFICATION = "de.tubs.ibr.dtn.action.UPDATE_NOTIFICATION";
 	public static final String ACTION_INITIATE_CONNECTION = "de.tubs.ibr.dtn.action.INITIATE_CONNECTION";
@@ -494,6 +498,54 @@ public class DaemonService extends Service {
 				discoIntent.putExtra(EXTRA_DISCOVERY_DURATION, 120L);
 				startService(discoIntent);
 			}
+		} else if (ACTION_CONNECTIVITY_CHANGED.equals(action)) {
+			// check connectivity and restart daemon if necessary
+			boolean newState = false;
+			
+			String state = intent.getStringExtra(EXTRA_CONNECTIVITY_STATE);
+			
+			// get preferences
+			SharedPreferences prefs = getSharedPreferences("dtnd", Context.MODE_PRIVATE);
+			String cloud_mode = prefs.getString(Preferences.KEY_UPLINK_MODE, "wifi");
+			
+			if ("offline".equals(state)) {
+				newState = false;
+			}
+			else if ("wifi".equals(state)) {
+				newState = "wifi".equals(cloud_mode) || "on".equals(cloud_mode);
+			}
+			else if ("metered".equals(state)) {
+				newState = "on".equals(cloud_mode);
+			}
+			else if ("online".equals(state)) {
+				newState = "on".equals(cloud_mode);
+			}
+			
+			// restart the daemon into the given run-level
+			mDaemonProcess.setGloballyConnected(newState, new DaemonProcess.OnRestartListener() {
+				@Override
+				public void OnStop(DaemonRunLevel previous, DaemonRunLevel next) {
+					if (next.swigValue() < DaemonRunLevel.RUNLEVEL_NETWORK.swigValue() && previous.swigValue() >= DaemonRunLevel.RUNLEVEL_NETWORK.swigValue()) {
+						// shutdown all networking components
+						Log.d(TAG, "connectivity: shutdown all networking components");
+						if (mP2pManager != null) mP2pManager.destroy();
+					}
+				}
+
+				@Override
+				public void OnStart(DaemonRunLevel previous, DaemonRunLevel next) {
+					if (previous.swigValue() < DaemonRunLevel.RUNLEVEL_NETWORK.swigValue() && next.swigValue() >= DaemonRunLevel.RUNLEVEL_NETWORK.swigValue()) {
+						// re-initialize all networking components
+						Log.d(TAG, "connectivity: re-initialize all networking components");
+						if (mP2pManager != null) mP2pManager.create();
+					}
+				}
+
+				@Override
+				public void OnReloadConfiguration() {
+				}
+			});
+			
 		} else if (ACTION_STORE_STATS.equals(action)) {
 			// cancel the next scheduled collection
 			mServiceHandler.removeMessages(MSG_WHAT_COLLECT_STATS);
@@ -968,6 +1020,7 @@ public class DaemonService extends Service {
 		}
 
 		private BroadcastReceiver mNetworkStateReceiver = new BroadcastReceiver() {
+			@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 			@Override
 			public void onReceive(final Context context, final Intent intent) {
 				final ConnectivityManager connMgr = (ConnectivityManager) 
@@ -993,6 +1046,31 @@ public class DaemonService extends Service {
 				} else {
 					mDiscoverySsid = null;
 				}
+				
+				// get current network info
+				final NetworkInfo info = connMgr.getActiveNetworkInfo();
+				
+				// prepare intent to inform the service about the change
+				final Intent connIntent = new Intent(context, DaemonService.class);
+				connIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_CONNECTIVITY_CHANGED);
+				
+				if (info != null && info.isConnected()) {
+					if (info.getType() == ConnectivityManager.TYPE_WIFI) {
+						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+							connIntent.putExtra(EXTRA_CONNECTIVITY_STATE, connMgr.isActiveNetworkMetered() ? "metered" : "wifi");
+						}
+						else {
+							connIntent.putExtra(EXTRA_CONNECTIVITY_STATE, "wifi");
+						}
+					} else {
+						connIntent.putExtra(EXTRA_CONNECTIVITY_STATE, "online");
+					}
+				} else {
+					connIntent.putExtra(EXTRA_CONNECTIVITY_STATE, "offline");
+				}
+				
+				// forward connection state to the service
+				context.startService(connIntent);
 			}
 		};
 		
