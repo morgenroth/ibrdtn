@@ -610,7 +610,7 @@ namespace dtn
 					nn.type = NativeNode::NODE_P2P;
 					break;
 				}
-			} catch (const NeighborNotAvailableException &ex) {
+			} catch (const NodeNotAvailableException &ex) {
 				throw NativeDaemonException(ex.what());
 			}
 

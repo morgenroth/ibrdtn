@@ -249,7 +249,7 @@ namespace dtn
 
 				// add the bundle to the summary vector of the neighbor
 				entry.add(event.getBundle());
-			} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
+			} catch (const NeighborDatabase::EntryNotFoundException&) { };
 
 			// trigger all routing modules to search for bundles to forward
 			__eventTransferCompleted(event.getPeer(), event.getBundle());
@@ -316,7 +316,7 @@ namespace dtn
 
 						// add the bundle to the summary vector of the neighbor
 						_neighbor_database.get(event.peer).add(m);
-					} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
+					} catch (const NeighborDatabase::EntryNotFoundException&) { };
 
 					// store the bundle into a storage module
 					getStorage().store(bundle);
@@ -383,7 +383,7 @@ namespace dtn
 					// add the bundle to the bloomfilter of the receiver to avoid further retries
 					entry.add(meta);
 				}
-			} catch (const NeighborDatabase::NeighborNotAvailableException&) {
+			} catch (const NeighborDatabase::EntryNotFoundException&) {
 			} catch (const dtn::storage::NoBundleFoundException&) { };
 
 			// trigger all routing modules to search for bundles to forward
@@ -414,7 +414,7 @@ namespace dtn
 				try {
 					ibrcommon::MutexLock l(_neighbor_database);
 					_neighbor_database.get( event.getNode().getEID() ).reset();
-				} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
+				} catch (const NeighborDatabase::EntryNotFoundException&) { };
 
 				// new bundles trigger a re-check for all neighbors
 				const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
@@ -487,7 +487,7 @@ namespace dtn
 					for (std::set<dtn::core::Node>::const_iterator it = neighbors.begin(); it != neighbors.end(); ++it) {
 						try {
 							_neighbor_database.get( (*it).getEID() );
-						} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
+						} catch (const NeighborDatabase::EntryNotFoundException&) { };
 					}
 
 					// check all neighbor entries for expiration

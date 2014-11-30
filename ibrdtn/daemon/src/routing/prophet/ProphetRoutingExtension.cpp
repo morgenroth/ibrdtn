@@ -129,7 +129,7 @@ namespace dtn
 
 					ibrcommon::MutexLock l(db);
 					db.get(neighbor_node).putDataset(ds);
-				} catch (const NeighborNotAvailableException&) { };
+				} catch (const NeighborDatabase::EntryNotFoundException&) { };
 
 				/* update predictability for this neighbor */
 				updateNeighbor(neighbor_node, neighbor_dp_map);
@@ -546,11 +546,13 @@ namespace dtn
 								} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 							}
 						} catch (const NeighborDatabase::NoMoreTransfersAvailable &ex) {
-							IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-						} catch (const NeighborDatabase::NeighborNotAvailableException &ex) {
-							IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						} catch (const NeighborDatabase::EntryNotFoundException &ex) {
+							IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						} catch (const NodeNotAvailableException &ex) {
+							IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 						} catch (const dtn::storage::NoBundleFoundException &ex) {
-							IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 						} catch (const std::bad_cast&) { }
 
 						/**

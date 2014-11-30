@@ -162,7 +162,7 @@ namespace dtn
 			}
 		}
 
-		void ConnectionManager::add(const dtn::core::Node &n)
+		void ConnectionManager::add(const dtn::core::Node &n) throw ()
 		{
 			// If node contains MCL
 			if(n.has(Node::CONN_EMAIL) && !n.getEID().getScheme().compare("mail") == 0)
@@ -224,7 +224,7 @@ namespace dtn
 			}
 		}
 
-		void ConnectionManager::remove(const dtn::core::Node &n)
+		void ConnectionManager::remove(const dtn::core::Node &n) throw ()
 		{
 			ibrcommon::MutexLock l(_node_lock);
 			try {
@@ -241,7 +241,7 @@ namespace dtn
 				}
 
 				IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 56) << "Node attributes removed: " << db << IBRCOMMON_LOGGER_ENDL;
-			} catch (const NeighborNotAvailableException&) { };
+			} catch (const NodeNotAvailableException&) { };
 		}
 
 		void ConnectionManager::add(ConvergenceLayer *cl)
@@ -297,7 +297,7 @@ namespace dtn
 			add(node);
 		}
 
-		bool ConnectionManager::isReachable(const dtn::core::Node &node)
+		bool ConnectionManager::isReachable(const dtn::core::Node &node) throw ()
 		{
 			// if the node has been discovered via an dial-up extension
 			// then this node is always considered as reachable
@@ -517,13 +517,16 @@ namespace dtn
 					// re-throw P2PDialupException
 					throw;
 				}
-			} catch (const dtn::net::NeighborNotAvailableException &ex) {
+			} catch (const dtn::net::NodeNotAvailableException &ex) {
+				// signal interruption of the transfer
+				job.abort(dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
+			} catch (const dtn::net::ConnectionNotAvailableException &ex) {
 				// signal interruption of the transfer
 				job.abort(dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
 			}
 		}
 
-		const ConnectionManager::protocol_list ConnectionManager::getSupportedProtocols()
+		const ConnectionManager::protocol_list ConnectionManager::getSupportedProtocols() throw ()
 		{
 			protocol_list ret;
 
@@ -540,7 +543,7 @@ namespace dtn
 			return ret;
 		}
 
-		const ConnectionManager::protocol_list ConnectionManager::getSupportedProtocols(const dtn::data::EID &peer)
+		const ConnectionManager::protocol_list ConnectionManager::getSupportedProtocols(const dtn::data::EID &peer) throw (NodeNotAvailableException)
 		{
 			protocol_list ret;
 
@@ -584,22 +587,22 @@ namespace dtn
 			return ret;
 		}
 
-		const dtn::core::Node ConnectionManager::getNeighbor(const dtn::data::EID &eid) throw (NeighborNotAvailableException)
+		const dtn::core::Node ConnectionManager::getNeighbor(const dtn::data::EID &eid) throw (NodeNotAvailableException)
 		{
 			ibrcommon::MutexLock l(_node_lock);
 			const Node &n = getNode(eid);
 			if (n.isAvailable() && isReachable(n)) return n;
 
-			throw dtn::net::NeighborNotAvailableException();
+			throw dtn::net::NodeNotAvailableException("Node is not reachable or not available.");
 		}
 
-		bool ConnectionManager::isNeighbor(const dtn::core::Node &node)
+		bool ConnectionManager::isNeighbor(const dtn::core::Node &node) throw ()
 		{
 			try {
 				ibrcommon::MutexLock l(_node_lock);
 				const Node &n = getNode(node.getEID());
 				if (n.isAvailable() && isReachable(n)) return true;
-			} catch (const NeighborNotAvailableException&) { }
+			} catch (const NodeNotAvailableException&) { }
 
 			return false;
 		}
@@ -614,10 +617,10 @@ namespace dtn
 			return "ConnectionManager";
 		}
 
-		dtn::core::Node& ConnectionManager::getNode(const dtn::data::EID &eid) throw (NeighborNotAvailableException)
+		dtn::core::Node& ConnectionManager::getNode(const dtn::data::EID &eid) throw (NodeNotAvailableException)
 		{
 			nodemap::iterator iter = _nodes.find(eid);
-			if (iter == _nodes.end()) throw NeighborNotAvailableException("neighbor not found");
+			if (iter == _nodes.end()) throw NodeNotAvailableException("node not found");
 			return (*iter).second;
 		}
 	}

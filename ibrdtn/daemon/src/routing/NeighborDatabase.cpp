@@ -220,15 +220,15 @@ namespace dtn
 			return *(*iter).second;
 		}
 
-		NeighborDatabase::NeighborEntry& NeighborDatabase::get(const dtn::data::EID &eid, bool noCached) throw (NeighborNotAvailableException)
+		NeighborDatabase::NeighborEntry& NeighborDatabase::get(const dtn::data::EID &eid, bool noCached) throw (EntryNotFoundException)
 		{
 			if (noCached && !dtn::core::BundleCore::getInstance().getConnectionManager().isNeighbor(eid))
-				throw NeighborDatabase::NeighborNotAvailableException();
+				throw NeighborDatabase::EntryNotFoundException();
 
 			neighbor_map::iterator iter = _entries.find(eid);
 			if (iter == _entries.end())
 			{
-				throw NeighborNotAvailableException();
+				throw EntryNotFoundException();
 			}
 
 			// set last update timestamp

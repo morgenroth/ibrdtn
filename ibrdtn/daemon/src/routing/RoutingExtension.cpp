@@ -90,7 +90,7 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG_TAG(RoutingExtension::TAG, 20) << "bundle " << meta.toString() << " queued for " << destination.getString() << " via protocol " << dtn::core::Node::toString(p) << IBRCOMMON_LOGGER_ENDL;
 			} catch (const dtn::core::P2PDialupException&) {
 				// the bundle transfer queues the bundle for retransmission, thus abort the query here
-				throw NeighborDatabase::NeighborNotAvailableException();
+				throw NeighborDatabase::EntryNotFoundException();
 			} catch (const ibrcommon::Exception &e) {
 				// ignore any other error
 			}

@@ -305,7 +305,7 @@ namespace dtn
 			_attr_list.clear();
 		}
 
-		dtn::data::Size Node::size() const
+		dtn::data::Size Node::size() const throw ()
 		{
 			return _uri_list.size() + _attr_list.size();
 		}
@@ -403,7 +403,7 @@ namespace dtn
 			return ret;
 		}
 
-		const dtn::data::EID& Node::getEID() const
+		const dtn::data::EID& Node::getEID() const throw ()
 		{
 			return _id;
 		}
@@ -523,7 +523,7 @@ namespace dtn
 			_connect_immediately = val;
 		}
 
-		bool Node::hasDialup() const
+		bool Node::hasDialup() const throw ()
 		{
 			for (std::set<Node::URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); ++iter)
 			{
@@ -534,7 +534,7 @@ namespace dtn
 			return false;
 		}
 
-		bool Node::isAvailable() const
+		bool Node::isAvailable() const throw ()
 		{
 			if (dtn::core::BundleCore::getInstance().isGloballyConnected()) {
 				return !_uri_list.empty();
@@ -557,7 +557,7 @@ namespace dtn
 			return false;
 		}
 
-		bool Node::isAvailable(const Node::URI &uri) const
+		bool Node::isAvailable(const Node::URI &uri) const throw ()
 		{
 			if (dtn::core::BundleCore::getInstance().isGloballyConnected()) {
 				return true;
@@ -582,12 +582,12 @@ namespace dtn
 			}
 		}
 
-		void Node::setAnnounced(bool val)
+		void Node::setAnnounced(bool val) throw ()
 		{
 			_announced_mark = val;
 		}
 
-		bool Node::isAnnounced() const
+		bool Node::isAnnounced() const throw ()
 		{
 			return _announced_mark;
 		}

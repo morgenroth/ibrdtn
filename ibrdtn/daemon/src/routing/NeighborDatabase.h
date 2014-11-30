@@ -77,11 +77,11 @@ namespace dtn
 				virtual ~AlreadyInTransitException() throw () { };
 			};
 
-			class NeighborNotAvailableException : public ibrcommon::Exception
+			class EntryNotFoundException : public ibrcommon::Exception
 			{
 			public:
-				NeighborNotAvailableException() : ibrcommon::Exception("Entry for this neighbor not found.") { };
-				virtual ~NeighborNotAvailableException() throw () { };
+				EntryNotFoundException() : ibrcommon::Exception("Entry for this neighbor not found.") { };
+				virtual ~EntryNotFoundException() throw () { };
 			};
 
 			class DatasetNotAvailableException : public ibrcommon::Exception
@@ -237,7 +237,7 @@ namespace dtn
 			 * @param noCached Only returns an entry if the neighbor is available
 			 * @return The neighbor entry reference.
 			 */
-			NeighborDatabase::NeighborEntry& get(const dtn::data::EID &eid, bool noCached = false) throw (NeighborNotAvailableException);
+			NeighborDatabase::NeighborEntry& get(const dtn::data::EID &eid, bool noCached = false) throw (EntryNotFoundException);
 
 			/**
 			 * Query a neighbor entry of the database. If the entry does not
