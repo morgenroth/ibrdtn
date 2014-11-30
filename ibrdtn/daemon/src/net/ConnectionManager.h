@@ -46,7 +46,7 @@ namespace dtn
 		class NeighborNotAvailableException : public ibrcommon::Exception
 		{
 		public:
-			NeighborNotAvailableException(string what = "The requested connection is not available.") throw() : ibrcommon::Exception(what)
+			NeighborNotAvailableException(string what = "The requested neighbor is not available.") throw() : ibrcommon::Exception(what)
 			{
 			};
 		};
