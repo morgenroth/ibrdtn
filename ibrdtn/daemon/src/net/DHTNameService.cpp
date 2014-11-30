@@ -491,45 +491,51 @@ bool dtn::dht::DHTNameService::isNeighbourAnnouncable(
 		return false;
 	}
 
+	try {
+		// get the merged node object
+		const dtn::core::Node n =
+				dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbor(node.getEID());
 
-	// get the merged node object
-	const dtn::core::Node n = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbor(
-			node.getEID());
+		// Ignore all none discovered and none static nodes
+		// They could only be discovered by the DHT,
+		// so they are not really close neighbours and could be found directly in the DHT.
+		// This prevents the node to be announced by all neighbours, how found this node
+		std::set<dtn::core::Node::Type> types = n.getTypes();
+		if (types.find(dtn::core::Node::NODE_DISCOVERED) == types.end()
+				&& (types.find(dtn::core::Node::NODE_STATIC_GLOBAL) == types.end())) {
+			return false;
+		}
 
-	// Ignore all none discovered and none static nodes
-	// They could only be discovered by the DHT,
-	// so they are not really close neighbours and could be found directly in the DHT.
-	// This prevents the node to be announced by all neighbours, how found this node
-	std::set<dtn::core::Node::Type> types = n.getTypes();
-	if (types.find(dtn::core::Node::NODE_DISCOVERED) == types.end()
-			&& (types.find(dtn::core::Node::NODE_STATIC_GLOBAL) == types.end())) {
+		// Proof, if the neighbour has told us, that he don't want to be published on the DHT
+		std::list<dtn::core::Node::Attribute> services = n.get("dhtns");
+		if (!services.empty()) {
+			for (std::list<dtn::core::Node::Attribute>::const_iterator service =
+					services.begin(); service != services.end(); ++service) {
+				bool proxy = true;
+				std::vector < string > parameters = dtn::utils::Utils::tokenize(
+						";", (*service).value);
+				std::vector<string>::const_iterator param_iter = parameters.begin();
+
+				while (param_iter != parameters.end()) {
+					std::vector < string > p = dtn::utils::Utils::tokenize("=",
+							(*param_iter));
+					if (p[0].compare("proxy") == 0) {
+						std::stringstream proxy_stream;
+						proxy_stream << p[1];
+						proxy_stream >> proxy;
+					}
+					++param_iter;
+				}
+				if (!proxy)
+					return false;
+			}
+		}
+		return true;
+	} catch (const NodeNotAvailableException&) {
+		// do not announce the node if it is
+		// not recognized as neighbor
 		return false;
 	}
-	// Proof, if the neighbour has told us, that he don't want to be published on the DHT
-	std::list<dtn::core::Node::Attribute> services = n.get("dhtns");
-	if (!services.empty()) {
-		for (std::list<dtn::core::Node::Attribute>::const_iterator service =
-				services.begin(); service != services.end(); ++service) {
-			bool proxy = true;
-			std::vector < string > parameters = dtn::utils::Utils::tokenize(
-					";", (*service).value);
-			std::vector<string>::const_iterator param_iter = parameters.begin();
-
-			while (param_iter != parameters.end()) {
-				std::vector < string > p = dtn::utils::Utils::tokenize("=",
-						(*param_iter));
-				if (p[0].compare("proxy") == 0) {
-					std::stringstream proxy_stream;
-					proxy_stream << p[1];
-					proxy_stream >> proxy;
-				}
-				++param_iter;
-			}
-			if (!proxy)
-				return false;
-		}
-	}
-	return true;
 }
 
 void dtn::dht::DHTNameService::deannounce(const dtn::core::Node &n) {

@@ -43,10 +43,10 @@ namespace dtn
 {
 	namespace net
 	{
-		class NeighborNotAvailableException : public ibrcommon::Exception
+		class NodeNotAvailableException : public ibrcommon::Exception
 		{
 		public:
-			NeighborNotAvailableException(string what = "The requested neighbor is not available.") throw() : ibrcommon::Exception(what)
+			NodeNotAvailableException(string what = "The requested node is not a neighbor.") throw() : ibrcommon::Exception(what)
 			{
 			};
 		};
@@ -67,8 +67,8 @@ namespace dtn
 			ConnectionManager();
 			virtual ~ConnectionManager();
 
-			void add(const dtn::core::Node &n);
-			void remove(const dtn::core::Node &n);
+			void add(const dtn::core::Node &n) throw ();
+			void remove(const dtn::core::Node &n) throw ();
 
 			/**
 			 * Add a convergence layer
@@ -118,12 +118,12 @@ namespace dtn
 			/**
 			 * Returns a list of all supported protocols
 			 */
-			const protocol_list getSupportedProtocols();
+			const protocol_list getSupportedProtocols() throw ();
 
 			/**
 			 * Returns a list of protocol supported by both, local BPA and the peer
 			 */
-			const protocol_list getSupportedProtocols(const dtn::data::EID &peer);
+			const protocol_list getSupportedProtocols(const dtn::data::EID &eid) throw (NodeNotAvailableException);
 
 			/**
 			 * get a set with all neighbors
@@ -136,15 +136,15 @@ namespace dtn
 			 * @param
 			 * @return
 			 */
-			bool isNeighbor(const dtn::core::Node&);
+			bool isNeighbor(const dtn::core::Node&) throw ();
 
 			/**
 			 * Get the neighbor with the given EID.
-			 * @throw dtn::net::NeighborNotAvailableException if the neighbor is not available.
+			 * @throw dtn::net::NodeNotAvailableException if the node is not a neighbor.
 			 * @param eid The EID of the neighbor.
 			 * @return A node object with all neighbor data.
 			 */
-			const dtn::core::Node getNeighbor(const dtn::data::EID &eid) throw (NeighborNotAvailableException);
+			const dtn::core::Node getNeighbor(const dtn::data::EID &eid) throw (NodeNotAvailableException);
 
 			/**
 			 * Add collected data about a neighbor to the neighbor database.
@@ -202,12 +202,12 @@ namespace dtn
 			/**
 			 * check if the node is reachable by any convergence-layer
 			 */
-			bool isReachable(const dtn::core::Node &node);
+			bool isReachable(const dtn::core::Node &node) throw ();
 
 			/**
 			 * get node
 			 */
-			dtn::core::Node& getNode(const dtn::data::EID &eid) throw (NeighborNotAvailableException);
+			dtn::core::Node& getNode(const dtn::data::EID &eid) throw (NodeNotAvailableException);
 
 			// mutex for the list of convergence layers
 			ibrcommon::Mutex _cl_lock;

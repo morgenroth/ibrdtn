@@ -238,7 +238,9 @@ namespace dtn
 						}
 					} catch (const NeighborDatabase::NoMoreTransfersAvailable &ex) {
 						IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-					} catch (const NeighborDatabase::NeighborNotAvailableException &ex) {
+					} catch (const NeighborDatabase::EntryNotFoundException &ex) {
+						IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					} catch (const NodeNotAvailableException &ex) {
 						IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					} catch (const dtn::storage::NoBundleFoundException &ex) {
 						IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
@@ -295,10 +297,13 @@ namespace dtn
 										}
 									}
 								}
-							} catch (const NeighborDatabase::NeighborNotAvailableException&) {
-								// neighbor is not available, can not forward this bundle
+							} catch (const NeighborDatabase::EntryNotFoundException&) {
+								// neighbor is not in the database, can not forward this bundle
 							} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
-							} catch (const NeighborDatabase::AlreadyInTransitException&) { };
+							} catch (const NeighborDatabase::AlreadyInTransitException&) {
+							} catch (const NodeNotAvailableException &ex) {
+								// node is not available as neighbor
+							};
 						}
 					} catch (const std::bad_cast&) { };
 
