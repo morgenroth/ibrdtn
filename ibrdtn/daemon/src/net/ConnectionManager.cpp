@@ -520,6 +520,9 @@ namespace dtn
 			} catch (const dtn::net::NeighborNotAvailableException &ex) {
 				// signal interruption of the transfer
 				job.abort(dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
+			} catch (const dtn::net::ConnectionNotAvailableException &ex) {
+				// signal interruption of the transfer
+				job.abort(dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
 			}
 		}
 
