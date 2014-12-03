@@ -34,6 +34,7 @@ class TestSDNV : public CPPUNIT_NS :: TestFixture {
 	CPPUNIT_TEST (testMax32);
 	CPPUNIT_TEST (testOutOfRange);
 	CPPUNIT_TEST (testBitset);
+	CPPUNIT_TEST (testTrim);
 	CPPUNIT_TEST_SUITE_END ();
 
 	static void hexdump(char c);
@@ -49,6 +50,7 @@ public:
 	void testMax(void);
 	void testMax32(void);
 	void testBitset(void);
+	void testTrim(void);
 };
 
 #endif /* TESTSDNV_H_ */
