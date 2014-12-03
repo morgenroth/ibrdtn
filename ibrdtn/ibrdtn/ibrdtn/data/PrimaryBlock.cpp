@@ -155,8 +155,8 @@ namespace dtn
 				sequencenumber = __sequencenumber_abs;
 				__sequencenumber_abs++;
 
-				// limit sequence-number to 32-bit for compatibility reasons
-				__sequencenumber_abs &= ((uint32_t)-1);
+				// trim sequence-number to 32-bit for compatibility reasons
+				__sequencenumber_abs.trim<uint32_t>();
 			}
 		}
 	}
