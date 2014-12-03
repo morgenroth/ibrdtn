@@ -293,10 +293,10 @@ namespace dtn
 		dtn::data::Number SecurityBlock::createCorrelatorValue(const dtn::data::Bundle& bundle)
 		{
 			dtn::data::Number corr;
-			corr.random();
+			corr.random<uint32_t>();
 
 			while (isCorrelatorPresent(bundle, corr)) {
-				corr.random();
+				corr.random<uint32_t>();
 			}
 			return corr;
 		}

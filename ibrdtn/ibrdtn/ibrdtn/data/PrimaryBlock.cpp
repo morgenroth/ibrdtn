@@ -32,7 +32,7 @@ namespace dtn
 		Number PrimaryBlock::__sequencenumber = 0;
 
 		// set initial absolute sequence number to a random value
-		Number PrimaryBlock::__sequencenumber_abs = dtn::data::Number().random();
+		Number PrimaryBlock::__sequencenumber_abs = dtn::data::Number().random<uint32_t>();
 
 		// set last assigned time-stamp to zero
 		Timestamp PrimaryBlock::__last_timestamp = 0;
