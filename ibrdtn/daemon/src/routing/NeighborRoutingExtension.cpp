@@ -133,6 +133,9 @@ namespace dtn
 					try {
 						SearchNextBundleTask &task = dynamic_cast<SearchNextBundleTask&>(*t);
 
+						// clear the result list
+						list.clear();
+
 						// lock the neighbor database while searching for bundles
 						{
 							// this destination is not handles by any static route
@@ -151,7 +154,6 @@ namespace dtn
 							BundleFilter filter(*this, entry, plist);
 
 							// query an unknown bundle from the storage, the list contains max. 10 items.
-							list.clear();
 							(**this).getSeeker().get(filter, list);
 						}
 

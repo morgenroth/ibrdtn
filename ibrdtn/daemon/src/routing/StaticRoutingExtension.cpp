@@ -183,6 +183,9 @@ namespace dtn
 						// remove all routes of the previous round
 						routes.clear();
 
+						// clear the result list
+						list.clear();
+
 						// look for routes to this node
 						for (std::list<StaticRoute*>::const_iterator iter = _routes.begin();
 								iter != _routes.end(); ++iter)
@@ -223,7 +226,6 @@ namespace dtn
 								IBRCOMMON_LOGGER_DEBUG_TAG(StaticRoutingExtension::TAG, 40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
 								// query all bundles from the storage
-								list.clear();
 								(**this).getSeeker().get(filter, list);
 							}
 
@@ -264,6 +266,7 @@ namespace dtn
 								if (route.match(task.bundle.destination))
 								{
 									// get data about the potential next-hop
+									ibrcommon::MutexLock l(db);
 									NeighborDatabase::NeighborEntry &entry = db.get(route.getDestination(), true);
 
 									// do not forward bundles already known by the destination
