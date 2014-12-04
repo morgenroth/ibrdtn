@@ -162,6 +162,11 @@ namespace dtn
 			void doHandshake(const dtn::data::EID &eid);
 
 			/**
+			 * Signals that some important data of the handshake has been updated
+			 */
+			void pushHandshakeUpdated(const NodeHandshakeItem::IDENTIFIER id);
+
+			/**
 			 * This method returns true, if the given BundleID is known.
 			 * @param id
 			 * @return

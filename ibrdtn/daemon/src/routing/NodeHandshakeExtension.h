@@ -49,6 +49,8 @@ namespace dtn
 
 			void doHandshake(const dtn::data::EID &eid);
 
+			void pushHandshakeUpdated(const NodeHandshakeItem::IDENTIFIER id);
+
 			/**
 			 * @see BaseRouter::requestHandshake()
 			 */
@@ -76,6 +78,7 @@ namespace dtn
 
 				void callbackBundleReceived(const Bundle &b);
 				void query(const dtn::data::EID &eid);
+				void push(const NodeHandshakeItem::IDENTIFIER id);
 
 				void send(dtn::data::Bundle &b);
 
@@ -91,6 +94,8 @@ namespace dtn
 			 * process the incoming bundles and send messages to other routers
 			 */
 			HandshakeEndpoint _endpoint;
+
+			static const dtn::data::EID BROADCAST_ENDPOINT;
 		};
 	} /* namespace routing */
 } /* namespace dtn */

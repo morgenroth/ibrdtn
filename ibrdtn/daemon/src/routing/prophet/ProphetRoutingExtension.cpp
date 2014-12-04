@@ -620,6 +620,9 @@ namespace dtn
 			// update the encounter on every routing handshake
 			ibrcommon::MutexLock l(_deliveryPredictabilityMap);
 
+			// remember the size of the map before it is altered
+			const size_t numOfItems = _deliveryPredictabilityMap.size();
+
 			// age the local predictability map
 			age();
 
@@ -647,6 +650,13 @@ namespace dtn
 
 			/* update the dp_map */
 			_deliveryPredictabilityMap.update(neighbor, neighbor_dp_map, _p_encounter_first);
+
+			// if the number of items has been increased by additional neighbors
+			if (numOfItems < _deliveryPredictabilityMap.size())
+			{
+				// then push a notification to all neighbors
+				(**this).pushHandshakeUpdated(NodeHandshakeItem::DELIVERY_PREDICTABILITY_MAP);
+			}
 		}
 
 		void ProphetRoutingExtension::age()

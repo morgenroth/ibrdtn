@@ -49,6 +49,7 @@ namespace dtn
 			float get(const dtn::data::EID &neighbor) const throw (ValueNotFoundException);
 			void set(const dtn::data::EID &neighbor, float value);
 			void clear();
+			size_t size() const;
 
 			/*!
 			 * Updates the DeliveryPredictabilityMap with one received by a neighbor.

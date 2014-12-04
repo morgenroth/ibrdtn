@@ -40,6 +40,7 @@ namespace dtn
 	namespace routing
 	{
 		const std::string NodeHandshakeExtension::TAG = "NodeHandshakeExtension";
+		const dtn::data::EID NodeHandshakeExtension::BROADCAST_ENDPOINT("dtn://broadcast.dtn");
 
 		NodeHandshakeExtension::NodeHandshakeExtension()
 		 : _endpoint(*this)
@@ -178,6 +179,11 @@ namespace dtn
 			_endpoint.query(eid);
 		}
 
+		void NodeHandshakeExtension::pushHandshakeUpdated(const NodeHandshakeItem::IDENTIFIER id)
+		{
+			_endpoint.push(id);
+		}
+
 		void NodeHandshakeExtension::componentUp() throw ()
 		{
 			dtn::core::EventDispatcher<dtn::core::NodeEvent>::add(this);
@@ -205,6 +211,7 @@ namespace dtn
 		 : _callback(callback)
 		{
 			AbstractWorker::initialize("routing");
+			AbstractWorker::subscribe(BROADCAST_ENDPOINT);
 		}
 
 		NodeHandshakeExtension::HandshakeEndpoint::~HandshakeEndpoint()
@@ -225,6 +232,51 @@ namespace dtn
 		{
 			ibrcommon::MutexLock l(_blacklist_lock);
 			_blacklist.erase(eid);
+		}
+
+		void NodeHandshakeExtension::HandshakeEndpoint::push(const NodeHandshakeItem::IDENTIFIER id)
+		{
+			// create a new notification
+			NodeHandshake notification(NodeHandshake::HANDSHAKE_NOTIFICATION);
+			notification.addRequest(id);
+
+			IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 15) << "handshake notification for type: " << id << IBRCOMMON_LOGGER_ENDL;
+
+			// create a new bundle with a zero timestamp (+age block)
+			dtn::data::Bundle req(true);
+
+			// set the source of the bundle
+			req.source = getWorkerURI();
+
+			// set the destination of the bundle
+			req.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, false);
+			req.destination = BROADCAST_ENDPOINT;
+
+			// set destination application
+			req.destination.setApplication("routing");
+
+			// limit the lifetime to 60 seconds
+			req.lifetime = 60;
+
+			// set high priority
+			req.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);
+			req.set(dtn::data::PrimaryBlock::PRIORITY_BIT2, true);
+
+			dtn::data::PayloadBlock &p = req.push_back<PayloadBlock>();
+			ibrcommon::BLOB::Reference ref = p.getBLOB();
+
+			// serialize the request into the payload
+			{
+				ibrcommon::BLOB::iostream ios = ref.iostream();
+				(*ios) << notification;
+			}
+
+			// add a schl block
+			dtn::data::ScopeControlHopLimitBlock &schl = req.push_front<dtn::data::ScopeControlHopLimitBlock>();
+			schl.setLimit(1);
+
+			// send the bundle
+			transmit(req);
 		}
 
 		void NodeHandshakeExtension::HandshakeEndpoint::query(const dtn::data::EID &origin)
@@ -358,6 +410,30 @@ namespace dtn
 
 				// call handshake completed event
 				NodeHandshakeEvent::raiseEvent( NodeHandshakeEvent::HANDSHAKE_COMPLETED, bundle.source.getNode() );
+			}
+			else if (handshake.getType() == NodeHandshake::HANDSHAKE_NOTIFICATION)
+			{
+				// create a new request
+				NodeHandshake request(NodeHandshake::HANDSHAKE_REQUEST);
+
+				// walk through all extensions to find out which requests are of interest
+				requestHandshake(BROADCAST_ENDPOINT, request);
+
+				const NodeHandshake::request_set &rs = handshake.getRequests();
+				for (NodeHandshake::request_set::const_iterator it = rs.begin(); it != rs.end(); ++it)
+				{
+					if (request.hasRequest(*it)) {
+						// get node endpoint
+						const dtn::data::EID node = bundle.source.getNode();
+
+						// clear 60 second blockage
+						_endpoint.removeFromBlacklist(node);
+
+						// execute handshake
+						_endpoint.query(node);
+						return;
+					}
+				}
 			}
 		}
 	} /* namespace routing */

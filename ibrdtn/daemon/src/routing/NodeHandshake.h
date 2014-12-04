@@ -96,8 +96,12 @@ namespace dtn
 			{
 				HANDSHAKE_INVALID = 0,
 				HANDSHAKE_REQUEST = 1,
-				HANDSHAKE_RESPONSE = 2
+				HANDSHAKE_RESPONSE = 2,
+				HANDSHAKE_NOTIFICATION = 3
 			};
+
+			typedef std::set<dtn::data::Number> request_set;
+			typedef std::list<NodeHandshakeItem*> item_set;
 
 			NodeHandshake();
 			NodeHandshake(MESSAGE_TYPE type, const dtn::data::Number &lifetime = 60);
@@ -106,8 +110,11 @@ namespace dtn
 
 			void addRequest(const dtn::data::Number &identifier);
 			bool hasRequest(const dtn::data::Number &identifier) const;
+			const request_set& getRequests() const;
+
 			void addItem(NodeHandshakeItem *item);
 			bool hasItem(const dtn::data::Number &identifier) const;
+			const item_set& getItems() const;
 
 			MESSAGE_TYPE getType() const;
 			const dtn::data::Number& getLifetime() const;
@@ -142,10 +149,7 @@ namespace dtn
 			dtn::data::Number _type;
 			dtn::data::Number _lifetime;
 
-			typedef std::set<dtn::data::Number> request_set;
 			request_set _requests;
-
-			typedef std::list<NodeHandshakeItem*> item_set;
 			item_set _items;
 
 			StreamMap _raw_items;

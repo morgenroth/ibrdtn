@@ -426,6 +426,12 @@ namespace dtn
 		{
 			if (event.getState() == dtn::net::ConnectionEvent::CONNECTION_UP)
 			{
+				// create a neighbor entry if that does not exists
+				{
+					ibrcommon::MutexLock l(_neighbor_database);
+					_neighbor_database.create( event.getNode().getEID() );
+				}
+
 				// trigger all routing modules to search for bundles to forward
 				__eventDataChanged( event.getNode().getEID() );
 			}
@@ -537,6 +543,11 @@ namespace dtn
 		void BaseRouter::doHandshake(const dtn::data::EID &eid)
 		{
 			_nh_extension.doHandshake(eid);
+		}
+
+		void BaseRouter::pushHandshakeUpdated(const NodeHandshakeItem::IDENTIFIER id)
+		{
+			_nh_extension.pushHandshakeUpdated(id);
 		}
 
 		dtn::storage::BundleStorage& BaseRouter::getStorage()
