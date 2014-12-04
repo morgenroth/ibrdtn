@@ -100,10 +100,20 @@ namespace dtn
 
 					try {
 						dtn::data::Bundle b = storage.get( id );
-						prepareBundle(b);
+
+						try {
+							// process the bundle block (security, compression, ...)
+							dtn::core::BundleCore::processBlocks(b);
+						} catch (const ibrcommon::Exception &ex) {
+							// delete the bundle from the storage
+							storage.remove(id);
+							continue;
+						}
+
+						// forward the bundle to the application
 						_worker.callbackBundleReceived( b );
 
-						// create meta bundle for futher processing
+						// create meta bundle for further processing
 						const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(b);
 
 						// raise bundle event
@@ -129,12 +139,6 @@ namespace dtn
 		{
 			// cancel the main thread in here
 			_receive_bundles.abort();
-		}
-
-		void AbstractWorker::AbstractWorkerAsync::prepareBundle(dtn::data::Bundle &bundle) const
-		{
-			// process the bundle block (security, compression, ...)
-			dtn::core::BundleCore::processBlocks(bundle);
 		}
 
 		AbstractWorker::AbstractWorker() : _eid(BundleCore::local), _thread(*this)

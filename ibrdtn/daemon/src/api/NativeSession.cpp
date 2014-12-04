@@ -250,10 +250,16 @@ namespace dtn
 			try {
 				_bundle[ri] = dtn::core::BundleCore::getInstance().getStorage().get(id);
 
-				// process the bundle block (security, compression, ...)
-				dtn::core::BundleCore::processBlocks(_bundle[ri]);
+				try {
+					// process the bundle block (security, compression, ...)
+					dtn::core::BundleCore::processBlocks(_bundle[ri]);
 
-				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Bundle " << id.toString() << " loaded" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Bundle " << id.toString() << " loaded" << IBRCOMMON_LOGGER_ENDL;
+				} catch (const ibrcommon::Exception &e) {
+					// clear the register
+					_bundle[ri] = dtn::data::Bundle();
+					IBRCOMMON_LOGGER_TAG(NativeSession::TAG, warning) << "Failed to process bundle " << id.toString() << ": " << e.what() << IBRCOMMON_LOGGER_ENDL;
+				}
 			} catch (const ibrcommon::Exception &ex) {
 				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 15) << "Failed to load bundle " << id.toString() << ", Exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				throw BundleNotFoundException();

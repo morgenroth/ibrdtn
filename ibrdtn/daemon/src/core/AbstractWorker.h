@@ -59,8 +59,6 @@ namespace dtn
 				void __cancellation() throw ();
 
 			private:
-				void prepareBundle(dtn::data::Bundle &bundle) const;
-
 				AbstractWorker &_worker;
 				bool _running;
 

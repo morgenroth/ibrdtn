@@ -661,10 +661,12 @@ namespace dtn
 							dtn::security::SecurityManager::getInstance().decrypt(b);
 						} catch (const dtn::security::SecurityManager::KeyMissingException&) {
 							// decrypt needed, but no key is available
-							IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "No key available for decrypt bundle." << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "No key available for decryption of bundle." << IBRCOMMON_LOGGER_ENDL;
+							throw;
 						} catch (const dtn::security::DecryptException &ex) {
 							// decrypt failed
 							IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "Decryption of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+							throw;
 						}
 
 						// bundle has been altered - proceed from the first block
@@ -679,7 +681,10 @@ namespace dtn
 						// try to decompress the bundle
 						try {
 							dtn::data::CompressedPayloadBlock::extract(b);
-						} catch (const ibrcommon::Exception&) { };
+						} catch (const ibrcommon::Exception &ex) {
+							IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "Decompression of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+							throw;
+						}
 
 						// bundle has been altered - proceed from the first block
 						restart = true;

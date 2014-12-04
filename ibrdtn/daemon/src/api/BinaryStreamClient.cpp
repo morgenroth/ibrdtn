@@ -230,8 +230,13 @@ namespace dtn
 					try {
 						dtn::data::Bundle bundle = reg.receive();
 
-						// process the bundle block (security, compression, ...)
-						dtn::core::BundleCore::processBlocks(bundle);
+						try {
+							// process the bundle block (security, compression, ...)
+							dtn::core::BundleCore::processBlocks(bundle);
+						} catch (const ibrcommon::Exception&) {
+							// bundle processing failure
+							continue;
+						}
 
 						// add bundle to the queue
 						_client._sentqueue.push(bundle);
