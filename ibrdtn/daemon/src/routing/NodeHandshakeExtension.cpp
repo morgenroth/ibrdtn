@@ -40,7 +40,7 @@ namespace dtn
 	namespace routing
 	{
 		const std::string NodeHandshakeExtension::TAG = "NodeHandshakeExtension";
-		const dtn::data::EID NodeHandshakeExtension::BROADCAST_ENDPOINT("dtn://broadcast.dtn");
+		const dtn::data::EID NodeHandshakeExtension::BROADCAST_ENDPOINT("dtn://broadcast.dtn/routing");
 
 		NodeHandshakeExtension::NodeHandshakeExtension()
 		 : _endpoint(*this)
@@ -220,6 +220,9 @@ namespace dtn
 
 		void NodeHandshakeExtension::HandshakeEndpoint::callbackBundleReceived(const Bundle &b)
 		{
+			// do not process bundles send from this endpoint
+			if (b.source.getNode() == dtn::core::BundleCore::getInstance().local) return;
+
 			_callback.processHandshake(b);
 		}
 
@@ -251,9 +254,6 @@ namespace dtn
 			// set the destination of the bundle
 			req.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, false);
 			req.destination = BROADCAST_ENDPOINT;
-
-			// set destination application
-			req.destination.setApplication("routing");
 
 			// limit the lifetime to 60 seconds
 			req.lifetime = 60;
@@ -417,7 +417,7 @@ namespace dtn
 				NodeHandshake request(NodeHandshake::HANDSHAKE_REQUEST);
 
 				// walk through all extensions to find out which requests are of interest
-				requestHandshake(BROADCAST_ENDPOINT, request);
+				(**this).requestHandshake(BROADCAST_ENDPOINT, request);
 
 				const NodeHandshake::request_set &rs = handshake.getRequests();
 				for (NodeHandshake::request_set::const_iterator it = rs.begin(); it != rs.end(); ++it)
