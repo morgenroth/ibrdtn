@@ -231,6 +231,9 @@ namespace dtn
 						try {
 							SearchNextBundleTask &task = dynamic_cast<SearchNextBundleTask&>(*t);
 
+							// clear the result list
+							list.clear();
+
 							// lock the neighbor database while searching for bundles
 							{
 								NeighborDatabase &db = (**this).getNeighborDB();
@@ -266,7 +269,6 @@ namespace dtn
 								IBRCOMMON_LOGGER_DEBUG_TAG(FloodRoutingExtension::TAG, 40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
 								// query all bundles from the storage
-								list.clear();
 								(**this).getSeeker().get(filter, list);
 							}
 

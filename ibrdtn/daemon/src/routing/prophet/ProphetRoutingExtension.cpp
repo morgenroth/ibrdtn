@@ -489,6 +489,9 @@ namespace dtn
 						try {
 							SearchNextBundleTask &task = dynamic_cast<SearchNextBundleTask&>(*t);
 
+							// clear the result list
+							list.clear();
+
 							// lock the neighbor database while searching for bundles
 							try {
 								NeighborDatabase &db = (**this).getNeighborDB();
@@ -527,7 +530,6 @@ namespace dtn
 								IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
 								// query some unknown bundle from the storage, the list contains max. 10 items.
-								list.clear();
 								(**this).getSeeker().get(filter, list);
 							} catch (const NeighborDatabase::DatasetNotAvailableException&) {
 								// if there is no DeliveryPredictabilityMap for the next hop
