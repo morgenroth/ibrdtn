@@ -156,6 +156,11 @@ namespace dtn
 			_predictmap.clear();
 		}
 
+		size_t DeliveryPredictabilityMap::size() const
+		{
+			return _predictmap.size();
+		}
+
 		void DeliveryPredictabilityMap::update(const dtn::data::EID &host_b, const DeliveryPredictabilityMap &dpm, const float &p_encounter_first)
 		{
 			float p_ab = 0.0f;

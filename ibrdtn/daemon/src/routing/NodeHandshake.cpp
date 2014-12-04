@@ -61,6 +61,16 @@ namespace dtn
 			return (_requests.find(identifier) != _requests.end());
 		}
 
+		const NodeHandshake::request_set& NodeHandshake::getRequests() const
+		{
+			return _requests;
+		}
+
+		const NodeHandshake::item_set& NodeHandshake::getItems() const
+		{
+			return _items;
+		}
+
 		void NodeHandshake::addItem(NodeHandshakeItem *item)
 		{
 			_items.push_back(item);
@@ -115,6 +125,10 @@ namespace dtn
 					ss << "HANDSHAKE_RESPONSE";
 					break;
 
+				case HANDSHAKE_NOTIFICATION:
+					ss << "HANDSHAKE_NOTIFICATION";
+					break;
+
 				default:
 					ss << "HANDSHAKE";
 					break;
@@ -122,7 +136,7 @@ namespace dtn
 
 			ss << "[ttl: " << getLifetime().toString() << ",";
 
-			if (getType() == NodeHandshake::HANDSHAKE_REQUEST)
+			if (getType() == NodeHandshake::HANDSHAKE_REQUEST || getType() == NodeHandshake::HANDSHAKE_NOTIFICATION)
 			{
 				for (request_set::const_iterator iter = _requests.begin(); iter != _requests.end(); ++iter)
 				{
@@ -149,7 +163,7 @@ namespace dtn
 			// first the type as SDNV
 			stream << hs._type;
 
-			if (hs.getType() == NodeHandshake::HANDSHAKE_REQUEST)
+			if (hs.getType() == NodeHandshake::HANDSHAKE_REQUEST || hs.getType() == NodeHandshake::HANDSHAKE_NOTIFICATION)
 			{
 				// then the number of request items
 				dtn::data::Number number_of_items(hs._requests.size());
@@ -197,7 +211,7 @@ namespace dtn
 			// first the type as SDNV
 			stream >> hs._type;
 
-			if (hs.getType() == NodeHandshake::HANDSHAKE_REQUEST)
+			if (hs.getType() == NodeHandshake::HANDSHAKE_REQUEST || hs.getType() == NodeHandshake::HANDSHAKE_NOTIFICATION)
 			{
 				// then the number of request items
 				dtn::data::Number number_of_items;
