@@ -369,13 +369,6 @@ namespace dtn
 					// add the transferred bundle to the bloomfilter of the receiver
 					entry.add(meta);
 				}
-				else if (event.reason == dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED)
-				{
-					const dtn::data::MetaBundle meta = getStorage().info(event.getBundleID());
-
-					// add the bundle to the bloomfilter of the receiver to avoid further retries
-					entry.add(meta);
-				}
 				else if (event.reason == dtn::net::TransferAbortedEvent::REASON_REFUSED_BY_FILTER)
 				{
 					const dtn::data::MetaBundle meta = getStorage().info(event.getBundleID());
