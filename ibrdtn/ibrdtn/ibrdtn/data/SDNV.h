@@ -396,12 +396,19 @@ namespace dtn
 				return std::numeric_limits<E>::max();
 			}
 
+			template <typename V>
 			SDNV<E>& random()
 			{
-				// for compatibility use 32-bit here
-				uint32_t val = (uint32_t)dtn::utils::Random::gen_number();
+				E val = (E)dtn::utils::Random::gen_number();
 				(*this) = static_cast<E>(val);
+				trim<V>();
 				return (*this);
+			}
+
+			template <typename V>
+			void trim()
+			{
+				(*this) &= std::numeric_limits<V>::max();
 			}
 
 			std::string toString() const {

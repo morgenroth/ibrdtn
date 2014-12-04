@@ -106,6 +106,17 @@ void TestSDNV::testMax32(void)
 	CPPUNIT_ASSERT_EQUAL(src, dst);
 }
 
+void TestSDNV::testTrim(void)
+{
+	dtn::data::SDNV<uint64_t> number = dtn::data::SDNV<uint32_t>::max().get<uint64_t>() + 1000;
+
+	CPPUNIT_ASSERT( number > dtn::data::SDNV<uint32_t>::max().get<uint64_t>() );
+
+	number.trim<uint32_t>();
+
+	CPPUNIT_ASSERT( number <= dtn::data::SDNV<uint32_t>::max().get<uint64_t>() );
+}
+
 void TestSDNV::testOutOfRange(void)
 {
 	uint64_t st = static_cast<uint64_t>(-1);
