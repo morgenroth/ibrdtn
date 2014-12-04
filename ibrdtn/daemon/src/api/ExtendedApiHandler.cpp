@@ -455,11 +455,19 @@ namespace dtn
 							try {
 								_bundle_reg = dtn::core::BundleCore::getInstance().getStorage().get(id);
 
-								// process the bundle block (security, compression, ...)
-								dtn::core::BundleCore::processBlocks(_bundle_reg);
+								try {
+									// process the bundle block (security, compression, ...)
+									dtn::core::BundleCore::processBlocks(_bundle_reg);
 
-								ibrcommon::MutexLock l(_write_lock);
-								_stream << ClientHandler::API_STATUS_OK << " BUNDLE LOADED "; sayBundleID(_stream, id); _stream << std::endl;
+									ibrcommon::MutexLock l(_write_lock);
+									_stream << ClientHandler::API_STATUS_OK << " BUNDLE LOADED "; sayBundleID(_stream, id); _stream << std::endl;
+								} catch (const ibrcommon::Exception &e) {
+									// clear the register
+									_bundle_reg = dtn::data::Bundle();
+
+									ibrcommon::MutexLock l(_write_lock);
+									_stream << ClientHandler::API_STATUS_INTERNAL_ERROR << " BUNDLE NOT LOADED" << std::endl;
+								}
 							} catch (const ibrcommon::Exception&) {
 								ibrcommon::MutexLock l(_write_lock);
 								_stream << ClientHandler::API_STATUS_NOT_FOUND << " BUNDLE NOT FOUND" << std::endl;
