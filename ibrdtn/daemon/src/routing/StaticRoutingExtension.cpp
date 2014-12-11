@@ -265,20 +265,24 @@ namespace dtn
 							try {
 								if (route.match(task.bundle.destination))
 								{
-									// get data about the potential next-hop
-									ibrcommon::MutexLock l(db);
-									NeighborDatabase::NeighborEntry &entry = db.get(route.getDestination(), true);
+									// lock the neighbor database while checking if the bundle
+									// is already known by the peer
+									{
+										// get data about the potential next-hop
+										ibrcommon::MutexLock l(db);
+										NeighborDatabase::NeighborEntry &entry = db.get(route.getDestination(), true);
 
-									// do not forward bundles already known by the destination
-									if (entry.has(task.bundle)) continue;
+										// do not forward bundles already known by the destination
+										if (entry.has(task.bundle)) continue;
+									}
 
 									// get a list of protocols supported by both, the local BPA and the remote peer
 									const dtn::net::ConnectionManager::protocol_list plist =
-											dtn::core::BundleCore::getInstance().getConnectionManager().getSupportedProtocols(entry.eid);
+											dtn::core::BundleCore::getInstance().getConnectionManager().getSupportedProtocols(route.getDestination());
 
 									// create a filter context
 									dtn::core::FilterContext context;
-									context.setPeer(entry.eid);
+									context.setPeer(route.getDestination());
 									context.setRouting(*this);
 
 									// check bundle filter for each possible path
