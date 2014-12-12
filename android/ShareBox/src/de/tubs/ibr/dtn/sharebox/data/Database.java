@@ -275,7 +275,7 @@ public class Database {
         try {
             Cursor cur = mDatabase.query(Database.TABLE_NAMES[1], PackageFileAdapter.PROJECTION, null, null, null, null, null);
             
-            if (cur.moveToNext())
+            while (cur.moveToNext())
             {
                 File file = new File(cur.getString(new PackageFileAdapter.ColumnsMap().mColumnFilename));
                 
