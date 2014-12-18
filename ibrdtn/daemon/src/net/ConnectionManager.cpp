@@ -76,6 +76,7 @@ namespace dtn
 				ibrcommon::MutexLock l(_cl_lock);
 				// clear the list of convergence layers
 				_cl.clear();
+				_cl_protocols.clear();
 			}
 
 			{
@@ -248,12 +249,21 @@ namespace dtn
 		{
 			ibrcommon::MutexLock l(_cl_lock);
 			_cl.insert( cl );
+			_cl_protocols.insert( cl->getDiscoveryProtocol() );
 		}
 
 		void ConnectionManager::remove(ConvergenceLayer *cl)
 		{
 			ibrcommon::MutexLock l(_cl_lock);
 			_cl.erase( cl );
+
+			// update protocols
+			_cl_protocols.clear();
+			for (std::set<ConvergenceLayer*>::const_iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
+			{
+				ConvergenceLayer &cl = (**iter);
+				_cl_protocols.insert( cl.getDiscoveryProtocol() );
+			}
 		}
 
 		void ConnectionManager::getStats(dtn::net::ConvergenceLayer::stats_data &data)
@@ -304,10 +314,10 @@ namespace dtn
 			if (node.hasDialup()) return true;
 
 			ibrcommon::MutexLock l(_cl_lock);
-			for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
+			for (std::set<Node::Protocol>::iterator iter = _cl_protocols.begin(); iter != _cl_protocols.end(); ++iter)
 			{
-				ConvergenceLayer &cl = (**iter);
-				if (node.has(cl.getDiscoveryProtocol())) return true;
+				const Node::Protocol &p = (*iter);
+				if (node.has(p)) return true;
 			}
 
 			return false;
@@ -526,21 +536,11 @@ namespace dtn
 			}
 		}
 
-		const ConnectionManager::protocol_list ConnectionManager::getSupportedProtocols() throw ()
+		const ConnectionManager::protocol_set ConnectionManager::getSupportedProtocols() throw ()
 		{
-			protocol_list ret;
-
-			// lock convergence layers while iterating over them
+			// lock convergence layers
 			ibrcommon::MutexLock l(_cl_lock);
-
-			// search a matching convergence layer for the desired path
-			for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
-			{
-				const ConvergenceLayer &cl = (**iter);
-				ret.push_back(cl.getDiscoveryProtocol());
-			}
-
-			return ret;
+			return _cl_protocols;
 		}
 
 		const ConnectionManager::protocol_list ConnectionManager::getSupportedProtocols(const dtn::data::EID &peer) throw (NodeNotAvailableException)
@@ -548,24 +548,17 @@ namespace dtn
 			protocol_list ret;
 
 			const dtn::core::Node node = getNeighbor(peer);
-
-			// add dial-up protocols
-			const std::list<Node::URI> dialupProtocols = node.get(Node::NODE_P2P_DIALUP);
-			for (std::list<Node::URI>::const_iterator iter = dialupProtocols.begin(); iter != dialupProtocols.end(); ++iter)
-			{
-				const Node::URI &uri = (*iter);
-				ret.push_back(uri.protocol);
-			}
+			const std::list<Node::URI> protocols = node.getAll();
 
 			// lock convergence layers while iterating over them
 			ibrcommon::MutexLock l(_cl_lock);
 
-			// search a matching convergence layer for the desired path
-			for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
+			for (std::list<Node::URI>::const_iterator iter = protocols.begin(); iter != protocols.end(); ++iter)
 			{
-				const ConvergenceLayer &cl = (**iter);
-				if (node.has(cl.getDiscoveryProtocol())) {
-					ret.push_back(cl.getDiscoveryProtocol());
+				const Node::URI &uri = (*iter);
+				if (uri.type == Node::NODE_P2P_DIALUP || _cl_protocols.find(uri.protocol) != _cl_protocols.end())
+				{
+					ret.push_back(uri.protocol);
 				}
 			}
 

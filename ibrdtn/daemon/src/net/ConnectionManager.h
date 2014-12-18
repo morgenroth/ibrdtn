@@ -113,12 +113,14 @@ namespace dtn
 
 			void open(const dtn::core::Node &node) throw (ibrcommon::Exception);
 
+
+			typedef std::set<dtn::core::Node::Protocol> protocol_set;
 			typedef std::list<dtn::core::Node::Protocol> protocol_list;
 
 			/**
 			 * Returns a list of all supported protocols
 			 */
-			const protocol_list getSupportedProtocols() throw ();
+			const protocol_set getSupportedProtocols() throw ();
 
 			/**
 			 * Returns a list of protocol supported by both, local BPA and the peer
@@ -214,6 +216,7 @@ namespace dtn
 
 			// contains all configured convergence layers
 			std::set<ConvergenceLayer*> _cl;
+			std::set<Node::Protocol> _cl_protocols;
 
 			// dial-up extensions
 			ibrcommon::Mutex _dialup_lock;

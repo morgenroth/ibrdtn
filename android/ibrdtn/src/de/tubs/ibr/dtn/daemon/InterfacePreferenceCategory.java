@@ -57,6 +57,10 @@ public class InterfacePreferenceCategory extends PreferenceCategory {
                 if (i.getDisplayName().startsWith("rmnet")) continue;
                 if (i.getDisplayName().startsWith("rev_rmnet")) continue;
                 
+                // p2p groups
+                if (i.getDisplayName().equals("p2p0")) continue;
+                if (i.getDisplayName().startsWith("p2p-")) continue;
+                
                 if (    iface.contains("wlan") ||
                         iface.contains("wifi") ||
                         iface.contains("eth")

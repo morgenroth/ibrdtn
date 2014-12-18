@@ -189,8 +189,8 @@ public class DaemonService extends Service {
 	
 	private final ControlService.Stub mControlBinder = new ControlService.Stub() {
 		@Override
-		public boolean isP2pActive() throws RemoteException {
-			return mP2pManager.isActive();
+		public boolean isP2pSupported() throws RemoteException {
+			return mP2pManager.isSupported();
 		}
 
 		@Override
@@ -201,17 +201,6 @@ public class DaemonService extends Service {
 		@Override
 		public Bundle getStats() throws RemoteException {
 			return DaemonService.this.getStats();
-		}
-
-		@Override
-		public void setP2pEnabled(boolean val) throws RemoteException {
-			if (val && mDaemonProcess.getState().equals(DaemonState.ONLINE)) {
-				if (mP2pManager != null)
-					mP2pManager.setEnabled(true);
-			} else {
-				if (mP2pManager != null)
-					mP2pManager.setEnabled(false);
-			}
 		}
 	};
 	
@@ -528,7 +517,7 @@ public class DaemonService extends Service {
 					if (next.swigValue() < DaemonRunLevel.RUNLEVEL_NETWORK.swigValue() && previous.swigValue() >= DaemonRunLevel.RUNLEVEL_NETWORK.swigValue()) {
 						// shutdown all networking components
 						Log.d(TAG, "connectivity: shutdown all networking components");
-						if (mP2pManager != null) mP2pManager.destroy();
+						if (mP2pManager != null) mP2pManager.onDestroy();
 					}
 				}
 
@@ -537,7 +526,7 @@ public class DaemonService extends Service {
 					if (previous.swigValue() < DaemonRunLevel.RUNLEVEL_NETWORK.swigValue() && next.swigValue() >= DaemonRunLevel.RUNLEVEL_NETWORK.swigValue()) {
 						// re-initialize all networking components
 						Log.d(TAG, "connectivity: re-initialize all networking components");
-						if (mP2pManager != null) mP2pManager.create();
+						if (mP2pManager != null) mP2pManager.onCreate();
 					}
 				}
 
@@ -796,7 +785,7 @@ public class DaemonService extends Service {
 		// create P2P Manager
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
 			mP2pManager = new P2pManager(this);
-			mP2pManager.create();
+			mP2pManager.onCreate();
 		}
 
 		// start initialization of the daemon process
@@ -843,7 +832,7 @@ public class DaemonService extends Service {
 	public void onDestroy() {
 		// disable P2P manager
 		if (mP2pManager != null)
-			mP2pManager.destroy();
+			mP2pManager.onDestroy();
 
 		// stop looper that handles incoming intents
 		mServiceLooper.quit();
@@ -914,10 +903,8 @@ public class DaemonService extends Service {
 					break;
 
 				case OFFLINE:
-					if (prefs.getBoolean(Preferences.KEY_P2P_ENABLED, true)) {
-						if (mP2pManager != null)
-							mP2pManager.setEnabled(false);
-					}
+					// pause p2p manager
+					if (mP2pManager != null) mP2pManager.onPause();
 					
 					// unlisten to device state events
 					unregisterReceiver(mScreenStateReceiver);
@@ -943,21 +930,25 @@ public class DaemonService extends Service {
 					break;
 
 				case ONLINE:
-					if (prefs.getBoolean(Preferences.KEY_P2P_ENABLED, false)) {
-						if (mP2pManager != null)
-							mP2pManager.setEnabled(true);
-					}
-					
 					// listen to Wi-Fi events
 					IntentFilter netstatefilter = new IntentFilter();
 					netstatefilter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
 					netstatefilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
 					registerReceiver(mNetworkStateReceiver, netstatefilter);
+					
+					// react to screen on/off events
+					IntentFilter dsfilter = new IntentFilter();
+					dsfilter.addAction(Intent.ACTION_SCREEN_ON);
+					dsfilter.addAction(Intent.ACTION_SCREEN_OFF);
+					registerReceiver(mScreenStateReceiver, dsfilter);
 
 					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
 						// wake-up all apps in stopped-state when going online
 						broadcastIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
 					}
+					
+					// resume p2p manager
+					if (mP2pManager != null) mP2pManager.onResume();
 
 					// if discovery is configured as "smart"
 					if ("smart".equals(prefs.getString(Preferences.KEY_DISCOVERY_MODE, "smart"))) {
@@ -978,12 +969,6 @@ public class DaemonService extends Service {
 								.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_START_DISCOVERY);
 						startService(discoIntent);
 					}
-					
-					// react to screen on/off events
-					IntentFilter dsfilter = new IntentFilter();
-					dsfilter.addAction(Intent.ACTION_SCREEN_ON);
-					dsfilter.addAction(Intent.ACTION_SCREEN_OFF);
-					registerReceiver(mScreenStateReceiver, dsfilter);
 					
 					// set initial state
 					PowerManager pm = (PowerManager)getSystemService(Context.POWER_SERVICE);
