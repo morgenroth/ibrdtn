@@ -112,12 +112,13 @@ public class P2pManager extends NativeP2pManager {
 		}
 	};
 
-	public void onCreate() {
+	public synchronized void onCreate() {
 		// listen to wifi p2p events
 		mP2pFilter = new IntentFilter();
 		mP2pFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
 		mP2pFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
 		mP2pFilter.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
+		mP2pFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
 		
 		// create local service info
 		Map<String, String> record = new HashMap<String, String>();
@@ -140,9 +141,15 @@ public class P2pManager extends NativeP2pManager {
 		Intent i = new Intent(INTENT_P2P_STATE_CHANGED);
 		i.putExtra(EXTRA_P2P_STATE, mWifiP2pManager != null);
 		mService.sendBroadcast(i);
+		
+		// restore resumed state
+		if (mResumed) resume();
+		
+		// register to P2p related intents
+		mService.registerReceiver(mP2pEventReceiver, mP2pFilter);
 	}
 	
-	public void onResume() {
+	public synchronized void onResume() {
 		mResumed = true;
 		
 		SharedPreferences prefs = mService.getSharedPreferences("dtnd", Context.MODE_PRIVATE);
@@ -151,19 +158,18 @@ public class P2pManager extends NativeP2pManager {
 		resume();
 	}
 	
-	private void resume() {
+	private synchronized void resume() {
+		if (mWifiP2pChannel != null) return;
+		
 		if (mWifiP2pManager != null) {
 			// create a new Wi-Fi P2P channel
 			mWifiP2pChannel = mWifiP2pManager.initialize(mService, mService.getMainLooper(), mChannelListener);
 			
 			if (mWifiP2pChannel == null) {
-				Log.e(TAG, "Can allocate a P2P channel");
+				Log.e(TAG, "Can not allocate a P2P channel");
 			} else {
 				// set service discovery listener
 				mWifiP2pManager.setDnsSdResponseListeners(mWifiP2pChannel, mServiceResponseListener, mRecordListener);
-				
-				// register to P2p related intents
-				mService.registerReceiver(mP2pEventReceiver, mP2pFilter);
 				
 				// add local service description
 				mWifiP2pManager.addLocalService(mWifiP2pChannel, mServiceInfo,
@@ -204,22 +210,22 @@ public class P2pManager extends NativeP2pManager {
 		}
 	}
 	
-	public void onPause() {
+	public synchronized void onPause() {
 		if (!mResumed) return;
 		mResumed = false;
 		pause();
 	}
 	
-	private void pause() {
+	private synchronized void pause() {
+		// only proceed if the channel is assigned
+		if (mWifiP2pChannel == null) return;
+		
 		// bring down all p2p interfaces
 		for (String iface : mInterfaces) {
 			Log.d(TAG, "disable connection on interface " + iface);
 			fireInterfaceDown(iface);
 		}
-		
-		// only proceed if the channel is assigned
-		if (mWifiP2pChannel == null) return;
-		
+
 		// disconnect all groups
 		mWifiP2pManager.removeGroup(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
 			@Override
@@ -284,19 +290,24 @@ public class P2pManager extends NativeP2pManager {
 				Log.d(TAG, "all local services cleared");
 			}
 		});
-
-		// stop listening to wifi p2p events
-		mService.unregisterReceiver(mP2pEventReceiver);
+		
+		// release channel
+		mWifiP2pChannel = null;
 	}
 
 	public synchronized void onDestroy() {
+		// switch to pause if was in resumed state
+		if (mResumed) pause();
+		
+		// stop listening to wifi p2p events
+		mService.unregisterReceiver(mP2pEventReceiver);
+		
 		SharedPreferences prefs = mService.getSharedPreferences("dtnd", Context.MODE_PRIVATE);
 		prefs.unregisterOnSharedPreferenceChangeListener(mPrefListener);
 		
 		// daemon goes down
 		mServiceInfo = null;
 		mServiceRequest = null;
-		mWifiP2pChannel = null;
 		mWifiP2pManager = null;
 
 		Intent i = new Intent(INTENT_P2P_STATE_CHANGED);
@@ -306,6 +317,8 @@ public class P2pManager extends NativeP2pManager {
 
 	@Override
 	public void connect(final String data) {
+		if (mWifiP2pChannel == null) return;
+		
 		// get device object to connect to
 		P2pDevice d = mDevices.get(data);
 		
@@ -377,25 +390,43 @@ public class P2pManager extends NativeP2pManager {
 
 			String action = intent.getAction();
 
-			if (WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION.equals(action)) {
-				int discoveryState = intent.getIntExtra(WifiP2pManager.EXTRA_DISCOVERY_STATE,
-						WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED);
+			if (WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION.equals(action)) {
+				int p2pState = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE, WifiP2pManager.WIFI_P2P_STATE_DISABLED);
 
-				if (discoveryState == WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED) {
-					Log.d(TAG, "Peer discovery has been stopped");
+				if (p2pState == WifiP2pManager.WIFI_P2P_STATE_DISABLED) {
+					Log.d(TAG, "Wi-Fi P2P has been disabled.");
+					
+					// switch to pause state
+					pause();
 				}
-				else if (discoveryState == WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED) {
-					Log.d(TAG, "Peer discovery has been started");
+				else if (p2pState == WifiP2pManager.WIFI_P2P_STATE_ENABLED) {
+					Log.d(TAG, "Wi-Fi P2P has been enabled.");
+
+					// restore resumed state
+					if (mResumed) resume();
 				}
-			} else if (WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION.equals(action)) {
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-					WifiP2pDeviceList peers = (WifiP2pDeviceList) intent.getParcelableExtra(WifiP2pManager.EXTRA_P2P_DEVICE_LIST);
-					handlePeersChanged(peers);
-				} else {
-					mWifiP2pManager.requestPeers(mWifiP2pChannel, mPeerListListener);
+			}
+			else if (mWifiP2pChannel != null) {
+				if (WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION.equals(action)) {
+					int discoveryState = intent.getIntExtra(WifiP2pManager.EXTRA_DISCOVERY_STATE,
+							WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED);
+	
+					if (discoveryState == WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED) {
+						Log.d(TAG, "Peer discovery has been stopped");
+					}
+					else if (discoveryState == WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED) {
+						Log.d(TAG, "Peer discovery has been started");
+					}
+				} else if (WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION.equals(action)) {
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+						WifiP2pDeviceList peers = (WifiP2pDeviceList) intent.getParcelableExtra(WifiP2pManager.EXTRA_P2P_DEVICE_LIST);
+						handlePeersChanged(peers);
+					} else {
+						mWifiP2pManager.requestPeers(mWifiP2pChannel, mPeerListListener);
+					}
+				} else if (WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)) {
+					connectionChanged(intent);
 				}
-			} else if (WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)) {
-				connectionChanged(intent);
 			}
 		}
 
@@ -420,7 +451,7 @@ public class P2pManager extends NativeP2pManager {
 					mInterfaces.remove(iface);
 					fireInterfaceDown(iface);
 				}
-			} else if (netInfo.isConnected()) {
+			} else if (netInfo.isConnected() && mWifiP2pChannel != null) {
 				// request group info to get the interface of the group
 				mWifiP2pManager.requestGroupInfo(mWifiP2pChannel, new GroupInfoListener() {
 					@Override
@@ -437,8 +468,10 @@ public class P2pManager extends NativeP2pManager {
 				});
 			}
 			
-			// update device list
-			mWifiP2pManager.requestPeers(mWifiP2pChannel, mPeerListListener);
+			if (mWifiP2pChannel != null) {
+				// update device list
+				mWifiP2pManager.requestPeers(mWifiP2pChannel, mPeerListListener);
+			}
 		}
 	};
 	
