@@ -139,7 +139,7 @@ public class Preferences extends PreferenceActivity {
 			// enable / disable P2P switch
 			if (mP2pSwitch != null) {
 				try {
-					mP2pSwitch.setEnabled(Preferences.this.mService.isP2pActive());
+					mP2pSwitch.setEnabled(Preferences.this.mService.isP2pSupported());
 				} catch (RemoteException e) {
 					mP2pSwitch.setEnabled(false);
 				}
@@ -404,7 +404,7 @@ public class Preferences extends PreferenceActivity {
 		// enable / disable P2P switch
 		if ((mP2pSwitch != null) && (mService != null)) {
 			try {
-				mP2pSwitch.setEnabled(mService.isP2pActive());
+				mP2pSwitch.setEnabled(mService.isP2pSupported());
 			} catch (RemoteException e) {
 				mP2pSwitch.setEnabled(false);
 			}
@@ -725,16 +725,6 @@ public class Preferences extends PreferenceActivity {
 				}
 				
 				Preferences.this.startService(intent);
-			}
-			else if (Preferences.KEY_P2P_ENABLED.equals(key))
-			{
-				if (mService != null) {
-					try {
-						mService.setP2pEnabled(prefs.getBoolean(key, false));
-					} catch (RemoteException e) {
-						// error
-					}
-				}
 			}
 			else if (Preferences.KEY_DISCOVERY_MODE.equals(key))
 			{

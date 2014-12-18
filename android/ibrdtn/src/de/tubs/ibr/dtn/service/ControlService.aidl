@@ -23,14 +23,9 @@ package de.tubs.ibr.dtn.service;
 
 interface ControlService {
 	/**
-	 * Returns whether Wi-Fi P2P is active or not
+	 * Returns whether Wi-Fi P2P is supported or not
 	 */
-	boolean isP2pActive();
-	
-	/**
-	 * Enable / disable P2P extension
-	 */
-	void setP2pEnabled(boolean val);
+	boolean isP2pSupported();
 	
 	/**
 	 * Get the version of the daemon
