@@ -48,6 +48,8 @@ public class SocketAPIConnection implements APIConnection  {
 			_socket.close();
 		}
 		_socket = new java.net.Socket(this._host, this._port);
+                // Disable Nagle's algorithm, preventing delays in sending bundles to the daemon
+                _socket.setTcpNoDelay(true);
 	}
 
 	@Override

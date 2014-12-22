@@ -1,4 +1,4 @@
-package ibrdtn.example.api;
+package ibrdtn.speedtest.api;
 
 import ibrdtn.api.ExtendedClient;
 import ibrdtn.api.object.Block;
@@ -6,13 +6,11 @@ import ibrdtn.api.object.Bundle;
 import ibrdtn.api.object.BundleID;
 import ibrdtn.api.sab.Custody;
 import ibrdtn.api.sab.StatusReport;
-import ibrdtn.example.data.Processor;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -26,51 +24,15 @@ public class SelectiveHandler extends AbstractAPIHandler {
 
     private static final Logger logger = Logger.getLogger(SelectiveHandler.class.getName());
 
-    LinkedBlockingQueue<BundleID> queue = new LinkedBlockingQueue<>();
-    boolean processing = false;
-    final Boolean myLock = false;
-
     public SelectiveHandler(ExtendedClient client, ExecutorService executor, PayloadType messageType) {
         this.client = client;
         this.executor = executor;
         this.messageType = messageType;
-
-        (new Thread(new Dequeuer())).start();
     }
 
     @Override
     public void notify(BundleID id) {
-        logger.log(Level.INFO, "Notified: {0}", id);
-        queue.add(id);
-        synchronized (myLock) {
-            myLock.notifyAll();
-        }
-    }
-
-    class Dequeuer implements Runnable {
-
-        @Override
-        public void run() {
-            try {
-                while (true) {
-                    synchronized (myLock) {
-                        while (processing) {
-                            try {
-                                myLock.wait();
-                            } catch (InterruptedException e) {
-                            }
-                        }
-                        BundleID currentId = queue.take();
-
-                        processing = true;
-                        logger.log(Level.WARNING, "Dequeue bundle {0}", currentId);
-                        loadAndGetInfo(currentId);
-                    }
-                }
-            } catch (InterruptedException e) {
-
-            }
-        }
+        loadAndGetInfo(id);
     }
 
     @Override
@@ -105,10 +67,6 @@ public class SelectiveHandler extends AbstractAPIHandler {
             getPayload();
         } else {
             markDelivered();
-            synchronized (myLock) {
-                processing = false;
-                myLock.notifyAll();
-            }
         }
     }
 
@@ -146,7 +104,7 @@ public class SelectiveHandler extends AbstractAPIHandler {
     }
 
     @Override
-    public synchronized void endPayload() {
+    public void endPayload() {
         if (os != null) {
             try {
                 t.join();
@@ -170,12 +128,8 @@ public class SelectiveHandler extends AbstractAPIHandler {
          * might interfere otherwise.
          */
         markDelivered();
-        synchronized (myLock) {
-            processing = false;
-            myLock.notifyAll();
-        }
 
-        executor.execute(new Processor(envelope, client, executor));
+//        executor.execute(new Processor(envelope, client, executor));
     }
 
     @Override
