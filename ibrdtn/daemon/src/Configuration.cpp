@@ -739,7 +739,7 @@ namespace dtn
 
 					if (n.getEID() == node_eid)
 					{
-						n.add( dtn::core::Node::URI( t, p, ss.str(), 0, 10 ) );
+						n.add( dtn::core::Node::URI( t, p, ss.str(), 0, -5 ) );
 						n.setConnectImmediately( conf.read<std::string>(prefix + "immediately", "no") == "yes" );
 						node_exists = true;
 						break;
@@ -749,7 +749,7 @@ namespace dtn
 				if (!node_exists)
 				{
 					Node n(node_eid);
-					n.add( dtn::core::Node::URI( t, p, ss.str(), 0, 10 ) );
+					n.add( dtn::core::Node::URI( t, p, ss.str(), 0, -5 ) );
 					n.setConnectImmediately( conf.read<std::string>(prefix + "immediately", "no") == "yes" );
 					_nodes.push_back(n);
 				}

@@ -579,7 +579,7 @@ public class P2pManager extends NativeP2pManager {
 			discoveredDevices.add(d.device.deviceAddress);
 			
 			if (d.endpoint != null) {
-				fireConnected(d.endpoint, d.device.deviceAddress, 120, 10);
+				fireConnected(d.endpoint, d.device.deviceAddress, 120);
 			}
 		}
 		
@@ -620,7 +620,7 @@ public class P2pManager extends NativeP2pManager {
 			d.device = srcDevice;
 			d.endpoint = new EID(txtRecordMap.get("eid"));
 			
-			fireDiscovered(d.endpoint, d.device.deviceAddress, 60, 10);
+			fireDiscovered(d.endpoint, d.device.deviceAddress, 60);
 		}
 	};
 

@@ -34,10 +34,10 @@ namespace dtn
 		{
 		}
 
-		void NativeP2pManager::fireDiscovered(const dtn::data::EID &eid, const std::string &identifier, size_t timeout, int priority)
+		void NativeP2pManager::fireDiscovered(const dtn::data::EID &eid, const std::string &identifier, size_t timeout)
 		{
 			// create a p2p uri for the discovered node
-			const dtn::core::Node::URI uri(dtn::core::Node::NODE_P2P_DIALUP, getProtocol(), identifier, timeout, priority);
+			const dtn::core::Node::URI uri(dtn::core::Node::NODE_P2P_DIALUP, getProtocol(), identifier, timeout, -50);
 
 			// announce the discovered peer
 			P2PDialupExtension::fireDiscovered(eid, uri);
@@ -46,16 +46,16 @@ namespace dtn
 		void NativeP2pManager::fireDisconnected(const dtn::data::EID &eid, const std::string &identifier)
 		{
 			// create a p2p uri for the discovered node
-			const dtn::core::Node::URI uri(dtn::core::Node::NODE_P2P_DIALUP, getProtocol(), identifier, 0, 0);
+			const dtn::core::Node::URI uri(dtn::core::Node::NODE_CONNECTED, getProtocol(), identifier, 0);
 
 			// announce the disconnected peer
 			P2PDialupExtension::fireDisconnected(eid, uri);
 		}
 
-		void NativeP2pManager::fireConnected(const dtn::data::EID &eid, const std::string &identifier, size_t timeout, int priority)
+		void NativeP2pManager::fireConnected(const dtn::data::EID &eid, const std::string &identifier, size_t timeout)
 		{
 			// create a p2p uri for the discovered node
-			const dtn::core::Node::URI uri(dtn::core::Node::NODE_P2P_DIALUP, getProtocol(), identifier, timeout, priority);
+			const dtn::core::Node::URI uri(dtn::core::Node::NODE_CONNECTED, getProtocol(), identifier, timeout, -40);
 
 			// announce the connected peer
 			P2PDialupExtension::fireConnected(eid, uri);

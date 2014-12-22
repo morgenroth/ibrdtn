@@ -24,7 +24,7 @@
 
 #define DHT_RESULTS_EXPIRE_TIMEOUT 600
 #define DHT_PATH_EXPIRE_TIMEOUT 60
-#define DHT_DISCOVERED_NODE_PRIORITY 3
+#define DHT_DISCOVERED_NODE_PRIORITY -10
 
 #include "Component.h"
 #include "Configuration.h"

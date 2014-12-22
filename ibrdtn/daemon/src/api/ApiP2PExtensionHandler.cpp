@@ -90,19 +90,10 @@ namespace dtn
 		{
 			try {
 				if (cmd[0] == "connected") {
-					if (cmd.size() < 4) throw ibrcommon::Exception("not enough parameters");
+					if (cmd.size() < 2) throw ibrcommon::Exception("not enough parameters");
 
 					const dtn::data::EID eid(cmd[1]);
-					dtn::core::Node::Protocol proto = dtn::core::Node::CONN_TCPIP;
-
-					if (cmd[2] == "tcp") {
-						proto = dtn::core::Node::CONN_TCPIP;
-					}
-					else if (cmd[2] == "udp") {
-						proto = dtn::core::Node::CONN_UDPIP;
-					}
-
-					const dtn::core::Node::URI uri(dtn::core::Node::NODE_CONNECTED, proto, cmd[3], 0, 30);
+					const dtn::core::Node::URI uri(dtn::core::Node::NODE_CONNECTED, this->getProtocol(), cmd[2], 120, -40);
 					fireConnected(eid, uri);
 
 					ibrcommon::MutexLock l(_write_lock);
@@ -112,16 +103,7 @@ namespace dtn
 					if (cmd.size() < 2) throw ibrcommon::Exception("not enough parameters");
 
 					const dtn::data::EID eid(cmd[1]);
-					dtn::core::Node::Protocol proto = dtn::core::Node::CONN_TCPIP;
-
-					if (cmd[2] == "tcp") {
-						proto = dtn::core::Node::CONN_TCPIP;
-					}
-					else if (cmd[2] == "udp") {
-						proto = dtn::core::Node::CONN_UDPIP;
-					}
-
-					const dtn::core::Node::URI uri(dtn::core::Node::NODE_CONNECTED, proto, cmd[3], 0, 10);
+					const dtn::core::Node::URI uri(dtn::core::Node::NODE_CONNECTED, this->getProtocol(), cmd[2], 0, 0);
 					fireDisconnected(eid, uri);
 
 					ibrcommon::MutexLock l(_write_lock);
@@ -131,7 +113,7 @@ namespace dtn
 					if (cmd.size() < 2) throw ibrcommon::Exception("not enough parameters");
 
 					const dtn::data::EID eid(cmd[1]);
-					const dtn::core::Node::URI uri(dtn::core::Node::NODE_P2P_DIALUP, this->getProtocol(), cmd[2], 120, 10);
+					const dtn::core::Node::URI uri(dtn::core::Node::NODE_P2P_DIALUP, this->getProtocol(), cmd[2], 120, -50);
 					fireDiscovered(eid, uri);
 
 					ibrcommon::MutexLock l(_write_lock);

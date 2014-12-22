@@ -309,15 +309,44 @@ namespace dtn
 
 		bool ConnectionManager::isReachable(const dtn::core::Node &node) throw ()
 		{
-			// if the node has been discovered via an dial-up extension
-			// then this node is always considered as reachable
-			if (node.hasDialup()) return true;
+			const std::list<Node::URI> urilist = node.getAll();
 
-			ibrcommon::MutexLock l(_cl_lock);
-			for (std::set<Node::Protocol>::iterator iter = _cl_protocols.begin(); iter != _cl_protocols.end(); ++iter)
+			for (std::list<Node::URI>::const_iterator uri_it = urilist.begin(); uri_it != urilist.end(); ++uri_it)
 			{
-				const Node::Protocol &p = (*iter);
-				if (node.has(p)) return true;
+				const Node::URI &uri = (*uri_it);
+
+				if (uri.type == Node::NODE_P2P_DIALUP)
+				{
+					// lock P2P manager while iterating over them
+					ibrcommon::MutexLock l(_dialup_lock);
+
+					// check if there is a P2P link opportunity
+					for (std::set<P2PDialupExtension*>::iterator iter = _dialups.begin(); iter != _dialups.end(); ++iter)
+					{
+						const P2PDialupExtension &p2pext = (**iter);
+						if (p2pext.getProtocol() == uri.protocol)
+						{
+							// link opportunity found
+							return true;
+						}
+					}
+				}
+				else
+				{
+					// lock convergence layers while iterating over them
+					ibrcommon::MutexLock l(_cl_lock);
+
+					// check if there is a link opportunity
+					for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
+					{
+						const ConvergenceLayer &cl = (**iter);
+						if (cl.getDiscoveryProtocol() == uri.protocol)
+						{
+							// link opportunity found
+							return true;
+						}
+					}
+				}
 			}
 
 			return false;
@@ -419,118 +448,110 @@ namespace dtn
 
 		void ConnectionManager::open(const dtn::core::Node &node) throw (ibrcommon::Exception)
 		{
-			// lock convergence layers while iterating over them
+			const std::list<Node::URI> urilist = node.getAll();
+
+			for (std::list<Node::URI>::const_iterator uri_it = urilist.begin(); uri_it != urilist.end(); ++uri_it)
 			{
-				ibrcommon::MutexLock l(_cl_lock);
+				const Node::URI &uri = (*uri_it);
 
-				// search for the right cl
-				for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
+				if (uri.type == Node::NODE_P2P_DIALUP)
 				{
-					ConvergenceLayer *cl = (*iter);
-					if (node.has(cl->getDiscoveryProtocol()))
+					// check if there is a P2P connection to establish
+					ibrcommon::MutexLock l(_dialup_lock);
+					for (std::set<P2PDialupExtension*>::iterator iter = _dialups.begin(); iter != _dialups.end(); ++iter)
 					{
-						cl->open(node);
+						P2PDialupExtension &p2pext = (**iter);
 
-						// stop here, we queued the bundle already
-						return;
+						if (uri.protocol == p2pext.getProtocol()) {
+							// trigger connection set-up
+							p2pext.connect(uri);
+							throw P2PDialupException();
+						}
 					}
 				}
-			}
+				else
+				{
+					// lock convergence layers while iterating over them
+					ibrcommon::MutexLock l(_cl_lock);
 
-			// throw dial-up exception if there are P2P dial-up connections available
-			if (node.hasDialup())
-			{
-				// trigger the dial-up connection
-				dialup(node);
+					// search for the right cl
+					for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
+					{
+						ConvergenceLayer *cl = (*iter);
+						if (cl->getDiscoveryProtocol() == uri.protocol)
+						{
+							cl->open(node);
 
-				throw dtn::core::P2PDialupException();
+							// stop here, we queued the bundle already
+							return;
+						}
+					}
+				}
 			}
 
 			throw dtn::net::ConnectionNotAvailableException();
 		}
 
-		void ConnectionManager::dialup(const dtn::core::Node &n)
-		{
-			// search for p2p_dialup connections
-			// get the list of all available URIs
-			std::list<Node::URI> uri_list = n.get(Node::NODE_P2P_DIALUP);
-
-			// trigger p2p_dialup connections
-			for (std::list<Node::URI>::const_iterator it = uri_list.begin(); it != uri_list.end(); ++it)
-			{
-				const dtn::core::Node::URI &uri = (*it);
-
-				ibrcommon::MutexLock l(_dialup_lock);
-				for (std::set<P2PDialupExtension*>::iterator iter = _dialups.begin(); iter != _dialups.end(); ++iter)
-				{
-					P2PDialupExtension &p2pext = (**iter);
-
-					if (uri.protocol == p2pext.getProtocol()) {
-						// trigger connection set-up
-						p2pext.connect(uri);
-					}
-				}
-			}
-		}
-
-		void ConnectionManager::queue(const dtn::core::Node &node, const dtn::net::BundleTransfer &job)
-		{
-			// lock convergence layers while iterating over them
-			ibrcommon::MutexLock l(_cl_lock);
-
-			// search a matching convergence layer for the desired path
-			for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
-			{
-				ConvergenceLayer *cl = (*iter);
-				if (cl->getDiscoveryProtocol() == job.getProtocol())
-				{
-					cl->queue(node, job);
-
-					// stop here, we queued the bundle already
-					return;
-				}
-			}
-
-			// throw dial-up exception if there are P2P dial-up connections available
-			if (node.hasDialup()) throw P2PDialupException();
-
-			throw ConnectionNotAvailableException();
-		}
-
 		void ConnectionManager::queue(dtn::net::BundleTransfer &job)
 		{
-			ibrcommon::MutexLock l(_node_lock);
-
-			if (IBRCOMMON_LOGGER_LEVEL >= 50)
-			{
-				IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 50) << "## node list ##" << IBRCOMMON_LOGGER_ENDL;
-				for (nodemap::const_iterator iter = _nodes.begin(); iter != _nodes.end(); ++iter)
-				{
-					const dtn::core::Node &n = (*iter).second;
-					IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 2) << n << IBRCOMMON_LOGGER_ENDL;
-				}
-			}
-
-			IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 50) << "search for node " << job.getNeighbor().getString() << IBRCOMMON_LOGGER_ENDL;
-
 			try {
+				ibrcommon::MutexLock l(_node_lock);
+
 				// queue to a node
 				const Node &n = getNode(job.getNeighbor());
+
+				// debug output
 				IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 2) << "next hop: " << n << IBRCOMMON_LOGGER_ENDL;
 
-				try {
-					queue(n, job);
-				} catch (const P2PDialupException&) {
-					// trigger the dial-up connection
-					dialup(n);
+				// lock convergence layers while iterating over them
+				{
+					ibrcommon::MutexLock lcl(_cl_lock);
 
-					// re-throw P2PDialupException
-					throw;
+					// search a matching convergence layer for the desired path
+					for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
+					{
+						ConvergenceLayer *cl = (*iter);
+						if (cl->getDiscoveryProtocol() == job.getProtocol())
+						{
+							cl->queue(n, job);
+
+							// stop here, we queued the bundle already
+							return;
+						}
+					}
 				}
-			} catch (const dtn::net::NodeNotAvailableException &ex) {
+
+				// check if there is a P2P connection to establish
+				{
+					ibrcommon::MutexLock ldu(_dialup_lock);
+					for (std::set<P2PDialupExtension*>::iterator iter = _dialups.begin(); iter != _dialups.end(); ++iter)
+					{
+						P2PDialupExtension &p2pext = (**iter);
+
+						if (job.getProtocol() == p2pext.getProtocol()) {
+							// matching P2P extension found
+							// get P2P credentials
+							const std::list<Node::URI> urilist = n.get(job.getProtocol());
+
+							// check if already connected
+							for (std::list<Node::URI>::const_iterator uri_it = urilist.begin(); uri_it != urilist.end(); ++uri_it)
+							{
+								const Node::URI &p2puri = (*uri_it);
+								if (p2puri.type == Node::NODE_CONNECTED) {
+									throw P2PDialupException();
+								} else {
+									// trigger connection set-up
+									p2pext.connect(*uri_it);
+									return;
+								}
+							}
+						}
+					}
+				}
+
 				// signal interruption of the transfer
 				job.abort(dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
-			} catch (const dtn::net::ConnectionNotAvailableException &ex) {
+			} catch (const dtn::net::NodeNotAvailableException &ex) {
 				// signal interruption of the transfer
 				job.abort(dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
 			}

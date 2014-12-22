@@ -212,15 +212,15 @@ namespace dtn
 					if(configTime > 0)
 						to_value_mailcl = configTime;
 
-					n.add(Node::URI(Node::NODE_DISCOVERED, Node::CONN_EMAIL, s.getParameters(), to_value_mailcl, 20));
+					n.add(Node::URI(Node::NODE_DISCOVERED, Node::CONN_EMAIL, s.getParameters(), to_value_mailcl, -80));
 				}
 				else if ((p == dtn::core::Node::CONN_UNSUPPORTED) || (p == dtn::core::Node::CONN_UNDEFINED))
 				{
-					n.add(Node::Attribute(Node::NODE_DISCOVERED, s.getName(), s.getParameters(), to_value, 20));
+					n.add(Node::Attribute(Node::NODE_DISCOVERED, s.getName(), s.getParameters(), to_value));
 				}
 				else
 				{
-					n.add(Node::URI(Node::NODE_DISCOVERED, p, s.getParameters(), to_value, 20));
+					n.add(Node::URI(Node::NODE_DISCOVERED, p, s.getParameters(), to_value));
 				}
 			}
 
