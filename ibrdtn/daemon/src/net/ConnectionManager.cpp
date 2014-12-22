@@ -309,15 +309,44 @@ namespace dtn
 
 		bool ConnectionManager::isReachable(const dtn::core::Node &node) throw ()
 		{
-			// if the node has been discovered via an dial-up extension
-			// then this node is always considered as reachable
-			if (node.hasDialup()) return true;
+			const std::list<Node::URI> urilist = node.getAll();
 
-			ibrcommon::MutexLock l(_cl_lock);
-			for (std::set<Node::Protocol>::iterator iter = _cl_protocols.begin(); iter != _cl_protocols.end(); ++iter)
+			for (std::list<Node::URI>::const_iterator uri_it = urilist.begin(); uri_it != urilist.end(); ++uri_it)
 			{
-				const Node::Protocol &p = (*iter);
-				if (node.has(p)) return true;
+				const Node::URI &uri = (*uri_it);
+
+				if (uri.type == Node::NODE_P2P_DIALUP)
+				{
+					// lock P2P manager while iterating over them
+					ibrcommon::MutexLock l(_dialup_lock);
+
+					// check if there is a P2P link opportunity
+					for (std::set<P2PDialupExtension*>::iterator iter = _dialups.begin(); iter != _dialups.end(); ++iter)
+					{
+						const P2PDialupExtension &p2pext = (**iter);
+						if (p2pext.getProtocol() == uri.protocol)
+						{
+							// link opportunity found
+							return true;
+						}
+					}
+				}
+				else
+				{
+					// lock convergence layers while iterating over them
+					ibrcommon::MutexLock l(_cl_lock);
+
+					// check if there is a link opportunity
+					for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
+					{
+						const ConvergenceLayer &cl = (**iter);
+						if (cl.getDiscoveryProtocol() == uri.protocol)
+						{
+							// link opportunity found
+							return true;
+						}
+					}
+				}
 			}
 
 			return false;
@@ -421,7 +450,6 @@ namespace dtn
 		{
 			const std::list<Node::URI> urilist = node.getAll();
 
-			// lock convergence layers while iterating over them
 			for (std::list<Node::URI>::const_iterator uri_it = urilist.begin(); uri_it != urilist.end(); ++uri_it)
 			{
 				const Node::URI &uri = (*uri_it);
@@ -443,6 +471,7 @@ namespace dtn
 				}
 				else
 				{
+					// lock convergence layers while iterating over them
 					ibrcommon::MutexLock l(_cl_lock);
 
 					// search for the right cl

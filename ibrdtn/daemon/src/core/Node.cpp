@@ -523,17 +523,6 @@ namespace dtn
 			_connect_immediately = val;
 		}
 
-		bool Node::hasDialup() const throw ()
-		{
-			for (std::set<Node::URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); ++iter)
-			{
-				const Node::URI &u = (*iter);
-				if (u.type == NODE_P2P_DIALUP) return true;
-			}
-
-			return false;
-		}
-
 		bool Node::isAvailable() const throw ()
 		{
 			if (dtn::core::BundleCore::getInstance().isGloballyConnected()) {

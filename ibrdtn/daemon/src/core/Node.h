@@ -227,11 +227,6 @@ namespace dtn
 			void setConnectImmediately(bool val);
 
 			/**
-			 * @return true, if there is at least one dial-up connection
-			 */
-			bool hasDialup() const throw ();
-
-			/**
 			 * @return true, if at least one connection is available
 			 */
 			bool isAvailable() const throw ();
