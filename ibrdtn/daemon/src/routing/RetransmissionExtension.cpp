@@ -81,8 +81,13 @@ namespace dtn
 							// create a new bundle transfer
 							dtn::net::BundleTransfer transfer(data.destination, meta, data.protocol);
 
-							// re-queue the bundle
-							dtn::core::BundleCore::getInstance().getConnectionManager().queue(transfer);
+							try {
+								// re-queue the bundle
+								dtn::core::BundleCore::getInstance().getConnectionManager().queue(transfer);
+							} catch (const dtn::core::P2PDialupException&) {
+								// abort transmission
+								transfer.abort(dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
+							}
 						} catch (const ibrcommon::Exception&) {
 							// do nothing here
 						}

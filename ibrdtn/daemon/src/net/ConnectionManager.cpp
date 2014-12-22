@@ -494,21 +494,9 @@ namespace dtn
 
 		void ConnectionManager::queue(dtn::net::BundleTransfer &job)
 		{
-			ibrcommon::MutexLock l(_node_lock);
-
-			if (IBRCOMMON_LOGGER_LEVEL >= 50)
-			{
-				IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 50) << "## node list ##" << IBRCOMMON_LOGGER_ENDL;
-				for (nodemap::const_iterator iter = _nodes.begin(); iter != _nodes.end(); ++iter)
-				{
-					const dtn::core::Node &n = (*iter).second;
-					IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 2) << n << IBRCOMMON_LOGGER_ENDL;
-				}
-			}
-
-			IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 50) << "search for node " << job.getNeighbor().getString() << IBRCOMMON_LOGGER_ENDL;
-
 			try {
+				ibrcommon::MutexLock l(_node_lock);
+
 				// queue to a node
 				const Node &n = getNode(job.getNeighbor());
 
@@ -544,12 +532,18 @@ namespace dtn
 							// matching P2P extension found
 							// get P2P credentials
 							const std::list<Node::URI> urilist = n.get(job.getProtocol());
+
+							// check if already connected
 							for (std::list<Node::URI>::const_iterator uri_it = urilist.begin(); uri_it != urilist.end(); ++uri_it)
 							{
-								// trigger connection set-up
-								p2pext.connect(*uri_it);
-
-								throw P2PDialupException();
+								const Node::URI &p2puri = (*uri_it);
+								if (p2puri.type == Node::NODE_CONNECTED) {
+									throw P2PDialupException();
+								} else {
+									// trigger connection set-up
+									p2pext.connect(*uri_it);
+									return;
+								}
 							}
 						}
 					}
