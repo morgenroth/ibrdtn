@@ -63,13 +63,13 @@ namespace dtn
 
 		protected:
 			// method for JNI
-			virtual void fireDiscovered(const dtn::data::EID &eid, const std::string &identifier, size_t timeout, int priority);
+			virtual void fireDiscovered(const dtn::data::EID &eid, const std::string &identifier, size_t timeout);
 
 			// method for JNI
 			virtual void fireDisconnected(const dtn::data::EID &eid, const std::string &identifier);
 
 			// method for JNI
-			virtual void fireConnected(const dtn::data::EID &eid, const std::string &identifier, size_t timeout, int priority);
+			virtual void fireConnected(const dtn::data::EID &eid, const std::string &identifier, size_t timeout);
 
 			// method for JNI
 			virtual void fireInterfaceUp(const std::string &iface);

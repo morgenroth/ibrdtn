@@ -477,7 +477,7 @@ namespace dtn
 
 							// add TCP connection descriptor to the node object
 							_node.clear();
-							_node.add( dtn::core::Node::URI(Node::NODE_CONNECTED, Node::CONN_TCPIP, uri.value, 0, 30) );
+							_node.add( dtn::core::Node::URI(Node::NODE_CONNECTED, Node::CONN_TCPIP, uri.value, 0, 10) );
 
 							// connection successful
 							return;

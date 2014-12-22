@@ -93,7 +93,7 @@ namespace dtn
 					if (cmd.size() < 2) throw ibrcommon::Exception("not enough parameters");
 
 					const dtn::data::EID eid(cmd[1]);
-					const dtn::core::Node::URI uri(dtn::core::Node::NODE_CONNECTED, this->getProtocol(), cmd[2], 120, 14);
+					const dtn::core::Node::URI uri(dtn::core::Node::NODE_CONNECTED, this->getProtocol(), cmd[2], 120, -40);
 					fireConnected(eid, uri);
 
 					ibrcommon::MutexLock l(_write_lock);
@@ -113,7 +113,7 @@ namespace dtn
 					if (cmd.size() < 2) throw ibrcommon::Exception("not enough parameters");
 
 					const dtn::data::EID eid(cmd[1]);
-					const dtn::core::Node::URI uri(dtn::core::Node::NODE_P2P_DIALUP, this->getProtocol(), cmd[2], 120, 15);
+					const dtn::core::Node::URI uri(dtn::core::Node::NODE_P2P_DIALUP, this->getProtocol(), cmd[2], 120, -50);
 					fireDiscovered(eid, uri);
 
 					ibrcommon::MutexLock l(_write_lock);

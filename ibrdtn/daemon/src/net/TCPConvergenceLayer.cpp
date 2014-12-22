@@ -548,7 +548,7 @@ namespace dtn
 
 							// add TCP connection
 							const std::string uri = "ip=" + peeraddr.address() + ";port=" + peeraddr.service() + ";";
-							node.add( dtn::core::Node::URI(Node::NODE_CONNECTED, Node::CONN_TCPIP, uri, 0, 30) );
+							node.add( dtn::core::Node::URI(Node::NODE_CONNECTED, Node::CONN_TCPIP, uri, 0, 10) );
 
 							// create a new TCPConnection and return the pointer
 							TCPConnection *obj = new TCPConnection(*this, node, client, _keepalive_timeout);

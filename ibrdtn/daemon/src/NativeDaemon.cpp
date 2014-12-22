@@ -642,18 +642,18 @@ namespace dtn
 			if (protocol == "tcp")
 			{
 				std::string uri = "ip=" + address + ";port=" + service + ";";
-				n.add(dtn::core::Node::URI(t, dtn::core::Node::CONN_TCPIP, uri, 0, 10));
+				n.add(dtn::core::Node::URI(t, dtn::core::Node::CONN_TCPIP, uri, 0, -5));
 				dtn::core::BundleCore::getInstance().getConnectionManager().add(n);
 			}
 			else if (protocol == "udp")
 			{
 				std::string uri = "ip=" + address + ";port=" + service + ";";
-				n.add(dtn::core::Node::URI(t, dtn::core::Node::CONN_UDPIP, uri, 0, 10));
+				n.add(dtn::core::Node::URI(t, dtn::core::Node::CONN_UDPIP, uri, 0, -5));
 				dtn::core::BundleCore::getInstance().getConnectionManager().add(n);
 			}
 			else if (protocol == "file")
 			{
-				n.add(dtn::core::Node::URI(dtn::core::Node::NODE_STATIC_LOCAL, dtn::core::Node::CONN_FILE, address, 0, 10));
+				n.add(dtn::core::Node::URI(dtn::core::Node::NODE_STATIC_LOCAL, dtn::core::Node::CONN_FILE, address, 0, -5));
 				dtn::core::BundleCore::getInstance().getConnectionManager().add(n);
 			}
 		}
@@ -668,18 +668,18 @@ namespace dtn
 			if (protocol == "tcp")
 			{
 				std::string uri = "ip=" + address + ";port=" + service + ";";
-				n.add(dtn::core::Node::URI(t, dtn::core::Node::CONN_TCPIP, uri, 0, 10));
+				n.add(dtn::core::Node::URI(t, dtn::core::Node::CONN_TCPIP, uri, 0, -5));
 				dtn::core::BundleCore::getInstance().getConnectionManager().remove(n);
 			}
 			else if (protocol == "udp")
 			{
 				std::string uri = "ip=" + address + ";port=" + service + ";";
-				n.add(dtn::core::Node::URI(t, dtn::core::Node::CONN_UDPIP, uri, 0, 10));
+				n.add(dtn::core::Node::URI(t, dtn::core::Node::CONN_UDPIP, uri, 0, -5));
 				dtn::core::BundleCore::getInstance().getConnectionManager().remove(n);
 			}
 			else if (protocol == "file")
 			{
-				n.add(dtn::core::Node::URI(dtn::core::Node::NODE_STATIC_LOCAL, dtn::core::Node::CONN_FILE, address, 0, 10));
+				n.add(dtn::core::Node::URI(dtn::core::Node::NODE_STATIC_LOCAL, dtn::core::Node::CONN_FILE, address, 0, -5));
 				dtn::core::BundleCore::getInstance().getConnectionManager().remove(n);
 			}
 		}
