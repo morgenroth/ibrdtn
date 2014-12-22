@@ -177,16 +177,6 @@ namespace dtn
 
 		private:
 			/**
-			 * establish a dial-up connection to the given node
-			 */
-			void dialup(const dtn::core::Node &n);
-
-			/**
-			 *  queue a bundle for delivery
-			 */
-			void queue(const dtn::core::Node &node, const dtn::net::BundleTransfer &job);
-
-			/**
 			 * checks for timed out nodes
 			 */
 			void check_unavailable();
