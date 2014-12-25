@@ -11,6 +11,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.stats.StatsEntry;
+import de.tubs.ibr.dtn.stats.StatsUtils;
 
 public abstract class StatsListAdapter extends BaseAdapter {
     private LayoutInflater mInflater = null;
@@ -236,7 +237,7 @@ public abstract class StatsListAdapter extends BaseAdapter {
                 return data.getBundleTransmitted();
                 
             case 13:
-                return data.getStorageSize();
+                return StatsUtils.formatByteString(data.getStorageSize(), true);
         }
         return null;
     }
