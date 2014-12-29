@@ -22,6 +22,7 @@
 package de.tubs.ibr.dtn.chat.core;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 
 import android.annotation.SuppressLint;
@@ -392,6 +393,23 @@ public class Roster {
 		
 		// send refresh intent
 		notifyBuddyChanged(buddyId);
+	}
+	
+	public Cursor queryBuddies() {
+		return database.query(Roster.TABLE_NAME_ROSTER, RosterAdapter.PROJECTION,
+				null, null, null, null, Buddy.NICKNAME);
+	}
+	
+	public Cursor queryOnlineBuddies() {
+		Calendar cal = Calendar.getInstance();
+		cal.add(Calendar.HOUR, -1);
+		
+		Date offline_limit = cal.getTime();
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		
+		// load online buddies
+		return database.query(Roster.TABLE_NAME_ROSTER, RosterAdapter.PROJECTION,
+				"(" + Buddy.PRESENCE + " != ? AND " + Buddy.LASTSEEN + " >= ?) OR " + Buddy.PINNED + " > 0", new String[] { "unavailable", dateFormat.format(offline_limit) }, null, null, Buddy.NICKNAME);
 	}
 	
 	public Buddy getBuddy(Long buddyId) {
