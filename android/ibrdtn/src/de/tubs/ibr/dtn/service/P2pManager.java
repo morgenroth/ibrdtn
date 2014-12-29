@@ -143,7 +143,7 @@ public class P2pManager extends NativeP2pManager {
 		mService.sendBroadcast(i);
 		
 		// restore resumed state
-		if (mResumed) resume();
+		if (mResumed && prefs.getBoolean(Preferences.KEY_P2P_ENABLED, false)) resume();
 		
 		// register to P2p related intents
 		mService.registerReceiver(mP2pEventReceiver, mP2pFilter);
@@ -403,7 +403,8 @@ public class P2pManager extends NativeP2pManager {
 					Log.d(TAG, "Wi-Fi P2P has been enabled.");
 
 					// restore resumed state
-					if (mResumed) resume();
+					SharedPreferences prefs = mService.getSharedPreferences("dtnd", Context.MODE_PRIVATE);
+					if (mResumed && prefs.getBoolean(Preferences.KEY_P2P_ENABLED, false)) resume();
 				}
 			}
 			else if (mWifiP2pChannel != null) {
