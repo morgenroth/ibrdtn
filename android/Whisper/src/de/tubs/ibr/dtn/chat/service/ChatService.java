@@ -34,10 +34,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.database.Cursor;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
@@ -63,6 +67,7 @@ import de.tubs.ibr.dtn.api.TransferMode;
 import de.tubs.ibr.dtn.chat.MainActivity;
 import de.tubs.ibr.dtn.chat.R;
 import de.tubs.ibr.dtn.chat.ReplyActivity;
+import de.tubs.ibr.dtn.chat.RosterAdapter;
 import de.tubs.ibr.dtn.chat.core.Buddy;
 import de.tubs.ibr.dtn.chat.core.Message;
 import de.tubs.ibr.dtn.chat.core.Roster;
@@ -96,6 +101,8 @@ public class ChatService extends DTNIntentService {
 	public static final String ACTION_USERINFO_UPDATED = "de.tubs.ibr.dtn.chat.USERINFO_UPDATED";
 	
 	private static final int MESSAGE_NOTIFICATION = 1;
+	private static final int REFRESH_BUDDY_DATA = 2;
+	
 	public static final String ACTION_OPENCHAT = "de.tubs.ibr.dtn.chat.OPENCHAT";
 	public static final GroupEndpoint PRESENCE_GROUP_EID = new GroupEndpoint("dtn://chat.dtn/presence");
 	
@@ -114,8 +121,28 @@ public class ChatService extends DTNIntentService {
 	// DTN client to talk with the DTN service
 	private DTNClient.Session _session = null;
 	
+	// handler for scheduled refreshes
+	private UpdateHandler mUpdateHandler = null;
+	
 	public ChatService() {
 		super(TAG);
+	}
+	
+	public class UpdateHandler extends Handler {
+		public UpdateHandler(Looper looper) {
+			super(looper);
+		}
+		
+		@Override
+		public void handleMessage(android.os.Message msg) {
+			super.handleMessage(msg);
+			
+			if (msg.what == REFRESH_BUDDY_DATA) {
+				String endpoint = (String)msg.obj;
+				Long buddyId = ChatService.this.getRoster().getBuddyId(endpoint);
+				ChatService.this.getRoster().notifyBuddyChanged(buddyId);
+			}
+		}
 	}
 	
 	private DataHandler _data_handler = new DataHandler()
@@ -248,6 +275,17 @@ public class ChatService extends DTNIntentService {
 			if (nickname != null)
 			{
 				getRoster().updatePresence(source.toString(), created, presence, nickname, status, voiceeid, language, country, flags);
+				
+				// set timer to update buddy status if presence is not 'unavailable'
+				if (!"unavailable".equals(presence)) {
+					// obtain a new refresh message
+					android.os.Message msg = mUpdateHandler.obtainMessage(REFRESH_BUDDY_DATA, source.toString());
+					
+					// schedule the update in 61 minutes
+					mUpdateHandler.sendMessageDelayed(msg, 61 * 60 * 1000);
+					
+					Log.d(TAG, "scheduled update for " + source.toString());
+				}
 			}
 		}
 		
@@ -297,6 +335,11 @@ public class ChatService extends DTNIntentService {
 		// call onCreate of the super-class
 		super.onCreate();
 		
+		HandlerThread thread = new HandlerThread(TAG, android.os.Process.THREAD_PRIORITY_BACKGROUND);
+		thread.start();
+		Looper looper = thread.getLooper();
+		mUpdateHandler = new UpdateHandler(looper);
+		
 		// create a roster object
 		this.roster = new Roster();
 		this.roster.open(this);
@@ -317,6 +360,21 @@ public class ChatService extends DTNIntentService {
 		// register to presence changes
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		prefs.registerOnSharedPreferenceChangeListener(mPrefListener);
+		
+		// schedule update actions for all online buddies
+		Cursor c = getRoster().queryOnlineBuddies();
+		RosterAdapter.ColumnsMap cmap = new RosterAdapter.ColumnsMap();
+		while (c.moveToNext()) {
+			Buddy b = new Buddy(this, c, cmap);
+			
+			// obtain a new refresh message
+			android.os.Message msg = mUpdateHandler.obtainMessage(REFRESH_BUDDY_DATA, b.getEndpoint());
+			
+			// schedule the update in 61 minutes
+			mUpdateHandler.sendMessageDelayed(msg, 61 * 60 * 1000);
+			
+			Log.d(TAG, "scheduled update for " + b.getEndpoint());
+		}
 		
 		Log.i(TAG, "service created.");
 	}

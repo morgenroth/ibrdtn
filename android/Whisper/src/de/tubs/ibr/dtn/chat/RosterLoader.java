@@ -1,9 +1,5 @@
 package de.tubs.ibr.dtn.chat;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -12,10 +8,8 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.preference.PreferenceManager;
 import android.support.v4.content.AsyncTaskLoader;
-import de.tubs.ibr.dtn.chat.core.Buddy;
 import de.tubs.ibr.dtn.chat.core.Roster;
 import de.tubs.ibr.dtn.chat.service.ChatService;
 
@@ -33,23 +27,13 @@ public class RosterLoader extends AsyncTaskLoader<Cursor> {
 
 	@Override
 	public Cursor loadInBackground() {
-		SQLiteDatabase db = mService.getRoster().getDatabase();
+		Roster roster = mService.getRoster();
 		
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
 		if (prefs.getBoolean("hideOffline", false)) {
-			Calendar cal = Calendar.getInstance();
-			cal.add(Calendar.HOUR, -1);
-			
-			Date offline_limit = cal.getTime();
-			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-			
-			// load online buddies
-			return db.query(Roster.TABLE_NAME_ROSTER, RosterAdapter.PROJECTION,
-					"(" + Buddy.PRESENCE + " != ? AND " + Buddy.LASTSEEN + " >= ?) OR " + Buddy.PINNED + " > 0", new String[] { "unavailable", dateFormat.format(offline_limit) }, null, null, Buddy.NICKNAME);
+			return roster.queryOnlineBuddies();
 		} else {
-			// load all buddies
-			return db.query(Roster.TABLE_NAME_ROSTER, RosterAdapter.PROJECTION,
-					null, null, null, null, Buddy.NICKNAME);
+			return roster.queryBuddies();
 		}
 	}
 
