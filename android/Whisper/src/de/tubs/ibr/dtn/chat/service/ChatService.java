@@ -123,14 +123,18 @@ public class ChatService extends DTNIntentService {
 	
 	// handler for scheduled refreshes
 	private UpdateHandler mUpdateHandler = null;
+	private HandlerThread mUpdateThread = null;
 	
 	public ChatService() {
 		super(TAG);
 	}
 	
-	public class UpdateHandler extends Handler {
-		public UpdateHandler(Looper looper) {
+	public final static class UpdateHandler extends Handler {
+		private Roster mRoster = null;
+		
+		public UpdateHandler(Looper looper, Roster roster) {
 			super(looper);
+			mRoster = roster;
 		}
 		
 		@Override
@@ -139,8 +143,8 @@ public class ChatService extends DTNIntentService {
 			
 			if (msg.what == REFRESH_BUDDY_DATA) {
 				String endpoint = (String)msg.obj;
-				Long buddyId = ChatService.this.getRoster().getBuddyId(endpoint);
-				ChatService.this.getRoster().notifyBuddyChanged(buddyId);
+				Long buddyId = mRoster.getBuddyId(endpoint);
+				mRoster.notifyBuddyChanged(buddyId);
 			}
 		}
 	}
@@ -334,15 +338,16 @@ public class ChatService extends DTNIntentService {
 	{
 		// call onCreate of the super-class
 		super.onCreate();
-		
-		HandlerThread thread = new HandlerThread(TAG, android.os.Process.THREAD_PRIORITY_BACKGROUND);
-		thread.start();
-		Looper looper = thread.getLooper();
-		mUpdateHandler = new UpdateHandler(looper);
-		
+
 		// create a roster object
 		this.roster = new Roster();
 		this.roster.open(this);
+		
+		// create a new background looper
+		mUpdateThread = new HandlerThread(TAG, android.os.Process.THREAD_PRIORITY_BACKGROUND);
+		mUpdateThread.start();
+		Looper looper = mUpdateThread.getLooper();
+		mUpdateHandler = new UpdateHandler(looper, roster);
 		
 		// create registration
 		Registration registration = new Registration("chat");
@@ -418,6 +423,14 @@ public class ChatService extends DTNIntentService {
 		// unregister preference listener
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		prefs.unregisterOnSharedPreferenceChangeListener(mPrefListener);
+
+		try {
+			// stop looper
+			mUpdateThread.quit();
+			mUpdateThread.join();
+		} catch (InterruptedException e) {
+			Log.e(TAG, "Wait for looper thread was interrupted.", e);
+		}
 		
 		// close the roster (plus db connection)
 		this.roster.close();
