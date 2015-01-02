@@ -28,7 +28,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -115,8 +114,8 @@ public class DaemonService extends Service {
 
 	private final String TAG = "DaemonService";
 
-	private volatile Looper mServiceLooper;
-	private volatile ServiceHandler mServiceHandler;
+	private HandlerThread mServiceThread;
+	private ServiceHandler mServiceHandler;
 	
 	private int MSG_WHAT_STOP_DISCOVERY = 1;
 	private int MSG_WHAT_COLLECT_STATS = 2;
@@ -341,16 +340,18 @@ public class DaemonService extends Service {
 		return i;
 	}
 
-	@SuppressLint("HandlerLeak")
-	private final class ServiceHandler extends Handler {
-		public ServiceHandler(Looper looper) {
+	private final static class ServiceHandler extends Handler {
+		private DaemonService mService = null;
+		
+		public ServiceHandler(Looper looper, DaemonService service) {
 			super(looper);
+			mService = service;
 		}
 
 		@Override
 		public void handleMessage(Message msg) {
 			Intent intent = (Intent) msg.obj;
-			onHandleIntent(intent, msg.arg1);
+			mService.onHandleIntent(intent, msg.arg1);
 		}
 	}
 
@@ -359,8 +360,7 @@ public class DaemonService extends Service {
 	 * 
 	 * @param intent
 	 */
-	@SuppressWarnings("deprecation")
-	public void onHandleIntent(Intent intent, int startId) {
+	protected void onHandleIntent(Intent intent, int startId) {
 		String action = intent.getAction();
 
 		if (ACTION_STARTUP.equals(action)) {
@@ -774,10 +774,10 @@ public class DaemonService extends Service {
 		 * incoming Intents will be processed by ServiceHandler and queued in
 		 * HandlerThread
 		 */
-		HandlerThread thread = new HandlerThread("DaemonService_IntentThread");
-		thread.start();
-		mServiceLooper = thread.getLooper();
-		mServiceHandler = new ServiceHandler(mServiceLooper);
+		mServiceThread = new HandlerThread(TAG, android.os.Process.THREAD_PRIORITY_BACKGROUND);
+		mServiceThread.start();
+		Looper looper = mServiceThread.getLooper();
+		mServiceHandler = new ServiceHandler(looper, this);
 
 		// create a session manager
 		mSessionManager = new SessionManager(this);
@@ -834,8 +834,13 @@ public class DaemonService extends Service {
 		if (mP2pManager != null)
 			mP2pManager.onDestroy();
 
-		// stop looper that handles incoming intents
-		mServiceLooper.quit();
+		try {
+			// stop looper thread that handles incoming intents
+			mServiceThread.quit();
+			mServiceThread.join();
+		} catch (InterruptedException e) {
+			Log.e(TAG, "Wait for looper thread was interrupted.", e);
+		}
 
 		// close all sessions
 		mSessionManager.destroy();
