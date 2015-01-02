@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 
-import android.annotation.SuppressLint;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -47,7 +46,6 @@ public class RecorderService extends Service {
     private File mCurrentFile = null;
     
     private Object mRecLock = new Object();
-    private Boolean mRecording = false;
     private Boolean mAbort = false;
 
     private EID mDestination = null;
@@ -59,8 +57,8 @@ public class RecorderService extends Service {
     
     private Handler mHandler = null;
     
-    private volatile Looper mServiceLooper;
-    private volatile ServiceHandler mServiceHandler;
+    private HandlerThread mServiceThread;
+    private ServiceHandler mServiceHandler;
     
     private AudioManager mAudioManager = null;
     
@@ -98,17 +96,28 @@ public class RecorderService extends Service {
         return null;
     }
     
-    @SuppressLint("HandlerLeak")
-    private final class ServiceHandler extends Handler {
-        public ServiceHandler(Looper looper) {
+    private final static class ServiceHandler extends Handler {
+    	private RecorderService mService = null;
+    	private boolean mOngoing = false;
+    	
+        public ServiceHandler(Looper looper, RecorderService service) {
             super(looper);
+            mService = service;
+        }
+        
+        public void setOngoing(boolean ongoing) {
+        	mOngoing = ongoing;
+        }
+        
+        public boolean isOngoing() {
+        	return mOngoing;
         }
 
         @Override
         public void handleMessage(Message msg) {
             Intent intent = (Intent) msg.obj;
-            onHandleIntent(intent, msg.arg1);
-            if (!mRecording) stopSelf(msg.arg1);
+            mService.onHandleIntent(intent, msg.arg1);
+            if (!mOngoing) mService.stopSelf(msg.arg1);
         }
     }
     
@@ -130,11 +139,11 @@ public class RecorderService extends Service {
     public void onCreate() {
         super.onCreate();
         
-        HandlerThread thread = new HandlerThread("HeadsetService");
-        thread.start();
+        mServiceThread = new HandlerThread("HeadsetService");
+        mServiceThread.start();
         
-        mServiceLooper = thread.getLooper();
-        mServiceHandler = new ServiceHandler(mServiceLooper);
+        Looper looper = mServiceThread.getLooper();
+        mServiceHandler = new ServiceHandler(looper, this);
         
         // get the audio-manager
         mAudioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
@@ -149,7 +158,7 @@ public class RecorderService extends Service {
         mRecorder.setOnErrorListener(mErrorListener);
         mRecorder.setOnInfoListener(mInfoListener);
         
-        mRecording = false;
+        mServiceHandler.setOngoing(false);
         mAbort = false;
     }
 
@@ -163,7 +172,13 @@ public class RecorderService extends Service {
         
         mHandler = null;
         
-        mServiceLooper.quit();
+        try {
+        	// stop looper
+        	mServiceThread.quit();
+        	mServiceThread.join();
+        } catch (InterruptedException e) {
+        	Log.e(TAG, "Wait for looper thread was interrupted.", e);
+        }
         
         // call super method
         super.onDestroy();
@@ -190,7 +205,7 @@ public class RecorderService extends Service {
     private void startRecording(EID destination, boolean indicator, boolean auto_stop)
     {
     	synchronized(mRecLock) {
-    		if (mRecording) return;
+    		if (mServiceHandler.isOngoing()) return;
     		
     		// request audio focus
     		int result = mAudioManager.requestAudioFocus(mAudioFocusChangeListener,
@@ -233,7 +248,7 @@ public class RecorderService extends Service {
 	            mRecorder.start();
 	            
 	            // set state to recording
-	            mRecording = true;
+	            mServiceHandler.setOngoing(true);
 	            mRecLock.notifyAll();
 	            
                 eventRecordingStarted();
@@ -251,7 +266,7 @@ public class RecorderService extends Service {
     {
     	synchronized(mRecLock) {
 	        // only stop recording in state RECORDING
-	        if (!mRecording) return;
+	        if (!mServiceHandler.isOngoing()) return;
 	
 	        Log.i(TAG, "stop recording audio");
 	        
@@ -263,7 +278,7 @@ public class RecorderService extends Service {
 	        }
 	        
 	        // wait until mRecording is false
-	        while (mRecording) {
+	        while (mServiceHandler.isOngoing()) {
 				try {
 					mRecLock.wait();
 				} catch (InterruptedException e) {
@@ -277,7 +292,7 @@ public class RecorderService extends Service {
     {
         synchronized(mRecLock) {
             // only stop recording in state RECORDING
-            if (!mRecording) return;
+            if (!mServiceHandler.isOngoing()) return;
     
             Log.i(TAG, "abort recording audio");
             
@@ -292,7 +307,7 @@ public class RecorderService extends Service {
 	        }
                         
 	        // wait until mRecording is false
-	        while (mRecording) {
+	        while (mServiceHandler.isOngoing()) {
 				try {
 					mRecLock.wait();
 				} catch (InterruptedException e) {
@@ -305,7 +320,7 @@ public class RecorderService extends Service {
     private void finalizeRecording(File f)
     {
     	synchronized(mRecLock) {
-    		if (!mRecording) return;
+    		if (!mServiceHandler.isOngoing()) return;
     		
 	        // reset recorder
 	        mRecorder.reset();
@@ -329,7 +344,7 @@ public class RecorderService extends Service {
 	        }
 	        
             // set recording to false
-            mRecording = false;
+	        mServiceHandler.setOngoing(false);
             mRecLock.notifyAll();
             mAbort = false;
             

@@ -1,6 +1,5 @@
 package de.tubs.ibr.dtn.dtalkie.service;
 
-import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -16,6 +15,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.support.v4.app.NotificationCompat;
+import android.util.Log;
 import de.tubs.ibr.dtn.dtalkie.R;
 import de.tubs.ibr.dtn.dtalkie.TalkieActivity;
 import de.tubs.ibr.dtn.dtalkie.db.MessageDatabase.Folder;
@@ -31,10 +31,9 @@ public class HeadsetService extends Service {
     
     public static Boolean ENABLED = false;
     
-    private volatile Looper mServiceLooper;
-    private volatile ServiceHandler mServiceHandler;
+    private HandlerThread mServiceThread;
+    private ServiceHandler mServiceHandler;
     
-    private Boolean mPersistent = false;
     private AudioManager mAudioManager = null;
     private ComponentName mMediaButtonReceiver = null;
     
@@ -72,7 +71,7 @@ public class HeadsetService extends Service {
             ENABLED = true;
             
             // set service mode to persistent
-            mPersistent = true;
+            mServiceHandler.setOngoing(true);
         }
         else if (LEAVE_HEADSET_MODE.equals(action)) {
             // turn this to a foreground service (kill-proof)
@@ -82,9 +81,9 @@ public class HeadsetService extends Service {
             ENABLED = false;
             
             // set service mode to persistent
-            mPersistent = false;
+            mServiceHandler.setOngoing(false);
         }
-        else if (ACTION_TOGGLE_RECORD.equals(action) && mPersistent) {
+        else if (ACTION_TOGGLE_RECORD.equals(action) && mServiceHandler.isOngoing()) {
             // if we're currently recording ...
             if (mRecording) {
                 // stop recording
@@ -94,19 +93,19 @@ public class HeadsetService extends Service {
                 startRecording();
             }
         }
-        else if (ACTION_START_RECORD.equals(action) && mPersistent) {
+        else if (ACTION_START_RECORD.equals(action) && mServiceHandler.isOngoing()) {
             if (!mRecording) {
                 // start recording
                 startRecording();
             }
         }
-        else if (ACTION_STOP_RECORD.equals(action) && mPersistent) {
+        else if (ACTION_STOP_RECORD.equals(action) && mServiceHandler.isOngoing()) {
             if (mRecording) {
                 // stop recording
                 stopRecording();
             }
         }
-        else if (ACTION_PLAY_ALL.equals(action) && mPersistent) {
+        else if (ACTION_PLAY_ALL.equals(action) && mServiceHandler.isOngoing()) {
             // play all unread messages
             Intent play_i = new Intent(this, TalkieService.class);
             play_i.setAction(TalkieService.ACTION_PLAY_ALL);
@@ -139,17 +138,28 @@ public class HeadsetService extends Service {
         mRecording = false;
     }
     
-    @SuppressLint("HandlerLeak")
-    private final class ServiceHandler extends Handler {
-        public ServiceHandler(Looper looper) {
+    private final static class ServiceHandler extends Handler {
+    	private HeadsetService mService = null;
+    	private boolean mOngoing = false;
+    	
+        public ServiceHandler(Looper looper, HeadsetService service) {
             super(looper);
+            mService = service;
+        }
+        
+        public void setOngoing(boolean ongoing) {
+        	mOngoing = ongoing;
+        }
+        
+        public boolean isOngoing() {
+        	return mOngoing;
         }
 
         @Override
         public void handleMessage(Message msg) {
             Intent intent = (Intent) msg.obj;
-            onHandleIntent(intent, msg.arg1);
-            if (!mPersistent) stopSelf(msg.arg1);
+            mService.onHandleIntent(intent, msg.arg1);
+            if (!mOngoing) mService.stopSelf(msg.arg1);
         }
     }
 
@@ -171,9 +181,6 @@ public class HeadsetService extends Service {
     public void onCreate() {
         super.onCreate();
         
-        // init persist state
-        mPersistent = false;
-        
         // init bound state
         mRecording = false;
         
@@ -188,11 +195,14 @@ public class HeadsetService extends Service {
         // get the audio manager
         mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         
-        HandlerThread thread = new HandlerThread("HeadsetService");
-        thread.start();
+        mServiceThread = new HandlerThread("HeadsetService");
+        mServiceThread.start();
         
-        mServiceLooper = thread.getLooper();
-        mServiceHandler = new ServiceHandler(mServiceLooper);
+        Looper looper = mServiceThread.getLooper();
+        mServiceHandler = new ServiceHandler(looper, this);
+        
+        // init persist state
+        mServiceHandler.setOngoing(false);
         
     	IntentFilter filter = new IntentFilter();
     	filter.addAction(RecorderService.EVENT_RECORDING_EVENT);
@@ -219,7 +229,13 @@ public class HeadsetService extends Service {
         // unregister from recorder events
         unregisterReceiver(mRecorderEventReceiver);
         
-        mServiceLooper.quit();
+        try {
+        	// stop looper
+        	mServiceThread.quit();
+        	mServiceThread.join();
+        } catch (InterruptedException e) {
+        	Log.e("HeadsetService", "Wait for looper thread was interrupted.", e);
+        }
         
 	    // free sound manager resources
 	    mSoundManager.release();
