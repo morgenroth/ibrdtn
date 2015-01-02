@@ -2,7 +2,6 @@ package de.tubs.ibr.dtn.api;
 
 import java.util.LinkedList;
 
-import android.annotation.SuppressLint;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Handler;
@@ -10,31 +9,25 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.util.Log;
 import de.tubs.ibr.dtn.api.DTNClient.Session;
 
 public abstract class DTNIntentService extends Service {
 	
-	private volatile Looper mServiceLooper;
-	private volatile ServiceHandler mServiceHandler;
+	private HandlerThread mServiceThread;
+	private ServiceHandler mServiceHandler;
 	
 	protected abstract void onHandleIntent(Intent intent);
 	protected abstract void onSessionConnected(Session session);
 	protected abstract void onSessionDisconnected();
 	
+	private String TAG = null;
 	private DTNClient mClient = null;
-	private DTNClient.Session mSession = null;
-	private boolean mOngoing = false;
-
-	private LinkedList<PendingOperation> mQueue = new LinkedList<PendingOperation>();
 	
 	private static final int STATE_CONNECTED = -1;
 	
-	class PendingOperation {
-		public Intent intent;
-		public int startId;
-	};
-	
 	public DTNIntentService(String tag) {
+		TAG = tag;
 	}
 	
 	protected DTNClient getClient() {
@@ -46,10 +39,47 @@ public abstract class DTNIntentService extends Service {
 		throw new UnsupportedOperationException("This service is not available for binding.");
 	}
 
-	@SuppressLint("HandlerLeak")
-	private final class ServiceHandler extends Handler {
-		public ServiceHandler(Looper looper) {
+	private final static class ServiceHandler extends Handler implements SessionConnection {
+		
+		private DTNIntentService mService = null;
+		private boolean mOngoing = false;
+		private LinkedList<PendingOperation> mQueue = new LinkedList<PendingOperation>();
+		private DTNClient.Session mSession = null;
+		
+		private class PendingOperation {
+			public Intent intent;
+			public int startId;
+		};
+		
+		public ServiceHandler(Looper looper, DTNIntentService service) {
 			super(looper);
+			mService = service;
+		}
+		
+		public void queue(Intent intent, int startId) {
+			Message msg = obtainMessage();
+			msg.arg1 = startId;
+			msg.obj = intent;
+			sendMessage(msg);
+		}
+		
+		public void setOngoing(boolean ongoing) {
+			mOngoing = ongoing;
+		}
+		
+		@Override
+		public void onSessionDisconnected() {
+			mSession = null;
+			mService.onSessionDisconnected();
+		}
+		
+		@Override
+		public void onSessionConnected(Session session) {
+			mSession = session;
+			mService.onSessionConnected(mSession);
+			
+			// start processing
+			queue(null, STATE_CONNECTED);
 		}
 
 		@Override
@@ -71,11 +101,11 @@ public abstract class DTNIntentService extends Service {
 				mQueue.add(po);
 			}
 			else if (intent.getAction() == null) {
-				stopSelf(msg.arg1);
+				mService.stopSelf(msg.arg1);
 			}
 			else {
-				onHandleIntent(intent);
-				if (!mOngoing) stopSelf(msg.arg1);
+				mService.onHandleIntent(intent);
+				if (!mOngoing) mService.stopSelf(msg.arg1);
 			}
 		}
 	}
@@ -91,20 +121,13 @@ public abstract class DTNIntentService extends Service {
 		}
 
 		// queue the intent to the handler
-		queue(intent, startId);
+		mServiceHandler.queue(intent, startId);
 	}
 	
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		onStart(intent, startId);
 		return Service.START_STICKY;
-	}
-	
-	private void queue(Intent intent, int startId) {
-		Message msg = mServiceHandler.obtainMessage();
-		msg.arg1 = startId;
-		msg.obj = intent;
-		mServiceHandler.sendMessage(msg);
 	}
 	
 	@Override
@@ -115,13 +138,13 @@ public abstract class DTNIntentService extends Service {
 		 * incoming Intents will be processed by ServiceHandler and queued in
 		 * HandlerThread
 		 */
-		HandlerThread thread = new HandlerThread("DaemonService_IntentThread");
-		thread.start();
-		mServiceLooper = thread.getLooper();
-		mServiceHandler = new ServiceHandler(mServiceLooper);
+		mServiceThread = new HandlerThread(TAG, android.os.Process.THREAD_PRIORITY_BACKGROUND);
+		mServiceThread.start();
+		Looper looper = mServiceThread.getLooper();
+		mServiceHandler = new ServiceHandler(looper, this);
 		
 		// create a client object
-		mClient = new DTNClient(mConnectionCallback);
+		mClient = new DTNClient(mServiceHandler);
 	}
 	
 	protected void initialize(Registration reg) throws ServiceNotAvailableException {
@@ -134,30 +157,18 @@ public abstract class DTNIntentService extends Service {
 		mClient.terminate();
 		mClient = null;
 		
-		// stop looper that handles incoming intents
-		mServiceLooper.quit();
+		try {
+			// stop looper that handles incoming intents
+			mServiceThread.quit();
+			mServiceThread.join();
+		} catch (InterruptedException e) {
+			Log.e(TAG, "Wait for looper thread was interrupted.", e);
+		}
 		
 		super.onDestroy();
 	}
 	
 	protected void setOngoing(boolean ongoing) {
-		mOngoing = ongoing;
+		mServiceHandler.setOngoing(ongoing);
 	}
-	
-	SessionConnection mConnectionCallback = new SessionConnection() {
-		@Override
-		public void onSessionDisconnected() {
-			mSession = null;
-			DTNIntentService.this.onSessionDisconnected();
-		}
-		
-		@Override
-		public void onSessionConnected(Session session) {
-			mSession = session;
-			DTNIntentService.this.onSessionConnected(mSession);
-			
-			// start processing
-			queue(null, STATE_CONNECTED);
-		}
-	};
 }
