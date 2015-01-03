@@ -329,11 +329,6 @@ public class PingService extends DTNIntentService {
 
     @Override
     public void onDestroy() {
-        // release stream endpoint
-        if (mReceiver != null) {
-            mReceiver.release();
-        }
-        
         if (mDestroySessionOnExit) mSession.destroy();
         
         if (mStreamJob != null) {
@@ -470,5 +465,10 @@ public class PingService extends DTNIntentService {
 	@Override
 	protected void onSessionDisconnected() {
         Log.d(TAG, "Session disconnected");
+        
+        // release stream endpoint
+        if (mReceiver != null) {
+            mReceiver.release();
+        }
 	}
 }
