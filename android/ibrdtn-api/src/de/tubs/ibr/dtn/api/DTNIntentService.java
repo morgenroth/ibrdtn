@@ -24,7 +24,9 @@ public abstract class DTNIntentService extends Service {
 	private String TAG = null;
 	private DTNClient mClient = null;
 	
-	private static final int STATE_CONNECTED = -1;
+	private static final int WHAT_CONNECTED = 1;
+	private static final int WHAT_RECONNECT = 2;
+	private static final int WHAT_INTENT = 3;
 	
 	public DTNIntentService(String tag) {
 		TAG = tag;
@@ -57,7 +59,7 @@ public abstract class DTNIntentService extends Service {
 		}
 		
 		public void queue(Intent intent, int startId) {
-			Message msg = obtainMessage();
+			Message msg = obtainMessage(WHAT_INTENT);
 			msg.arg1 = startId;
 			msg.obj = intent;
 			sendMessage(msg);
@@ -71,6 +73,9 @@ public abstract class DTNIntentService extends Service {
 		public void onSessionDisconnected() {
 			mSession = null;
 			mService.onSessionDisconnected();
+			
+			// schedule reconnect
+			sendMessageDelayed(obtainMessage(WHAT_RECONNECT), 5000);
 		}
 		
 		@Override
@@ -79,33 +84,50 @@ public abstract class DTNIntentService extends Service {
 			mService.onSessionConnected(mSession);
 			
 			// start processing
-			queue(null, STATE_CONNECTED);
+			sendMessage(obtainMessage(WHAT_CONNECTED));
 		}
 
 		@Override
 		public void handleMessage(Message msg) {
-			Intent intent = (Intent) msg.obj;
-			
-			if (msg.arg1 == STATE_CONNECTED) {
-				// enqueue all pending actions
-				for (PendingOperation po : mQueue) {
-					queue(po.intent, po.startId);
+			switch (msg.what) {
+				case WHAT_INTENT:
+				{
+					Intent intent = (Intent) msg.obj;
+					
+					if (mSession == null) {
+						// put intent into the pending queue
+						PendingOperation po = new PendingOperation();
+						po.intent = intent;
+						po.startId = msg.arg1;
+						mQueue.add(po);
+					}
+					else {
+						if (intent.getAction() != null) mService.onHandleIntent(intent);
+						if (!mOngoing) mService.stopSelf(msg.arg1);
+					}
+					break;
 				}
-				mQueue.clear();
-			}
-			else if (mSession == null) {
-				// put intent into the pending queue
-				PendingOperation po = new PendingOperation();
-				po.intent = intent;
-				po.startId = msg.arg1;
-				mQueue.add(po);
-			}
-			else if (intent.getAction() == null) {
-				mService.stopSelf(msg.arg1);
-			}
-			else {
-				mService.onHandleIntent(intent);
-				if (!mOngoing) mService.stopSelf(msg.arg1);
+				
+				case WHAT_CONNECTED:
+				{
+					// enqueue all pending actions
+					for (PendingOperation po : mQueue) {
+						queue(po.intent, po.startId);
+					}
+					mQueue.clear();
+					break;
+				}
+				
+				case WHAT_RECONNECT:
+				{
+					try {
+						mService.mClient.reconnect();
+					} catch (ServiceNotAvailableException e) {
+						Log.e(mService.TAG, "DTN service no longer available.");
+						mService.stopSelf();
+					}
+					break;
+				}
 			}
 		}
 	}
