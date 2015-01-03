@@ -62,9 +62,6 @@ public final class DTNClient {
 	// marker to know if the service is connected
 	private Boolean mConnected = false;
 	
-	// marker to know if the service has been disconnected
-	private Boolean mDisconnected = false;
-	
 	public DTNClient(SessionConnection handler) {
 		mSessionHandler = handler;
 	}
@@ -121,9 +118,6 @@ public final class DTNClient {
 			if (mConnected) {
 				// set state to disconnected
 				mConnected = false;
-				
-				// mark as disconnected
-				mDisconnected = true;
 				
 				// announce disconnected state
 				mSessionHandler.onSessionDisconnected();
@@ -442,10 +436,6 @@ public final class DTNClient {
 		}
 	};
 	
-	public boolean isDisconnected() {
-		return mDisconnected;
-	}
-	
 	/**
 	 * This method initialize the DTNClient connection to the DTN service. Call this method in the
 	 * onCreate() method of your activity or service.
@@ -468,8 +458,12 @@ public final class DTNClient {
 		// mark this client as initialized
 		mInitialized = true;
 		
-		// clear disconnected marker
-		mDisconnected = false;
+		// Establish a connection with the service.
+		reconnect();
+	}
+	
+	public synchronized void reconnect() throws ServiceNotAvailableException {
+		if (!mInitialized) return;
 		
 		// Establish a connection with the service.
 		Services.SERVICE_APPLICATION.bind(mContext, mConnection, Context.BIND_AUTO_CREATE);
@@ -490,9 +484,6 @@ public final class DTNClient {
 			if (mConnected) {
 				// set state to disconnected
 				mConnected = false;
-				
-				// mark as disconnected
-				mDisconnected = true;
 				
 				// announce disconnected state
 				mSessionHandler.onSessionDisconnected();
