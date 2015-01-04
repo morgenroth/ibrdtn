@@ -114,10 +114,10 @@ ANDROID_AC_BUILD([
 	AC_CHECK_LIB([m], [pow])
 
 	# check for ibrcommon library
-	AC_CHECK_IBRCOMMON([0.13])
+	AC_CHECK_IBRCOMMON([1.0])
 	
 	# check for ibrdtn library
-	AC_CHECK_IBRDTN([0.13])
+	AC_CHECK_IBRDTN([1.0])
 
 	# Checks for header files.
 	AC_CHECK_HEADERS([syslog.h pwd.h sys/inotify.h])

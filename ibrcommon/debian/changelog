@@ -1,8 +1,25 @@
-ibrcommon (0.13.0) UNRELEASED; urgency=low
+ibrcommon (1.0.0) stable; urgency=medium
 
-  * Development revision
+  * Use CLOCK_BOOTTIME instead of CLOCK_MONOTONIC for MonotonicClock
+  * Improved scope handling in vaddress objects
+  * Improved error checking on RWMutex locking
+  * Add gcov and debug option to configuration.ac files
+  * Add isValid() method to File class
+  * Allow removal of a stream from the Logger
+  * Fix absolute path of File if the path begins with a "."
+  * Add SHA256Stream
+  * Improved implementation of vaddress::isLocal()
+  * Fix build with libnl2 or netlink 3.2.21
+  * Usage of RWMutex / RWLock simplyfied
+  * Fix push() method of exclusive queue access
+  * Add comparison operator to refcnt_ptr and remove getPointer() methods
+  * Fix queue limitation handling when using exclusive locking
+  * Split getnpop() of the Queue class into take() and poll()
+  * Add hash stream for MD5
+  * Fix buffer size of HMacStream
+  * ibrcommon.h added to reflect the library features
 
- -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Fri, 28 Mar 2014 17:06:04 +0100
+ -- Johannes Morgenroth <jm@m-network.de>  Sun, 04 Jan 2015 13:32:13 +0100
 
 ibrcommon (0.12.0) stable; urgency=low
 

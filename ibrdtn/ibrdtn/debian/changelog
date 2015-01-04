@@ -1,8 +1,30 @@
-ibrdtn (0.13.0) UNRELEASED; urgency=low
+ibrdtn (1.0.0) stable; urgency=medium
 
-  * Development revision
+  * Add template type to call of SDNV::random()
+  * Add SDNV::trim() method to limit the absolute sequence-number to 32-bit
+  * Fix: The local time is no longer modified if the clock rating is equal to 1.0
+  * Non-reference clocks are now independent of outer clock adjustments (e.g. by NTP)
+  * Add configure option to disable dependency on glib2
+  * size_t is used in the definition of PrimaryFlags to avoid signed values
+  * The absolute sequence-number is limited to 32-bit for compatibility reasons
+  * The initial absolute sequence number is set to a random value instead of zero
+  * Add gcov and debug option to configuration.ac files
+  * VerificationSkippedException is thrown if PIB verification can not be performed
+  * Skip PIB verification if the fragment range does not match the bundle
+  * Fix for a segfault in case the BLOB creation fails
+  * Add zlib flags and libs to fix unittests on recent ubuntu versions
+  * Fix for bundle expiration of references in MemoryBundleSet
+  * Add trust-levels and methods to store meta data to security key
+  * Add operator==() to compare SecurityKey objects based on the fingerprint
+  * Use take() and poll() methods of the queue instead of getnpop()
+  * Fix autoconf recipe for win32
+  * Fix copy operator of MemoryBundleSet
+  * Fix usage of MD5Stream to convert string-based EIDs to CBHE
+  * Fix compiler selection on some platforms
+  * Automatically detect support for the bundle security protocol
+  * Use MD5Stream class to convert application strings into numbers
 
- -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Fri, 28 Mar 2014 17:06:05 +0100
+ -- Johannes Morgenroth <jm@m-network.de>  Sun, 04 Jan 2015 13:45:46 +0100
 
 ibrdtn (0.12.0) stable; urgency=low
 

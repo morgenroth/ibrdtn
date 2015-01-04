@@ -121,7 +121,7 @@ ANDROID_AC_BUILD([
 	AC_CHECK_LIB([rt], [clock_gettime])
 
 	# check for ibrcommon library
-	AC_CHECK_IBRCOMMON([0.13])
+	AC_CHECK_IBRCOMMON([1.0])
 
 	# Checks for header files.
 	AC_CHECK_HEADERS([inttypes.h stddef.h stdint.h stdlib.h string.h sys/time.h unistd.h])
