@@ -8,6 +8,7 @@
     
     <uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:allowBackup="true"
@@ -52,6 +53,12 @@
 	            <action android:name="de.tubs.ibr.dtn.intent.STATUS_REPORT" />
 	            <category android:name="de.tubs.ibr.dtn.chat" />
 	        </intent-filter>
+			<intent-filter>
+				<action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+			</intent-filter>
+			<intent-filter>
+				<action android:name="android.intent.action.BOOT_COMPLETED" />
+			</intent-filter>
 	    </receiver>
 	    
 	    <receiver android:enabled="true" android:name=".service.NotificationReceiver" android:exported="false">

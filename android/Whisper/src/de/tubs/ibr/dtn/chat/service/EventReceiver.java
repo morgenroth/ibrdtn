@@ -24,6 +24,8 @@ package de.tubs.ibr.dtn.chat.service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 
 public class EventReceiver extends BroadcastReceiver {
 	
@@ -46,6 +48,25 @@ public class EventReceiver extends BroadcastReceiver {
 			i.putExtra("source", intent.getParcelableExtra("source"));
 			i.putExtra("bundleid", intent.getParcelableExtra("bundleid"));
 			context.startService(i);
+		}
+		else if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction()) ||
+				 Intent.ACTION_MY_PACKAGE_REPLACED.equals(intent.getAction()))
+		{
+			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+			String desired = prefs.getString("presencetag", "unavailable");
+			
+			if (desired.equals("unavailable")) {
+				// deactivate presence generator
+				PresenceGenerator.deactivate(context);
+			} else {
+				// activate presence generator
+				PresenceGenerator.activate(context);
+				
+				// send initial presence
+				Intent presenceIntent = new Intent(context, ChatService.class);
+				presenceIntent.setAction(ChatService.ACTION_PRESENCE_ALARM);
+				context.startService(presenceIntent);
+			}
 		}
 	}
 }
