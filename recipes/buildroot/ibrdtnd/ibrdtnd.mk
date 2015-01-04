@@ -3,7 +3,7 @@
 # ibrdtnd
 #
 #############################################################
-IBRDTND_VERSION:=0.13.0
+IBRDTND_VERSION:=1.0.0
 IBRDTND_SOURCE:=ibrdtnd-$(IBRDTND_VERSION).tar.gz
 IBRDTND_SITE:=http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/releases
 IBRDTND_LIBTOOL_PATCH:=NO

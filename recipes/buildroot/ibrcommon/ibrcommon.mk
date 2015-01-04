@@ -3,7 +3,7 @@
 # ibrcommon
 #
 #############################################################
-IBRCOMMON_VERSION:=0.13.0
+IBRCOMMON_VERSION:=1.0.0
 IBRCOMMON_SOURCE:=ibrcommon-$(IBRCOMMON_VERSION).tar.gz
 IBRCOMMON_SITE:=http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/releases
 IBRCOMMON_LIBTOOL_PATCH:=NO
