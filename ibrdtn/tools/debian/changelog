@@ -1,8 +1,10 @@
-ibrdtn-tools (0.13.0) UNRELEASED; urgency=low
+ibrdtn-tools (1.0.0) stable; urgency=medium
 
-  * Development revision
+  * Add configure option to disable dependency on libdaemon, libarchive, and openssl
+  * Use libarchive >= 3.0 instead of shell call of 'tar' for dtninbox / dtnoutbox
+  * Remove dependency on openssl
 
- -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Fri, 28 Mar 2014 17:06:05 +0100
+ -- Johannes Morgenroth <jm@m-network.de>  Sun, 04 Jan 2015 13:56:53 +0100
 
 ibrdtn-tools (0.12.0) stable; urgency=low
 

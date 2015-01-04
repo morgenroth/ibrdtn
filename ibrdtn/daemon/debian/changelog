@@ -1,8 +1,62 @@
-ibrdtnd (0.13.0) UNRELEASED; urgency=low
+ibrdtnd (1.0.0) stable; urgency=medium
 
-  * Development revision
+  * Features & Fixes
+    * Detect potential duplicates during the bundle reception
+    * Trigger all routing modules to react to initial topology
+    * Time-sync only with the best available peer
+    * Synchronize time even if the timestamp is equal in seconds
+    * Automatically generate a local security key if it does not exists
+    * Add security key-exchange mechanism
+    * Add key-exchange controls to the NativeDaemon
+    * Add key-exchange controls to the management API
+    * Store meta-data of security keys
+    * Specify a trust-level for each key exchange protocol
+    * Update equal keys if the trust-level of the new key is higher
+    * Put public and private key into separate files
+    * Only enable KeyExchanger if security features are enabled
+    * Generate DH params for key-exchange only if enabled
+    * Increase seq.no. range of UDP datagram service to 0..15
+    * Add sign / encrypt capabilities to integrated applications
+    * Sign and encrypt echo replies if the request was signed / encrypted
+    * Sign status reports if the referenced bundles was signed
+    * Sign custody signals if the referenced bundles was signed
+    * Stream log via API (protocol management -> logstream)
+    * Verify PIBs of merged bundles
+    * Fix copy operator of SQLiteBundleSet
+    * Fix queue poll() function call in TCPConnection::Sender
+    * Store routing data of PRoPHET persistently if the storage path is set
+    * Add special treatment for binding a TCP convergence-layer to loopback
+    * Add low-energy mode which is controlled by the API
+    * Make TCP keep-alive time-out configurable
+    * Make beacon interval configurable
+    * Add option to enable externally managed connectivity state
+    * Fix processing of compression and encryption block
+    * Add basic filtering capabilities
+    * Set inital timeout for TCP-CL handshake
+    * Send notification to all neighbors if the PredictabilityMap of PRoPHET grows
 
- -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Fri, 28 Mar 2014 17:06:05 +0100
+  * Build process
+    * Automatically detect support for BSP and 6LowPAN
+    * Autoconf make-over
+    * Remove redundant linker options in Makefile.am
+    * Fix autoconf recipe for win32
+    * Fix TLS support checking
+    * Exclude security headers if BSP is not supported by ibrdtn library
+    * Disable TLS if ibrcommon does not supports SSL
+    * Add configure option to disable dependency on libwifip2p and vmime
+    * Introduce configure option to enable build of documentation explicitly
+    * Enable build of documentation for Debian packages
+
+  * Packaging
+    * Create a spool directory with write permissions for 'dtnd' in debian install script
+    * Add process name checking to dtnd init script
+    * Load init script defaults before checking if the start-up is disabled
+    * Fix directory permissions during Debian installation
+    * Enable security settings by default
+    * Change permissions of bpsec and certs directory on start-up
+    * Fix munin bundle stats script
+
+ -- Johannes Morgenroth <jm@m-network.de>  Sun, 04 Jan 2015 14:00:58 +0100
 
 ibrdtnd (0.12.0) stable; urgency=low
 
