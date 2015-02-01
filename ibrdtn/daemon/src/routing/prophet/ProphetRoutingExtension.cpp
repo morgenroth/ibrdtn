@@ -617,42 +617,48 @@ namespace dtn
 
 		void ProphetRoutingExtension::updateNeighbor(const dtn::data::EID &neighbor, const DeliveryPredictabilityMap& neighbor_dp_map)
 		{
-			// update the encounter on every routing handshake
-			ibrcommon::MutexLock l(_deliveryPredictabilityMap);
+			bool shouldPush = false;
 
-			// remember the size of the map before it is altered
-			const size_t numOfItems = _deliveryPredictabilityMap.size();
+			{
+				// update the encounter on every routing handshake
+				ibrcommon::MutexLock l(_deliveryPredictabilityMap);
 
-			// age the local predictability map
-			age();
+				// remember the size of the map before it is altered
+				const size_t numOfItems = _deliveryPredictabilityMap.size();
 
-			/**
-			 * Calculate new value for this encounter
-			 */
-			try {
-				float neighbor_dp = _deliveryPredictabilityMap.get(neighbor);
+				// age the local predictability map
+				age();
 
-				if (neighbor_dp < _p_first_threshold)
-				{
-					neighbor_dp = _p_encounter_first;
+				/**
+				 * Calculate new value for this encounter
+				 */
+				try {
+					float neighbor_dp = _deliveryPredictabilityMap.get(neighbor);
+
+					if (neighbor_dp < _p_first_threshold)
+					{
+						neighbor_dp = _p_encounter_first;
+					}
+					else
+					{
+						neighbor_dp += (1 - _delta - neighbor_dp) * p_encounter(neighbor);
+					}
+
+					_deliveryPredictabilityMap.set(neighbor, neighbor_dp);
+				} catch (const DeliveryPredictabilityMap::ValueNotFoundException&) {
+					_deliveryPredictabilityMap.set(neighbor, _p_encounter_first);
 				}
-				else
-				{
-					neighbor_dp += (1 - _delta - neighbor_dp) * p_encounter(neighbor);
-				}
 
-				_deliveryPredictabilityMap.set(neighbor, neighbor_dp);
-			} catch (const DeliveryPredictabilityMap::ValueNotFoundException&) {
-				_deliveryPredictabilityMap.set(neighbor, _p_encounter_first);
+				_ageMap[neighbor] = dtn::utils::Clock::getMonotonicTimestamp();
+
+				/* update the dp_map */
+				_deliveryPredictabilityMap.update(neighbor, neighbor_dp_map, _p_encounter_first);
+
+				// if the number of items has been increased by additional neighbors
+				shouldPush = numOfItems < _deliveryPredictabilityMap.size();
 			}
 
-			_ageMap[neighbor] = dtn::utils::Clock::getMonotonicTimestamp();
-
-			/* update the dp_map */
-			_deliveryPredictabilityMap.update(neighbor, neighbor_dp_map, _p_encounter_first);
-
-			// if the number of items has been increased by additional neighbors
-			if (numOfItems < _deliveryPredictabilityMap.size())
+			if (shouldPush)
 			{
 				// then push a notification to all neighbors
 				(**this).pushHandshakeUpdated(NodeHandshakeItem::DELIVERY_PREDICTABILITY_MAP);
