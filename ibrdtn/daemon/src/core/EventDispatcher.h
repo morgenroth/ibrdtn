@@ -11,7 +11,8 @@
 #include "core/Event.h"
 #include "core/EventSwitch.h"
 #include "core/EventReceiver.h"
-#include <ibrcommon/thread/Mutex.h>
+#include <ibrcommon/thread/RWMutex.h>
+#include <ibrcommon/thread/RWLock.h>
 #include <ibrcommon/thread/MutexLock.h>
 #include <list>
 
@@ -52,7 +53,7 @@ namespace dtn
 			};
 
 			void _reset() {
-				ibrcommon::MutexLock l(_dispatch_lock);
+				ibrcommon::RWLock l(_dispatch_lock);
 				_stat_count = 0;
 			}
 
@@ -75,12 +76,12 @@ namespace dtn
 			}
 
 			void _add(EventReceiver<E> *receiver) {
-				ibrcommon::MutexLock l(_dispatch_lock);
+				ibrcommon::RWLock l(_dispatch_lock);
 				_receivers.push_back(receiver);
 			}
 
 			void _remove(const EventReceiver<E> *receiver) {
-				ibrcommon::MutexLock l(_dispatch_lock);
+				ibrcommon::RWLock l(_dispatch_lock);
 				for (typename std::list<EventReceiver<E>*>::iterator iter = _receivers.begin(); iter != _receivers.end(); ++iter)
 				{
 					if ((*iter) == receiver)
@@ -130,7 +131,7 @@ namespace dtn
 			}
 
 		private:
-			ibrcommon::Mutex _dispatch_lock;
+			ibrcommon::RWMutex _dispatch_lock;
 			std::list<EventReceiver<E>*> _receivers;
 			EventProcessorImpl _processor;
 			size_t _stat_count;
