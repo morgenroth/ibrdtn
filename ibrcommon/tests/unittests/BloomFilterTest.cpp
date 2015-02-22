@@ -516,7 +516,7 @@ void BloomFilterTest::testMemory()
 	Filter1.insert("test");
 	CPPUNIT_ASSERT(Filter1.contains("test"));
 	Filter1.clear();
-	CPPUNIT_ASSERT_EQUAL(false, Filter1.contains("test"));
+	CPPUNIT_ASSERT(!Filter1.contains("test"));
 
 }
 /*=== END   tests for class 'BloomFilter' ===*/

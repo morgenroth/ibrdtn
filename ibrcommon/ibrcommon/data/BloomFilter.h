@@ -164,7 +164,16 @@ namespace ibrcommon
 
 		const cell_type* table() const;
 
+		/**
+		 * Returns the allocation
+		 */
 		double getAllocation() const;
+
+		/**
+		 * Increase the Bloom-filter table by the initial size
+		 * This operation also clears all elements
+		 */
+		bool grow(size_t num);
 
 	protected:
 		virtual void compute_indices(const bloom_type& hash, std::size_t& bit_index, std::size_t& bit) const;
@@ -172,9 +181,17 @@ namespace ibrcommon
 
 		unsigned char*          bit_table_;
 		std::size_t             table_size_;
+		std::size_t             initial_table_size_;
 
 		unsigned int _itemcount;
 		std::size_t salt_count_;
+
+	private:
+		/**
+		 * Returns the allocation under the assumption that the given number
+		 * of items is stored within the filter
+		 */
+		double estimateAllocation(size_t items, size_t table_size) const;
 	};
 }
 
