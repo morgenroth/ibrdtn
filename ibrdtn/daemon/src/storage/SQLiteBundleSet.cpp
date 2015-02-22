@@ -231,8 +231,20 @@ namespace dtn
 				// update expiretime, if necessary
 				new_expire_time(bundle.expiretime);
 
-				// add bundle to the bloomfilter
-				bundle.addTo(_bf);
+				// estimate allocation of the Bloom-filter and double size if threshold is reached
+				// growing is only allowed if the set is consistent with the Bloom-filter
+				if (_consistent && _bf.grow(size() + 1))
+				{
+					// rebuild Bloom-filter
+					// this process will choose the right size for the
+					// current number of elements
+					rebuild_bloom_filter();
+				}
+				else
+				{
+					// add bundle to the bloomfilter
+					bundle.addTo(_bf);
+				}
 			} catch (const SQLiteDatabase::SQLiteQueryException&) {
 				// error
 			}
@@ -435,6 +447,12 @@ namespace dtn
 		{
 			// rebuild the bloom-filter
 			_bf.clear();
+
+			// get number of elements
+			const size_t bnum = size();
+
+			// increase the size of the Bloom-filter if the allocation is too high
+			_bf.grow(bnum);
 
 			try {
 				SQLiteDatabase::Statement st(_sqldb._database, SQLiteDatabase::_sql_queries[SQLiteDatabase::BUNDLE_SET_GET_ALL]);
