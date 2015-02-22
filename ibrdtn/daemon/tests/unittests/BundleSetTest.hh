@@ -67,6 +67,7 @@ class BundleSetTest : public CppUnit::TestFixture {
 		void namingTest();
 		void performanceTest();
 		void persistanceTest();
+		void sizeTest();
 
 		void setUp();
 		void tearDown();
@@ -84,6 +85,7 @@ class BundleSetTest : public CppUnit::TestFixture {
 		CPPUNIT_TEST_ALL_STORAGES(namingTest);
 		CPPUNIT_TEST_ALL_STORAGES(performanceTest);
 		CPPUNIT_TEST_ALL_STORAGES(persistanceTest);
+		CPPUNIT_TEST_ALL_STORAGES(sizeTest);
 		CPPUNIT_TEST_SUITE_END();
 
 		static size_t testCounter;
