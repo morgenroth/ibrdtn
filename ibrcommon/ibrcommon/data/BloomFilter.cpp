@@ -137,11 +137,12 @@ namespace ibrcommon
 														 };
 
 	BloomFilter::BloomFilter(std::size_t table_size, std::size_t salt_count)
-	 : _hashp(salt_count), table_size_(table_size), _itemcount(0), salt_count_(salt_count)
+	 : _hashp(salt_count), table_size_(table_size), initial_table_size_(table_size), _itemcount(0), salt_count_(salt_count)
 	{
 		// check if table_size_ is multiple of 8
-		if (table_size_ % bits_per_char != 0) {
-			table_size_ += bits_per_char - (table_size_ % bits_per_char);
+		if (initial_table_size_ % bits_per_char != 0) {
+			initial_table_size_ += bits_per_char - (initial_table_size_ % bits_per_char);
+			table_size_ = initial_table_size_;
 		}
 
 		bit_table_ = new cell_type[table_size_ / bits_per_char];
@@ -149,7 +150,7 @@ namespace ibrcommon
 	}
 
 	BloomFilter::BloomFilter(const BloomFilter& filter)
-	 : _hashp(filter._hashp), table_size_(filter.table_size_), _itemcount(filter._itemcount), salt_count_(filter.salt_count_)
+	 : _hashp(filter._hashp), table_size_(filter.table_size_), initial_table_size_(filter.initial_table_size_), _itemcount(filter._itemcount), salt_count_(filter.salt_count_)
 	{
 		bit_table_ = new cell_type[table_size_ / bits_per_char];
 		std::copy(filter.bit_table_, filter.bit_table_ + (table_size_ / bits_per_char), bit_table_);
@@ -177,6 +178,13 @@ namespace ibrcommon
 
 	void BloomFilter::clear()
 	{
+		// shrink Bloom-filter to initial size
+		if (table_size_ > initial_table_size_) {
+			table_size_ = initial_table_size_;
+			delete[] bit_table_;
+			bit_table_ = new cell_type[table_size_ / bits_per_char];
+		}
+
 		std::fill_n(bit_table_,(table_size_ / bits_per_char),0x00);
 		_itemcount = 0;
 	}
@@ -291,16 +299,51 @@ namespace ibrcommon
 
 	void BloomFilter::load(const cell_type* data, size_t len)
 	{
-		if (len < table_size_)
+		if (len == (table_size_ / bits_per_char))
 		{
 			std::copy(data, data + len, bit_table_);
 		}
 		else
 		{
-			std::copy(data, data + table_size_, bit_table_);
+			table_size_ = len * bits_per_char;
+			delete[] bit_table_;
+			bit_table_ = new cell_type[len];
+			std::copy(data, data + len, bit_table_);
 		}
 
 		_itemcount = 0;
+	}
+
+	bool BloomFilter::grow(size_t num)
+	{
+		// estimate allocation
+		double alloc = estimateAllocation(num, table_size_);
+
+		// return true, if the allocation is acceptable
+		if (alloc < 0.01) return false;
+
+		size_t nalloc = initial_table_size_ * 2;
+
+		// double maximum of 8 times
+		for (int i = 0; i < 8; ++i)
+		{
+			if (estimateAllocation(num, nalloc) < 0.01) break;
+			nalloc *= 2;
+		}
+
+		if (table_size_ >= nalloc) return false;
+
+		table_size_ = nalloc;
+
+		// create a new table
+		delete[] bit_table_;
+		bit_table_ = new cell_type[table_size_ / bits_per_char];
+
+		std::fill_n(bit_table_,(table_size_ / bits_per_char),0x00);
+		_itemcount = 0;
+
+		// return true to indicate that the filter should get re-filled
+		return true;
 	}
 
 	const cell_type* BloomFilter::table() const
@@ -314,12 +357,16 @@ namespace ibrcommon
 		bit = bit_index % bits_per_char;
 	}
 
+	double BloomFilter::estimateAllocation(size_t items, size_t table_size) const
+	{
+		double n = static_cast<double>(items);
+		double k = static_cast<double>(salt_count_);
+		double s = static_cast<double>(table_size);
+		return pow(1 - pow(1 - (1 / s), k * n), k);
+	}
+
 	double BloomFilter::getAllocation() const
 	{
-		double m = static_cast<double>(table_size_);
-		double n = static_cast<double>(_itemcount);
-		double k = static_cast<double>(salt_count_);
-
-		return pow(1 - pow(1 - (1 / m), k * n), k);
+		return estimateAllocation(_itemcount, table_size_);
 	}
 }

@@ -282,6 +282,25 @@ void BundleSetTest::persistanceTest()
 	CPPUNIT_ASSERT_EQUAL(num_bundles,size_after);
 }
 
+void BundleSetTest::sizeTest()
+{
+	BundleSet src(NULL, 12000);
+	genbundles(src,100,10,15);
+
+	BundleSet dst;
+	genbundles(dst,100,10,15);
+
+	CPPUNIT_ASSERT(src.getBloomFilter().size() != dst.getBloomFilter().size());
+
+	std::stringstream ss;
+	ss << src;
+	ss.clear();
+
+	ss >> dst;
+
+	CPPUNIT_ASSERT_EQUAL(src.getBloomFilter().size(), dst.getBloomFilter().size());
+}
+
 void BundleSetTest::genbundles(dtn::data::BundleSet &l, int number, int offset, int max)
 {
 	int range = max - offset;

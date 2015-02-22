@@ -114,8 +114,20 @@ namespace dtn
 			BundleSetImpl::ExpiringBundle exb(*ret.first);
 			_expire.insert(exb);
 
-			// add bundle to the bloomfilter
-			bundle.addTo(_bf);
+			// increase the size of the Bloom-filter if the allocation is too high
+			if (_consistent && _bf.grow(_bundles.size() + 1))
+			{
+				// re-insert all bundles
+				for (bundle_set::const_iterator iter = _bundles.begin(); iter != _bundles.end(); ++iter)
+				{
+					(*iter).addTo(_bf);
+				}
+			}
+			else
+			{
+				// add bundle to the bloomfilter
+				bundle.addTo(_bf);
+			}
 		}
 
 		void MemoryBundleSet::clear() throw ()
@@ -179,6 +191,13 @@ namespace dtn
 			{
 				// rebuild the bloom-filter
 				_bf.clear();
+
+				// get number of elements
+				const size_t bnum = size();
+
+				// increase the size of the Bloom-filter if the allocation is too high
+				_bf.grow(bnum);
+
 				for (bundle_set::const_iterator iter = _bundles.begin(); iter != _bundles.end(); ++iter)
 				{
 					(*iter).addTo(_bf);
