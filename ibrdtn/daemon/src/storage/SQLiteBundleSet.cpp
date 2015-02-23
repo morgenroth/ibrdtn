@@ -106,7 +106,7 @@ namespace dtn
 		}
 
 		SQLiteBundleSet::SQLiteBundleSet(const size_t id, bool persistant, dtn::data::BundleSet::Listener *listener, dtn::data::Size bf_size, dtn::storage::SQLiteDatabase& database)
-		 : _set_id(id), _bf_size(bf_size), _bf(bf_size * 8), _listener(listener), _consistent(true),_sqldb(database), _persistent(persistant)
+		 : _set_id(id), _bf_size(bf_size), _bf(bf_size), _listener(listener), _consistent(true),_sqldb(database), _persistent(persistant)
 		{
 			// if this is a persitant bundle-set
 			if (_persistent) {
