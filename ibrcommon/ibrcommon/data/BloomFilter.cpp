@@ -125,6 +125,9 @@ namespace ibrcommon
 		return hash;
 	}
 
+	// allocation threshold for growing = 0.01%
+	const double BloomFilter::table_allocation_max = 0.0001;
+
 	const unsigned char BloomFilter::bit_mask[bits_per_char] = {
 														   0x01,  //00000001
 														   0x02,  //00000010
@@ -136,21 +139,15 @@ namespace ibrcommon
 														   0x80   //10000000
 														 };
 
-	BloomFilter::BloomFilter(std::size_t table_size, std::size_t salt_count)
-	 : _hashp(salt_count), table_size_(table_size), initial_table_size_(table_size), _itemcount(0), salt_count_(salt_count)
+	BloomFilter::BloomFilter(std::size_t table_size, std::size_t table_max, std::size_t salt_count)
+	 : _hashp(salt_count), table_size_(table_size * bits_per_char), table_size_init_(table_size * bits_per_char), table_size_max_(::max(table_size, table_max) * bits_per_char), _itemcount(0), salt_count_(salt_count)
 	{
-		// check if table_size_ is multiple of 8
-		if (initial_table_size_ % bits_per_char != 0) {
-			initial_table_size_ += bits_per_char - (initial_table_size_ % bits_per_char);
-			table_size_ = initial_table_size_;
-		}
-
 		bit_table_ = new cell_type[table_size_ / bits_per_char];
 		std::fill_n(bit_table_,(table_size_ / bits_per_char),0x00);
 	}
 
 	BloomFilter::BloomFilter(const BloomFilter& filter)
-	 : _hashp(filter._hashp), table_size_(filter.table_size_), initial_table_size_(filter.initial_table_size_), _itemcount(filter._itemcount), salt_count_(filter.salt_count_)
+	 : _hashp(filter._hashp), table_size_(filter.table_size_), table_size_init_(filter.table_size_init_), table_size_max_(filter.table_size_max_), _itemcount(filter._itemcount), salt_count_(filter.salt_count_)
 	{
 		bit_table_ = new cell_type[table_size_ / bits_per_char];
 		std::copy(filter.bit_table_, filter.bit_table_ + (table_size_ / bits_per_char), bit_table_);
@@ -179,8 +176,8 @@ namespace ibrcommon
 	void BloomFilter::clear()
 	{
 		// shrink Bloom-filter to initial size
-		if (table_size_ > initial_table_size_) {
-			table_size_ = initial_table_size_;
+		if (table_size_ > table_size_init_) {
+			table_size_ = table_size_init_;
 			delete[] bit_table_;
 			bit_table_ = new cell_type[table_size_ / bits_per_char];
 		}
@@ -316,30 +313,27 @@ namespace ibrcommon
 
 	bool BloomFilter::grow(size_t num)
 	{
-		// estimate allocation
-		double alloc = estimateAllocation(num, table_size_);
+		// do not grow if maximum size is already reached
+		if (table_size_ >= table_size_max_) return false;
 
 		// return true, if the allocation is acceptable
-		if (alloc < 0.01) return false;
+		if (estimateAllocation(num, table_size_) < table_allocation_max) return false;
 
-		size_t nalloc = initial_table_size_ * 2;
-
-		// double maximum of 8 times
-		for (int i = 0; i < 8; ++i)
+		// double table_size
+		while (table_size_ < table_size_max_)
 		{
-			if (estimateAllocation(num, nalloc) < 0.01) break;
-			nalloc *= 2;
+			// limit the table size to the maximum value
+			table_size_ = ::min(table_size_ * 2, table_size_max_);
+
+			// if allocation is sufficient low, stop growing
+			if (estimateAllocation(num, table_size_) < table_allocation_max) break;
 		}
-
-		if (table_size_ >= nalloc) return false;
-
-		table_size_ = nalloc;
 
 		// create a new table
 		delete[] bit_table_;
 		bit_table_ = new cell_type[table_size_ / bits_per_char];
 
-		std::fill_n(bit_table_,(table_size_ / bits_per_char),0x00);
+		std::fill_n(bit_table_, (table_size_ / bits_per_char), 0x00);
 		_itemcount = 0;
 
 		// return true to indicate that the filter should get re-filled
