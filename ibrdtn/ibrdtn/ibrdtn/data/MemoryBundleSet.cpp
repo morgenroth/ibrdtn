@@ -31,12 +31,12 @@ namespace dtn
 		bool MemoryBundleSet::__store_path_set__ = false;
 
 		MemoryBundleSet::MemoryBundleSet(BundleSet::Listener *listener, Length bf_size)
-		 : _name(), _bf_size(bf_size), _bf(bf_size * 8), _listener(listener), _consistent(true)
+		 : _name(), _bf_size(bf_size), _bf(bf_size), _listener(listener), _consistent(true)
 		{
 		}
 
 		MemoryBundleSet::MemoryBundleSet(const std::string &name, BundleSet::Listener *listener, Length bf_size)
-		 : _name(name), _bf_size(bf_size), _bf(bf_size * 8), _listener(listener), _consistent(true)
+		 : _name(name), _bf_size(bf_size), _bf(bf_size), _listener(listener), _consistent(true)
 		{
 			try {
 				restore();
