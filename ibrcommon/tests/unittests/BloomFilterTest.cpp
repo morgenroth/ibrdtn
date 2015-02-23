@@ -115,7 +115,7 @@ void BloomFilterTest::testLoad()
 {
 	/* test signature (const cell_type* data, size_t len) */
 
-	ibrcommon::BloomFilter Filter(8196,2);
+	ibrcommon::BloomFilter Filter(1024,1024,2);
 	const ibrcommon::cell_type* cad1;
 	const ibrcommon::cell_type* cad2;
 	cad1 = (const ibrcommon::cell_type*)"Hello World\0";
@@ -134,8 +134,8 @@ void BloomFilterTest::testOperatorAssign()
 {
 	/* test signature (const BloomFilter& filter) */
 
-	ibrcommon::BloomFilter FilterA(8196,2);
-	ibrcommon::BloomFilter FilterB(8196,2);
+	ibrcommon::BloomFilter FilterA(1024,1024,2);
+	ibrcommon::BloomFilter FilterB(1024,1024,2);
 
 	string strin;
 	strin="hello";
@@ -150,14 +150,14 @@ void BloomFilterTest::testOperatorNot()
 {
 	/* test signature () const */
 
-	ibrcommon::BloomFilter Filter1(0,2);
+	ibrcommon::BloomFilter Filter1(0,0,2);
 	CPPUNIT_ASSERT_EQUAL(true, Filter1.operator !());
 
 }
 
 void BloomFilterTest::testInsert()
 {
-	ibrcommon::BloomFilter Filter1(8196,2);
+	ibrcommon::BloomFilter Filter1(1024,1024,2);
 
 //	 test signature (const unsigned char* key_begin, const std::size_t length)
 
@@ -186,7 +186,7 @@ void BloomFilterTest::testContains()
 	/* test signature (const std::string& key) const */
 	/* test signature (const char* data, const std::size_t& length) const */
 
-	ibrcommon::BloomFilter Filter1(8196,2);
+	ibrcommon::BloomFilter Filter1(1024,1024,2);
 	char word[8];
 	for(int j=0; j <=127 ; ++j)
 	{
@@ -204,7 +204,7 @@ void BloomFilterTest::testContains()
 
 void BloomFilterTest::testContainsAll()
 {
-	ibrcommon::BloomFilter Filter2(8196,2);
+	ibrcommon::BloomFilter Filter2(1024,1024,2);
 	vector<char*> v(127);
 	std::vector<char*>::iterator it;
 	for(int j=0; j<128 ; ++j)
@@ -224,7 +224,7 @@ void BloomFilterTest::testContainsAll()
 
 void BloomFilterTest::testContainsNone()
 {
-	ibrcommon::BloomFilter Filter2(8196,2);
+	ibrcommon::BloomFilter Filter2(1024,1024,2);
 	vector<char*> v(127);
 	std::vector<char*>::iterator it;
 	for(int j=0; j<128 ; ++j)
@@ -246,8 +246,8 @@ void BloomFilterTest::testOperatorAndAndAssign()
 {
 	/* test signature (const BloomFilter& filter) */
 
-	ibrcommon::BloomFilter FilterA(8196,2);
-	ibrcommon::BloomFilter FilterB(8196,2);
+	ibrcommon::BloomFilter FilterA(1024,1024,2);
+	ibrcommon::BloomFilter FilterB(1024,1024,2);
 
 	string strin1,strin2,strin3,strin4;
 	strin1="hello";
@@ -275,8 +275,8 @@ void BloomFilterTest::testOperatorAndAndAssign()
 void BloomFilterTest::testOperatorInclusiveOrAndAssign()
 {
 	/* test signature (const BloomFilter& filter) */
-	ibrcommon::BloomFilter FilterA(8196,2);
-	ibrcommon::BloomFilter FilterB(8196,2);
+	ibrcommon::BloomFilter FilterA(1024,1024,2);
+	ibrcommon::BloomFilter FilterB(1024,1024,2);
 
 	string strin1,strin2,strin3,strin4;
 	strin1="hello";
@@ -305,8 +305,8 @@ void BloomFilterTest::testOperatorXorAndAssign()
 {
 	/* test signature (const BloomFilter& filter) */
 
-	ibrcommon::BloomFilter FilterA(8196,2);
-	ibrcommon::BloomFilter FilterB(8196,2);
+	ibrcommon::BloomFilter FilterA(1024,1024,2);
+	ibrcommon::BloomFilter FilterB(1024,1024,2);
 
 	string strin1,strin2,strin3,strin4;
 	strin1="hello";
@@ -335,9 +335,9 @@ void BloomFilterTest::testGetAllocation()
 {
 	/* test signature () const */
 
-	ibrcommon::BloomFilter FilterA(1000,1);
+	ibrcommon::BloomFilter FilterA(100,100,1);
 	vector<char*> v1(100);
-	float expResult = 0.0952; //m/n=10  k=1
+	float expResult = 0.1164; //m/n=10  k=1
 	for(int j=0; j<100 ; ++j)
 	{
 		char word[8];
@@ -355,9 +355,9 @@ void BloomFilterTest::testGetAllocation()
 	CPPUNIT_ASSERT_DOUBLES_EQUAL(expResult, Result, 0.01);
 
 
-	ibrcommon::BloomFilter FilterB(10000,1);
+	ibrcommon::BloomFilter FilterB(1000,1000,1);
 	vector<char*> v2(1000);
-	expResult = 0.0952; //m/n=10  k=1
+	expResult = 0.1173; //m/n=10  k=1
 	for(int j=0; j<1000 ; ++j)
 	{
 		char word[8];
@@ -376,7 +376,7 @@ void BloomFilterTest::testGetAllocation()
 
 
 
-	ibrcommon::BloomFilter FilterC(8192,2);
+	ibrcommon::BloomFilter FilterC(1024,1024,2);
 	vector<char*> v3(1024);
 	expResult = 0.0489; //m/n=8  k=2
 	for(int j=0; j<1024 ; ++j)
@@ -397,7 +397,7 @@ void BloomFilterTest::testGetAllocation()
 
 
 
-	ibrcommon::BloomFilter FilterD(2250,4);
+	ibrcommon::BloomFilter FilterD(256,256,4);
 	vector<char*> v4(150);
 	expResult = 0.003; //m/n=15  k=4
 	for(int j=0; j<150 ; ++j)
@@ -418,9 +418,9 @@ void BloomFilterTest::testGetAllocation()
 
 
 
-	ibrcommon::BloomFilter FilterF(100,2);
+	ibrcommon::BloomFilter FilterF(16,16,2);
 	vector<char*> v5(50);
-	expResult = 0.383; //m/n=20  k=2
+	expResult = 0.2954; //m/n=20  k=2
 	for(int j=0; j<51; ++j)
 	{
 		char word[8];
@@ -439,9 +439,9 @@ void BloomFilterTest::testGetAllocation()
 
 
 
-	ibrcommon::BloomFilter FilterG(70,5);
+	ibrcommon::BloomFilter FilterG(8,8,5);
 	vector<char*> v6(10);
-	expResult = 0.0347; //m/n=7 k=5
+	expResult = 0.0480; //m/n=7 k=5
 	for(int j=0; j<11; ++j)
 	{
 		char word[8];
@@ -501,10 +501,23 @@ void BloomFilterTest::testGetAllocation()
 */
 }
 
+void BloomFilterTest::testGrow()
+{
+	ibrcommon::BloomFilter f(1,128,2);
+	CPPUNIT_ASSERT_EQUAL((size_t)1, f.size());
+
+	f.grow(1);
+
+	CPPUNIT_ASSERT_EQUAL((size_t)32, f.size());
+
+	f.grow(10);
+
+	CPPUNIT_ASSERT_EQUAL((size_t)128, f.size());
+}
 
 void BloomFilterTest::testMemory()
 {
-	ibrcommon::BloomFilter Filter1(7,1);
+	ibrcommon::BloomFilter Filter1(1,1,1);
 	Filter1.insert("test");
 	CPPUNIT_ASSERT(Filter1.contains("test"));
 	Filter1.clear();

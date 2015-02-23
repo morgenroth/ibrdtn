@@ -39,6 +39,7 @@ class BloomFilterTest : public CppUnit::TestFixture {
 		void testOperatorInclusiveOrAndAssign();
 		void testOperatorXorAndAssign();
 		void testGetAllocation();
+		void testGrow();
 
 		void testMemory();
 		/*=== END   tests for class 'BloomFilter' ===*/
@@ -63,6 +64,7 @@ class BloomFilterTest : public CppUnit::TestFixture {
 			CPPUNIT_TEST(testOperatorInclusiveOrAndAssign);
 			CPPUNIT_TEST(testOperatorXorAndAssign);
 			CPPUNIT_TEST(testGetAllocation);
+			CPPUNIT_TEST(testGrow);
 
 			CPPUNIT_TEST(testMemory);
 		CPPUNIT_TEST_SUITE_END();
