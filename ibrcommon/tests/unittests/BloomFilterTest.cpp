@@ -118,23 +118,15 @@ void BloomFilterTest::testLoad()
 	ibrcommon::BloomFilter Filter(8196,2);
 	const ibrcommon::cell_type* cad1;
 	const ibrcommon::cell_type* cad2;
-	cad1 = (const ibrcommon::cell_type*)"Hello World";
-	Filter.load(cad1, sizeof(cad1));
+	cad1 = (const ibrcommon::cell_type*)"Hello World\0";
+	Filter.load(cad1, 12);
 	cad2 = Filter.table();
 	int i = 0;
 	bool dif;
 	while (cad1[i] != 0 && cad2[i] != 0)
 	{
-		if (cad1[i] == cad2[i])
-		{
-			dif = true ;
-		}
-		else
-		{
-			dif= false;
-		}
-	i++;
-	CPPUNIT_ASSERT_EQUAL(true,dif);
+		i++;
+		CPPUNIT_ASSERT_EQUAL(cad1[i], cad2[i]);
 	}
 }
 

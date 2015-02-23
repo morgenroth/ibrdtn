@@ -291,13 +291,16 @@ namespace ibrcommon
 
 	void BloomFilter::load(const cell_type* data, size_t len)
 	{
-		if (len < table_size_)
+		if (len == (table_size_ / bits_per_char))
 		{
 			std::copy(data, data + len, bit_table_);
 		}
 		else
 		{
-			std::copy(data, data + table_size_, bit_table_);
+			table_size_ = len * bits_per_char;
+			delete[] bit_table_;
+			bit_table_ = new cell_type[len];
+			std::copy(data, data + len, bit_table_);
 		}
 
 		_itemcount = 0;

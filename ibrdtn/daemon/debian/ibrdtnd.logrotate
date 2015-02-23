@@ -5,7 +5,8 @@
 	compress
 	delaycompress
 	notifempty
-	create 640 dtnd adm
+	su dtnd daemon
+	create 640 dtnd daemon
 	sharedscripts
 	postrotate
 		/etc/init.d/ibrdtnd reload > /dev/null
