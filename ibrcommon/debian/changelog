@@ -1,3 +1,9 @@
+ibrcommon (1.0.1) stable; urgency=medium
+
+  * Add support for loading Bloom-filter structures of different sizes
+
+ -- Johannes Morgenroth <jm@m-network.de>  Tue, 24 Feb 2015 07:47:57 +0100
+
 ibrcommon (1.0.0) stable; urgency=medium
 
   * Use CLOCK_BOOTTIME instead of CLOCK_MONOTONIC for MonotonicClock
