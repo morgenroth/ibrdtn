@@ -1,3 +1,9 @@
+ibrdtn-tools (1.0.1) stable; urgency=medium
+
+  * Version increased to be inline with other packages
+
+ -- Johannes Morgenroth <jm@m-network.de>  Tue, 24 Feb 2015 07:48:16 +0100
+
 ibrdtn-tools (1.0.0) stable; urgency=medium
 
   * Add configure option to disable dependency on libdaemon, libarchive, and openssl
