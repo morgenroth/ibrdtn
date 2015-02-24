@@ -1,3 +1,9 @@
+ibrdtn (1.0.1) stable; urgency=medium
+
+  * Version increased to be inline with other packages
+
+ -- Johannes Morgenroth <jm@m-network.de>  Tue, 24 Feb 2015 07:48:08 +0100
+
 ibrdtn (1.0.0) stable; urgency=medium
 
   * Add template type to call of SDNV::random()

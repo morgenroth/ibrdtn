@@ -1,3 +1,10 @@
+ibrdtnd (1.0.1) stable; urgency=medium
+
+  * Fix user and file permissions in logrotate configuration file
+  * Solve possible ring lock in Prophet routing
+
+ -- Johannes Morgenroth <jm@m-network.de>  Tue, 24 Feb 2015 07:48:12 +0100
+
 ibrdtnd (1.0.0) stable; urgency=medium
 
   * Features & Fixes
