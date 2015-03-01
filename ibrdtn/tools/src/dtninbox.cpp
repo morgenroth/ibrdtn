@@ -29,7 +29,6 @@
 #include <ibrdtn/data/Bundle.h>
 #include <ibrcommon/data/BLOB.h>
 #include <ibrcommon/data/File.h>
-#include <ibrcommon/appstreambuf.h>
 
 #include <stdlib.h>
 #include <iostream>
