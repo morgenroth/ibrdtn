@@ -226,7 +226,7 @@ namespace dtn
 #endif
 			{
 			public:
-				BundleFilter(const std::set<dtn::data::EID> endpoints, const RegistrationQueue &queue, bool loopback, bool fragment_filter)
+				BundleFilter(const std::set<dtn::data::EID> &endpoints, const RegistrationQueue &queue, bool loopback, bool fragment_filter)
 				 : _endpoints(endpoints), _queue(queue), _loopback(loopback), _fragment_filter(fragment_filter)
 				{};
 
@@ -307,7 +307,7 @@ namespace dtn
 #endif
 
 			private:
-				const std::set<dtn::data::EID> _endpoints;
+				const std::set<dtn::data::EID> &_endpoints;
 				const RegistrationQueue &_queue;
 				const bool _loopback;
 				const bool _fragment_filter;
