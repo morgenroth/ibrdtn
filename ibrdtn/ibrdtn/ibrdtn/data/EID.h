@@ -123,6 +123,21 @@ namespace dtn
 			typedef std::pair<Number, Number> Compressed;
 			Compressed getCompressed() const;
 
+			/**
+			 * Prepares an internal regular expression structure for matching
+			 * against another EID. If the compilation of the structure
+			 * fails an exception is throw.
+			 */
+			void prepare() throw (ibrcommon::Exception);
+
+			/**
+			 * Matches this EID against another EID by interpreting the result
+			 * of getString() as regular expression. This method need a preceding
+			 * call of prepare() otherwise the string is matched using the
+			 * standard compare operators.
+			 */
+			bool match(const dtn::data::EID &other) const;
+
 		private:
 			/**
 			 * private constructor to create a modified EID
@@ -151,6 +166,9 @@ namespace dtn
 			// CBHE scheme
 			Number _cbhe_node;
 			Number _cbhe_application;
+
+			// regex structure
+			void *_regex;
 
 			// well-known CBHE numbers
 			typedef std::map<std::string, Number> cbhe_map;

@@ -112,6 +112,10 @@ ANDROID_AC_BUILD([
 	ZLIB_LIBS="-lz"
 	AC_SUBST(ZLIB_LIBS)
 	with_compression="yes"
+	
+	# REGEX
+	AC_DEFINE(HAVE_REGEX_H, [1] ["Define to 1 if you have the <regex.h> header file."])
+	have_regex="yes"
 ],[
 #ANDROID else begin
 	AC_CHECK_HEADERS([netinet/in.h])
@@ -268,6 +272,15 @@ ANDROID_AC_BUILD([
 		])
 	],[
 		with_compression="no"
+	])
+	
+	dnl -----------------------------------------------
+	dnl check for regex capabilities
+	dnl -----------------------------------------------
+	AC_CHECK_HEADERS([regex.h], [
+		have_regex="yes"
+	], [
+		have_regex="no"
 	])
 #ANDROID else end
 ])

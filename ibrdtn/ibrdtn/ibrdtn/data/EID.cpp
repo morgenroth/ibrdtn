@@ -33,6 +33,10 @@
 // include code for platform-independent endianess conversion
 #include "ibrdtn/data/Endianess.h"
 
+#ifdef HAVE_REGEX_H
+#include <regex.h>
+#endif
+
 namespace dtn
 {
 	namespace data
@@ -182,12 +186,12 @@ namespace dtn
 		}
 
 		EID::EID()
-		: _scheme_type(SCHEME_DTN), _scheme(), _ssp("none"), _application(), _cbhe_node(0), _cbhe_application(0)
+		: _scheme_type(SCHEME_DTN), _scheme(), _ssp("none"), _application(), _cbhe_node(0), _cbhe_application(0), _regex(NULL)
 		{
 		}
 
 		EID::EID(const Scheme scheme_type, const std::string &scheme, const std::string &ssp, const std::string &application)
-		: _scheme_type(scheme_type), _scheme(scheme), _ssp(ssp), _application(application), _cbhe_node(0), _cbhe_application(0)
+		: _scheme_type(scheme_type), _scheme(scheme), _ssp(ssp), _application(application), _cbhe_node(0), _cbhe_application(0), _regex(NULL)
 		{
 			if (scheme_type == SCHEME_CBHE) {
 				throw dtn::InvalidDataException("This constructor does not work for CBHE schemes");
@@ -195,7 +199,7 @@ namespace dtn
 		}
 
 		EID::EID(const std::string &scheme, const std::string &ssp)
-		 : _scheme_type(SCHEME_EXTENDED), _scheme(), _ssp(ssp), _application(), _cbhe_node(0), _cbhe_application(0)
+		 : _scheme_type(SCHEME_EXTENDED), _scheme(), _ssp(ssp), _application(), _cbhe_node(0), _cbhe_application(0), _regex(NULL)
 		{
 			// resolve scheme
 			_scheme_type = resolveScheme(scheme);
@@ -221,7 +225,7 @@ namespace dtn
 		}
 
 		EID::EID(const std::string &orig_value)
-		: _scheme_type(SCHEME_DTN), _scheme(), _ssp("none"), _application(), _cbhe_node(0), _cbhe_application(0)
+		: _scheme_type(SCHEME_DTN), _scheme(), _ssp("none"), _application(), _cbhe_node(0), _cbhe_application(0), _regex(NULL)
 		{
 			try {
 				if (orig_value.length() == 0) {
@@ -280,7 +284,7 @@ namespace dtn
 		}
 
 		EID::EID(const dtn::data::Number &node, const dtn::data::Number &application)
-		 : _scheme_type(SCHEME_CBHE), _scheme(), _ssp(), _application(), _cbhe_node(node), _cbhe_application(application)
+		 : _scheme_type(SCHEME_CBHE), _scheme(), _ssp(), _application(), _cbhe_node(node), _cbhe_application(application), _regex(NULL)
 		{
 			// set dtn:none if the node is zero
 			if (node == 0) {
@@ -291,6 +295,13 @@ namespace dtn
 
 		EID::~EID()
 		{
+#ifdef HAVE_REGEX_H
+			if (_regex != NULL) {
+				regfree((regex_t*)_regex);
+				delete (regex_t*)_regex;
+				_regex = NULL;
+			}
+#endif
 		}
 
 		bool EID::operator==(const EID &other) const
@@ -415,6 +426,14 @@ namespace dtn
 				// not defined
 				break;
 			}
+
+#ifdef HAVE_REGEX_H
+			if (_regex != NULL) {
+				regfree((regex_t*)_regex);
+				delete (regex_t*)_regex;
+				_regex = NULL;
+			}
+#endif
 		}
 
 		void EID::setApplication(const std::string &app) throw ()
@@ -433,6 +452,14 @@ namespace dtn
 				// not defined
 				break;
 			}
+
+#ifdef HAVE_REGEX_H
+			if (_regex != NULL) {
+				regfree((regex_t*)_regex);
+				delete (regex_t*)_regex;
+				_regex = NULL;
+			}
+#endif
 		}
 
 		std::string EID::getApplication() const throw ()
@@ -576,6 +603,33 @@ namespace dtn
 			}
 
 			return make_pair(0, 0);
+		}
+
+		void EID::prepare() throw (ibrcommon::Exception)
+		{
+#ifdef HAVE_REGEX_H
+			if (_regex != NULL) return;
+			_regex = new regex_t();
+			const std::string data = std::string("^") + getString() + std::string("$");
+			if ( regcomp((regex_t*)_regex, data.c_str(), 0) ) {
+				delete (regex_t*)_regex;
+				_regex = NULL;
+				throw ibrcommon::Exception("Invalid expression");
+			}
+#endif
+		}
+
+		bool EID::match(const dtn::data::EID &other) const
+		{
+#ifdef HAVE_REGEX_H
+			if (_regex != NULL) {
+				const std::string data = other.getString();
+
+				// test against the regular expression
+				return regexec((regex_t*)_regex, data.c_str(), 0, NULL, 0) == 0;
+			}
+#endif
+			return (*this) == other;
 		}
 	}
 }
