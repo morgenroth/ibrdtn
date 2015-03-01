@@ -151,7 +151,13 @@ namespace dtn
 		bool Registration::hasSubscribed(const dtn::data::EID &endpoint)
 		{
 			ibrcommon::MutexLock l(_endpoints_lock);
-			return (_endpoints.find(endpoint) != _endpoints.end());
+
+			for (std::set<dtn::data::EID>::const_iterator iter = _endpoints.begin(); iter != _endpoints.end(); ++iter)
+			{
+				const dtn::data::EID &e = (*iter);
+				if (e.match(endpoint)) return true;
+			}
+			return false;
 		}
 
 		const std::set<dtn::data::EID> Registration::getSubscriptions()
@@ -242,11 +248,6 @@ namespace dtn
 						return false;
 					}
 
-					if (_endpoints.find(meta.destination) == _endpoints.end())
-					{
-						return false;
-					}
-
 					// filter own bundles
 					if (!_loopback)
 					{
@@ -255,6 +256,18 @@ namespace dtn
 							return false;
 						}
 					}
+
+					// check if bundle destination has been subscribed
+					bool found = false;
+					for (std::set<dtn::data::EID>::const_iterator iter = _endpoints.begin(); iter != _endpoints.end(); ++iter)
+					{
+						const dtn::data::EID &e = (*iter);
+						if (e.match(meta.destination)) {
+							found = true;
+							break;
+						}
+					}
+					if (!found) return false;
 
 					IBRCOMMON_LOGGER_DEBUG_TAG(Registration::TAG, 30) << "search bundle in the list of delivered bundles: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
@@ -377,7 +390,12 @@ namespace dtn
 				ibrcommon::MutexLock l(_endpoints_lock);
 
 				// add endpoint to the local set
-				_endpoints.insert(endpoint);
+				std::pair<std::set<dtn::data::EID>::iterator, bool> i = _endpoints.insert(endpoint);
+
+				// prepare endpoint for regex matching
+				try {
+					if (i.second) const_cast<dtn::data::EID&>(*i.first).prepare();
+				} catch (const ibrcommon::Exception&) { };
 			}
 
 			// trigger the search for new bundles
