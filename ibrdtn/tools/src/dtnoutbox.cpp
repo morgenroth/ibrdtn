@@ -29,7 +29,6 @@
 #include <ibrdtn/data/PayloadBlock.h>
 #include <ibrcommon/data/BLOB.h>
 #include <ibrcommon/data/File.h>
-#include <ibrcommon/appstreambuf.h>
 #include <ibrcommon/Logger.h>
 
 #include "io/TarUtils.h"
