@@ -325,8 +325,8 @@ namespace ibrcommon
 		pthread_t self = pthread_self();
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
-			// never try to join our own thread, check this here
-			assert( !equal(tid, self) );
+		// never try to join our own thread, check this here
+		assert( !equal(tid, self) );
 #endif
 
 		// if the thread has been started, do join
