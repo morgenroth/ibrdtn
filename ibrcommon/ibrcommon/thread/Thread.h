@@ -161,13 +161,6 @@ namespace ibrcommon
 			{ return (equal(other.tid, tid) != 0); }
 
 		/**
-		 * sends a signal to this thread
-		 * @param sig
-		 * @return
-		 */
-		int kill(int sig);
-
-		/**
 		 * Cancel the running thread context.
 		 */
 		void cancel() throw ();

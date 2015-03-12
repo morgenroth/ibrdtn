@@ -171,13 +171,6 @@ namespace ibrcommon
 		pthread_attr_init(&attr);
 	}
 
-	int Thread::kill(int sig)
-	{
-		if (pthread_equal(tid, pthread_t())) return -1;
-
-		return pthread_kill(tid, sig);
-	}
-
 	void Thread::cancel() throw ()
 	{
 		// block multiple cancel calls
