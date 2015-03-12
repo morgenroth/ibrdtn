@@ -57,13 +57,13 @@ namespace ibrcommon
 			return _state;
 		}
 
-		void wait(T st)
+		void wait(size_t st)
 		{
 			ibrcommon::MutexLock l(*this);
-			while (_state != st)
+			while (!(_state & st))
 			{
 				if (_state == _final_state) return;
-				this->wait();
+				ibrcommon::Conditional::wait();
 			}
 		}
 
