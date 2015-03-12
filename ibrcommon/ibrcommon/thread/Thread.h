@@ -60,12 +60,11 @@ namespace ibrcommon
 		{
 			THREAD_CREATED = 1 << 0,
 			THREAD_STARTED = 1 << 1,
-			THREAD_INITIALIZED = 1 << 2,
-			THREAD_RUNNING = 1 << 3,
-			THREAD_CANCELLED = 1 << 4,
-			THREAD_FINALIZING = 1 << 5,
-			THREAD_JOINABLE = 1 << 6,
-			THREAD_FINALIZED = 1 << 7
+			THREAD_RUNNING = 1 << 2,
+			THREAD_CANCELLED = 1 << 3,
+			THREAD_FINALIZING = 1 << 4,
+			THREAD_JOINABLE = 1 << 5,
+			THREAD_FINALIZED = 1 << 6
 		};
 
 		ibrcommon::ThreadsafeState<THREAD_STATE> _state;
@@ -75,9 +74,6 @@ namespace ibrcommon
 
 		// thread's stack size
 		size_t stack;
-
-		// thread's priority
-		int priority;
 
 		// thread's attributes
 		pthread_attr_t attr;
@@ -161,13 +157,6 @@ namespace ibrcommon
 			{ return (equal(other.tid, tid) != 0); }
 
 		/**
-		 * sends a signal to this thread
-		 * @param sig
-		 * @return
-		 */
-		int kill(int sig);
-
-		/**
 		 * Cancel the running thread context.
 		 */
 		void cancel() throw ();
@@ -221,14 +210,9 @@ namespace ibrcommon
 		void join(void) throw (ThreadException);
 
 		/**
-		 * Start execution of child context.  This must be called after the
-		 * child object is created (perhaps with "new") and before it can be
-		 * joined.  This method actually begins the new thread context, which
-		 * then calls the object's run method.  Optionally raise the priority
-		 * of the thread when it starts under realtime priority.
-		 * @param priority of child thread.
+		 * Start execution of child context.
 		 */
-		void start(int priority = 0) throw (ThreadException);
+		void start() throw (ThreadException);
 
 		/**
 		 * Stop the execution of child context.
@@ -261,12 +245,9 @@ namespace ibrcommon
 		virtual ~DetachedThread() = 0;
 
 		/**
-		 * Start execution of detached context.  This must be called after the
-		 * object is created (perhaps with "new"). This method actually begins
-		 * the new thread context, which then calls the object's run method.
-		 * @param priority to start thread with.
+		 * Start execution of detached context.
 		 */
-		void start(int priority = 0) throw (ThreadException);
+		void start() throw (ThreadException);
 
 		/**
 		 * Stop the execution of child context.

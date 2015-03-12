@@ -78,8 +78,8 @@ namespace ibrcommon
 		// cast the thread object
 		Thread *th = static_cast<Thread *>(obj);
 
-		// set the state to running
-		th->_state = THREAD_RUNNING;
+		// wait until the running state is set
+		th->_state.wait(THREAD_RUNNING | THREAD_CANCELLED);
 
 		// run threads run routine
 		th->run();
@@ -105,9 +105,9 @@ namespace ibrcommon
 
 	Thread::Thread(size_t size)
 #ifdef __WIN32__
-	 : _state(THREAD_CREATED, THREAD_FINALIZED), tid(), stack(size), priority(0), _detached(false)
+	 : _state(THREAD_CREATED, THREAD_FINALIZED), tid(), stack(size), _detached(false)
 #else
-	 : _state(THREAD_CREATED, THREAD_FINALIZED), tid(0), stack(size), priority(0), _detached(false)
+	 : _state(THREAD_CREATED, THREAD_FINALIZED), tid(0), stack(size), _detached(false)
 #endif
 	{
 		pthread_attr_init(&attr);
@@ -171,13 +171,6 @@ namespace ibrcommon
 		pthread_attr_init(&attr);
 	}
 
-	int Thread::kill(int sig)
-	{
-		if (pthread_equal(tid, pthread_t())) return -1;
-
-		return pthread_kill(tid, sig);
-	}
-
 	void Thread::cancel() throw ()
 	{
 		// block multiple cancel calls
@@ -230,7 +223,7 @@ namespace ibrcommon
 		join();
 	}
 
-	void JoinableThread::start(int adj) throw (ThreadException)
+	void JoinableThread::start() throw (ThreadException)
 	{
 		int ret;
 
@@ -245,14 +238,8 @@ namespace ibrcommon
 			ls = THREAD_STARTED;
 		}
 
-		// set priority
-		priority = adj;
-
 		// call the setup method
 		setup();
-
-		// set the state to running
-		_state = THREAD_INITIALIZED;
 
 #ifndef	__PTH__
 		// modify the threads attributes - set as joinable thread
@@ -305,6 +292,9 @@ namespace ibrcommon
 		case EPERM:
 			_state = THREAD_FINALIZED;
 			throw ThreadException(ret, "The caller does not have appropriate permission to set the required scheduling parameters or scheduling policy.");
+		default:
+			_state = THREAD_RUNNING;
+			break;
 		}
 #endif
 	}
@@ -335,8 +325,8 @@ namespace ibrcommon
 		pthread_t self = pthread_self();
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
-			// never try to join our own thread, check this here
-			assert( !equal(tid, self) );
+		// never try to join our own thread, check this here
+		assert( !equal(tid, self) );
 #endif
 
 		// if the thread has been started, do join
@@ -360,7 +350,7 @@ namespace ibrcommon
 	{
 	}
 
-	void DetachedThread::start(int adj) throw (ThreadException)
+	void DetachedThread::start() throw (ThreadException)
 	{
 		int ret = 0;
 
@@ -375,14 +365,8 @@ namespace ibrcommon
 			ls = THREAD_STARTED;
 		}
 
-		// set the priority
-		priority = adj;
-
 		// call the setup method
 		setup();
-
-		// set the state to running
-		_state = THREAD_INITIALIZED;
 
 #ifndef	__PTH__
 		// modify the threads attributes - set as detached thread
@@ -410,6 +394,9 @@ namespace ibrcommon
 		}
 #endif
 
+		// set this thread as detached
+		_detached = true;
+
 #ifdef	__PTH__
 		// spawn a new thread
 		tid = pth_spawn(PTH_ATTR_DEFAULT, &Thread::__execute__, this);
@@ -420,9 +407,6 @@ namespace ibrcommon
 			// set the stack size attribute
 			pthread_attr_setstacksize(&attr, stack);
 		}
-
-		// set this thread as detached
-		_detached = true;
 
 		// spawn a new thread
 		ret = pthread_create(&tid, &attr, &Thread::__execute__, this);
@@ -439,6 +423,9 @@ namespace ibrcommon
 		case EPERM:
 			_state = THREAD_FINALIZED;
 			throw ThreadException(ret, "The caller does not have appropriate permission to set the required scheduling parameters or scheduling policy.");
+		default:
+			_state = THREAD_RUNNING;
+			break;
 		}
 #endif
 	}
