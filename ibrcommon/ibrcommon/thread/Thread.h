@@ -76,9 +76,6 @@ namespace ibrcommon
 		// thread's stack size
 		size_t stack;
 
-		// thread's priority
-		int priority;
-
 		// thread's attributes
 		pthread_attr_t attr;
 
@@ -214,14 +211,9 @@ namespace ibrcommon
 		void join(void) throw (ThreadException);
 
 		/**
-		 * Start execution of child context.  This must be called after the
-		 * child object is created (perhaps with "new") and before it can be
-		 * joined.  This method actually begins the new thread context, which
-		 * then calls the object's run method.  Optionally raise the priority
-		 * of the thread when it starts under realtime priority.
-		 * @param priority of child thread.
+		 * Start execution of child context.
 		 */
-		void start(int priority = 0) throw (ThreadException);
+		void start() throw (ThreadException);
 
 		/**
 		 * Stop the execution of child context.
@@ -254,12 +246,9 @@ namespace ibrcommon
 		virtual ~DetachedThread() = 0;
 
 		/**
-		 * Start execution of detached context.  This must be called after the
-		 * object is created (perhaps with "new"). This method actually begins
-		 * the new thread context, which then calls the object's run method.
-		 * @param priority to start thread with.
+		 * Start execution of detached context.
 		 */
-		void start(int priority = 0) throw (ThreadException);
+		void start() throw (ThreadException);
 
 		/**
 		 * Stop the execution of child context.

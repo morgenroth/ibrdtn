@@ -105,9 +105,9 @@ namespace ibrcommon
 
 	Thread::Thread(size_t size)
 #ifdef __WIN32__
-	 : _state(THREAD_CREATED, THREAD_FINALIZED), tid(), stack(size), priority(0), _detached(false)
+	 : _state(THREAD_CREATED, THREAD_FINALIZED), tid(), stack(size), _detached(false)
 #else
-	 : _state(THREAD_CREATED, THREAD_FINALIZED), tid(0), stack(size), priority(0), _detached(false)
+	 : _state(THREAD_CREATED, THREAD_FINALIZED), tid(0), stack(size), _detached(false)
 #endif
 	{
 		pthread_attr_init(&attr);
@@ -223,7 +223,7 @@ namespace ibrcommon
 		join();
 	}
 
-	void JoinableThread::start(int adj) throw (ThreadException)
+	void JoinableThread::start() throw (ThreadException)
 	{
 		int ret;
 
@@ -237,9 +237,6 @@ namespace ibrcommon
 			// set the thread state to STARTED
 			ls = THREAD_STARTED;
 		}
-
-		// set priority
-		priority = adj;
 
 		// call the setup method
 		setup();
@@ -353,7 +350,7 @@ namespace ibrcommon
 	{
 	}
 
-	void DetachedThread::start(int adj) throw (ThreadException)
+	void DetachedThread::start() throw (ThreadException)
 	{
 		int ret = 0;
 
@@ -367,9 +364,6 @@ namespace ibrcommon
 			// set the thread state to STARTED
 			ls = THREAD_STARTED;
 		}
-
-		// set the priority
-		priority = adj;
 
 		// call the setup method
 		setup();
