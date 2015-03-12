@@ -60,12 +60,11 @@ namespace ibrcommon
 		{
 			THREAD_CREATED = 1 << 0,
 			THREAD_STARTED = 1 << 1,
-			THREAD_INITIALIZED = 1 << 2,
-			THREAD_RUNNING = 1 << 3,
-			THREAD_CANCELLED = 1 << 4,
-			THREAD_FINALIZING = 1 << 5,
-			THREAD_JOINABLE = 1 << 6,
-			THREAD_FINALIZED = 1 << 7
+			THREAD_RUNNING = 1 << 2,
+			THREAD_CANCELLED = 1 << 3,
+			THREAD_FINALIZING = 1 << 4,
+			THREAD_JOINABLE = 1 << 5,
+			THREAD_FINALIZED = 1 << 6
 		};
 
 		ibrcommon::ThreadsafeState<THREAD_STATE> _state;
