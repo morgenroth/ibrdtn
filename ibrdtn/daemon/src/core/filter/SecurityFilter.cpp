@@ -116,6 +116,11 @@ namespace dtn
 					break;
 				}
 			}
+#else
+			// without BSP support we can not execute any security check
+			// therefore we always proceed as if the check were successful and
+			// return with the positive action
+			return _positive_action;
 #endif
 
 			// forward call to the next filter or return with the default action
@@ -168,6 +173,11 @@ namespace dtn
 					break;
 				}
 			}
+#else
+			// without BSP support we can not execute any security check
+			// therefore we always proceed as if the check were successful and
+			// return with the positive action
+			return _positive_action;
 #endif
 
 			// forward call to the next filter or return with the default action
