@@ -82,7 +82,7 @@ namespace dtn
 			custody_bundle.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, true);
 
 			// send the custody accepted bundle
-			dtn::core::BundleCore::inject(dtn::core::BundleCore::local, custody_bundle);
+			dtn::core::BundleCore::getInstance().inject(dtn::core::BundleCore::local, custody_bundle, true);
 
 			// raise the custody accepted event
 			dtn::core::CustodyEvent::raise(meta, dtn::core::CUSTODY_ACCEPT);
@@ -122,7 +122,7 @@ namespace dtn
 			b.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, true);
 
 			// send the custody rejected bundle
-			dtn::core::BundleCore::inject(dtn::core::BundleCore::local, b);
+			dtn::core::BundleCore::getInstance().inject(dtn::core::BundleCore::local, b, true);
 
 			// raise the custody rejected event
 			dtn::core::CustodyEvent::raise(dtn::data::MetaBundle::create(b), dtn::core::CUSTODY_REJECT);

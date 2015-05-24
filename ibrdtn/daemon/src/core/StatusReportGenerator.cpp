@@ -101,7 +101,7 @@ namespace dtn
 			dtn::data::PayloadBlock &payload = bundle.push_back<dtn::data::PayloadBlock>();
 			report.write(payload);
 
-			dtn::core::BundleCore::inject(dtn::core::BundleCore::local, bundle);
+			dtn::core::BundleCore::getInstance().inject(dtn::core::BundleCore::local, bundle, true);
 		}
 
 		void StatusReportGenerator::raiseEvent(const dtn::core::BundleEvent &bundleevent) throw ()

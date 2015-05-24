@@ -28,7 +28,6 @@
 #include "core/NodeEvent.h"
 #include "core/GlobalEvent.h"
 #include "core/CustodyEvent.h"
-#include "net/BundleReceivedEvent.h"
 #include "net/TransferAbortedEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "net/ConnectionEvent.h"
@@ -42,7 +41,6 @@ namespace dtn
 			public dtn::core::EventReceiver<dtn::core::NodeEvent>,
 			public dtn::core::EventReceiver<dtn::core::GlobalEvent>,
 			public dtn::core::EventReceiver<dtn::core::CustodyEvent>,
-			public dtn::core::EventReceiver<dtn::net::BundleReceivedEvent>,
 			public dtn::core::EventReceiver<dtn::net::TransferAbortedEvent>,
 			public dtn::core::EventReceiver<dtn::net::TransferCompletedEvent>,
 			public dtn::core::EventReceiver<dtn::net::ConnectionEvent>,
@@ -60,7 +58,6 @@ namespace dtn
 			void raiseEvent(const dtn::core::NodeEvent &evt) throw ();
 			void raiseEvent(const dtn::core::GlobalEvent &evt) throw ();
 			void raiseEvent(const dtn::core::CustodyEvent &evt) throw ();
-			void raiseEvent(const dtn::net::BundleReceivedEvent &evt) throw ();
 			void raiseEvent(const dtn::net::TransferAbortedEvent &evt) throw ();
 			void raiseEvent(const dtn::net::TransferCompletedEvent &evt) throw ();
 			void raiseEvent(const dtn::net::ConnectionEvent &evt) throw ();

@@ -26,11 +26,12 @@
 #include "core/GlobalEvent.h"
 #include "core/BundleEvent.h"
 #include "core/FragmentManager.h"
-#include "net/BundleReceivedEvent.h"
+#include "routing/QueueBundleEvent.h"
 #include "routing/RequeueBundleEvent.h"
 #include "routing/StaticRouteChangeEvent.h"
 
 #include <ibrcommon/data/BLOB.h>
+#include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <ibrdtn/data/CustodySignalBlock.h>
 #include <ibrdtn/data/TrackingBlock.h>
 #include <ibrdtn/data/MetaBundle.h>
@@ -703,88 +704,165 @@ namespace dtn
 			}
 		}
 
-		void BundleCore::inject(const dtn::data::EID &source, dtn::data::Bundle &bundle)
+		void BundleCore::inject(const dtn::data::EID &source, dtn::data::Bundle &bundle, bool local)
 		{
-			// modify TrackingBlock
+			const dtn::data::MetaBundle m = dtn::data::MetaBundle::create(bundle);
+
 			try {
-				dtn::data::TrackingBlock &track = bundle.find<dtn::data::TrackingBlock>();
-				track.append(dtn::core::BundleCore::local);
-			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
+				if (local)
+				{
+					IBRCOMMON_LOGGER_TAG(TAG, notice) << "Bundle received " + bundle.toString() + " (local)" << IBRCOMMON_LOGGER_ENDL;
+
+					// modify TrackingBlock
+					try {
+						dtn::data::TrackingBlock &track = bundle.find<dtn::data::TrackingBlock>();
+						track.append(dtn::core::BundleCore::local);
+					} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
 #ifdef IBRDTN_SUPPORT_COMPRESSION
-			// if the compression bit is set, then compress the bundle
-			if (bundle.get(dtn::data::PrimaryBlock::IBRDTN_REQUEST_COMPRESSION))
-			{
-				try {
-					dtn::data::CompressedPayloadBlock::compress(bundle, dtn::data::CompressedPayloadBlock::COMPRESSION_ZLIB);
+					// if the compression bit is set, then compress the bundle
+					if (bundle.get(dtn::data::PrimaryBlock::IBRDTN_REQUEST_COMPRESSION))
+					{
+						try {
+							dtn::data::CompressedPayloadBlock::compress(bundle, dtn::data::CompressedPayloadBlock::COMPRESSION_ZLIB);
 
-					bundle.set(dtn::data::PrimaryBlock::IBRDTN_REQUEST_COMPRESSION, false);
-				} catch (const ibrcommon::Exception &ex) {
-					IBRCOMMON_LOGGER_TAG(TAG, warning) << "compression of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-				};
-			}
+							bundle.set(dtn::data::PrimaryBlock::IBRDTN_REQUEST_COMPRESSION, false);
+						} catch (const ibrcommon::Exception &ex) {
+							IBRCOMMON_LOGGER_TAG(TAG, warning) << "compression of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						};
+					}
 #endif
 
 #ifdef IBRDTN_SUPPORT_BSP
-			// if the encrypt bit is set, then try to encrypt the bundle
-			if (bundle.get(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT))
-			{
-				try {
-					dtn::security::SecurityManager::getInstance().encrypt(bundle);
-
-					bundle.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT, false);
-				} catch (const dtn::security::SecurityManager::KeyMissingException&) {
-					// sign requested, but no key is available
-					IBRCOMMON_LOGGER_TAG(TAG, warning) << "No key available for encrypt process." << IBRCOMMON_LOGGER_ENDL;
-				} catch (const dtn::security::EncryptException&) {
-					IBRCOMMON_LOGGER_TAG(TAG, warning) << "Encryption of bundle failed." << IBRCOMMON_LOGGER_ENDL;
-				}
-			}
-
-			// if the sign bit is set, then try to sign the bundle
-			if (bundle.get(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN))
-			{
-				try {
-					dtn::security::SecurityManager::getInstance().sign(bundle);
-
-					bundle.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, false);
-				} catch (const dtn::security::SecurityManager::KeyMissingException&) {
-					// sign requested, but no key is available
-					IBRCOMMON_LOGGER_TAG(TAG, warning) << "No key available for sign process." << IBRCOMMON_LOGGER_ENDL;
-				}
-			}
-#endif
-
-			// get the payload size maximum
-			size_t maxPayloadLength = dtn::daemon::Configuration::getInstance().getLimit("payload");
-
-			// check if fragmentation is enabled
-			// do not try pro-active fragmentation if the payload length is not limited
-			if (dtn::daemon::Configuration::getInstance().getNetwork().doFragmentation() && (maxPayloadLength > 0))
-			{
-				try {
-					std::list<dtn::data::Bundle> fragments;
-
-					dtn::core::FragmentManager::split(bundle, maxPayloadLength, fragments);
-
-					// for each fragment raise bundle received event
-					for (std::list<dtn::data::Bundle>::iterator it = fragments.begin(); it != fragments.end(); ++it)
+					// if the encrypt bit is set, then try to encrypt the bundle
+					if (bundle.get(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT))
 					{
-						// raise default bundle received event
-						dtn::net::BundleReceivedEvent::raise(source, *it, true);
+						try {
+							dtn::security::SecurityManager::getInstance().encrypt(bundle);
+
+							bundle.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT, false);
+						} catch (const dtn::security::SecurityManager::KeyMissingException&) {
+							// sign requested, but no key is available
+							IBRCOMMON_LOGGER_TAG(TAG, warning) << "No key available for encrypt process." << IBRCOMMON_LOGGER_ENDL;
+						} catch (const dtn::security::EncryptException&) {
+							IBRCOMMON_LOGGER_TAG(TAG, warning) << "Encryption of bundle failed." << IBRCOMMON_LOGGER_ENDL;
+						}
 					}
 
-					return;
-				} catch (const FragmentationProhibitedException&) {
-				} catch (const FragmentationNotNecessaryException&) {
-				} catch (const FragmentationAbortedException&) {
-					// drop the bundle
-					return;
-				}
-			}
+					// if the sign bit is set, then try to sign the bundle
+					if (bundle.get(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN))
+					{
+						try {
+							dtn::security::SecurityManager::getInstance().sign(bundle);
 
-			// raise default bundle received event
-			dtn::net::BundleReceivedEvent::raise(source, bundle, true);
+							bundle.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, false);
+						} catch (const dtn::security::SecurityManager::KeyMissingException&) {
+							// sign requested, but no key is available
+							IBRCOMMON_LOGGER_TAG(TAG, warning) << "No key available for sign process." << IBRCOMMON_LOGGER_ENDL;
+						}
+					}
+#endif
+
+					// get the payload size maximum
+					size_t maxPayloadLength = dtn::daemon::Configuration::getInstance().getLimit("payload");
+
+					// check if fragmentation is enabled
+					// do not try pro-active fragmentation if the payload length is not limited
+					if (dtn::daemon::Configuration::getInstance().getNetwork().doFragmentation() && (maxPayloadLength > 0))
+					{
+						try {
+							std::list<dtn::data::Bundle> fragments;
+
+							dtn::core::FragmentManager::split(bundle, maxPayloadLength, fragments);
+
+							// for each fragment raise bundle received event
+							for (std::list<dtn::data::Bundle>::iterator it = fragments.begin(); it != fragments.end(); ++it)
+							{
+								const dtn::data::MetaBundle m_fragment = dtn::data::MetaBundle::create(*it);
+
+								// store the bundle into a storage module
+								getStorage().store(*it);
+
+								// set the bundle as known
+								getRouter().setKnown(m_fragment);
+
+								// raise the queued event to notify all receivers about the new bundle
+								dtn::routing::QueueBundleEvent::raise(m_fragment, source);
+							}
+
+							return;
+						} catch (const FragmentationProhibitedException&) {
+						} catch (const FragmentationNotNecessaryException&) {
+						} catch (const FragmentationAbortedException&) {
+							// drop the bundle
+							return;
+						}
+					}
+
+					// store the bundle into a storage module
+					getStorage().store(bundle);
+
+					// set the bundle as known
+					getRouter().setKnown(m);
+
+					// raise the queued event to notify all receivers about the new bundle
+					dtn::routing::QueueBundleEvent::raise(m, source);
+				}
+				else
+				{
+					IBRCOMMON_LOGGER_TAG(TAG, notice) << "Bundle received " + bundle.toString() + " from " + source.getString() << IBRCOMMON_LOGGER_ENDL;
+
+
+
+					// if the bundle is not known
+					if (!getRouter().filterKnown(m))
+					{
+						// increment value in the scope control hop limit block
+						try {
+							dtn::data::ScopeControlHopLimitBlock &schl = bundle.find<dtn::data::ScopeControlHopLimitBlock>();
+							schl.increment();
+						} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
+
+						// modify TrackingBlock
+						try {
+							dtn::data::TrackingBlock &track = bundle.find<dtn::data::TrackingBlock>();
+							track.append(dtn::core::BundleCore::local);
+						} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
+
+						// store the bundle into a storage module
+						getStorage().store(bundle);
+
+						// raise the queued event to notify all receivers about the new bundle
+						dtn::routing::QueueBundleEvent::raise(m, source);
+					}
+					else
+					{
+						IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 5) << "Duplicate bundle " << bundle.toString() << " from " << source.getString() << " ignored." << IBRCOMMON_LOGGER_ENDL;
+					}
+
+					// finally create a bundle received event
+					dtn::core::BundleEvent::raise(m, dtn::core::BUNDLE_RECEIVED);
+				}
+#ifdef IBRDTN_SUPPORT_BSP
+			} catch (const dtn::security::VerificationFailedException &ex) {
+				IBRCOMMON_LOGGER_TAG(TAG, notice) << "Security checks failed (" << ex.what() << "), bundle will be dropped: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+#endif
+			} catch (const ibrcommon::IOException &ex) {
+				IBRCOMMON_LOGGER_TAG(TAG, notice) << "Unable to store bundle " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+
+				// raise BundleEvent because we have to drop the bundle
+				dtn::core::BundleEvent::raise(m, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
+			} catch (const dtn::storage::BundleStorage::StorageSizeExeededException &ex) {
+				IBRCOMMON_LOGGER_TAG(TAG, notice) << "No space left for bundle " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+
+				// raise BundleEvent because we have to drop the bundle
+				dtn::core::BundleEvent::raise(m, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
+			} catch (const ibrcommon::Exception &ex) {
+				IBRCOMMON_LOGGER_TAG(TAG, error) << "Bundle " << bundle.toString() << " dropped: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+
+				// raise BundleEvent because we have to drop the bundle
+				dtn::core::BundleEvent::raise(m, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
+			}
 		}
 
 		void BundleCore::setGloballyConnected(bool val)

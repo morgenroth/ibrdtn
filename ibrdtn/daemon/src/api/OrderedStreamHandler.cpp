@@ -21,7 +21,6 @@
 
 #include "api/OrderedStreamHandler.h"
 #include "core/BundleCore.h"
-#include "net/BundleReceivedEvent.h"
 
 #include <ibrdtn/data/PrimaryBlock.h>
 #include <ibrdtn/utils/Utils.h>
@@ -76,8 +75,8 @@ namespace dtn
 				b.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
 			}
 
-			// raise default bundle received event
-			dtn::core::BundleCore::inject(_client.getRegistration().getDefaultEID(), b);
+			// inject bundle into core
+			dtn::core::BundleCore::getInstance().inject(_client.getRegistration().getDefaultEID(), b, true);
 		}
 
 		dtn::data::MetaBundle OrderedStreamHandler::get(const dtn::data::Timeout timeout)

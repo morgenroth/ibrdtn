@@ -192,7 +192,7 @@ namespace dtn
 			/**
 			 * Injects a bundle from an endpoint into the BPA system
 			 */
-			static void inject(const dtn::data::EID &source, dtn::data::Bundle &bundle);
+			void inject(const dtn::data::EID &source, dtn::data::Bundle &bundle, bool local);
 
 		protected:
 			virtual void componentUp() throw ();

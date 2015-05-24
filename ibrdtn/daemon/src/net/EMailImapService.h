@@ -146,7 +146,7 @@ namespace dtn
 			 * Tries to generate a bundle out of the given message.
 			 * An InvalidConversion exception will be thrown if this is
 			 * not possible. If the conversion was successful, the
-			 * BundleReceivedEvent will be called.
+			 * BundleCore::inject() method will be called.
 			 *
 			 * The message will be marked as "seen".
 			 *

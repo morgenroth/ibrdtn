@@ -24,7 +24,6 @@
 #include "core/FragmentManager.h"
 #include "core/BundleCore.h"
 #include "core/BundlePurgeEvent.h"
-#include "net/BundleReceivedEvent.h"
 
 #include <ibrdtn/data/BundleMerger.h>
 #include <ibrdtn/utils/Clock.h>
@@ -149,8 +148,8 @@ namespace dtn
 						context.setBundle(merged);
 						if (BundleCore::getInstance().filter(BundleFilter::INPUT, context, merged) == BundleFilter::ACCEPT)
 						{
-							// raise default bundle received event
-							dtn::net::BundleReceivedEvent::raise(dtn::core::BundleCore::local, merged, true);
+							// inject bundle into core
+							dtn::core::BundleCore::getInstance().inject(dtn::core::BundleCore::local, merged, true);
 						}
 
 						// delete all fragments of the merged bundle

@@ -123,7 +123,6 @@
 #include "core/GlobalEvent.h"
 #include "core/CustodyEvent.h"
 #include "routing/QueueBundleEvent.h"
-#include "net/BundleReceivedEvent.h"
 #include "net/TransferAbortedEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "net/ConnectionEvent.h"
@@ -189,7 +188,6 @@ namespace dtn
 				dtn::core::EventDispatcher<dtn::core::NodeEvent>::add(this);
 				dtn::core::EventDispatcher<dtn::core::GlobalEvent>::add(this);
 				dtn::core::EventDispatcher<dtn::core::CustodyEvent>::add(this);
-				dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::add(this);
 				dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::add(this);
 				dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::add(this);
 				dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::add(this);
@@ -208,7 +206,6 @@ namespace dtn
 				dtn::core::EventDispatcher<dtn::core::NodeEvent>::remove(this);
 				dtn::core::EventDispatcher<dtn::core::GlobalEvent>::remove(this);
 				dtn::core::EventDispatcher<dtn::core::CustodyEvent>::remove(this);
-				dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::remove(this);
 				dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::remove(this);
 				dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::remove(this);
 				dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::remove(this);
@@ -351,25 +348,6 @@ namespace dtn
 			default:
 				break;
 			}
-
-			// signal event to the callback interface
-			_eventcb->eventRaised(event, action, data);
-		}
-
-		void NativeDaemon::raiseEvent(const dtn::net::BundleReceivedEvent &received) throw ()
-		{
-			const std::string event = received.getName();
-			std::string action;
-			std::vector<std::string> data;
-
-			// set action
-			action = "received";
-
-			data.push_back("Peer: " + received.peer.getString());
-			data.push_back("Local: " + (received.fromlocal ? std::string("true") : std::string("false")));
-
-			// add bundle data
-			addEventData(received.bundle, data);
 
 			// signal event to the callback interface
 			_eventcb->eventRaised(event, action, data);
@@ -553,7 +531,6 @@ namespace dtn
 
 			ret.bundles_stored = dtn::core::BundleCore::getInstance().getStorage().count();
 			ret.bundles_expired = dtn::core::EventDispatcher<dtn::core::BundleExpiredEvent>::getCounter();
-			ret.bundles_received = dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::getCounter();
 			ret.bundles_transmitted = dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::getCounter();
 			ret.bundles_aborted = dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::getCounter();
 			ret.bundles_requeued = dtn::core::EventDispatcher<dtn::routing::RequeueBundleEvent>::getCounter();

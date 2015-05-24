@@ -1,8 +1,6 @@
 ## sub directory
 
-net_SOURCES = 	BundleReceivedEvent.cpp \
-	BundleReceivedEvent.h \
-	BundleReceiver.h \
+net_SOURCES = 	BundleReceiver.h \
 	BundleTransfer.h \
 	BundleTransfer.cpp \
 	ConnectionEvent.cpp \

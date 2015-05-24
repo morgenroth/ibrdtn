@@ -140,7 +140,7 @@ namespace dtn
 		 * Joinable Thread run method, this thread starts when the componentRun() method
 		 * is running and connected to the tomcat server. This thread is watching permanent
 		 * on the istream of the ibrcommon::iobuffer. When a valid bundle is detected
-		 * a BundleReceivedEvent will be raised.
+		 * the BundleCore::inject() method will be raised.
 		 *
 		 */
 		void DownloadThread::run() throw ()
@@ -162,8 +162,8 @@ namespace dtn
 
 						if (ret != BundleFilter::ACCEPT) continue;
 
-						// raise default bundle received event
-						dtn::net::BundleReceivedEvent::raise(dtn::data::EID(), bundle, false);
+						// inject bundle into core
+						dtn::core::BundleCore::getInstance().inject(dtn::data::EID(), bundle, false);
 					} catch (const ibrcommon::Exception &ex) {
 						IBRCOMMON_LOGGER_DEBUG_TAG("HTTPConvergenceLayer", 10) << "http error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
