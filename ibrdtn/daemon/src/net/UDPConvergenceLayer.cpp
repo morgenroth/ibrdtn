@@ -20,7 +20,6 @@
  */
 
 #include "net/UDPConvergenceLayer.h"
-#include "net/BundleReceivedEvent.h"
 #include "net/TransferAbortedEvent.h"
 #include "core/BundleEvent.h"
 #include "core/BundleCore.h"
@@ -465,8 +464,8 @@ namespace dtn
 
 					switch (ret) {
 						case BundleFilter::ACCEPT:
-							// raise default bundle received event
-							dtn::net::BundleReceivedEvent::raise(sender, bundle, false);
+							// inject bundle into core
+							dtn::core::BundleCore::getInstance().inject(sender, bundle, false);
 							break;
 
 						case BundleFilter::REJECT:

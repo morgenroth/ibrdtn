@@ -29,7 +29,6 @@
 #include "core/NodeEvent.h"
 #include "core/GlobalEvent.h"
 #include "core/CustodyEvent.h"
-#include "net/BundleReceivedEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
 #include "net/ConnectionEvent.h"
@@ -110,9 +109,8 @@ namespace dtn
 			NativeStats()
 			: uptime(0), timestamp(0), neighbors(0), storage_size(0),
 			  time_offset(0.0), time_rating(0.0), time_adjustments(0),
-			  bundles_stored(0), bundles_expired(0),
-			  bundles_received(0), bundles_transmitted(0), bundles_aborted(0),
-			  bundles_requeued(0), bundles_queued(0)
+			  bundles_stored(0), bundles_expired(0), bundles_transmitted(0),
+			  bundles_aborted(0), bundles_requeued(0), bundles_queued(0)
 			{ };
 
 			~NativeStats() { };
@@ -128,7 +126,6 @@ namespace dtn
 
 			size_t bundles_stored;
 			size_t bundles_expired;
-			size_t bundles_received;
 			size_t bundles_transmitted;
 			size_t bundles_aborted;
 			size_t bundles_requeued;
@@ -166,7 +163,6 @@ namespace dtn
 			public dtn::core::EventReceiver<dtn::core::NodeEvent>,
 			public dtn::core::EventReceiver<dtn::core::GlobalEvent>,
 			public dtn::core::EventReceiver<dtn::core::CustodyEvent>,
-			public dtn::core::EventReceiver<dtn::net::BundleReceivedEvent>,
 			public dtn::core::EventReceiver<dtn::net::TransferAbortedEvent>,
 			public dtn::core::EventReceiver<dtn::net::TransferCompletedEvent>,
 			public dtn::core::EventReceiver<dtn::net::ConnectionEvent>,
@@ -296,7 +292,6 @@ namespace dtn
 			virtual void raiseEvent(const dtn::core::NodeEvent &evt) throw ();
 			virtual void raiseEvent(const dtn::core::GlobalEvent &evt) throw ();
 			virtual void raiseEvent(const dtn::core::CustodyEvent &evt) throw ();
-			virtual void raiseEvent(const dtn::net::BundleReceivedEvent &evt) throw ();
 			virtual void raiseEvent(const dtn::net::TransferAbortedEvent &evt) throw ();
 			virtual void raiseEvent(const dtn::net::TransferCompletedEvent &evt) throw ();
 			virtual void raiseEvent(const dtn::net::ConnectionEvent &evt) throw ();

@@ -44,7 +44,6 @@
 
 #include "net/TransferAbortedEvent.h"
 #include "net/TransferCompletedEvent.h"
-#include "net/BundleReceivedEvent.h"
 #include "routing/QueueBundleEvent.h"
 #include "core/NodeEvent.h"
 #include "core/TimeEvent.h"
@@ -61,7 +60,6 @@ namespace dtn
 		class BaseRouter : public dtn::daemon::IntegratedComponent,
 			public dtn::core::EventReceiver<dtn::net::TransferAbortedEvent>,
 			public dtn::core::EventReceiver<dtn::net::TransferCompletedEvent>,
-			public dtn::core::EventReceiver<dtn::net::BundleReceivedEvent>,
 			public dtn::core::EventReceiver<dtn::routing::QueueBundleEvent>,
 			public dtn::core::EventReceiver<dtn::core::NodeEvent>,
 			public dtn::core::EventReceiver<dtn::core::TimeEvent>,
@@ -138,7 +136,6 @@ namespace dtn
 			 */
 			void raiseEvent(const dtn::net::TransferAbortedEvent &evt) throw ();
 			void raiseEvent(const dtn::net::TransferCompletedEvent &evt) throw ();
-			void raiseEvent(const dtn::net::BundleReceivedEvent &evt) throw ();
 			void raiseEvent(const dtn::routing::QueueBundleEvent &evt) throw ();
 			void raiseEvent(const dtn::core::NodeEvent &evt) throw ();
 			void raiseEvent(const dtn::core::TimeEvent &evt) throw ();

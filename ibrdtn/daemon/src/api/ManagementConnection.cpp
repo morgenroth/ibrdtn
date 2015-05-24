@@ -31,7 +31,6 @@
 
 #include "core/EventDispatcher.h"
 #include "core/GlobalEvent.h"
-#include "net/BundleReceivedEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
 #include "core/BundleExpiredEvent.h"
@@ -470,7 +469,6 @@ namespace dtn
 						_stream << ClientHandler::API_STATUS_OK << " STATS BUNDLES" << std::endl;
 						_stream << "Stored: " << dtn::core::BundleCore::getInstance().getStorage().count() << std::endl;
 						_stream << "Expired: " << dtn::core::EventDispatcher<dtn::core::BundleExpiredEvent>::getCounter() << std::endl;
-						_stream << "Received: " << dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::getCounter() << std::endl;
 						_stream << "Transmitted: " << dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::getCounter() << std::endl;
 						_stream << "Aborted: " << dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::getCounter() << std::endl;
 						_stream << "Requeued: " << dtn::core::EventDispatcher<dtn::routing::RequeueBundleEvent>::getCounter() << std::endl;
@@ -489,7 +487,6 @@ namespace dtn
 						_stream << std::endl;
 					} else if ( cmd[1] == "reset" ) {
 						dtn::core::EventDispatcher<dtn::core::BundleExpiredEvent>::resetCounter();
-						dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::resetCounter();
 						dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::resetCounter();
 						dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::resetCounter();
 						dtn::core::EventDispatcher<dtn::routing::RequeueBundleEvent>::resetCounter();

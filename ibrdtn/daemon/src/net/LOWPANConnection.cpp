@@ -20,7 +20,6 @@
  */
 
 #include "net/LOWPANConnection.h"
-#include "net/BundleReceivedEvent.h"
 #include "core/BundleEvent.h"
 #include "core/BundleCore.h"
 
@@ -98,8 +97,8 @@ namespace dtn
 						BundleFilter::ACTION ret = dtn::core::BundleCore::getInstance().filter(dtn::core::BundleFilter::INPUT, context, bundle);
 
 						if (ret == BundleFilter::ACCEPT) {
-							// raise default bundle received event
-							dtn::net::BundleReceivedEvent::raise(sender, bundle, false);
+							// inject bundle into core
+							dtn::core::BundleCore::getInstance().inject(sender, bundle, false);
 						}
 					} catch (const dtn::InvalidDataException &ex) {
 						IBRCOMMON_LOGGER_DEBUG_TAG("LOWPANConnection", 10) << "Received a invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;

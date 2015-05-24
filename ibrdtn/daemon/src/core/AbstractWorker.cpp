@@ -184,7 +184,7 @@ namespace dtn
 
 		void AbstractWorker::transmit(dtn::data::Bundle &bundle)
 		{
-			dtn::core::BundleCore::inject(dtn::core::BundleCore::local, bundle);
+			dtn::core::BundleCore::getInstance().inject(dtn::core::BundleCore::local, bundle, true);
 		}
 	}
 }

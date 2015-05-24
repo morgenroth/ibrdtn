@@ -21,7 +21,6 @@
 
 #include "Configuration.h"
 #include "net/DatagramConnection.h"
-#include "net/BundleReceivedEvent.h"
 #include "core/BundleEvent.h"
 #include "net/TransferAbortedEvent.h"
 #include "core/BundleCore.h"
@@ -102,8 +101,8 @@ namespace dtn
 
 						switch (ret) {
 							case BundleFilter::ACCEPT:
-								// raise default bundle received event
-								dtn::net::BundleReceivedEvent::raise(_peer_eid, bundle, false);
+								// inject bundle into core
+								dtn::core::BundleCore::getInstance().inject(_peer_eid, bundle, false);
 								break;
 
 							case BundleFilter::REJECT:

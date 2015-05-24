@@ -9,7 +9,7 @@ import de.tubs.ibr.dtn.stats.StatsUtils;
 
 public class StorageChartFragment extends StatsChartFragment {
     
-    private Integer[] mChartMap = { 13 };
+    private Integer[] mChartMap = { 12 };
     private int[] mChartColors = { R.color.stats_first };
     
     @Override

@@ -36,7 +36,6 @@
 #include "storage/BundleStorage.h"
 #include "core/Node.h"
 #include "../tools/EventSwitchLoop.h"
-#include "net/BundleReceivedEvent.h"
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/EID.h>
 #include <ibrcommon/thread/Thread.h>
@@ -187,7 +186,7 @@ void BaseRouterTest::testRaiseEvent()
 	CPPUNIT_ASSERT_EQUAL(false, router.isKnown(b));
 
 	// send a bundle
-	dtn::net::BundleReceivedEvent::raise(eid, b, false);
+	dtn::core::BundleCore::getInstance().inject(eid, b, false);
 
 	// stop the event switch
 	esl.stop();

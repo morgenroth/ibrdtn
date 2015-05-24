@@ -27,7 +27,6 @@
 #include "core/FragmentManager.h"
 
 #include "net/TCPConvergenceLayer.h"
-#include "net/BundleReceivedEvent.h"
 #include "net/ConnectionEvent.h"
 #include "net/TransferAbortedEvent.h"
 
@@ -559,8 +558,8 @@ namespace dtn
 
 						switch (ret) {
 							case BundleFilter::ACCEPT:
-								// raise default bundle received event
-								dtn::net::BundleReceivedEvent::raise(_peer._localeid, bundle, false);
+								// inject bundle into core
+								dtn::core::BundleCore::getInstance().inject(_peer._localeid, bundle, false);
 								break;
 
 							case BundleFilter::REJECT:

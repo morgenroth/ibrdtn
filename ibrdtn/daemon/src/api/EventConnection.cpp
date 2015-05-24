@@ -123,37 +123,6 @@ namespace dtn
 			_stream << std::endl;
 		}
 
-		void EventConnection::raiseEvent(const dtn::net::BundleReceivedEvent &received) throw ()
-		{
-			ibrcommon::MutexLock l(_mutex);
-			if (!_running) return;
-
-			// start with the event tag
-			_stream << "Event: " << received.getName() << std::endl;
-			_stream << "Peer: " << received.peer.getString() << std::endl;
-			_stream << "Local: " << (received.fromlocal ? "true" : "false") << std::endl;
-
-			// write the bundle data
-			_stream << "Source: " << received.bundle.source.getString() << std::endl;
-			_stream << "Timestamp: " << received.bundle.timestamp.toString() << std::endl;
-			_stream << "Sequencenumber: " << received.bundle.sequencenumber.toString() << std::endl;
-			_stream << "Lifetime: " << received.bundle.lifetime.toString() << std::endl;
-			_stream << "Procflags: " << received.bundle.procflags.toString() << std::endl;
-
-			// write the destination eid
-			_stream << "Destination: " << received.bundle.destination.getString() << std::endl;
-
-			if (received.bundle.get(dtn::data::PrimaryBlock::FRAGMENT))
-			{
-				// write fragmentation values
-				_stream << "Appdatalength: " << received.bundle.appdatalength.toString() << std::endl;
-				_stream << "Fragmentoffset: " << received.bundle.fragmentoffset.toString() << std::endl;
-			}
-
-			// close the event
-			_stream << std::endl;
-		}
-
 		void EventConnection::raiseEvent(const dtn::core::CustodyEvent &custody) throw ()
 		{
 			ibrcommon::MutexLock l(_mutex);
@@ -348,7 +317,6 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::core::NodeEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::core::GlobalEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::core::CustodyEvent>::add(this);
-			dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::add(this);
@@ -361,7 +329,6 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::core::NodeEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::core::GlobalEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::core::CustodyEvent>::remove(this);
-			dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::remove(this);

@@ -21,7 +21,6 @@
 
 #include "Configuration.h"
 #include "CapsuleWorker.h"
-#include "net/BundleReceivedEvent.h"
 #include "core/BundleCore.h"
 #include <ibrdtn/data/PayloadBlock.h>
 #include <ibrdtn/utils/Clock.h>
@@ -74,8 +73,8 @@ namespace dtn
 						context.setPeer(capsule.source.getNode());
 						if (BundleCore::getInstance().filter(BundleFilter::INPUT, context, b) == BundleFilter::ACCEPT)
 						{
-							// raise default bundle received event
-							dtn::net::BundleReceivedEvent::raise(capsule.source, b, false);
+							// inject bundle into core
+							dtn::core::BundleCore::getInstance().inject(capsule.source, b, false);
 						}
 					}
 				}

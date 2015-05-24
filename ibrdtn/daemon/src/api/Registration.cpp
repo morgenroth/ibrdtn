@@ -27,7 +27,6 @@
 #include "core/BundleEvent.h"
 #include "core/BundlePurgeEvent.h"
 #include "core/FragmentManager.h"
-#include "net/BundleReceivedEvent.h"
 
 #ifdef HAVE_SQLITE
 #include "storage/SQLiteBundleStorage.h"
@@ -544,7 +543,7 @@ namespace dtn
 			if (bundle.custodian == clienteid) bundle.custodian = source;
 
 			// inject the bundle
-			dtn::core::BundleCore::inject(source, bundle);
+			dtn::core::BundleCore::getInstance().inject(source, bundle, true);
 		}
 	}
 }

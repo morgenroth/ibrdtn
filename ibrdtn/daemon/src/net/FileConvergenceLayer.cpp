@@ -22,7 +22,6 @@
 #include "Configuration.h"
 #include "net/FileConvergenceLayer.h"
 #include "net/TransferAbortedEvent.h"
-#include "net/BundleReceivedEvent.h"
 #include "core/EventDispatcher.h"
 #include "core/BundleEvent.h"
 #include "core/BundleCore.h"
@@ -324,8 +323,8 @@ namespace dtn
 
 					if (ret == BundleFilter::ACCEPT)
 					{
-						// raise default bundle received event
-						dtn::net::BundleReceivedEvent::raise(n.getEID(), bundle, false);
+						// inject bundle into core
+						dtn::core::BundleCore::getInstance().inject(n.getEID(), bundle, false);
 					}
 				}
 				catch (const dtn::data::Validator::RejectedException &ex)
@@ -493,8 +492,8 @@ namespace dtn
 
 				if (ret == BundleFilter::ACCEPT)
 				{
-					// raise default bundle received event
-					dtn::net::BundleReceivedEvent::raise(bundle.destination.getNode(), answer, false);
+					// inject bundle into core
+					dtn::core::BundleCore::getInstance().inject(bundle.destination.getNode(), answer, false);
 				}
 			}
 		}

@@ -105,7 +105,7 @@ public abstract class StatsListAdapter extends BaseAdapter {
             // special case "seconds"
             return String.format("%f s", (Double)value);
         }
-        else if (position == 13) {
+        else if (position == 12) {
             // special case "bytes"
             return StatsUtils.formatByteString((Long)value, true);
         }
@@ -170,7 +170,6 @@ public abstract class StatsListAdapter extends BaseAdapter {
       R.string.stats_title_transfers_aborted,
       R.string.stats_title_bundles_expired,
       R.string.stats_title_bundles_queued,
-      R.string.stats_title_bundles_received,
       R.string.stats_title_transfers_requeued,
       R.string.stats_title_bundles_stored,
       R.string.stats_title_transfers_completed,
@@ -216,18 +215,15 @@ public abstract class StatsListAdapter extends BaseAdapter {
                 return data.getBundleQueued();
 
             case 9:
-                return data.getBundleReceived();
-
-            case 10:
                 return data.getBundleRequeued();
 
-            case 11:
+            case 10:
                 return data.getBundleStored();
 
-            case 12:
+            case 11:
                 return data.getBundleTransmitted();
                 
-            case 13:
+            case 12:
                 return data.getStorageSize();
         }
         return null;

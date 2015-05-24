@@ -20,7 +20,6 @@
  */
 
 #include "net/EMailImapService.h"
-#include "net/BundleReceivedEvent.h"
 #include "core/BundleCore.h"
 #include "core/BundleEvent.h"
 #include "ibrdtn/data/BundleBuilder.h"
@@ -520,8 +519,8 @@ namespace dtn
 
 			if (ret == BundleFilter::ACCEPT)
 			{
-				// Raise default bundle received event
-				dtn::net::BundleReceivedEvent::raise(newBundle.source, newBundle, false);
+				// inject bundle into core
+				dtn::core::BundleCore::getInstance().inject(newBundle.source, newBundle, false);
 			}
 		}
 

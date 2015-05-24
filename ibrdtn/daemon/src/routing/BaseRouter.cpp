@@ -28,8 +28,6 @@
 #include "storage/BundleStorage.h"
 #include "core/BundleEvent.h"
 
-#include <ibrdtn/data/TrackingBlock.h>
-#include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <ibrdtn/utils/Clock.h>
 
 #include <ibrcommon/Logger.h>
@@ -214,7 +212,6 @@ namespace dtn
 			// routine checked for throw() on 15.02.2013
 			dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::add(this);
-			dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::core::NodeEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
@@ -227,7 +224,6 @@ namespace dtn
 			// routine checked for throw() on 15.02.2013
 			dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::remove(this);
-			dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::core::NodeEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
@@ -260,6 +256,14 @@ namespace dtn
 
 		void BaseRouter::raiseEvent(const dtn::routing::QueueBundleEvent &event) throw ()
 		{
+			// prevent loops
+			try {
+				ibrcommon::MutexLock l(_neighbor_database);
+
+				// add the bundle to the summary vector of the neighbor
+				_neighbor_database.get(event.origin).add(event.bundle);
+			} catch (const NeighborDatabase::EntryNotFoundException&) { };
+
 			// check Scope Control Block - do not forward bundles with hop limit == 0
 			if (event.bundle.hopcount == 0) return;
 
@@ -273,84 +277,6 @@ namespace dtn
 			// If an incoming bundle is received, forward it to all connected neighbors
 			// trigger all routing modules to forward the new bundle
 			__eventBundleQueued(event.origin, event.bundle);
-		}
-
-		void BaseRouter::raiseEvent(const dtn::net::BundleReceivedEvent &event) throw ()
-		{
-			const dtn::data::MetaBundle m = dtn::data::MetaBundle::create(event.bundle);
-
-			// Store incoming bundles into the storage
-			try {
-				if (event.fromlocal)
-				{
-					// store the bundle into a storage module
-					getStorage().store(event.bundle);
-
-					// set the bundle as known
-					setKnown(m);
-
-					// raise the queued event to notify all receivers about the new bundle
-					QueueBundleEvent::raise(m, event.peer);
-				}
-				// if the bundle is not known
-				else if (!filterKnown(m))
-				{
-					// security methods modifies the bundle, thus we need a copy of it
-					dtn::data::Bundle bundle = event.bundle;
-
-					// increment value in the scope control hop limit block
-					try {
-						dtn::data::ScopeControlHopLimitBlock &schl = bundle.find<dtn::data::ScopeControlHopLimitBlock>();
-						schl.increment();
-					} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
-
-					// modify TrackingBlock
-					try {
-						dtn::data::TrackingBlock &track = bundle.find<dtn::data::TrackingBlock>();
-						track.append(dtn::core::BundleCore::local);
-					} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
-
-					// prevent loops
-					try {
-						ibrcommon::MutexLock l(_neighbor_database);
-
-						// add the bundle to the summary vector of the neighbor
-						_neighbor_database.get(event.peer).add(m);
-					} catch (const NeighborDatabase::EntryNotFoundException&) { };
-
-					// store the bundle into a storage module
-					getStorage().store(bundle);
-
-					// raise the queued event to notify all receivers about the new bundle
-					QueueBundleEvent::raise(m, event.peer);
-				}
-				else
-				{
-					IBRCOMMON_LOGGER_DEBUG_TAG(BaseRouter::TAG, 5) << "Duplicate bundle " << event.bundle.toString() << " from " << event.peer.getString() << " ignored." << IBRCOMMON_LOGGER_ENDL;
-				}
-
-				// finally create a bundle received event
-				dtn::core::BundleEvent::raise(m, dtn::core::BUNDLE_RECEIVED);
-#ifdef IBRDTN_SUPPORT_BSP
-			} catch (const dtn::security::VerificationFailedException &ex) {
-				IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "Security checks failed (" << ex.what() << "), bundle will be dropped: " << event.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
-#endif
-			} catch (const ibrcommon::IOException &ex) {
-				IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "Unable to store bundle " << event.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
-
-				// raise BundleEvent because we have to drop the bundle
-				dtn::core::BundleEvent::raise(m, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
-			} catch (const dtn::storage::BundleStorage::StorageSizeExeededException &ex) {
-				IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "No space left for bundle " << event.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
-
-				// raise BundleEvent because we have to drop the bundle
-				dtn::core::BundleEvent::raise(m, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
-			} catch (const ibrcommon::Exception &ex) {
-				IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, error) << "Bundle " << event.bundle.toString() << " dropped: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-
-				// raise BundleEvent because we have to drop the bundle
-				dtn::core::BundleEvent::raise(m, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
-			}
 		}
 
 		void BaseRouter::raiseEvent(const dtn::net::TransferAbortedEvent &event) throw ()
