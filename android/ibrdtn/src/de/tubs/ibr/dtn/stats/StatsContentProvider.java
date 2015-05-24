@@ -34,7 +34,7 @@ public class StatsContentProvider extends ContentProvider {
     private static final String DATABASE_NAME = "stats";
     private static final String[] TABLE_NAMES = { "dtnd", "cl" };
 	
-    private static final int DATABASE_VERSION = 5;
+    private static final int DATABASE_VERSION = 6;
     
     // Database creation sql statement
     private static final String DATABASE_CREATE_DTND = 
@@ -52,7 +52,6 @@ public class StatsContentProvider extends ContentProvider {
                 StatsEntry.BUNDLE_ABORTED + " INTEGER, " +
                 StatsEntry.BUNDLE_EXPIRED + " INTEGER, " +
                 StatsEntry.BUNDLE_QUEUED + " INTEGER, " +
-                StatsEntry.BUNDLE_RECEIVED + " INTEGER, " +
                 StatsEntry.BUNDLE_REQUEUED + " INTEGER, " +
                 StatsEntry.BUNDLE_STORED + " INTEGER, " +
                 StatsEntry.BUNDLE_TRANSMITTED + " INTEGER" +
@@ -84,6 +83,11 @@ public class StatsContentProvider extends ContentProvider {
             if ((oldVersion == 2) && (newVersion == 3)) {
                 Log.w(TAG, "Upgrading database from version " + oldVersion + " to " + newVersion);
                 db.execSQL(DATABASE_CREATE_CL);
+            } else if ((oldVersion == 5) && (newVersion == 6)) {
+                Log.w(TAG, "Upgrading database from version " + oldVersion + " to " + newVersion);
+                // drop stats table
+                db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAMES[0]);
+                db.execSQL(DATABASE_CREATE_DTND);
             } else if ((oldVersion == 4) && (newVersion == 5)) {
                 Log.w(TAG, "Upgrading database from version " + oldVersion + " to " + newVersion);
                 // drop stats table
@@ -190,7 +194,6 @@ public class StatsContentProvider extends ContentProvider {
 			values.put(StatsEntry.BUNDLE_ABORTED, e.getBundleAborted());
 			values.put(StatsEntry.BUNDLE_EXPIRED, e.getBundleExpired());
 			values.put(StatsEntry.BUNDLE_QUEUED, e.getBundleQueued());
-			values.put(StatsEntry.BUNDLE_RECEIVED, e.getBundleReceived());
 			values.put(StatsEntry.BUNDLE_REQUEUED, e.getBundleRequeued());
 			values.put(StatsEntry.BUNDLE_STORED, e.getBundleStored());
 			values.put(StatsEntry.BUNDLE_TRANSMITTED, e.getBundleTransmitted());

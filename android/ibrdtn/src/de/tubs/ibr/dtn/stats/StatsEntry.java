@@ -33,7 +33,6 @@ public class StatsEntry implements Parcelable {
     public static final String BUNDLE_ABORTED = "bundle_aborted";
     public static final String BUNDLE_EXPIRED = "bundle_expired";
     public static final String BUNDLE_QUEUED = "bundle_queued";
-    public static final String BUNDLE_RECEIVED = "bundle_received";
     public static final String BUNDLE_REQUEUED = "bundle_requeued";
     public static final String BUNDLE_STORED = "bundle_stored";
     public static final String BUNDLE_TRANSMITTED = "bundle_transmitted";
@@ -49,7 +48,6 @@ public class StatsEntry implements Parcelable {
     private Long mBundleAborted = null;
     private Long mBundleExpired = null;
     private Long mBundleQueued = null;
-    private Long mBundleReceived = null;
     private Long mBundleRequeued = null;
     private Long mBundleStored = null;
     private Long mBundleTransmitted = null;
@@ -66,7 +64,6 @@ public class StatsEntry implements Parcelable {
         StatsEntry.BUNDLE_ABORTED,
         StatsEntry.BUNDLE_EXPIRED,
         StatsEntry.BUNDLE_QUEUED,
-        StatsEntry.BUNDLE_RECEIVED,
         StatsEntry.BUNDLE_REQUEUED,
         StatsEntry.BUNDLE_STORED,
         StatsEntry.BUNDLE_TRANSMITTED
@@ -88,10 +85,9 @@ public class StatsEntry implements Parcelable {
     static final int COLUMN_STATS_BUNDLE_ABORTED     = 8;
     static final int COLUMN_STATS_BUNDLE_EXPIRED     = 9;
     static final int COLUMN_STATS_BUNDLE_QUEUED      = 10;
-    static final int COLUMN_STATS_BUNDLE_RECEIVED    = 11;
-    static final int COLUMN_STATS_BUNDLE_REQUEUED    = 12;
-    static final int COLUMN_STATS_BUNDLE_STORED      = 13;
-    static final int COLUMN_STATS_BUNDLE_TRANSMITTED = 14;
+    static final int COLUMN_STATS_BUNDLE_REQUEUED    = 11;
+    static final int COLUMN_STATS_BUNDLE_STORED      = 12;
+    static final int COLUMN_STATS_BUNDLE_TRANSMITTED = 13;
 
     @SuppressLint("SimpleDateFormat")
     public StatsEntry(Context context, Cursor cursor, ColumnsMap cmap) {
@@ -108,7 +104,6 @@ public class StatsEntry implements Parcelable {
         mBundleAborted = cursor.getLong(cmap.mColumnBundleAborted);
         mBundleExpired = cursor.getLong(cmap.mColumnBundleExpired);
         mBundleQueued = cursor.getLong(cmap.mColumnBundleQueued);
-        mBundleReceived = cursor.getLong(cmap.mColumnBundleReceived);
         mBundleRequeued = cursor.getLong(cmap.mColumnBundleRequeued);
         mBundleStored = cursor.getLong(cmap.mColumnBundleStored);
         mBundleTransmitted = cursor.getLong(cmap.mColumnBundleTransmitted);
@@ -131,7 +126,6 @@ public class StatsEntry implements Parcelable {
         mBundleAborted = stats.getBundles_aborted();
         mBundleExpired = stats.getBundles_expired();
         mBundleQueued = stats.getBundles_queued();
-        mBundleReceived = stats.getBundles_received();
         mBundleRequeued = stats.getBundles_requeued();
         mBundleStored = stats.getBundles_stored();
         mBundleTransmitted = stats.getBundles_transmitted();
@@ -205,14 +199,6 @@ public class StatsEntry implements Parcelable {
         mBundleQueued = bundleQueued;
     }
 
-    public Long getBundleReceived() {
-        return mBundleReceived;
-    }
-
-    public void setBundleReceived(Long bundleReceived) {
-        mBundleReceived = bundleReceived;
-    }
-
     public Long getBundleRequeued() {
         return mBundleRequeued;
     }
@@ -265,7 +251,6 @@ public class StatsEntry implements Parcelable {
         public int mColumnBundleAborted;
         public int mColumnBundleExpired;
         public int mColumnBundleQueued;
-        public int mColumnBundleReceived;
         public int mColumnBundleRequeued;
         public int mColumnBundleStored;
         public int mColumnBundleTransmitted;
@@ -281,7 +266,6 @@ public class StatsEntry implements Parcelable {
             mColumnBundleAborted = COLUMN_STATS_BUNDLE_ABORTED;
             mColumnBundleExpired = COLUMN_STATS_BUNDLE_EXPIRED;
             mColumnBundleQueued = COLUMN_STATS_BUNDLE_QUEUED;
-            mColumnBundleReceived = COLUMN_STATS_BUNDLE_RECEIVED;
             mColumnBundleRequeued = COLUMN_STATS_BUNDLE_REQUEUED;
             mColumnBundleStored = COLUMN_STATS_BUNDLE_STORED;
             mColumnBundleTransmitted = COLUMN_STATS_BUNDLE_TRANSMITTED;
@@ -325,7 +309,6 @@ public class StatsEntry implements Parcelable {
         mBundleAborted = in.readLong();
         mBundleExpired = in.readLong();
         mBundleQueued = in.readLong();
-        mBundleReceived = in.readLong();
         mBundleRequeued = in.readLong();
         mBundleStored = in.readLong();
         mBundleTransmitted = in.readLong();
@@ -348,7 +331,6 @@ public class StatsEntry implements Parcelable {
         dest.writeLong( mBundleAborted );
         dest.writeLong( mBundleExpired );
         dest.writeLong( mBundleQueued );
-        dest.writeLong( mBundleReceived );
         dest.writeLong( mBundleRequeued );
         dest.writeLong( mBundleStored );
         dest.writeLong( mBundleTransmitted );
