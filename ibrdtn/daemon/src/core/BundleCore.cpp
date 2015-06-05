@@ -713,6 +713,9 @@ namespace dtn
 				{
 					IBRCOMMON_LOGGER_TAG(TAG, notice) << "Bundle received " + bundle.toString() + " (local)" << IBRCOMMON_LOGGER_ENDL;
 
+					// create a bundle received event
+					dtn::core::BundleEvent::raise(m, dtn::core::BUNDLE_RECEIVED);
+
 					// modify TrackingBlock
 					try {
 						dtn::data::TrackingBlock &track = bundle.find<dtn::data::TrackingBlock>();
@@ -742,7 +745,7 @@ namespace dtn
 
 							bundle.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT, false);
 						} catch (const dtn::security::SecurityManager::KeyMissingException&) {
-							// sign requested, but no key is available
+							// encryption requested, but no key is available
 							IBRCOMMON_LOGGER_TAG(TAG, warning) << "No key available for encrypt process." << IBRCOMMON_LOGGER_ENDL;
 						} catch (const dtn::security::EncryptException&) {
 							IBRCOMMON_LOGGER_TAG(TAG, warning) << "Encryption of bundle failed." << IBRCOMMON_LOGGER_ENDL;
@@ -764,7 +767,7 @@ namespace dtn
 #endif
 
 					// get the payload size maximum
-					size_t maxPayloadLength = dtn::daemon::Configuration::getInstance().getLimit("payload");
+					const size_t maxPayloadLength = dtn::daemon::Configuration::getInstance().getLimit("payload");
 
 					// check if fragmentation is enabled
 					// do not try pro-active fragmentation if the payload length is not limited
@@ -812,11 +815,12 @@ namespace dtn
 				{
 					IBRCOMMON_LOGGER_TAG(TAG, notice) << "Bundle received " + bundle.toString() + " from " + source.getString() << IBRCOMMON_LOGGER_ENDL;
 
-
-
 					// if the bundle is not known
 					if (!getRouter().filterKnown(m))
 					{
+						// create a bundle received event
+						dtn::core::BundleEvent::raise(m, dtn::core::BUNDLE_RECEIVED);
+
 						// increment value in the scope control hop limit block
 						try {
 							dtn::data::ScopeControlHopLimitBlock &schl = bundle.find<dtn::data::ScopeControlHopLimitBlock>();
@@ -839,14 +843,7 @@ namespace dtn
 					{
 						IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 5) << "Duplicate bundle " << bundle.toString() << " from " << source.getString() << " ignored." << IBRCOMMON_LOGGER_ENDL;
 					}
-
-					// finally create a bundle received event
-					dtn::core::BundleEvent::raise(m, dtn::core::BUNDLE_RECEIVED);
 				}
-#ifdef IBRDTN_SUPPORT_BSP
-			} catch (const dtn::security::VerificationFailedException &ex) {
-				IBRCOMMON_LOGGER_TAG(TAG, notice) << "Security checks failed (" << ex.what() << "), bundle will be dropped: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
-#endif
 			} catch (const ibrcommon::IOException &ex) {
 				IBRCOMMON_LOGGER_TAG(TAG, notice) << "Unable to store bundle " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
