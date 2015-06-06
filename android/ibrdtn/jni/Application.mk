@@ -10,13 +10,7 @@ dtnd_TOP:=$(abspath $(LOCAL_PATH))/dtnd
 APP_OPTIM:=debug
 
 # NDK Toolchain
-# works:
-#NDK_TOOLCHAIN_VERSION=4.4.3
-#NDK_TOOLCHAIN_VERSION=clang
-#NDK_TOOLCHAIN_VERSION=clang3.2
-# does not work with NDK < r9:
-#NDK_TOOLCHAIN_VERSION=4.6
-#NDK_TOOLCHAIN_VERSION=4.8
+NDK_TOOLCHAIN_VERSION=4.9
 
 # Build target
 APP_ABI:=armeabi armeabi-v7a x86 mips
