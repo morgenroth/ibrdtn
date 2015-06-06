@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 
-OPENSSL_COMMIT="59254098a1ebe67b1d8faee1c8f87400974367de"
+OPENSSL_COMMIT="01e473f0a6320fafec82e3cc015bb2653879ef51"
 LIBNL_COMMIT="7e32da396adfe6b58b23641dacb1887f5855ff9c"
 
 set -e
@@ -69,4 +69,4 @@ swig -c++ -java -package de.tubs.ibr.dtn.swig -verbose -outdir ../src/de/tubs/ib
 echo ""
 echo "Building IBR-DTN with Android NDK..."
 echo "------------------------------------"
-ndk-build
+ndk-build -j
