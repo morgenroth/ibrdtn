@@ -153,6 +153,23 @@ AS_IF([test -z "${tffs_path}"], [
 		])
 ])
 
+AC_ARG_WITH([bash-completion-dir],
+	AS_HELP_STRING([--with-bash-completion-dir[=PATH]],
+		[Install the bash auto-completion script in this directory. @<:@default=yes@:>@]),
+		[],
+		[with_bash_completion_dir=yes])
+
+if test "x$with_bash_completion_dir" = "xyes"; then
+	PKG_CHECK_MODULES([BASH_COMPLETION], [bash-completion >= 2.0],
+	[BASH_COMPLETION_DIR="$(pkg-config --define-variable=prefix=$prefix --variable=completionsdir bash-completion)"],
+	[BASH_COMPLETION_DIR="no"])
+else
+	BASH_COMPLETION_DIR="$with_bash_completion_dir"
+fi
+
+AC_SUBST([BASH_COMPLETION_DIR])
+
+AM_CONDITIONAL([ENABLE_BASH_COMPLETION],[test "x$with_bash_completion_dir" != "xno"])
 AM_CONDITIONAL([TUNNEL], [test x$has_tun = xyes])
 AM_CONDITIONAL([LIBARCHIVE], [test x$has_libarchive = xyes])
 AM_CONDITIONAL([TFFS], [test x$has_tffs = xyes])
