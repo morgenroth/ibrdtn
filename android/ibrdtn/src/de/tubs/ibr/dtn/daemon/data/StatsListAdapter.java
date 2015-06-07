@@ -151,7 +151,6 @@ public abstract class StatsListAdapter extends BaseAdapter {
         RowType.RELATIVE,
         RowType.RELATIVE,
         RowType.RELATIVE,
-        RowType.RELATIVE,
         RowType.ABSOLUTE,
         RowType.RELATIVE,
         
