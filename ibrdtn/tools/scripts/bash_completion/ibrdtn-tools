@@ -1,0 +1,71 @@
+#
+# Bash completion for IBR-DTN Tools
+#
+
+__ibrdtn_tools_destinations()
+{
+	echo -e "protocol management\nneighbor list\n" | nc localhost 4550 | grep -v "^200 " | grep -v "^IBR-DTN "
+	echo -e "protocol management\nrouting prophet info\n" | nc localhost 4550 | grep -v "^200 " | grep -v "^IBR-DTN " | awk -F ': ' '{print $1}'
+}
+
+__ibrdtn_tools_help_options()
+{
+	${1} -h | grep "^ -" | awk '{print $1}' | sed 's/|/ /'
+}
+
+_ibrdtn_tools_destination()
+{
+	local cur prev suffix
+	_init_completion -n : || return
+
+	if [[ "$cur" == -* ]]; then
+		COMPREPLY=( $( compgen -W "$(__ibrdtn_tools_help_options ${1})" -- $cur) )
+		return 0
+	else
+		case $1 in
+		    dtnping)
+			suffix="/echo"
+		    ;;
+
+		    dtntracepath)
+			suffix="/echo"
+		    ;;
+
+		    dtnoutbox)
+			suffix="/sharebox"
+		    ;;
+
+		    dtntunnel)
+			suffix="/tunnel"
+		    ;;
+
+		    *)
+			compopt -o nospace
+			suffix="/"
+		    ;;
+		esac
+
+		COMPREPLY=( $( compgen -S "${suffix}" -W "$(__ibrdtn_tools_destinations | sort -u)" -- $cur) )
+		__ltrim_colon_completions "$cur"
+		return 0
+	fi
+
+	return 0
+} &&
+complete -F _ibrdtn_tools_destination dtnping dtntracepath dtntunnel dtnsend
+
+_ibrdtn_tools_help()
+{
+        local cur prev scheme
+
+        _init_completion -n : || return
+
+        if [[ "$cur" == -* ]]; then
+                COMPREPLY=( $( compgen -W "$(__ibrdtn_tools_help_options ${1})" -- $cur) )
+                return 0
+        fi
+
+        return 0
+} &&
+complete -F _ibrdtn_tools_help dtninbox dtnconvert dtnrecv dtntrigger dtnstream dtnoutbox
+

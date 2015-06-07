@@ -2,6 +2,11 @@ AUTOMAKE_OPTIONS = foreign
 SUBDIRS = src doc man
 ACLOCAL_AMFLAGS = -I m4
 
+if ENABLE_BASH_COMPLETION
+bashcompletiondir = $(BASH_COMPLETION_DIR)
+dist_bashcompletion_DATA = scripts/bash_completion/ibrdtn-tools
+endif
+
 # debian files for package building
 EXTRA_DIST= \
 	debian/changelog \
