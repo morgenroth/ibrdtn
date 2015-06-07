@@ -105,8 +105,15 @@ namespace dtn
 							// process the bundle block (security, compression, ...)
 							dtn::core::BundleCore::processBlocks(b);
 						} catch (const ibrcommon::Exception &ex) {
-							// delete the bundle from the storage
-							storage.remove(id);
+							// delete the invalid bundle
+							const dtn::data::MetaBundle m = dtn::data::MetaBundle::create(b);
+							dtn::core::BundleEvent::raise(m, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::BLOCK_UNINTELLIGIBLE);
+
+							// ignore remove failures
+							try {
+								storage.remove(id);
+							} catch (const ibrcommon::Exception&) { };
+
 							continue;
 						}
 
