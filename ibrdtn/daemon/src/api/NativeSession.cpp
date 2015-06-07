@@ -256,9 +256,20 @@ namespace dtn
 
 					IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Bundle " << id.toString() << " loaded" << IBRCOMMON_LOGGER_ENDL;
 				} catch (const ibrcommon::Exception &e) {
+					IBRCOMMON_LOGGER_TAG(NativeSession::TAG, warning) << "Failed to process bundle " << id.toString() << ": " << e.what() << IBRCOMMON_LOGGER_ENDL;
+
+					// create a meta bundle
+					const dtn::data::MetaBundle m = dtn::data::MetaBundle::create(_bundle[ri]);
+
 					// clear the register
 					_bundle[ri] = dtn::data::Bundle();
-					IBRCOMMON_LOGGER_TAG(NativeSession::TAG, warning) << "Failed to process bundle " << id.toString() << ": " << e.what() << IBRCOMMON_LOGGER_ENDL;
+
+					// delete the invalid bundle
+					dtn::core::BundleEvent::raise(m, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::BLOCK_UNINTELLIGIBLE);
+					dtn::core::BundleCore::getInstance().getStorage().remove(id);
+
+					// re-throw previous exception
+					throw;
 				}
 			} catch (const ibrcommon::Exception &ex) {
 				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 15) << "Failed to load bundle " << id.toString() << ", Exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;

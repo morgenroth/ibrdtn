@@ -234,7 +234,18 @@ namespace dtn
 							// process the bundle block (security, compression, ...)
 							dtn::core::BundleCore::processBlocks(bundle);
 						} catch (const ibrcommon::Exception&) {
-							// bundle processing failure
+							// create a meta bundle
+							const dtn::data::MetaBundle m = dtn::data::MetaBundle::create(bundle);
+
+							// report deletion
+							dtn::core::BundleEvent::raise(m, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::BLOCK_UNINTELLIGIBLE);
+
+							// ignore remove failures
+							try {
+								dtn::core::BundleCore::getInstance().getStorage().remove(m);
+							} catch (const ibrcommon::Exception&) { };
+
+							// proceed with the next bundle
 							continue;
 						}
 
