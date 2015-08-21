@@ -62,7 +62,7 @@ else
 lib_LTLIBRARIES = libibrcommon.la
 libibrcommon_la_SOURCES = $(h_sources) $(cc_sources)
 libibrcommon_la_LIBADD = $(ibrcommon_libs)
-libibrcommon_la_LDFLAGS = -version-info $(GENERIC_LIBRARY_VERSION) -release $(GENERIC_RELEASE)
+libibrcommon_la_LDFLAGS = -version-info $(GENERIC_LIBRARY_VERSION)
 if WIN32
 libibrcommon_la_LDFLAGS += -no-undefined
 endif
