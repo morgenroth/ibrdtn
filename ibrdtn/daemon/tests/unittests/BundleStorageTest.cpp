@@ -749,6 +749,40 @@ void BundleStorageTest::testDoubleStore(dtn::storage::BundleStorage &storage)
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)1, storage.count());
 }
 
+void BundleStorageTest::testGet()
+{
+	STORAGE_TEST(testGet);
+}
+
+void BundleStorageTest::testGet(dtn::storage::BundleStorage &storage)
+{
+	// create some bundles
+	std::list<dtn::data::Bundle> list;
+
+	for (int i = 0; i < 2000; ++i)
+	{
+		dtn::data::Bundle b;
+		b.lifetime = 1;
+		b.source = dtn::data::EID("dtn://node-two/foo");
+		ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
+		b.push_back(ref);
+
+		(*ref.iostream()) << "Hallo Welt" << std::endl;
+
+		list.push_back(b);
+		storage.store(b);
+	}
+
+	// in parallel we try to retrieve bundles from list1
+	for (std::list<dtn::data::Bundle>::const_reverse_iterator iter = list.rbegin(); iter != list.rend(); ++iter)
+	{
+		const dtn::data::Bundle &b = (*iter);
+		dtn::data::Bundle bundle = storage.get(b);
+	}
+
+	storage.clear();
+}
+
 void BundleStorageTest::testFaultyGet()
 {
 	STORAGE_TEST(testFaultyGet);
