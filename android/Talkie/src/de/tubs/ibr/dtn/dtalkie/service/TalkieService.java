@@ -169,7 +169,7 @@ public class TalkieService extends DTNIntentService {
 		public TransferMode startBlock(Block block) {
 			if ((block.type == 1) && (file == null))
 			{
-				File folder = Utils.getStoragePath();
+				File folder = Utils.getStoragePath(TalkieService.this);
 				
 				// create a new temporary file
 				try {
