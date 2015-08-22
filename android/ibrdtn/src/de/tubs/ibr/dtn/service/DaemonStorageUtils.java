@@ -53,6 +53,7 @@ public class DaemonStorageUtils {
 		if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED))
 		{
 			File externalStorage = context.getExternalFilesDir(null);
+			if (externalStorage == null) return null;
 			return new File(externalStorage.getPath() + File.separatorChar + "storage");
 		}
 
@@ -64,6 +65,7 @@ public class DaemonStorageUtils {
 		if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED))
 		{
 			File externalStorage = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+			if (externalStorage == null) return null;
 			return new File(externalStorage.getPath() + File.separatorChar + "logs");
 		}
 
