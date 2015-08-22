@@ -1,7 +1,7 @@
 ## sub directory
 
-AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS)
-AM_LDFLAGS = $(ibrdtn_LIBS)
+AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS) $(GCOV_CFLAGS)
+AM_LDFLAGS = $(ibrdtn_LIBS) $(GCOV_LIBS)
 
 api_SOURCES = \
 	ApiServer.h \
