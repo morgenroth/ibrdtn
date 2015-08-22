@@ -24,8 +24,8 @@ cc_sources = \
 library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)-$(GENERIC_API_VERSION)/$(GENERIC_LIBRARY_NAME)/security
 library_include_HEADERS = $(h_sources)
 
-AM_CPPFLAGS = -I$(top_srcdir) $(ibrcommon_CFLAGS) $(OPENSSL_CFLAGS) $(GLIB_CFLAGS)
-AM_LDFLAGS = $(ibrcommon_LIBS) $(OPENSSL_LIBS) $(GLIB_LIBS)
+AM_CPPFLAGS = -I$(top_srcdir) $(ibrcommon_CFLAGS) $(OPENSSL_CFLAGS) $(GLIB_CFLAGS) $(GCOV_CFLAGS)
+AM_LDFLAGS = $(ibrcommon_LIBS) $(OPENSSL_LIBS) $(GLIB_LIBS) $(GCOV_LIBS)
 
 if ANDROID
 noinst_DATA = Android.mk

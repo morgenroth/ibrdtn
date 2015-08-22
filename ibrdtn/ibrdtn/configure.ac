@@ -174,9 +174,8 @@ ANDROID_AC_BUILD([
 		if test "x$CLANG" = xyes; then
 			AC_MSG_WARN([Code coverage is only supported in combination with GCC.])
 		else
-			CPPFLAGS="${CPPFLAGS} -fprofile-arcs -ftest-coverage -fPIC -O0"
-			CFLAGS="${CFLAGS} -fprofile-arcs -ftest-coverage -fPIC -O0"
-			LIBS="${LIBS} -lgcov"
+			AC_SUBST(GCOV_CFLAGS, "-fprofile-arcs -ftest-coverage -fPIC -O0")
+			AC_SUBST(GCOV_LIBS, "-lgcov")
 		fi
 	])
 

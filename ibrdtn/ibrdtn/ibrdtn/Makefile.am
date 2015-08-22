@@ -15,8 +15,8 @@ library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)-$(GENERIC_API_VERSION)/
 nodist_library_include_HEADERS = ibrdtn.h
 library_include_HEADERS = $(h_sources)
 
-AM_CPPFLAGS = -I$(top_srcdir) $(ibrcommon_CFLAGS)
-AM_LDFLAGS = $(ibrcommon_LIBS)
+AM_CPPFLAGS = -I$(top_srcdir) $(ibrcommon_CFLAGS) $(GCOV_CFLAGS)
+AM_LDFLAGS = $(ibrcommon_LIBS) $(GCOV_LIBS)
 
 ibrdtn_libs = api/libapi.la data/libdata.la streams/libstreams.la utils/libutils.la
 
