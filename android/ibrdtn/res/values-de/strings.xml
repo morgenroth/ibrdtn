@@ -50,7 +50,7 @@
     <string name="pref_log_debug_verbosity">Debug Verbosity Level</string>
     <string name="pref_log_debug_verbosity_desc">Benötigt Log Level DEBUG</string>
     <string name="pref_log_enable_file">Speichere Log als Datei</string>
-    <string name="pref_log_enable_file_desc">Speichert das Log als Datei in ibrdtn/logs/ auf dem externen Speicher.</string>
+    <string name="pref_log_enable_file_desc">Speichert das Log als Datei in Download/logs/ auf dem externen Speicher.</string>
     <string name="pref_debugging">Entwickler Modus</string>
     <string name="pref_debugging_desc">Entwickleroptionen einschalten.</string>
     <string name="list_no_log">Keine Einträge gefunden.</string>

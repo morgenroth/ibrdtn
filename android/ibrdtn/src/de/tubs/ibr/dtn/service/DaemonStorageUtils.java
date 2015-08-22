@@ -52,8 +52,8 @@ public class DaemonStorageUtils {
 	{
 		if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED))
 		{
-			File externalStorage = Environment.getExternalStorageDirectory();
-			return new File(externalStorage.getPath() + File.separatorChar + "ibrdtn" + File.separatorChar + "storage");
+			File externalStorage = context.getExternalFilesDir(null);
+			return new File(externalStorage.getPath() + File.separatorChar + "storage");
 		}
 
 		return null;
@@ -63,8 +63,8 @@ public class DaemonStorageUtils {
 	{
 		if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED))
 		{
-			File externalStorage = Environment.getExternalStorageDirectory();
-			return new File(externalStorage.getPath() + File.separatorChar + "ibrdtn" + File.separatorChar + "logs");
+			File externalStorage = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+			return new File(externalStorage.getPath() + File.separatorChar + "logs");
 		}
 
 		return null;

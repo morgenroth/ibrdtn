@@ -709,6 +709,8 @@ public class Preferences extends PreferenceActivity {
 
 						logFilePath = logPath.getPath() + File.separatorChar + "ibrdtn_" + time
 								+ ".log";
+					} else {
+						Log.e(TAG, "External media for logging is not mounted");
 					}
 				}
 				
@@ -913,6 +915,8 @@ public class Preferences extends PreferenceActivity {
 				File blobPath = DaemonStorageUtils.getBlobPath(context);
 				if (blobPath != null) {
 					p.println("blob_path = " + blobPath.getPath());
+				} else {
+					Log.e(TAG, "Internal cache directory is not available");
 				}
 			}
 
@@ -921,6 +925,8 @@ public class Preferences extends PreferenceActivity {
 				if (bundlePath != null) {
 					p.println("storage_path = " + bundlePath.getPath());
 					p.println("use_persistent_bundlesets = yes");
+				} else {
+					Log.e(TAG, "External media to store bundles is not mounted");
 				}
 			}
 
