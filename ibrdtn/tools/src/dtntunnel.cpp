@@ -562,7 +562,7 @@ int main(int argc, char *argv[])
 #ifdef HAVE_LIBDAEMON
 	if (daemonize) {
 		/* Do a cleanup */
-		IBRCOMMON_LOGGER_TAG("Core", info) << "Stopped" << app_name << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Core", info) << "Stopped " << app_name << IBRCOMMON_LOGGER_ENDL;
 		daemon_retval_send(255);
 		daemon_signal_done();
 		daemon_pid_file_remove();
