@@ -117,6 +117,11 @@ namespace dtn
 				for (bundle_list::const_iterator iter = _bundles.begin(); iter != _bundles.end(); ++iter)
 				{
 					const dtn::data::Bundle &bundle = (*iter);
+
+					// the bundles are sorted, therefore it is possible to optimize
+					// the search for the bundle by skipping all "lower" bundles
+					if (id > bundle) continue;
+
 					if (id == bundle)
 					{
 						if (_faulty) {
@@ -125,6 +130,9 @@ namespace dtn
 
 						return bundle;
 					}
+
+					// stop here, following bundles are "greater"
+					break;
 				}
 			} catch (const dtn::SerializationFailedException &ex) {
 				// bundle loading failed
