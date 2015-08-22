@@ -39,6 +39,9 @@ CONF_PARAMS="${CONF_PARAMS} --enable-debug"
 # enable building of documentation
 CONF_PARAMS="${CONF_PARAMS} --enable-docs"
 
+# enable code coverage
+CONF_PARAMS="${CONF_PARAMS} --enable-gcov"
+
 # configure all packages
 ./configure ${CONF_PARAMS} $@
 
