@@ -295,12 +295,6 @@ int main(int argc, char *argv[])
 	std::string pidfile;
 	bool throughput = false;
 
-	// catch process signals
-	ibrcommon::SignalHandler sighandler(term);
-	sighandler.handle(SIGINT);
-	sighandler.handle(SIGTERM);
-	sighandler.handle(SIGQUIT);
-
 #ifdef HAVE_LIBDAEMON
 	while ((c = getopt (argc, argv, "td:s:l:hDkp:")) != -1)
 #else
@@ -358,6 +352,12 @@ int main(int argc, char *argv[])
 
 	// print help if not enough parameters are set
 	if (!stop_daemon && (optindex < 1)) { print_help(argv[0]); exit(0); }
+
+	// catch process signals
+	ibrcommon::SignalHandler sighandler(term);
+	sighandler.handle(SIGINT);
+	sighandler.handle(SIGTERM);
+	sighandler.handle(SIGQUIT);
 
 	//initialize sighandler after possible exit call
 	sighandler.initialize();
@@ -490,8 +490,8 @@ int main(int argc, char *argv[])
 				return -1;
 			}
 
-	        /* Send OK to parent process */
-	        daemon_retval_send(0);
+			/* Send OK to parent process */
+			daemon_retval_send(0);
 		}
 	}
 #endif
@@ -562,7 +562,7 @@ int main(int argc, char *argv[])
 #ifdef HAVE_LIBDAEMON
 	if (daemonize) {
 		/* Do a cleanup */
-		IBRCOMMON_LOGGER_TAG("Core", info) << "Stopped" << app_name << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Core", info) << "Stopped " << app_name << IBRCOMMON_LOGGER_ENDL;
 		daemon_retval_send(255);
 		daemon_signal_done();
 		daemon_pid_file_remove();

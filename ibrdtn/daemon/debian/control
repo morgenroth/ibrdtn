@@ -31,4 +31,7 @@ Architecture: any
 Priority: optional
 Depends: ibrdtnd, python, munin-plugins-core, ${misc:Depends}
 Description: Munin plugins for IBR-DTN
+	This package contains plugins for the munin framework. These collect
+	general statistics of the running daemon for representation within
+	the monitor pages.
 

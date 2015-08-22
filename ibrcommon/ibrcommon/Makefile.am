@@ -38,8 +38,8 @@ nodist_library_include_HEADERS = ibrcommon.h
 library_include_HEADERS = $(h_sources)
 
 AUTOMAKE_OPTIONS = nostdinc
-AM_CPPFLAGS = -I$(top_srcdir) $(PTHREAD_CFLAGS) $(NL_CFLAGS) $(NL_ROUTE_CFLAGS) $(NL_GENL_CFLAGS)
-AM_LDFLAGS = $(PTHREAD_LIBS) $(NL_LIBS) $(NL_ROUTE_LIBS) $(NL_GENL_LIBS)
+AM_CPPFLAGS = -I$(top_srcdir) $(PTHREAD_CFLAGS) $(NL_CFLAGS) $(NL_ROUTE_CFLAGS) $(NL_GENL_CFLAGS) $(GCOV_CFLAGS)
+AM_LDFLAGS = $(PTHREAD_LIBS) $(NL_LIBS) $(NL_ROUTE_LIBS) $(NL_GENL_LIBS) $(GCOV_LIBS)
 
 ibrcommon_libs = \
 	data/libibrcommon_data.la \
@@ -62,7 +62,7 @@ else
 lib_LTLIBRARIES = libibrcommon.la
 libibrcommon_la_SOURCES = $(h_sources) $(cc_sources)
 libibrcommon_la_LIBADD = $(ibrcommon_libs)
-libibrcommon_la_LDFLAGS = -version-info $(GENERIC_LIBRARY_VERSION) -release $(GENERIC_RELEASE)
+libibrcommon_la_LDFLAGS = -version-info $(GENERIC_LIBRARY_VERSION)
 if WIN32
 libibrcommon_la_LDFLAGS += -no-undefined
 endif

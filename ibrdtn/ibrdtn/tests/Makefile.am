@@ -1,5 +1,6 @@
 ## Source directory
 
+AUTOMAKE_OPTIONS = subdir-objects
 dist_noinst_DATA = test-key.pem
 
 h_sources = data/TestSDNV.h data/TestEID.h data/TestBundleList.h data/TestBundleSet.h data/TestDictionary.h data/TestSerializer.h net/TestStreamConnection.h api/TestPlainSerializer.h utils/TestUtils.h data/TestExtensionBlock.h data/TestTrackingBlock.h data/TestBundleString.h data/TestBundleID.h
