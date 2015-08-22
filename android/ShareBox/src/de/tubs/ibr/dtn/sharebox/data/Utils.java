@@ -75,10 +75,10 @@ public class Utils {
     {
         if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED))
         {
-            File externalStorage = Environment.getExternalStorageDirectory();
+            File externalStorage = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
             
             // create working directory
-            File sharefolder = new File(externalStorage.getPath() + File.separatorChar + "sharebox");
+            File sharefolder = new File(externalStorage.getPath() + File.separatorChar + "ShareBox");
             if (!sharefolder.exists())
             {
                     sharefolder.mkdir();

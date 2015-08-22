@@ -225,12 +225,8 @@ public class RecorderService extends Service {
             
             Log.i(TAG, "start recording audio for " + mDestination.toString());
             
-            File path = Utils.getStoragePath();
+            File path = Utils.getStoragePath(this);
             
-            if (path == null) {
-                Log.e(TAG, "no storage path available");
-            }
-
             try {
                 Log.i(TAG, "create temporary file in " + path.getAbsolutePath());
 

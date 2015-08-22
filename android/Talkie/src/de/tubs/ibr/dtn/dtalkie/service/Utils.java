@@ -80,35 +80,20 @@ public class Utils {
 		builder.show();
 	}
 	
-    public static File getStoragePath()
-    {
-        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED))
-        {
-            File externalStorage = Environment.getExternalStorageDirectory();
-            
-            // create working directory
-            File sharefolder = new File(externalStorage.getPath() + File.separatorChar + "dtalkie");
-            if (!sharefolder.exists())
-            {
-                    sharefolder.mkdir();
-            }
-            
-            // add gallery hide file
-            File hideFile = new File(sharefolder.getPath() + File.separatorChar + ".nomedia");
-            if (!hideFile.exists()) {
-                try {
-                    hideFile.createNewFile();
-                } catch (IOException e) {
-                    Log.e(TAG, null, e);
-                }
-            }
-            
-            return sharefolder;
-        }
-        
-        return null;
-    }
-    
+	public static File getStoragePath(Context context)
+	{
+		File externalStorage = context.getFilesDir();
+
+		// create working directory
+		File sharefolder = new File(externalStorage.getPath() + File.separatorChar + "audio");
+		if (!sharefolder.exists())
+		{
+			sharefolder.mkdir();
+		}
+
+		return sharefolder;
+	}
+
     public static void lockScreenOrientation(Activity activity) {
         int orientation = activity.getResources().getConfiguration().orientation;
         activity.setRequestedOrientation(orientation);
