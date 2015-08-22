@@ -31,7 +31,7 @@ else
 lib_LTLIBRARIES= libibrdtn.la
 libibrdtn_la_SOURCES= $(h_sources) $(cc_sources)
 libibrdtn_la_LIBADD= $(ibrdtn_libs)
-libibrdtn_la_LDFLAGS= -version-info $(GENERIC_LIBRARY_VERSION) -release $(GENERIC_RELEASE)
+libibrdtn_la_LDFLAGS= -version-info $(GENERIC_LIBRARY_VERSION)
 if WIN32
 libibrdtn_la_LDFLAGS += -no-undefined
 endif
