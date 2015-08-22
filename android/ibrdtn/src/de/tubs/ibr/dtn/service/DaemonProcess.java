@@ -280,6 +280,8 @@ public class DaemonProcess {
                         + cal.get(Calendar.HOUR) + cal.get(Calendar.MINUTE) + cal.get(Calendar.SECOND);
                 
                 logFilePath = logPath.getPath() + File.separatorChar + "ibrdtn_" + time + ".log";
+            } else {
+                Log.e(TAG, "External media for logging is not mounted");
             }
         }
 
