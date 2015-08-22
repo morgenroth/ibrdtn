@@ -38,8 +38,8 @@ nodist_library_include_HEADERS = ibrcommon.h
 library_include_HEADERS = $(h_sources)
 
 AUTOMAKE_OPTIONS = nostdinc
-AM_CPPFLAGS = -I$(top_srcdir) $(PTHREAD_CFLAGS) $(NL_CFLAGS) $(NL_ROUTE_CFLAGS) $(NL_GENL_CFLAGS)
-AM_LDFLAGS = $(PTHREAD_LIBS) $(NL_LIBS) $(NL_ROUTE_LIBS) $(NL_GENL_LIBS)
+AM_CPPFLAGS = -I$(top_srcdir) $(PTHREAD_CFLAGS) $(NL_CFLAGS) $(NL_ROUTE_CFLAGS) $(NL_GENL_CFLAGS) $(GCOV_CFLAGS)
+AM_LDFLAGS = $(PTHREAD_LIBS) $(NL_LIBS) $(NL_ROUTE_LIBS) $(NL_GENL_LIBS) $(GCOV_LIBS)
 
 ibrcommon_libs = \
 	data/libibrcommon_data.la \
