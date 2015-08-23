@@ -1082,6 +1082,34 @@ namespace dtn
 		{
 			dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
 
+			/**
+			 * initialize blob storage mechanism for default / simple storage
+			 * (MemoryBundleStorage or SimpleBundleStorage)
+			 */
+			if ((conf.getStorage() == "simple") || (conf.getStorage() == "default"))
+			{
+				try {
+					// the configured BLOB path
+					ibrcommon::File blob_path = conf.getPath("blob");
+
+					// check if the BLOB path exists
+					if (!blob_path.exists()) {
+						// try to create the BLOB path
+						ibrcommon::File::createDirectory(blob_path);
+					}
+
+					if (blob_path.exists() && blob_path.isDirectory())
+					{
+						IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "using BLOB path: " << blob_path.getPath() << IBRCOMMON_LOGGER_ENDL;
+						ibrcommon::BLOB::changeProvider(new ibrcommon::FileBLOBProvider(blob_path), true);
+					}
+					else if (blob_path.exists())
+					{
+						IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, warning) << "BLOB path exists, but is not a directory!" << IBRCOMMON_LOGGER_ENDL;
+					}
+				} catch (const dtn::daemon::Configuration::ParameterNotSetException&) { }
+			}
+
 			// create a storage for bundles
 			dtn::storage::BundleStorage *storage = NULL;
 
@@ -1099,7 +1127,6 @@ namespace dtn
 					}
 
 					IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "using sqlite bundle storage in " << path.getPath() << IBRCOMMON_LOGGER_ENDL;
-
 
 					dtn::storage::SQLiteBundleStorage *sbs;
 					if (conf.getUsePersistentBundleSets())
@@ -1119,8 +1146,6 @@ namespace dtn
 					throw NativeDaemonException("initialization of the bundle storage failed");
 				}
 			}
-
-
 #endif
 
 			if ((conf.getStorage() == "simple") || (conf.getStorage() == "default"))
@@ -1177,31 +1202,6 @@ namespace dtn
 				// set the storage as default seeker
 				dtn::core::BundleCore::getInstance().setSeeker( storage );
 			}
-
-			/**
-			 * initialize blob storage mechanism
-			 */
-			try {
-				// the configured BLOB path
-				ibrcommon::File blob_path = conf.getPath("blob");
-
-				// check if the BLOB path exists
-				if (!blob_path.exists()) {
-					// try to create the BLOB path
-					ibrcommon::File::createDirectory(blob_path);
-				}
-
-				if (blob_path.exists() && blob_path.isDirectory())
-				{
-					IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "using BLOB path: " << blob_path.getPath() << IBRCOMMON_LOGGER_ENDL;
-					ibrcommon::BLOB::changeProvider(new ibrcommon::FileBLOBProvider(blob_path), true);
-				}
-				else
-				{
-					IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, warning) << "BLOB path exists, but is not a directory! Fallback to memory based mode." << IBRCOMMON_LOGGER_ENDL;
-					ibrcommon::BLOB::changeProvider(new ibrcommon::MemoryBLOBProvider(), true);
-				}
-			} catch (const dtn::daemon::Configuration::ParameterNotSetException&) { }
 		}
 
 		void NativeDaemon::shutdown_storage() const throw (NativeDaemonException)
