@@ -25,6 +25,7 @@
 #include "Component.h"
 #include "core/BundleCore.h"
 #include "storage/BundleStorage.h"
+#include <iostream>
 
 namespace dtn
 {
@@ -33,10 +34,42 @@ namespace dtn
 		class HybridBLOBProvider : public ibrcommon::BLOB::Provider
 		{
 		public:
-			HybridBLOBProvider();
+			HybridBLOBProvider(const ibrcommon::File &path, std::streamsize threshold);
 			virtual ~HybridBLOBProvider();
 
 			virtual ibrcommon::BLOB::Reference create();
+
+		private:
+			const ibrcommon::File _path;
+			const std::streamsize _threshold;
+		};
+
+		class HybridBLOB : public ibrcommon::BLOB
+		{
+		public:
+			virtual ~HybridBLOB();
+
+			virtual void clear();
+
+			virtual void open();
+			virtual void close();
+
+			static ibrcommon::BLOB::Reference create(const ibrcommon::File &path, std::streamsize threshold);
+
+		protected:
+			std::iostream &__get_stream()
+			{
+				return *_stream;
+			}
+
+			virtual std::streamsize __get_size();
+
+		private:
+			HybridBLOB(const ibrcommon::File &path, std::streamsize threshold);
+			std::iostream *_stream;
+			ibrcommon::TemporaryFile *_file;
+			const ibrcommon::File _path;
+			const std::streamsize _threshold;
 		};
 
 		class HybridBundleStorage : public BundleStorage, public dtn::daemon::IntegratedComponent
