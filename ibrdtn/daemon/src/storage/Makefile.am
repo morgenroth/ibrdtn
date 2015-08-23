@@ -7,6 +7,8 @@ storage_SOURCES = \
 	MemoryBundleStorage.cpp \
 	SimpleBundleStorage.cpp \
 	SimpleBundleStorage.h \
+	HybridBundleStorage.h \
+	HybridBundleStorage.cpp \
 	DataStorage.h \
 	DataStorage.cpp \
 	BundleResult.h \

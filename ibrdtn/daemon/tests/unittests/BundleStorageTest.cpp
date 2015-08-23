@@ -50,6 +50,7 @@
 
 #include "storage/SimpleBundleStorage.h"
 #include "storage/MemoryBundleStorage.h"
+#include "storage/HybridBundleStorage.h"
 
 #ifdef HAVE_SQLITE
 #include "storage/SQLiteBundleStorage.h"
@@ -102,8 +103,20 @@ void BundleStorageTest::setUp()
 			break;
 		}
 
-#ifdef HAVE_SQLITE
 	case 2:
+		{
+			// prepare path for the disk based storage
+			ibrcommon::File path("/tmp/bundle-hybrid-test");
+			if (path.exists()) path.remove(true);
+			ibrcommon::File::createDirectory(path);
+
+			// add hybrid storage
+			_storage = new dtn::storage::HybridBundleStorage(path);
+			break;
+		}
+
+#ifdef HAVE_SQLITE
+	case 3:
 		{
 			// prepare path for the sqlite based storage
 			ibrcommon::File path("/tmp/bundle-sqlite-test");

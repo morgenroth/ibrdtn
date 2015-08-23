@@ -94,6 +94,7 @@ class BundleStorageTest : public CppUnit::TestFixture {
 
 		_storage_names.push_back("MemoryBundleStorage");
 		_storage_names.push_back("SimpleBundleStorage");
+		_storage_names.push_back("HybridBundleStorage");
 
 #ifdef HAVE_SQLITE
 		_storage_names.push_back("SQLiteBundleStorage");

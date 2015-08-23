@@ -36,6 +36,7 @@
 #include "storage/BundleSeeker.h"
 #include "storage/MemoryBundleStorage.h"
 #include "storage/SimpleBundleStorage.h"
+#include "storage/HybridBundleStorage.h"
 
 #include "core/BundleCore.h"
 #include "net/ConnectionManager.h"
@@ -1148,7 +1149,7 @@ namespace dtn
 			}
 #endif
 
-			if ((conf.getStorage() == "simple") || (conf.getStorage() == "default"))
+			if ((conf.getStorage() == "simple") || (conf.getStorage() == "default") || (conf.getStorage() == "hybrid"))
 			{
 				// default behavior if no bundle storage is set
 				try {
@@ -1164,10 +1165,20 @@ namespace dtn
 						IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "using persistent bundle-sets" << IBRCOMMON_LOGGER_ENDL;
 					}
 
-					IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "using simple bundle storage in " << path.getPath() << IBRCOMMON_LOGGER_ENDL;
-					dtn::storage::SimpleBundleStorage *sbs = new dtn::storage::SimpleBundleStorage(path, conf.getLimit("storage"), static_cast<unsigned int>(conf.getLimit("storage_buffer")));
-					_components[RUNLEVEL_STORAGE].push_back(sbs);
-					storage = sbs;
+					if (conf.getStorage() == "hybrid")
+					{
+						IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "using hybrid bundle storage in " << path.getPath() << IBRCOMMON_LOGGER_ENDL;
+						dtn::storage::HybridBundleStorage *hbs = new dtn::storage::HybridBundleStorage(path, conf.getLimit("storage"), static_cast<unsigned int>(conf.getLimit("storage_buffer")));
+						_components[RUNLEVEL_STORAGE].push_back(hbs);
+						storage = hbs;
+					}
+					else
+					{
+						IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "using simple bundle storage in " << path.getPath() << IBRCOMMON_LOGGER_ENDL;
+						dtn::storage::SimpleBundleStorage *sbs = new dtn::storage::SimpleBundleStorage(path, conf.getLimit("storage"), static_cast<unsigned int>(conf.getLimit("storage_buffer")));
+						_components[RUNLEVEL_STORAGE].push_back(sbs);
+						storage = sbs;
+					}
 				} catch (const dtn::daemon::Configuration::ParameterNotSetException&) {
 					IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "using bundle storage in memory-only mode" << IBRCOMMON_LOGGER_ENDL;
 					dtn::storage::MemoryBundleStorage *sbs = new dtn::storage::MemoryBundleStorage(conf.getLimit("storage"));
