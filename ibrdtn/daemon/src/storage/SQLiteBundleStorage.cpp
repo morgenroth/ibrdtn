@@ -84,6 +84,9 @@ namespace dtn
 
 			if (!_filestream.is_open())
 			{
+				// Release semaphore on failed file open
+				ibrcommon::BLOB::_filelimit.post();
+
 				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, error) << "can not open temporary file " << _file.getPath() << IBRCOMMON_LOGGER_ENDL;
 				throw ibrcommon::CanNotOpenFileException(_file);
 			}
