@@ -307,6 +307,9 @@ namespace ibrcommon
 
 		if (!_filestream.is_open())
 		{
+			// Release semaphore on failed file open
+			ibrcommon::BLOB::_filelimit.post();
+
 			throw ibrcommon::CanNotOpenFileException(_file);
 		}
 	}
@@ -359,6 +362,9 @@ namespace ibrcommon
 
 		if (!_filestream.is_open())
 		{
+			// Release semaphore on failed file open
+			ibrcommon::BLOB::_filelimit.post();
+
 			IBRCOMMON_LOGGER_TAG("TmpFileBLOB::open", error) << "can not open temporary file " << _tmpfile.getPath() << IBRCOMMON_LOGGER_ENDL;
 			throw ibrcommon::CanNotOpenFileException(_tmpfile);
 		}
