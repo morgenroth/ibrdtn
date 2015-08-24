@@ -59,17 +59,45 @@ namespace dtn
 		protected:
 			std::iostream &__get_stream()
 			{
-				return *_stream;
+				return _stream;
 			}
 
 			virtual std::streamsize __get_size();
 
 		private:
+			class streambuf : public std::basic_streambuf<char, std::char_traits<char> >
+			{
+			public:
+				streambuf(const ibrcommon::File &path, std::streamsize threshold);
+				virtual ~streambuf();
+
+				virtual void clear();
+
+				virtual void open();
+				virtual void close();
+
+				virtual std::streamsize size();
+
+			protected:
+				virtual int sync();
+				virtual std::char_traits<char>::int_type overflow(std::char_traits<char>::int_type = std::char_traits<char>::eof());
+				virtual std::char_traits<char>::int_type underflow();
+
+				virtual std::streampos seekoff(std::streamoff off, std::ios_base::seekdir way, std::ios_base::openmode m = std::ios_base::in | std::ios_base::out);
+				virtual std::streampos seekpos(std::streampos pos, std::ios_base::openmode m = std::ios_base::in | std::ios_base::out);
+
+			private:
+				std::streambuf *_streambuf;
+
+				const ibrcommon::File _path;
+				ibrcommon::TemporaryFile *_file;
+				const std::streamsize _threshold;
+			};
+
 			HybridBLOB(const ibrcommon::File &path, std::streamsize threshold);
-			std::iostream *_stream;
-			ibrcommon::TemporaryFile *_file;
-			const ibrcommon::File _path;
-			const std::streamsize _threshold;
+
+			streambuf _streambuf;
+			std::iostream _stream;
 		};
 
 		class HybridBundleStorage : public BundleStorage, public dtn::daemon::IntegratedComponent

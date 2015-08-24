@@ -43,24 +43,102 @@ namespace dtn
 			return HybridBLOB::create(_path, _threshold);
 		}
 
-		HybridBLOB::HybridBLOB(const ibrcommon::File &path, std::streamsize threshold)
-		 : _stream(NULL), _file(NULL), _path(path), _threshold(threshold)
+		HybridBLOB::streambuf::streambuf(const ibrcommon::File &path, std::streamsize threshold)
+		 : _streambuf(NULL), _file(NULL), _path(path), _threshold(threshold)
 		{
+
 		}
 
-		HybridBLOB::~HybridBLOB()
+		HybridBLOB::streambuf::~streambuf()
 		{
-			if (_stream)
-			{
-				delete _stream;
-			}
-
 			if (_file)
 			{
 				// delete temporary file
 				_file->remove();
 				delete _file;
 			}
+		}
+
+		int HybridBLOB::streambuf::sync()
+		{
+			if (pptr() != pbase()) return overflow(EOF);
+			return 0;
+		}
+
+		std::streampos HybridBLOB::streambuf::seekpos(std::streampos pos, std::ios_base::openmode m)
+		{
+			return seekoff(std::streamoff(pos), std::ios_base::beg, m);
+		}
+
+		std::streampos HybridBLOB::streambuf::seekoff(std::streamoff off, std::ios_base::seekdir seekdir, std::ios_base::openmode)
+		{
+			if (sync()) return -1;
+			if (_streambuf == NULL) {
+				setg(0,0,0);
+				return -1;
+			}
+
+			return -1; //_streambuf->seekoff(off, seekdir);
+		}
+
+		void HybridBLOB::streambuf::clear()
+		{
+			if (_streambuf) {
+				delete _streambuf;
+				_streambuf = new std::stringbuf();
+			}
+
+			if (_file) {
+				delete _file;
+				_file = NULL;
+			}
+		}
+
+		void HybridBLOB::streambuf::open()
+		{
+			if (_file)
+			{
+				ibrcommon::BLOB::_filelimit.wait();
+
+				std::filebuf *fb = static_cast<std::filebuf*>(_streambuf);
+				fb->open(_file->getPath().c_str(), ios::in|ios::binary);
+
+				if (!fb->is_open())
+				{
+					// Release semaphore on failed file open
+					ibrcommon::BLOB::_filelimit.post();
+
+					throw ibrcommon::CanNotOpenFileException(*_file);
+				}
+			}
+		}
+
+		void HybridBLOB::streambuf::close()
+		{
+			if (_file)
+			{
+				static_cast<std::filebuf*>(_streambuf)->close();
+
+				ibrcommon::BLOB::_filelimit.post();
+			}
+		}
+
+		std::streamsize HybridBLOB::streambuf::size()
+		{
+			if (_file) {
+				return _file->size();
+			} else {
+				return static_cast<std::stringbuf*>(_streambuf)->str().length();
+			}
+		}
+
+		HybridBLOB::HybridBLOB(const ibrcommon::File &path, std::streamsize threshold)
+		 : _streambuf(path, threshold), _stream(&_streambuf)
+		{
+		}
+
+		HybridBLOB::~HybridBLOB()
+		{
 		}
 
 		ibrcommon::BLOB::Reference HybridBLOB::create(const ibrcommon::File &path, std::streamsize threshold)
@@ -70,47 +148,27 @@ namespace dtn
 
 		void HybridBLOB::clear()
 		{
-
+			_streambuf.clear();
 		}
 
 		void HybridBLOB::open()
 		{
-
+			_streambuf.open();
 		}
 
 		void HybridBLOB::close()
 		{
-
+			_streambuf.close();
 		}
 
 		std::streamsize HybridBLOB::__get_size()
 		{
-			if (_file)
-			{
-				return _file->size();
-			}
-			else if (_stream)
-			{
-				// store current position
-				std::streamoff pos = _stream->tellg();
-
-				// clear all marker (EOF, fail, etc.)
-				_stream->clear();
-
-				_stream->seekg(0, std::ios_base::end);
-				std::streamoff size = _stream->tellg();
-				_stream->seekg(pos);
-
-				return static_cast<std::streamsize>(size);
-			}
-
-			return 0;
+			return _streambuf.size();
 		}
 
 		HybridBundleStorage::HybridBundleStorage(const ibrcommon::File &workdir, const dtn::data::Length maxsize, const unsigned int buffer_limit)
 		 : dtn::storage::BundleStorage(maxsize), _path(workdir), _buffer_limit(buffer_limit)
 		{
-
 		}
 
 		HybridBundleStorage::~HybridBundleStorage()
