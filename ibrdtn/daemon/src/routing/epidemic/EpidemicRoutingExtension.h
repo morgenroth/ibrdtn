@@ -57,6 +57,8 @@ namespace dtn
 
 			virtual void eventDataChanged(const dtn::data::EID &peer) throw ();
 
+			virtual void eventTransferSlotChanged(const dtn::data::EID &peer) throw ();
+
 			virtual void eventBundleQueued(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ();
 
 			void raiseEvent(const dtn::routing::NodeHandshakeEvent &evt) throw ();
@@ -95,6 +97,10 @@ namespace dtn
 			 * hold queued tasks for later processing
 			 */
 			ibrcommon::Queue<EpidemicRoutingExtension::Task* > _taskqueue;
+
+			// set for pending transfers
+			ibrcommon::Mutex _pending_mutex;
+			std::set<dtn::data::EID> _pending_peers;
 		};
 	}
 }

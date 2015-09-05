@@ -299,7 +299,7 @@ namespace dtn
 			// walk through all extensions to generate a request
 			(*_callback).requestHandshake(origin, request);
 
-			IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 15) << "handshake query from " << origin.getString() << ": " << request.toString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 15) << "handshake query for " << origin.getString() << ": " << request.toString() << IBRCOMMON_LOGGER_ENDL;
 
 			// create a new bundle with a zero timestamp (+age block)
 			dtn::data::Bundle req(true);

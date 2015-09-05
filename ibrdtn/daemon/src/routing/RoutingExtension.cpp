@@ -96,5 +96,12 @@ namespace dtn
 			}
 		}
 
+		void RoutingExtension::eventTransferSlotChanged(const dtn::data::EID &peer) throw ()
+		{
+			// To stay compatible with old modules, trigger this event if the modules
+			// does not handle the new event separately.
+			eventDataChanged(peer);
+		}
+
 	} /* namespace routing */
 } /* namespace dtn */
