@@ -208,7 +208,7 @@ namespace dtn
 
 								// check if enough transfer slots available (threshold reached)
 								if (!entry.isTransferThresholdReached())
-									throw NeighborDatabase::NoMoreTransfersAvailable();
+									throw NeighborDatabase::NoMoreTransfersAvailable(task.eid);
 
 								// get a list of protocols supported by both, the local BPA and the remote peer
 								const dtn::net::ConnectionManager::protocol_list plist =

@@ -258,6 +258,7 @@ namespace dtn
 
 		private:
 			void __eventDataChanged(const dtn::data::EID &peer) throw ();
+			void __eventTransferSlotChanged(const dtn::data::EID &peer) throw ();
 			void __eventTransferCompleted(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ();
 			void __eventBundleQueued(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ();
 

@@ -148,7 +148,7 @@ namespace dtn
 		void NeighborDatabase::NeighborEntry::acquireTransfer(const dtn::data::BundleID &id) throw (NoMoreTransfersAvailable, AlreadyInTransitException)
 		{
 			// check if enough resources available to transfer the bundle
-			if (_transit_bundles.size() >= dtn::core::BundleCore::max_bundles_in_transit) throw NoMoreTransfersAvailable();
+			if (_transit_bundles.size() >= dtn::core::BundleCore::max_bundles_in_transit) throw NoMoreTransfersAvailable(eid);
 
 			// check if the bundle is already in transit
 			if (_transit_bundles.find(id) != _transit_bundles.end()) throw AlreadyInTransitException();

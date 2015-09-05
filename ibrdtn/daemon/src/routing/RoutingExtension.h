@@ -80,6 +80,12 @@ namespace dtn
 			virtual void eventBundleQueued(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw () { };
 
 			/**
+			 * This method is called if more transfer slots are available again
+			 * @param peer is the target to which the capacity is available again
+			 */
+			virtual void eventTransferSlotChanged(const dtn::data::EID &peer) throw ();
+
+			/**
 			 * If some data of another node is required. These method is called to collect all
 			 * necessary identifier of data items.
 			 * @param The EID of the other node.

@@ -81,6 +81,11 @@ namespace dtn
 			 */
 			void restore(std::istream &input);
 
+			/**
+			 * Creates a digest over all peers
+			 */
+			unsigned int hashCode() const;
+
 		private:
 			typedef std::map<dtn::data::EID, float> predictmap;
 			predictmap _predictmap;
