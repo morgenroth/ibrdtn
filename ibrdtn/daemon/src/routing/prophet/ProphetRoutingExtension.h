@@ -184,6 +184,9 @@ namespace dtn
 				virtual std::string toString() const;
 			};
 
+			/**
+			 * hold queued tasks for later processing
+			 */
 			ibrcommon::Queue<Task* > _taskqueue;
 
 			// set for pending transfers

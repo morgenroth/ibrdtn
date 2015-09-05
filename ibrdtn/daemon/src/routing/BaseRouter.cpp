@@ -464,7 +464,10 @@ namespace dtn
 			if ((meta.destination.getNode() == dtn::core::BundleCore::local)
 					&& meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON)) return;
 
+			// forward event to neighbor handshake extension
 			_nh_extension.eventBundleQueued(peer, meta);
+
+			// forward event to retransmission extension
 			_retransmission_extension.eventBundleQueued(peer, meta);
 
 			// notify all underlying extensions
