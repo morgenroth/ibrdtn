@@ -211,6 +211,15 @@ namespace dtn
 			_taskqueue.push( new SearchNextBundleTask( peer ) );
 		}
 
+		void ProphetRoutingExtension::eventTransferSlotChanged(const dtn::data::EID &peer) throw ()
+		{
+			ibrcommon::MutexLock pending_lock(_pending_mutex);
+			if (_pending_peers.find(peer) != _pending_peers.end()) {
+				_pending_peers.erase(peer);
+				eventDataChanged(peer);
+			}
+		}
+
 		void ProphetRoutingExtension::eventTransferCompleted(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ()
 		{
 			// add forwarded entry to GTMX strategy
@@ -551,6 +560,10 @@ namespace dtn
 								} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 							}
 						} catch (const NeighborDatabase::NoMoreTransfersAvailable &ex) {
+							// remember that this peer has pending transfers
+							ibrcommon::MutexLock pending_lock(_pending_mutex);
+							_pending_peers.insert(ex.peer);
+
 							IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 						} catch (const NeighborDatabase::EntryNotFoundException &ex) {
 							IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;

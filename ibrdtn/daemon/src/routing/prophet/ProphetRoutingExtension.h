@@ -83,6 +83,8 @@ namespace dtn
 
 			virtual void eventDataChanged(const dtn::data::EID &peer) throw ();
 
+			virtual void eventTransferSlotChanged(const dtn::data::EID &peer) throw ();
+
 			virtual void eventTransferCompleted(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ();
 
 			virtual void eventBundleQueued(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ();
@@ -183,6 +185,10 @@ namespace dtn
 			};
 
 			ibrcommon::Queue<Task* > _taskqueue;
+
+			// set for pending transfers
+			ibrcommon::Mutex _pending_mutex;
+			std::set<dtn::data::EID> _pending_peers;
 
 		public:
 			/*!
