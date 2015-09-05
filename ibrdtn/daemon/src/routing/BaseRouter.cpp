@@ -250,8 +250,8 @@ namespace dtn
 			// trigger all routing modules to search for bundles to forward
 			__eventTransferCompleted(event.getPeer(), event.getBundle());
 
-			// trigger all routing modules to search for bundles to forward
-			__eventDataChanged(event.getPeer());
+			// notify all modules about changed transfer capacity
+			__eventTransferSlotChanged(event.getPeer());
 		}
 
 		void BaseRouter::raiseEvent(const dtn::routing::QueueBundleEvent &event) throw ()
@@ -305,8 +305,8 @@ namespace dtn
 			} catch (const NeighborDatabase::EntryNotFoundException&) {
 			} catch (const dtn::storage::NoBundleFoundException&) { };
 
-			// trigger all routing modules to search for bundles to forward
-			__eventDataChanged(event.getPeer());
+			// notify all modules about changed transfer capacity
+			__eventTransferSlotChanged(event.getPeer());
 		}
 
 		void BaseRouter::raiseEvent(const dtn::core::NodeEvent &event) throw ()
@@ -334,6 +334,10 @@ namespace dtn
 					ibrcommon::MutexLock l(_neighbor_database);
 					_neighbor_database.get( event.getNode().getEID() ).reset();
 				} catch (const NeighborDatabase::EntryNotFoundException&) { };
+
+				// trigger transfer slot changed event to purge pending
+				// transfers from the extensions
+				__eventTransferSlotChanged(event.getNode().getEID());
 
 				// new bundles trigger a re-check for all neighbors
 				const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
@@ -433,6 +437,21 @@ namespace dtn
 			for (extension_list::const_iterator iter = _extensions.begin(); iter != _extensions.end(); ++iter)
 			{
 				(*iter)->eventDataChanged(peer);
+			}
+		}
+
+		void BaseRouter::__eventTransferSlotChanged(const dtn::data::EID &peer) throw ()
+		{
+			// do not forward the event if the extensions are down
+			if (!_extension_state) return;
+
+			_nh_extension.eventTransferSlotChanged(peer);
+			_retransmission_extension.eventTransferSlotChanged(peer);
+
+			// notify all underlying extensions
+			for (extension_list::const_iterator iter = _extensions.begin(); iter != _extensions.end(); ++iter)
+			{
+				(*iter)->eventTransferSlotChanged(peer);
 			}
 		}
 
