@@ -639,8 +639,8 @@ namespace dtn
 				// update the encounter on every routing handshake
 				ibrcommon::MutexLock l(_deliveryPredictabilityMap);
 
-				// remember the size of the map before it is altered
-				const size_t numOfItems = _deliveryPredictabilityMap.size();
+				// remember the hash code before the map is altered
+				const unsigned int oldCode = _deliveryPredictabilityMap.hashCode();
 
 				// age the local predictability map
 				age();
@@ -670,8 +670,8 @@ namespace dtn
 				/* update the dp_map */
 				_deliveryPredictabilityMap.update(neighbor, neighbor_dp_map, _p_encounter_first);
 
-				// if the number of items has been increased by additional neighbors
-				shouldPush = numOfItems < _deliveryPredictabilityMap.size();
+				// push if the hash has changed
+				shouldPush = (oldCode != _deliveryPredictabilityMap.hashCode());
 			}
 
 			if (shouldPush)
