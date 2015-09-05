@@ -275,7 +275,7 @@ namespace dtn
 
 								// check if enough transfer slots available (threshold reached)
 								if (!entry.isTransferThresholdReached())
-									throw NeighborDatabase::NoMoreTransfersAvailable();
+									throw NeighborDatabase::NoMoreTransfersAvailable(task.eid);
 
 								if (dtn::daemon::Configuration::getInstance().getNetwork().doPreferDirect()) {
 									// get current neighbor list

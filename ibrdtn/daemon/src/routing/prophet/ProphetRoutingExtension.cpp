@@ -501,7 +501,7 @@ namespace dtn
 
 								// check if enough transfer slots available (threshold reached)
 								if (!entry.isTransferThresholdReached())
-									throw NeighborDatabase::NoMoreTransfersAvailable();
+									throw NeighborDatabase::NoMoreTransfersAvailable(task.eid);
 
 								// get the DeliveryPredictabilityMap of the potentially next hop
 								const DeliveryPredictabilityMap &dpm = entry.getDataset<DeliveryPredictabilityMap>();
