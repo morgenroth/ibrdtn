@@ -441,6 +441,10 @@ namespace dtn
 			// do not forward the event if the extensions are down
 			if (!_extension_state) return;
 
+			// do not route any local bundle with the routing extensions
+			if ((meta.destination.getNode() == dtn::core::BundleCore::local)
+					&& meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON)) return;
+
 			_nh_extension.eventBundleQueued(peer, meta);
 			_retransmission_extension.eventBundleQueued(peer, meta);
 
