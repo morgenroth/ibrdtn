@@ -26,6 +26,7 @@
 #include "core/EventDispatcher.h"
 
 #include <algorithm>
+#include <set>
 #include <memory>
 #include <fstream>
 
@@ -633,14 +634,15 @@ namespace dtn
 
 		void ProphetRoutingExtension::updateNeighbor(const dtn::data::EID &neighbor, const DeliveryPredictabilityMap& neighbor_dp_map)
 		{
-			bool shouldPush = false;
+			// a set where all new endpoints are stored
+			std::set<dtn::data::EID> new_endpoints;
 
 			{
 				// update the encounter on every routing handshake
 				ibrcommon::MutexLock l(_deliveryPredictabilityMap);
 
-				// remember the hash code before the map is altered
-				const unsigned int oldCode = _deliveryPredictabilityMap.hashCode();
+				// copy all known endpoints to a temporary set
+				std::set<dtn::data::EID> known_endpoints(_deliveryPredictabilityMap.begin(), _deliveryPredictabilityMap.end());
 
 				// age the local predictability map
 				age();
@@ -670,11 +672,18 @@ namespace dtn
 				/* update the dp_map */
 				_deliveryPredictabilityMap.update(neighbor, neighbor_dp_map, _p_encounter_first);
 
-				// push if the hash has changed
-				shouldPush = (oldCode != _deliveryPredictabilityMap.hashCode());
+				// copy all known endpoints to a temporary set
+				const std::set<dtn::data::EID> updated_endpoints(_deliveryPredictabilityMap.begin(), _deliveryPredictabilityMap.end());
+
+				// determine the new endpoints
+				std::set_difference(
+						updated_endpoints.begin(), updated_endpoints.end(),
+						known_endpoints.begin(), known_endpoints.end(),
+						std::inserter(new_endpoints, new_endpoints.begin())
+				);
 			}
 
-			if (shouldPush)
+			if (new_endpoints.size() > 0)
 			{
 				// then push a notification to all neighbors
 				(**this).pushHandshakeUpdated(NodeHandshakeItem::DELIVERY_PREDICTABILITY_MAP);
