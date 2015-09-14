@@ -47,11 +47,11 @@ namespace dtn
 
 		ProphetRoutingExtension::ProphetRoutingExtension(ForwardingStrategy *strategy, float p_encounter_max, float p_encounter_first, float p_first_threshold,
 								 float beta, float gamma, float delta, ibrcommon::Timer::time_t time_unit, ibrcommon::Timer::time_t i_typ,
-								 dtn::data::Timestamp next_exchange_timeout)
+								 dtn::data::Timestamp next_exchange_timeout, bool push_notification)
 			: _deliveryPredictabilityMap(time_unit, beta, gamma),
 			  _forwardingStrategy(strategy), _next_exchange_timeout(next_exchange_timeout), _next_exchange_timestamp(0),
 			  _p_encounter_max(p_encounter_max), _p_encounter_first(p_encounter_first),
-			  _p_first_threshold(p_first_threshold), _delta(delta), _i_typ(i_typ)
+			  _p_first_threshold(p_first_threshold), _delta(delta), _i_typ(i_typ), _push_notification(push_notification)
 		{
 			// assign myself to the forwarding strategy
 			strategy->setProphetRouter(this);
@@ -641,8 +641,14 @@ namespace dtn
 				// update the encounter on every routing handshake
 				ibrcommon::MutexLock l(_deliveryPredictabilityMap);
 
-				// copy all known endpoints to a temporary set
-				std::set<dtn::data::EID> known_endpoints(_deliveryPredictabilityMap.begin(), _deliveryPredictabilityMap.end());
+				// temporary set for known endpoints
+				std::set<dtn::data::EID> known_endpoints;
+
+				if (_push_notification)
+				{
+					// copy all known endpoints to a temporary set
+					known_endpoints.insert(_deliveryPredictabilityMap.begin(), _deliveryPredictabilityMap.end());
+				}
 
 				// age the local predictability map
 				age();
@@ -672,15 +678,19 @@ namespace dtn
 				/* update the dp_map */
 				_deliveryPredictabilityMap.update(neighbor, neighbor_dp_map, _p_encounter_first);
 
-				// copy all known endpoints to a temporary set
-				const std::set<dtn::data::EID> updated_endpoints(_deliveryPredictabilityMap.begin(), _deliveryPredictabilityMap.end());
+				if (_push_notification)
+				{
+					// copy all known endpoints to a temporary set
+					const std::set<dtn::data::EID> updated_endpoints(_deliveryPredictabilityMap.begin(), _deliveryPredictabilityMap.end());
 
-				// determine the new endpoints
-				std::set_difference(
-						updated_endpoints.begin(), updated_endpoints.end(),
-						known_endpoints.begin(), known_endpoints.end(),
-						std::inserter(new_endpoints, new_endpoints.begin())
-				);
+					// determine the new endpoints
+					std::set_difference(
+							updated_endpoints.begin(), updated_endpoints.end(),
+							known_endpoints.begin(), known_endpoints.end(),
+							std::inserter(new_endpoints, new_endpoints.begin())
+					);
+				}
+
 			}
 
 			if (new_endpoints.size() > 0)

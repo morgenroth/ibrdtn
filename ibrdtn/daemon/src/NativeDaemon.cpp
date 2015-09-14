@@ -1645,7 +1645,8 @@ namespace dtn
 												prophet_config.p_encounter_first, prophet_config.p_first_threshold,
 												prophet_config.beta, prophet_config.gamma, prophet_config.delta,
 												prophet_config.time_unit, prophet_config.i_typ,
-												prophet_config.next_exchange_timeout));
+												prophet_config.next_exchange_timeout,
+												prophet_config.push_notification));
 
 				// add neighbor routing (direct-delivery) extension
 				router.add( new dtn::routing::NeighborRoutingExtension() );

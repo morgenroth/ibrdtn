@@ -65,7 +65,7 @@ namespace dtn
 			ProphetRoutingExtension(ForwardingStrategy *strategy, float p_encounter_max, float p_encounter_first,
 						float p_first_threshold, float beta, float gamma, float delta,
 						size_t time_unit, size_t i_typ,
-						dtn::data::Timestamp next_exchange_timeout);
+						dtn::data::Timestamp next_exchange_timeout, bool push_notification);
 			virtual ~ProphetRoutingExtension();
 
 			virtual const std::string getTag() const throw ();
@@ -151,6 +151,7 @@ namespace dtn
 			float _p_first_threshold; ///< If the predictability falls below this value, it is erased from the map and _p_encounter_first will be used on the next encounter.
 			float _delta; ///< Maximum predictability is (1-delta).
 			size_t _i_typ; ///< time interval that is characteristic for the network
+			bool _push_notification; ///< true if push notifications should sent
 
 			typedef std::map<dtn::data::EID, dtn::data::Timestamp> age_map;
 			age_map _ageMap; ///< map with time for each neighbor, when the last encounter happened
