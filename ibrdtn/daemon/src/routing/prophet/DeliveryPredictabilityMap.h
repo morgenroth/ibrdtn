@@ -12,6 +12,7 @@
 #include "routing/NodeHandshake.h"
 #include <ibrdtn/data/EID.h>
 #include <ibrcommon/thread/Mutex.h>
+#include <ibrcommon/Iterator.h>
 #include <map>
 
 namespace dtn
@@ -86,8 +87,16 @@ namespace dtn
 			 */
 			unsigned int hashCode() const;
 
-		private:
+			/**
+			 * Iterator methods and definitions
+			 */
 			typedef std::map<dtn::data::EID, float> predictmap;
+			typedef ibrcommon::key_iterator<predictmap> const_iterator;
+
+			const_iterator begin() const;
+			const_iterator end() const;
+
+		private:
 			predictmap _predictmap;
 
 			float _beta; ///< Weight of the transitive property of prophet.

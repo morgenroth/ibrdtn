@@ -58,6 +58,22 @@ namespace ibrcommon
 			}
 		}
 	};
+
+	template <class map>
+	class key_iterator {
+		typename map::const_iterator iter_;
+	public:
+		key_iterator() {}
+		key_iterator(typename map::iterator iter) :iter_(iter) {}
+		key_iterator(typename map::const_iterator iter) :iter_(iter) {}
+		key_iterator(const key_iterator& b) :iter_(b.iter_) {}
+		key_iterator& operator=(const key_iterator& b) {iter_ = b.iter_; return *this;}
+		key_iterator& operator++() {++iter_; return *this;}
+		key_iterator operator++(int) {return KeyIterator(iter_++);}
+		const typename map::key_type& operator*() {return iter_->first;}
+		bool operator==(const key_iterator& b) {return iter_==b.iter_;}
+		bool operator!=(const key_iterator& b) {return iter_!=b.iter_;}
+	};
 }
 
 #endif /*IBRCOMMON_ITERATOR_H_*/
