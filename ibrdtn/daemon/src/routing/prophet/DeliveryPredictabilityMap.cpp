@@ -340,5 +340,15 @@ namespace dtn
 #endif
 			return hashCode;
 		}
+
+		DeliveryPredictabilityMap::const_iterator DeliveryPredictabilityMap::begin() const
+		{
+			return _predictmap.begin();
+		}
+
+		DeliveryPredictabilityMap::const_iterator DeliveryPredictabilityMap::end() const
+		{
+			return _predictmap.end();
+		}
 	} /* namespace routing */
 } /* namespace dtn */
