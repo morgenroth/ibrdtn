@@ -63,7 +63,8 @@ int main(int argc, char** argv)
 		{
 		case 'h':
 			print_help();
-			break;
+			// Deleted break;
+			return (EXIT_SUCCESS);
 
 		case 'r':
 			working_mode = 1;
