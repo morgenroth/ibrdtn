@@ -26,6 +26,7 @@ namespace dtn
 		public:
 			ForwardingStrategy();
 			virtual ~ForwardingStrategy() = 0;
+
 			/*!
 			 * The prophetRoutingExtension calls this function for every bundle that can be forwarded to a neighbor
 			 * and forwards it depending on the return value.
@@ -35,10 +36,16 @@ namespace dtn
 			 * \return true if the bundle should be forwarded
 			 */
 			virtual bool shallForward(const DeliveryPredictabilityMap& neighbor_dpm, const dtn::data::MetaBundle& bundle) const = 0;
+
 			/*!
 			 * checks if the deliveryPredictability of the neighbor is higher than that of the destination of the bundle.
 			 */
 			bool neighborDPIsGreater(const DeliveryPredictabilityMap& neighbor_dpm, const dtn::data::EID& destination) const;
+
+			/*!
+			 * checks if a backwards route exists to the source
+			 */
+			bool isBackrouteValid(const DeliveryPredictabilityMap& neighbor_dpm, const dtn::data::EID& source) const;
 
 			/**
 			 * Set back-reference to the prophet router

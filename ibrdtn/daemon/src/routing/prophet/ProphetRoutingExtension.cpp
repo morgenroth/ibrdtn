@@ -397,22 +397,10 @@ namespace dtn
 						{
 							return false;
 						}
-
-						// check if the neighbor data is up-to-date
-						if (!_entry.isFilterValid()) throw dtn::storage::BundleSelectorException();
 					}
-					else
-					{
-						// check if the neighbor data is up-to-date
-						if (!_entry.isFilterValid()) throw dtn::storage::BundleSelectorException();
 
-						// if this is a non-singleton, check if the peer knows a way to the source
-						try {
-							if (_dpm.get(meta.source.getNode()) <= 0.0) return false;
-						} catch (const dtn::routing::DeliveryPredictabilityMap::ValueNotFoundException&) {
-							return false;
-						}
-					}
+					// check if the neighbor data is up-to-date
+					if (!_entry.isFilterValid()) throw dtn::storage::BundleSelectorException();
 
 					// do not forward bundles already known by the destination
 					// throws BloomfilterNotAvailableException if no filter is available or it is expired
@@ -813,6 +801,10 @@ namespace dtn
 
 		bool ProphetRoutingExtension::GRTR_Strategy::shallForward(const DeliveryPredictabilityMap& neighbor_dpm, const dtn::data::MetaBundle& bundle) const
 		{
+			if (bundle.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON)) {
+				return isBackrouteValid(neighbor_dpm, bundle.source);
+			}
+
 			return neighborDPIsGreater(neighbor_dpm, bundle.destination);
 		}
 
@@ -838,6 +830,10 @@ namespace dtn
 
 		bool ProphetRoutingExtension::GTMX_Strategy::shallForward(const DeliveryPredictabilityMap& neighbor_dpm, const dtn::data::MetaBundle& bundle) const
 		{
+			if (bundle.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON)) {
+				return isBackrouteValid(neighbor_dpm, bundle.source);
+			}
+
 			unsigned int NF = 0;
 
 			nf_map::const_iterator nf_it = _NF_map.find(bundle);
