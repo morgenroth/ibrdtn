@@ -836,7 +836,7 @@ namespace dtn
 
 		bool ProphetRoutingExtension::GRTR_Strategy::shallForward(const DeliveryPredictabilityMap& neighbor_dpm, const dtn::data::MetaBundle& bundle) const
 		{
-			if (bundle.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON)) {
+			if (!bundle.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON)) {
 				return isBackrouteValid(neighbor_dpm, bundle.source);
 			}
 
@@ -865,7 +865,7 @@ namespace dtn
 
 		bool ProphetRoutingExtension::GTMX_Strategy::shallForward(const DeliveryPredictabilityMap& neighbor_dpm, const dtn::data::MetaBundle& bundle) const
 		{
-			if (bundle.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON)) {
+			if (!bundle.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON)) {
 				return isBackrouteValid(neighbor_dpm, bundle.source);
 			}
 
