@@ -55,12 +55,17 @@ namespace dtn
 		{
 			ibrcommon::MutexLock dpm_lock(_prophet_router->_deliveryPredictabilityMap);
 
-			// if this is a non-singleton, check if we or the peer know a way to the source
+			// check if we know a way to the source
 			try {
-				return ((_prophet_router->_deliveryPredictabilityMap.get(source.getNode()) > 0.0) || (neighbor_dpm.get(source.getNode()) > 0.0));
-			} catch (const dtn::routing::DeliveryPredictabilityMap::ValueNotFoundException&) {
-				return false;
-			}
+				if (_prophet_router->_deliveryPredictabilityMap.get(source.getNode()) > 0.0) return true;
+			} catch (const dtn::routing::DeliveryPredictabilityMap::ValueNotFoundException&) { }
+
+			// check if the peer know a way to the source
+			try {
+				if (neighbor_dpm.get(source.getNode()) > 0.0) return true;
+			} catch (const dtn::routing::DeliveryPredictabilityMap::ValueNotFoundException&) { }
+
+			return false;
 		}
 
 		void ForwardingStrategy::setProphetRouter(ProphetRoutingExtension *router)
