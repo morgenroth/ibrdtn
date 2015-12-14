@@ -93,7 +93,7 @@ namespace dtn
 		 : _quiet(false), _options(0), _timestamps(false), _verbose(false) {}
 
 		Configuration::Network::Network()
-		 : _routing("default"), _forwarding(true), _prefer_direct(true), _tcp_nodelay(true), _tcp_chunksize(4096), _tcp_idle_timeout(0), _keepalive_timeout(60), _default_net("lo"), _use_default_net(false), _auto_connect(0), _fragmentation(false), _scheduling(false), _link_request_interval(5000)
+		 : _routing("default"), _forwarding(true), _prefer_direct(true), _tcp_nodelay(true), _tcp_chunksize(4096), _tcp_idle_timeout(0), _keepalive_timeout(60), _default_net("lo"), _use_default_net(false), _auto_connect(0), _fragmentation(false), _scheduling(false), _managed_connectivity(false), _link_request_interval(5000)
 		{}
 
 		Configuration::Security::Security()
