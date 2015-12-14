@@ -458,6 +458,14 @@ namespace dtn
 				throw dtn::data::Validator::RejectedException("bundle is expired");
 			}
 
+			// if we do not accept non-singleton bundles
+			if (BundleCore::singleton_only && !p.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+			{
+				// ... we reject all non-singleton bundles.
+				IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "non-singleton bundle rejected: " << p.toString() << IBRCOMMON_LOGGER_ENDL;
+				throw dtn::data::Validator::RejectedException("bundle is not addressed to a singleton endpoint");
+			}
+
 			// if we do not forward bundles
 			if (!BundleCore::forwarding)
 			{
