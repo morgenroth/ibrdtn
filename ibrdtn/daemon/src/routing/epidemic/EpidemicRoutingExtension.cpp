@@ -197,6 +197,24 @@ namespace dtn
 						return false;
 					}
 
+					// request limits from neighbor database
+					try {
+						const RoutingLimitations &limits = _entry.getDataset<RoutingLimitations>();
+
+						// check if the peer accepts bundles for other nodes
+						if (limits.getLimit(RoutingLimitations::LIMIT_LOCAL_ONLY) > 0) return false;
+
+						// check if the payload is too large for the neighbor
+						if ((limits.getLimit(RoutingLimitations::LIMIT_BLOCKSIZE) > 0) &&
+							((size_t)limits.getLimit(RoutingLimitations::LIMIT_BLOCKSIZE) < meta.getPayloadLength())) return false;
+
+						if (!meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+						{
+							// check if destination permits non-singleton bundles
+							if (limits.getLimit(RoutingLimitations::LIMIT_SINGLETON_ONLY) > 0) return false;
+						}
+					} catch (const NeighborDatabase::DatasetNotAvailableException&) { }
+
 					// if this is a singleton bundle ...
 					if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
 					{
