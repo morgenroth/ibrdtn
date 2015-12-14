@@ -820,10 +820,6 @@ public class Preferences extends PreferenceActivity {
 			// limit pre-dated timestamp to 2 weeks
 			p.println("limit_predated_timestamp = 1209600");
 
-			// limit block size to 50 MB
-			p.println("limit_blocksize = 250M");
-			p.println("limit_foreign_blocksize = 50M");
-
 			// specify a security path for keys
 			File sec_folder = DaemonStorageUtils.getSecurityPath(context);
 			if (!sec_folder.exists() || sec_folder.isDirectory()) {
@@ -910,14 +906,25 @@ public class Preferences extends PreferenceActivity {
 			p.println("static1_global = yes");
 
 			String storage_mode = preferences.getString(KEY_STORAGE_MODE, "disk-persistent");
+
+			// storage path
+			File blobPath = DaemonStorageUtils.getBlobPath(context);
+
 			if ("disk".equals(storage_mode) || "disk-persistent".equals(storage_mode)) {
-				// storage path
-				File blobPath = DaemonStorageUtils.getBlobPath(context);
 				if (blobPath != null) {
 					p.println("blob_path = " + blobPath.getPath());
 				} else {
 					Log.e(TAG, "Internal cache directory is not available");
 				}
+			} else {
+				// we want to store everything in memory => clear the blob path
+				blobPath = null;
+			}
+
+			if (blobPath == null) {
+				// if blocks are processed in memory limit these to 50 MB / 250 MB
+				p.println("limit_blocksize = 250M");
+				p.println("limit_foreign_blocksize = 50M");
 			}
 
 			if ("disk-persistent".equals(storage_mode)) {
