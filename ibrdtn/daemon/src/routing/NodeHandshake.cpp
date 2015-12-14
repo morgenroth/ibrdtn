@@ -390,5 +390,84 @@ namespace dtn
 
 		const dtn::data::Number BloomFilterPurgeVector::identifier = NodeHandshakeItem::BLOOM_FILTER_PURGE_VECTOR;
 
+		RoutingLimitations::RoutingLimitations()
+		 : NeighborDataSetImpl(RoutingLimitations::identifier)
+		{
+		}
+
+		RoutingLimitations::~RoutingLimitations()
+		{
+		}
+
+		const dtn::data::Number& RoutingLimitations::getIdentifier() const
+		{
+			return identifier;
+		}
+
+		dtn::data::Length RoutingLimitations::getLength() const
+		{
+			dtn::data::Length ret = 0;
+
+			// number of elements
+			ret += dtn::data::Number(_limits.size()).getLength();
+
+			for (std::map<size_t, ssize_t>::const_iterator it = _limits.begin(); it != _limits.end(); ++it)
+			{
+				ret += dtn::data::Number((*it).first).getLength();
+				ret += dtn::data::SDNV<ssize_t>((*it).second).getLength();
+			}
+
+			return ret;
+		}
+
+		void RoutingLimitations::setLimit(LimitIndex index, ssize_t value)
+		{
+			_limits[index] = value;
+		}
+
+		ssize_t RoutingLimitations::getLimit(LimitIndex index) const
+		{
+			std::map<size_t, ssize_t>::const_iterator it = _limits.find(index);
+			if (it == _limits.end()) return 0;
+			return (*it).second;
+		}
+
+		std::ostream& RoutingLimitations::serialize(std::ostream &stream) const
+		{
+			// number of elements
+			stream << dtn::data::Number(_limits.size());
+
+			for (std::map<size_t, ssize_t>::const_iterator it = _limits.begin(); it != _limits.end(); ++it)
+			{
+				stream << dtn::data::Number((*it).first);
+				stream << dtn::data::SDNV<ssize_t>((*it).second);
+			}
+
+			return stream;
+		}
+
+		std::istream& RoutingLimitations::deserialize(std::istream &stream)
+		{
+			dtn::data::Number elements, first;
+			dtn::data::SDNV<ssize_t> second;
+
+			// clear all elements
+			_limits.clear();
+
+			// get number of elements
+			stream >> elements;
+
+			for (size_t i = 0; i < elements.get<size_t>(); ++i)
+			{
+				stream >> first;
+				stream >> second;
+				_limits[first.get<size_t>()] = second.get<ssize_t>();
+			}
+
+			return stream;
+		}
+
+		const dtn::data::Number RoutingLimitations::identifier = NodeHandshakeItem::ROUTING_LIMITATIONS;
+
 	} /* namespace routing */
 } /* namespace dtn */

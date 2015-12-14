@@ -22,6 +22,7 @@
 #ifndef NODEHANDSHAKE_H_
 #define NODEHANDSHAKE_H_
 
+#include "routing/NeighborDataset.h"
 #include <ibrdtn/data/BundleSet.h>
 #include <ibrdtn/data/SDNV.h>
 #include <iostream>
@@ -43,7 +44,8 @@ namespace dtn
 				BLOOM_FILTER_SUMMARY_VECTOR = 1,
 				BLOOM_FILTER_PURGE_VECTOR = 2,
 				DELIVERY_PREDICTABILITY_MAP = 3,
-				PROPHET_ACKNOWLEDGEMENT_SET = 4
+				PROPHET_ACKNOWLEDGEMENT_SET = 4,
+				ROUTING_LIMITATIONS = 5
 			};
 
 			virtual ~NodeHandshakeItem() { };
@@ -87,6 +89,30 @@ namespace dtn
 
 		private:
 			dtn::data::BundleSet _vector;
+		};
+
+		class RoutingLimitations : public NeighborDataSetImpl, public NodeHandshakeItem
+		{
+		public:
+			RoutingLimitations();
+			virtual ~RoutingLimitations();
+			const dtn::data::Number& getIdentifier() const;
+			dtn::data::Length getLength() const;
+			std::ostream& serialize(std::ostream&) const;
+			std::istream& deserialize(std::istream&);
+			static const dtn::data::Number identifier;
+
+			enum LimitIndex {
+				LIMIT_BLOCKSIZE = 0,
+				LIMIT_SINGLETON_ONLY = 1,
+				LIMIT_LOCAL_ONLY = 2
+			};
+
+			void setLimit(LimitIndex index, ssize_t value);
+			ssize_t getLimit(LimitIndex index) const;
+
+		private:
+			std::map<size_t, ssize_t> _limits;
 		};
 
 		class NodeHandshake
