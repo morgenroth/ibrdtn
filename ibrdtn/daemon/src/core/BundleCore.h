@@ -174,6 +174,11 @@ namespace dtn
 			static bool forwarding;
 
 			/**
+			 * Define if non-singleton bundles accepted for routing
+			 */
+			static bool singleton_only;
+
+			/**
 			 * Defines how many bundles should be in transit at once
 			 */
 			static dtn::data::Size max_bundles_in_transit;

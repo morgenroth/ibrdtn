@@ -79,6 +79,7 @@ namespace dtn
 		dtn::data::Size BundleCore::max_bundles_in_transit = 5;
 
 		bool BundleCore::forwarding = true;
+		bool BundleCore::singleton_only = false;
 
 		BundleCore& BundleCore::getInstance()
 		{
