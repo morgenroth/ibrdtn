@@ -316,6 +316,7 @@ namespace dtn
 				std::list<NetConfig> _interfaces;
 				std::string _routing;
 				bool _forwarding;
+				bool _accept_nonsingleton;
 				bool _prefer_direct;
 				bool _tcp_nodelay;
 				dtn::data::Length _tcp_chunksize;
@@ -357,6 +358,11 @@ namespace dtn
 				 * @return True, if forwarding is enabled.
 				 */
 				bool doForwarding() const;
+
+				/**
+				 * Define if non-singleton bundles are accepted or not.
+				 */
+				bool doAcceptNonSingleton() const;
 
 				/**
 				 * Define if direct routes are preferred instead of spreading bundles to all

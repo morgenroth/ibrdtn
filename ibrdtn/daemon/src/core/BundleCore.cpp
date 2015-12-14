@@ -79,6 +79,7 @@ namespace dtn
 		dtn::data::Size BundleCore::max_bundles_in_transit = 5;
 
 		bool BundleCore::forwarding = true;
+		bool BundleCore::singleton_only = false;
 
 		BundleCore& BundleCore::getInstance()
 		{
@@ -190,6 +191,18 @@ namespace dtn
 			{
 				IBRCOMMON_LOGGER_TAG(BundleCore::TAG, info) << "Forwarding of bundles disabled." << IBRCOMMON_LOGGER_ENDL;
 				BundleCore::forwarding = false;
+			}
+
+			// accept or reject non-singleton bundles
+			if (config.getNetwork().doAcceptNonSingleton())
+			{
+				IBRCOMMON_LOGGER_TAG(BundleCore::TAG, info) << "Non-singleton bundles are accepted." << IBRCOMMON_LOGGER_ENDL;
+				BundleCore::singleton_only = false;
+			}
+			else
+			{
+				IBRCOMMON_LOGGER_TAG(BundleCore::TAG, info) << "Non-singleton bundles are rejected." << IBRCOMMON_LOGGER_ENDL;
+				BundleCore::singleton_only = true;
 			}
 
 			const std::set<ibrcommon::vinterface> &global_nets = config.getNetwork().getInternetDevices();
@@ -445,8 +458,16 @@ namespace dtn
 				throw dtn::data::Validator::RejectedException("bundle is expired");
 			}
 
+			// if we do not accept non-singleton bundles
+			if (BundleCore::singleton_only && !p.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+			{
+				// ... we reject all non-singleton bundles.
+				IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "non-singleton bundle rejected: " << p.toString() << IBRCOMMON_LOGGER_ENDL;
+				throw dtn::data::Validator::RejectedException("bundle is not addressed to a singleton endpoint");
+			}
+
 			// if we do not forward bundles
-			if (!BundleCore::forwarding)
+			if (!BundleCore::forwarding && p.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
 			{
 				if (!p.destination.sameHost(BundleCore::local))
 				{
