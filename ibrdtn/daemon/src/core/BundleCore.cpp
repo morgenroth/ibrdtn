@@ -193,6 +193,18 @@ namespace dtn
 				BundleCore::forwarding = false;
 			}
 
+			// accept or reject non-singleton bundles
+			if (config.getNetwork().doAcceptNonSingleton())
+			{
+				IBRCOMMON_LOGGER_TAG(BundleCore::TAG, info) << "Non-singleton bundles are accepted." << IBRCOMMON_LOGGER_ENDL;
+				BundleCore::singleton_only = false;
+			}
+			else
+			{
+				IBRCOMMON_LOGGER_TAG(BundleCore::TAG, info) << "Non-singleton bundles are rejected." << IBRCOMMON_LOGGER_ENDL;
+				BundleCore::singleton_only = true;
+			}
+
 			const std::set<ibrcommon::vinterface> &global_nets = config.getNetwork().getInternetDevices();
 
 			// remove myself from all listeners
