@@ -704,7 +704,7 @@ namespace dtn
 			{
 				const dtn::data::EID node_eid( conf.read<std::string>(prefix + "uri", "dtn:none") );
 
-				// create a address URI
+				// create an address URI
 				std::stringstream ss;
 				ss << "ip=" << conf.read<std::string>(prefix + "address", "127.0.0.1") << ";port=" << conf.read<unsigned int>(prefix + "port", 4556) << ";";
 
