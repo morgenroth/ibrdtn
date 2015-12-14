@@ -467,7 +467,7 @@ namespace dtn
 			}
 
 			// if we do not forward bundles
-			if (!BundleCore::forwarding)
+			if (!BundleCore::forwarding && p.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
 			{
 				if (!p.destination.sameHost(BundleCore::local))
 				{
