@@ -173,8 +173,8 @@ namespace dtn
 						if (limits.getLimit(RoutingLimitations::LIMIT_LOCAL_ONLY) > 0) return false;
 
 						// check if the payload is too large for the neighbor
-						if ((limits.getLimit(RoutingLimitations::LIMIT_BLOCKSIZE) > 0) &&
-							((size_t)limits.getLimit(RoutingLimitations::LIMIT_BLOCKSIZE) < meta.getPayloadLength())) return false;
+						if ((limits.getLimit(RoutingLimitations::LIMIT_FOREIGN_BLOCKSIZE) > 0) &&
+							((size_t)limits.getLimit(RoutingLimitations::LIMIT_FOREIGN_BLOCKSIZE) < meta.getPayloadLength())) return false;
 
 						if (!meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
 						{

@@ -89,7 +89,8 @@ namespace dtn
 				RoutingLimitations *limits = new RoutingLimitations();
 
 				// add limitations
-				limits->setLimit(RoutingLimitations::LIMIT_BLOCKSIZE, dtn::core::BundleCore::foreign_blocksizelimit);
+				limits->setLimit(RoutingLimitations::LIMIT_BLOCKSIZE, dtn::core::BundleCore::blocksizelimit);
+				limits->setLimit(RoutingLimitations::LIMIT_FOREIGN_BLOCKSIZE, dtn::core::BundleCore::foreign_blocksizelimit);
 				limits->setLimit(RoutingLimitations::LIMIT_SINGLETON_ONLY, dtn::core::BundleCore::singleton_only ? 1 : 0);
 				limits->setLimit(RoutingLimitations::LIMIT_LOCAL_ONLY, dtn::core::BundleCore::forwarding ? 0 : 1);
 

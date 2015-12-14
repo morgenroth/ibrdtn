@@ -104,8 +104,9 @@ namespace dtn
 
 			enum LimitIndex {
 				LIMIT_BLOCKSIZE = 0,
-				LIMIT_SINGLETON_ONLY = 1,
-				LIMIT_LOCAL_ONLY = 2
+				LIMIT_FOREIGN_BLOCKSIZE = 1,
+				LIMIT_SINGLETON_ONLY = 2,
+				LIMIT_LOCAL_ONLY = 3
 			};
 
 			void setLimit(LimitIndex index, ssize_t value);
