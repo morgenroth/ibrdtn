@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="de.tubs.ibr.dtn" android:versionCode="1010"
-	android:versionName="1.0">
+          package="de.tubs.ibr.dtn">
 
 	<permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"
 		android:description="@string/permdesc_dtnCommunication" android:label="@string/permlab_dtnCommunication"
@@ -59,8 +58,6 @@
 	<!-- This app uses but not require Wi-Fi -->
 	<uses-feature android:name="android.hardware.wifi"
 		android:required="false" />
-
-	<uses-sdk android:minSdkVersion="9" android:targetSdkVersion="21" />
 
 	<application android:allowBackup="false" android:icon="@drawable/ic_launcher"
 		android:label="@string/app_name" android:theme="@style/AppTheme">
