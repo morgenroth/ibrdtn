@@ -45,6 +45,9 @@ if [ ! -d openssl ]; then
   cd ..
 fi
 
+# if this variable is set to 1 all following parts are rebuilt
+REBUILD=0
+
 echo ""
 echo "Generating Android.mk files using Autotools and Androgenizer..."
 echo "---------------------------------------------------------------"
@@ -59,6 +62,7 @@ do
 		./configure --enable-android
 		make clean
 		make
+		REBUILD=1
 	fi
 	cd ..
 done
@@ -66,9 +70,11 @@ done
 echo ""
 echo "Generate SWIG wrapper classes..."
 echo "--------------------------------"
-rm -Rf ../src/de/tubs/ibr/dtn/swig
-mkdir -p ../src/de/tubs/ibr/dtn/swig
-swig -c++ -java -package de.tubs.ibr.dtn.swig -verbose -outdir ../src/de/tubs/ibr/dtn/swig/ -o android-glue/SWIGWrapper.cpp android-glue/swig.i 
+if [ ! -e "../src/de/tubs/ibr/dtn/swig" ] || [ ${REBUILD} -eq 1 ]; then
+	rm -Rf ../src/de/tubs/ibr/dtn/swig
+	mkdir -p ../src/de/tubs/ibr/dtn/swig
+	swig -c++ -java -package de.tubs.ibr.dtn.swig -verbose -outdir ../src/de/tubs/ibr/dtn/swig/ -o android-glue/SWIGWrapper.cpp android-glue/swig.i 
+fi
 
 echo ""
 echo "Building IBR-DTN with Android NDK..."
