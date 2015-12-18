@@ -18,30 +18,32 @@ echo "-------------------------------------------------------------------"
 
 # check if the existing directory has the right revision
 if [ -e nl-3 ]; then
-  cd nl-3; REV=$(git rev-parse HEAD|tr -d '\n'); cd ..
-  if [ ${REV} != "${LIBNL_COMMIT}" ]; then
+  cd nl-3; REV=$(git rev-parse HEAD | tr -d '\n'); cd ..
+  if [ "${REV}" != "${LIBNL_COMMIT}" ]; then
     rm -rf nl-3
   fi
 fi
-[ ! -e nl-3 ] && git clone git://github.com/ibrdtn/libnl-3-android.git nl-3
-cd nl-3
-git fetch --tags
-git checkout ${LIBNL_COMMIT}
-cd ..
+if [ ! -d nl-3 ]; then
+  git clone git://github.com/ibrdtn/libnl-3-android.git nl-3
+  cd nl-3
+  git checkout --detach ${LIBNL_COMMIT}
+  cd ..
+fi
 
 # check if the existing directory has the right revision
 if [ -e openssl ]; then
-  cd openssl; REV=$(git rev-parse HEAD|tr -d '\n'); cd ..
+  cd openssl; REV=$(git rev-parse HEAD~1 | tr -d '\n'); cd ..
   if [ "${REV}" != "${OPENSSL_COMMIT}" ]; then
     rm -rf openssl
   fi
 fi
-[ ! -e openssl ] && git clone git://github.com/ibrdtn/openssl-android.git openssl
-cd openssl
-git fetch --tags
-git checkout ${OPENSSL_COMMIT}
-git am < ../0001-renamed-crypto-library.patch
-cd ..
+if [ ! -d openssl ]; then
+  git clone git://github.com/ibrdtn/openssl-android.git openssl
+  cd openssl
+  git checkout --detach ${OPENSSL_COMMIT}
+  git am < ../0001-renamed-crypto-library.patch
+  cd ..
+fi
 
 echo ""
 echo "Generating Android.mk files using Autotools and Androgenizer..."
