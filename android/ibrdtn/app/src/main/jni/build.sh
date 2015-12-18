@@ -54,10 +54,12 @@ do
 	echo "Generating Android.mk files for $SOURCE"
 	echo "---------------------------------------"
 	cd $SOURCE
-	./autogen.sh
-	./configure --enable-android
-	make clean
-	make
+	if [ ! -e "Android.mk" ]; then
+		./autogen.sh
+		./configure --enable-android
+		make clean
+		make
+	fi
 	cd ..
 done
 
