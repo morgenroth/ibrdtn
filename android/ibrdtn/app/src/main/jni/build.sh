@@ -8,9 +8,9 @@ set -e
 
 echo "Generating symlinks to IBR-DTN sources..."
 echo "-----------------------------------------"
-[ ! -e ibrcommon ] && ln -s ../../../ibrcommon/ ibrcommon
-[ ! -e ibrdtn ] && ln -s ../../../ibrdtn/ibrdtn/ ibrdtn
-[ ! -e dtnd ] && ln -s ../../../ibrdtn/daemon/ dtnd
+[ ! -e ibrcommon ] && ln -s ../../../../../../ibrcommon/ ibrcommon
+[ ! -e ibrdtn ] && ln -s ../../../../../../ibrdtn/ibrdtn/ ibrdtn
+[ ! -e dtnd ] && ln -s ../../../../../../ibrdtn/daemon/ dtnd
 
 echo ""
 echo "Cloning external git sources used in IBR-DTN (libnl and openssl)..."
