@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android" >
-    <item android:id="@+id/itemPlayAll" android:title="@string/play_all" android:icon="@drawable/ic_action_playall" android:showAsAction="ifRoom" android:orderInCategory="1"></item>
-    <item android:id="@+id/itemStop" android:title="@string/stop_playing" android:icon="@drawable/ic_action_stop" android:showAsAction="ifRoom" android:visible="false" android:orderInCategory="2"></item>
-</menu>

@@ -1,0 +1,48 @@
+#Android generated
+bin
+gen
+obj
+lint.xml
+local.properties
+ant.properties
+
+#Eclipse
+.project
+.classpath
+.settings
+
+#IntelliJ IDEA
+.idea
+*.iml
+
+#Maven
+target
+release.properties
+pom.xml.*
+
+#compiled libs
+libs
+
+#
+# JNI
+#
+
+# ignore symlinked folders
+jni/dtnd
+jni/ibrcommon
+jni/ibrdtn
+
+# ignore folders from external git repos
+jni/nl-3
+jni/openssl
+
+#
+# SWIG
+#
+
+# generated swig java classes
+java/de/tubs/ibr/dtn/swig
+
+# generated c wrapper
+jni/android-glue/SWIGWrapper.cpp
+jni/android-glue/SWIGWrapper.h

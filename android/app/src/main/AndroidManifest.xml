@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="de.tubs.ibr.dtn">
+
+	<permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"
+		android:description="@string/permdesc_dtnCommunication" android:label="@string/permlab_dtnCommunication"
+		android:permissionGroup="android.permission-group.NETWORK"
+		android:protectionLevel="normal" />
+
+	<permission android:name="de.tubs.ibr.dtn.permission.DTN_CONTROL"
+		android:description="@string/permdesc_dtnControl" android:label="@string/permlab_dtnControl"
+		android:permissionGroup="android.permission-group.NETWORK"
+		android:protectionLevel="dangerous" />
+
+	<permission android:name="de.tubs.ibr.dtn.permission.DTN_SERVER"
+		android:label="@string/permlab_dtnCommunicationServer"
+		android:description="@string/permdesc_dtnCommunicationServer"
+		android:permissionGroup="android.permission-group.SYSTEM_TOOLS"
+		android:protectionLevel="normal" />
+
+	<uses-permission android:name="android.permission.INTERNET" />
+	<uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+	<uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+	<uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+	<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+	<!-- READ_LOGS is needed on Android < 4.1, On Android >= 4.1 an app can 
+		read it's own logs without permission -->
+	<uses-permission android:name="android.permission.READ_LOGS" />
+
+	<!-- Custom permission to send/received bundles using the DTN services -->
+	<uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION" />
+
+	<!-- Custom permission to provide DTN services -->
+	<uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_SERVER" />
+	
+	<!-- Custom permission to control the DTN services -->
+	<uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_CONTROL" />
+
+	<!-- This app require access to NFC to verify the hash of the security key -->
+	<uses-permission android:name="android.permission.NFC" />
+
+	<!-- This app uses but not require Wi-Fi direct -->
+	<uses-feature android:name="android.hardware.wifi.direct"
+		android:required="false" />
+
+	<!-- This app uses NFC if available -->
+	<uses-feature android:name="android.hardware.nfc"
+		android:required="false" />
+
+	<!-- This app uses but not require a touchscreen -->
+	<uses-feature android:name="android.hardware.touchscreen"
+		android:required="false" />
+
+	<!-- This app uses but not require Wi-Fi -->
+	<uses-feature android:name="android.hardware.wifi"
+		android:required="false" />
+
+	<application android:allowBackup="false" android:icon="@drawable/ic_launcher"
+		android:label="@string/app_name" android:theme="@style/AppTheme">
+		<activity android:name=".daemon.Preferences" android:icon="@drawable/ic_launcher"
+			android:label="@string/app_name" android:uiOptions="splitActionBarWhenNarrow">
+			<intent-filter>
+				<action android:name="android.intent.action.MAIN" />
+				<category android:name="android.intent.category.LAUNCHER" />
+			</intent-filter>
+		</activity>
+
+		<service android:name=".service.DaemonService"
+			android:permission="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"
+			android:exported="true" android:label="@string/app_name_daemon"
+			android:process=":dtnd">
+			<intent-filter>
+				<action android:name="de.tubs.ibr.dtn.intent.REGISTER" />
+				<action android:name="de.tubs.ibr.dtn.intent.UNREGISTER" />
+				<action android:name="de.tubs.ibr.dtn.DTNService" />
+				<action android:name="de.tubs.ibr.dtn.SecurityService" />
+			</intent-filter>
+		</service>
+
+		<service android:name=".service.DaemonManager"
+			android:permission="de.tubs.ibr.dtn.permission.DTN_CONTROL"
+			android:exported="true" android:process=":dtnd">
+			<intent-filter>
+				<action android:name="de.tubs.ibr.dtn.DtnManager" />
+			</intent-filter>
+		</service>
+
+		<activity android:name="de.tubs.ibr.dtn.daemon.NeighborActivity"
+			android:icon="@drawable/ic_neighbors" android:label="@string/list_neighbors"
+			android:parentActivityName=".daemon.Preferences">
+			<meta-data android:name="android.support.PARENT_ACTIVITY"
+				android:value=".daemon.Preferences" />
+		</activity>
+
+		<activity android:name="de.tubs.ibr.dtn.daemon.api.SelectNeighborActivity"
+			android:icon="@drawable/ic_neighbors" android:label="@string/select_neighbor"
+			android:permission="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"
+			android:exported="true" />
+
+		<activity android:name=".daemon.LogActivity"
+			android:configChanges="keyboardHidden|orientation|screenSize"
+			android:icon="@drawable/ic_log" android:label="@string/list_logs"
+			android:parentActivityName=".daemon.Preferences">
+			<meta-data android:name="android.support.PARENT_ACTIVITY"
+				android:value=".daemon.Preferences" />
+		</activity>
+
+		<activity android:name="de.tubs.ibr.dtn.daemon.StatsActivity"
+			android:icon="@drawable/ic_action_stats" android:label="@string/stats_activity"
+			android:parentActivityName=".daemon.Preferences">
+			<meta-data android:name="android.support.PARENT_ACTIVITY"
+				android:value=".daemon.Preferences" />
+		</activity>
+
+		<activity android:name="de.tubs.ibr.dtn.keyexchange.KeyInformationActivity"
+			android:icon="@drawable/ic_action_key" android:label="@string/key_information" />
+
+		<activity android:name="de.tubs.ibr.dtn.keyexchange.NFCReceiver">
+			<intent-filter>
+				<action android:name="android.nfc.action.NDEF_DISCOVERED" />
+				<category android:name="android.intent.category.DEFAULT" />
+				<data android:mimeType="text/plain" />
+			</intent-filter>
+		</activity>
+
+		<service android:name=".keyexchange.KeyExchangeService" />
+
+		<receiver android:name=".keyexchange.KeyExchangeReceiver"
+			android:exported="false" android:label="KeyExchangeReceiver">
+			<intent-filter>
+				<action android:name="de.tubs.ibr.dtn.Intent.KEY_EXCHANGE" />
+				<category android:name="android.intent.category.DEFAULT" />
+			</intent-filter>
+			<intent-filter>
+				<action android:name="de.tubs.ibr.dtn.Intent.NFC_EXCHANGE" />
+				<category android:name="android.intent.category.DEFAULT" />
+			</intent-filter>
+		</receiver>
+
+		<receiver android:name=".service.OnRestartReceiver"
+			android:enabled="true" android:exported="false" android:label="OnRestartReceiver">
+			<intent-filter>
+				<action android:name="android.intent.action.BOOT_COMPLETED" />
+			</intent-filter>
+			<intent-filter>
+				<action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+			</intent-filter>
+		</receiver>
+
+		<provider
+			android:name=".stats.StatsContentProvider"
+			android:authorities="de.tubs.ibr.dtn.contentprovider"
+			android:enabled="true"
+			android:exported="false" >
+		</provider>
+	</application>
+</manifest>
