@@ -71,4 +71,4 @@ swig -c++ -java -package de.tubs.ibr.dtn.swig -verbose -outdir ../src/de/tubs/ib
 echo ""
 echo "Building IBR-DTN with Android NDK..."
 echo "------------------------------------"
-ndk-build -j
+ndk-build -j4
