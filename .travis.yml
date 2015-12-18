@@ -8,25 +8,32 @@ matrix:
       env: DO_COVERAGE=no
 
 before_install:
-  - sudo apt-get update
+  - sudo apt-get update -qq
 
 install:
   - sudo apt-get install build-essential libssl-dev libz-dev libsqlite3-dev libcurl4-gnutls-dev libdaemon-dev automake autoconf pkg-config libtool libcppunit-dev libnl-3-dev libnl-cli-3-dev libnl-genl-3-dev libnl-nf-3-dev libnl-route-3-dev libarchive-dev
-  - sudo pip install cpp-coveralls
+  - if [ "${DO_COVERAGE}" == "yes" ]; then
+      sudo pip install cpp-coveralls;
+    fi
 
 before_script:
   - cd ibrdtn
 
 script:
+  - CONFIGURE_OPTS="--with-cppunit --with-openssl --with-curl --with-lowpan --with-sqlite --with-compression --with-xml --with-tls --with-dht --enable-debug --disable-netlink"
   - ./autogen.sh
-  - ./configure-dev --disable-netlink --enable-gcov
+  - if [ "${DO_COVERAGE}" == "yes" ]; then
+      ./configure-dev ${CONFIGURE_OPTS} --enable-gcov;
+    else
+      ./configure-dev ${CONFIGURE_OPTS};
+    fi
   - make
   - make check
 
 after_success:
   - rm ibrdtn/ibrcommon; mv ibrcommon ibrdtn/ibrcommon
-  - rm $(find -name '*.gcno' | grep -v '.libs')
   - if [ "${DO_COVERAGE}" == "yes" ]; then
+      rm $(find -name '*.gcno' | grep -v '.libs');
       coveralls -r $(pwd)/ibrdtn --exclude ibrcommon/tests --exclude ibrdtn/tests --exclude daemon/tests --exclude tools --gcov-options '\-lp';
     fi
 
