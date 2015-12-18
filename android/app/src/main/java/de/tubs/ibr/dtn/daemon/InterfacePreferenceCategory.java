@@ -15,7 +15,7 @@ import android.util.Log;
 
 public class InterfacePreferenceCategory extends PreferenceCategory {
     
-    private static final String TAG = "InterfacePreferenceCategory";
+    private static final String TAG = "IfPreferenceCategory";
     
     public InterfacePreferenceCategory(Context context) {
         super(context);

@@ -17,7 +17,7 @@ import de.tubs.ibr.dtn.swig.NativeStats;
 
 public class ConvergenceLayerStatsEntry implements Parcelable {
     
-    private final static String TAG = "ConvergenceLayerStatsEntry";
+    private final static String TAG = "ClStatsEntry";
     
     public static final String ID = BaseColumns._ID;
     public static final String TIMESTAMP = "timestamp";

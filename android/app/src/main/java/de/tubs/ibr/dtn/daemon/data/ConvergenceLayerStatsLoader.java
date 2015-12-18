@@ -18,7 +18,7 @@ import de.tubs.ibr.dtn.stats.StatsContentProvider;
 @SuppressLint("SimpleDateFormat")
 public class ConvergenceLayerStatsLoader extends AsyncTaskLoader<Cursor> {
     
-    private static final String TAG = "ConvergenceLayerStatsLoader";
+    private static final String TAG = "ClStatsLoader";
     
     private Boolean mStarted = false;
     private Cursor mData = null;
