@@ -17,7 +17,18 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    sourceSets.main {
+        jniLibs.srcDir 'src/main/libs'
+        jni.srcDirs = []
+    }
 }
+
+task ndkBuild(type: Exec) {
+    executable "sh"
+    workingDir "src/main/jni"
+    args "build.sh"
+}
+preBuild.dependsOn ndkBuild
 
 dependencies {
     compile 'de.tubs.ibr.dtn:library:1.1.2'
