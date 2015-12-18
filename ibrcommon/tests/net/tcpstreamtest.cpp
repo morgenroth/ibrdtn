@@ -69,7 +69,7 @@ void tcpstreamtest::runTest()
 	char values[10] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
 
 	try {
-		ibrcommon::vaddress addr("::1", 4343);
+		ibrcommon::vaddress addr("127.0.0.1", 4343);
 		ibrcommon::socketstream client(new ibrcommon::tcpsocket(addr));
 
 		// send some data
