@@ -1,6 +1,18 @@
 apply plugin: 'android-sdk-manager'
 apply plugin: 'com.android.application'
 
+def createVersionName() {
+    if (System.getenv().containsKey("BUILD_NUMBER")) {
+        if (System.getenv().containsKey("GIT_COMMIT")) {
+            return rootProject.ext.versionName + "-" + System.getenv("GIT_COMMIT").substring(0, 7)
+        } else {
+            return rootProject.ext.versionName + "-" + System.getenv("BUILD_NUMBER")
+        }
+    } else {
+        return rootProject.ext.versionName
+    }
+}
+
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -9,8 +21,8 @@ android {
         applicationId "de.tubs.ibr.dtn"
         minSdkVersion 9
         targetSdkVersion 22
-        versionCode 1010
-        versionName "1.0"
+        versionCode System.getenv("BUILD_NUMBER") as Integer ?: rootProject.ext.versionCode
+        versionName createVersionName()
     }
     signingConfigs {
         release {
