@@ -12,10 +12,19 @@ android {
         versionCode 1010
         versionName "1.0"
     }
+    signingConfigs {
+        release {
+            storeFile file(System.getenv("KEYSTORE"))
+            storePassword System.getenv("KEYSTORE_PASSWD")
+            keyAlias System.getenv("KEY_ALIAS")
+            keyPassword System.getenv("KEY_PASSWD")
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
     sourceSets.main {
