@@ -14,3 +14,10 @@ allprojects {
         jcenter()
     }
 }
+
+ext {
+    compileSdkVersion = 23
+    buildToolsVersion = "23.0.1"
+    versionCode = 1010
+    versionName = "1.0.1"
+}
