@@ -128,14 +128,6 @@ public class Preferences extends PreferenceActivity {
 			if (Log.isLoggable(TAG, Log.DEBUG))
 				Log.d(TAG, "service connected");
 
-			// get the daemon version
-			try {
-				String version[] = Preferences.this.mService.getVersion();
-				setVersion("dtnd: " + version[0] + ", build: " + version[1]);
-			} catch (RemoteException e) {
-				Log.e(TAG, "Can not query the daemon version", e);
-			}
-			
 			// enable / disable P2P switch
 			if (mP2pSwitch != null) {
 				try {
@@ -261,17 +253,12 @@ public class Preferences extends PreferenceActivity {
 		// create configuration file
 		createConfig(Preferences.this);
 
+		// add standard preferences
 		addPreferencesFromResource(R.xml.preferences);
 		
 		// add debugging preference in debuggable version
 		if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
-			CheckBoxPreference pref_debug = new CheckBoxPreference(this);
-			pref_debug.setKey(KEY_DEBUG_MODE);
-			pref_debug.setTitle(R.string.pref_debugging);
-			pref_debug.setSummary(R.string.pref_debugging_desc);
-			pref_debug.setDefaultValue(false);
-			pref_debug.setOrder(-10);
-			((PreferenceCategory)findPreference("prefcat_system")).addPreference(pref_debug);
+			addPreferencesFromResource(R.xml.preferences_debug);
 		}
 
 		mInterfacePreference = (InterfacePreferenceCategory) findPreference("prefcat_interfaces");
@@ -318,9 +305,6 @@ public class Preferences extends PreferenceActivity {
 			});
 		}
 
-		// set initial version
-		setVersion(null);
-		
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
 			// hide P2p control
 			mP2pSwitch = (SwitchPreference)findPreference(KEY_P2P_ENABLED);
@@ -353,22 +337,6 @@ public class Preferences extends PreferenceActivity {
 		}
 
 		super.onDestroy();
-	}
-
-	@SuppressWarnings("deprecation")
-	private void setVersion(String versionValue) {
-		// version information
-		Preference version = findPreference("system_version");
-		try {
-			PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0);
-			if (versionValue == null) {
-				version.setSummary("app: " + info.versionName);
-			} else {
-				version.setSummary("app: " + info.versionName + ", " + versionValue);
-			}
-		} catch (NameNotFoundException e) {
-		}
-		;
 	}
 
 	@Override

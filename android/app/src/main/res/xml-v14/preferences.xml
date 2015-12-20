@@ -110,10 +110,5 @@
             android:summary="@string/pref_log_enable_file_desc"
             android:title="@string/pref_log_enable_file" />
     </PreferenceCategory>
-    <PreferenceCategory android:key="prefcat_system" android:title="@string/pref_system" >
-        <Preference
-            android:key="system_version"
-            android:title="@string/system_version" />
-    </PreferenceCategory>
 
 </PreferenceScreen>
