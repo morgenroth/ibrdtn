@@ -26,9 +26,9 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file(System.getenv("KEYSTORE"))
+            storeFile file(System.getenv().containsKey("KEYSTORE") ?: "publish.keystore")
             storePassword System.getenv("KEYSTORE_PASSWD")
-            keyAlias System.getenv("KEY_ALIAS")
+            keyAlias System.getenv("KEY_ALIAS") ?: android.defaultConfig.applicationId
             keyPassword System.getenv("KEY_PASSWD")
         }
     }
