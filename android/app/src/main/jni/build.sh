@@ -94,4 +94,10 @@ fi
 echo ""
 echo "Building IBR-DTN with Android NDK..."
 echo "------------------------------------"
-ndk-build -j4
+if [ -e "$(which ndk-build)" ]; then
+  ndk-build -j4
+else
+  echo "ndk-build from android-ndk not in PATH"
+  exit 1
+fi
+
