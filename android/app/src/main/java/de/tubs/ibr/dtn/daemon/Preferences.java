@@ -253,17 +253,12 @@ public class Preferences extends PreferenceActivity {
 		// create configuration file
 		createConfig(Preferences.this);
 
+		// add standard preferences
 		addPreferencesFromResource(R.xml.preferences);
 		
 		// add debugging preference in debuggable version
 		if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
-			CheckBoxPreference pref_debug = new CheckBoxPreference(this);
-			pref_debug.setKey(KEY_DEBUG_MODE);
-			pref_debug.setTitle(R.string.pref_debugging);
-			pref_debug.setSummary(R.string.pref_debugging_desc);
-			pref_debug.setDefaultValue(false);
-			pref_debug.setOrder(-10);
-			((PreferenceCategory)findPreference("prefcat_system")).addPreference(pref_debug);
+			addPreferencesFromResource(R.xml.preferences_debug);
 		}
 
 		mInterfacePreference = (InterfacePreferenceCategory) findPreference("prefcat_interfaces");
