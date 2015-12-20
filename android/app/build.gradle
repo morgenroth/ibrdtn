@@ -26,9 +26,9 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file(System.getenv("KEYSTORE"))
+            storeFile file(System.getenv().containsKey("KEYSTORE") ?: "publish.keystore")
             storePassword System.getenv("KEYSTORE_PASSWD")
-            keyAlias System.getenv("KEY_ALIAS")
+            keyAlias System.getenv("KEY_ALIAS") ?: android.defaultConfig.applicationId
             keyPassword System.getenv("KEY_PASSWD")
         }
     }
@@ -36,13 +36,17 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.release
         }
     }
     sourceSets.main {
         jniLibs.srcDir 'src/main/libs'
         jni.srcDirs = []
     }
+}
+
+// enable signing if the keystore exists
+if (android.signingConfigs.release.storeFile.exists()) {
+    android.buildTypes.release.signingConfig = android.signingConfigs.release
 }
 
 task ndkBuild(type: Exec) {

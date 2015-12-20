@@ -13,6 +13,21 @@ echo "-----------------------------------------"
 [ ! -e dtnd ] && ln -s ../../../../../ibrdtn/daemon/ dtnd
 
 echo ""
+echo "Get Androgenizer..."
+echo "-------------------"
+if [ ! -e "$(which androgenizer)" ]; then
+  if [ ! -e "androgenizer" ]; then
+    git clone http://cgit.collabora.com/git/android/androgenizer.git
+    cd androgenizer
+    make
+    cd ..
+  fi
+
+  # Add androgenizer to path
+  export PATH=${PATH}:$(pwd)/androgenizer
+fi
+
+echo ""
 echo "Cloning external git sources used in IBR-DTN (libnl and openssl)..."
 echo "-------------------------------------------------------------------"
 
@@ -79,4 +94,10 @@ fi
 echo ""
 echo "Building IBR-DTN with Android NDK..."
 echo "------------------------------------"
-ndk-build -j4
+if [ -e "$(which ndk-build)" ]; then
+  ndk-build -j4
+else
+  echo "ndk-build from android-ndk not in PATH"
+  exit 1
+fi
+
