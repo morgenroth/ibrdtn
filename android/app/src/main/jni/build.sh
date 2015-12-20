@@ -13,6 +13,21 @@ echo "-----------------------------------------"
 [ ! -e dtnd ] && ln -s ../../../../../ibrdtn/daemon/ dtnd
 
 echo ""
+echo "Get Androgenizer..."
+echo "-------------------"
+if [ ! -e "$(which androgenizer)" ]; then
+  if [ ! -e "androgenizer" ]; then
+    git clone http://cgit.collabora.com/git/android/androgenizer.git
+    cd androgenizer
+    make
+    cd ..
+  fi
+
+  # Add androgenizer to path
+  export PATH=${PATH}:$(pwd)/androgenizer
+fi
+
+echo ""
 echo "Cloning external git sources used in IBR-DTN (libnl and openssl)..."
 echo "-------------------------------------------------------------------"
 
