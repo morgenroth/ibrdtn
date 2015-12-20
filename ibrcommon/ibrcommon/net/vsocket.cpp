@@ -24,7 +24,7 @@
 #include "ibrcommon/thread/MutexLock.h"
 #include "ibrcommon/Logger.h"
 
-#ifndef HAVE_FEATURES_H
+#ifndef __linux__
 #include "ibrcommon/TimeMeasurement.h"
 #endif
 
@@ -131,7 +131,7 @@ namespace ibrcommon
 #define pipewrite(a,b,c) ::write(a,b,c)
 #endif
 
-#ifdef HAVE_FEATURES_H
+#ifdef __linux__
 #define __compat_select ::select
 #else
 	int __compat_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout)

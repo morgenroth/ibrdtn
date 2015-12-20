@@ -34,10 +34,7 @@
 #include <cstring>
 #include <cerrno>
 #include <fstream>
-
-#if !defined(HAVE_FEATURES_H) || defined(ANDROID)
 #include <libgen.h>
-#endif
 
 #ifdef __WIN32__
 #include <io.h>
@@ -225,14 +222,7 @@ namespace ibrcommon
 
 	std::string File::getBasename() const
 	{
-#if !defined(ANDROID) && defined(HAVE_FEATURES_H)
-		return std::string(basename(_path.c_str()));
-#else
-		char path[_path.length()+1];
-		::memcpy(&path, _path.c_str(), _path.length()+1);
-
-		return std::string(basename(path));
-#endif
+		return std::string(basename((char*)_path.c_str()));
 	}
 
 	File File::get(const std::string &filename) const
