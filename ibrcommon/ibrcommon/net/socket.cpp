@@ -1078,7 +1078,7 @@ namespace ibrcommon
 		try {
 			switch (get_family()) {
 			case AF_INET: {
-#ifdef HAVE_FEATURES_H
+#ifdef __linux__
 				int val = 1;
 				if ( __compat_setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
 				{
@@ -1100,7 +1100,7 @@ namespace ibrcommon
 			}
 
 			case AF_INET6: {
-#ifdef HAVE_FEATURES_H
+#ifdef __linux__
 				int val = 1;
 				if ( __compat_setsockopt(_fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
 				{
@@ -1132,7 +1132,7 @@ namespace ibrcommon
 	{
 		switch (get_family()) {
 		case AF_INET: {
-#ifdef HAVE_FEATURES_H
+#ifdef __linux__
 			int val = 0;
 			if ( __compat_setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
 			{
@@ -1143,7 +1143,7 @@ namespace ibrcommon
 		}
 
 		case AF_INET6: {
-#ifdef HAVE_FEATURES_H
+#ifdef __linux__
 			int val = 0;
 			if ( __compat_setsockopt(_fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
 			{
