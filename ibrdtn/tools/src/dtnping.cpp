@@ -226,7 +226,7 @@ int main(int argc, char *argv[])
 	bool wait_for_reply = true;
 	bool stop_after_first_fail = false;
 	bool nonstop = true;
-	size_t interval_pause = 1;
+	double interval_pause = 1.0f;
 	size_t count = 0;
 	dtn::api::Client::COMMUNICATION_MODE mode = dtn::api::Client::MODE_BIDIRECTIONAL;
 	ibrcommon::File unixdomain;
