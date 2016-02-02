@@ -54,6 +54,7 @@ namespace dtn
 		void NodeHandshakeExtension::requestHandshake(const dtn::data::EID&, NodeHandshake &request) const
 		{
 			request.addRequest(BloomFilterPurgeVector::identifier);
+			request.addRequest(RoutingLimitations::identifier);
 		}
 
 		void NodeHandshakeExtension::responseHandshake(const dtn::data::EID&, const NodeHandshake &request, NodeHandshake &answer)
@@ -80,6 +81,21 @@ namespace dtn
 
 				// add it to the handshake
 				answer.addItem(item);
+			}
+
+			if (request.hasRequest(RoutingLimitations::identifier))
+			{
+				// create a new limitations object
+				RoutingLimitations *limits = new RoutingLimitations();
+
+				// add limitations
+				limits->setLimit(RoutingLimitations::LIMIT_BLOCKSIZE, dtn::core::BundleCore::blocksizelimit);
+				limits->setLimit(RoutingLimitations::LIMIT_FOREIGN_BLOCKSIZE, dtn::core::BundleCore::foreign_blocksizelimit);
+				limits->setLimit(RoutingLimitations::LIMIT_SINGLETON_ONLY, dtn::core::BundleCore::singleton_only ? 1 : 0);
+				limits->setLimit(RoutingLimitations::LIMIT_LOCAL_ONLY, dtn::core::BundleCore::forwarding ? 0 : 1);
+
+				// add it to the handshake
+				answer.addItem(limits);
 			}
 		}
 
@@ -171,6 +187,23 @@ namespace dtn
 						(**this).setPurged(meta);
 					}
 				} while (!list.empty());
+			} catch (std::exception&) { };
+
+			try {
+				// get limits from the answer
+				const RoutingLimitations &limits = answer.get<RoutingLimitations>();
+
+				IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 10) << "routing limitations received from " << source.getString() << IBRCOMMON_LOGGER_ENDL;
+
+				// create a new neighbor data-set
+				NeighborDataset ds(new RoutingLimitations(limits));
+
+				/**
+				 * Update the neighbor database with the received limitations.
+				 */
+				NeighborDatabase &db = (**this).getNeighborDB();
+				ibrcommon::MutexLock l(db);
+				db.get(source.getNode()).putDataset(ds);
 			} catch (std::exception&) { };
 		}
 
@@ -299,7 +332,7 @@ namespace dtn
 			// walk through all extensions to generate a request
 			(*_callback).requestHandshake(origin, request);
 
-			IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 15) << "handshake query from " << origin.getString() << ": " << request.toString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 15) << "handshake query for " << origin.getString() << ": " << request.toString() << IBRCOMMON_LOGGER_ENDL;
 
 			// create a new bundle with a zero timestamp (+age block)
 			dtn::data::Bundle req(true);

@@ -430,6 +430,25 @@ int main(int argc, char *argv[])
 						}
 					}
 				}
+				else{
+					try{
+						// Added this from the (wait_for_reply) part, because you weren't
+						// able to stop the dtnping while using --nowait without
+						// this.
+						if (interval_pause > 0)
+						{
+							ibrcommon::MutexLock l(__pause);
+							__pause.wait(interval_pause);
+						}
+					} catch (const ibrcommon::Conditional::ConditionalAbortException &e) {
+						if (e.reason == ibrcommon::Conditional::ConditionalAbortException::COND_TIMEOUT)
+						{
+							continue;
+						}
+						// aborted
+						break;
+					}
+				}
 			}
 		} catch (const dtn::api::ConnectionException&) {
 			std::cerr << "Disconnected." << std::endl;

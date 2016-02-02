@@ -23,8 +23,8 @@ if SQLITE
 storage_SOURCES += SQLiteConfigure.h SQLiteConfigure.cpp SQLiteBundleStorage.h SQLiteBundleStorage.cpp SQLiteDatabase.h SQLiteDatabase.cpp SQLiteBundleSet.h SQLiteBundleSet.cpp
 endif
 
-AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS) $(SQLITE_CFLAGS)
-AM_LDFLAGS = $(ibrdtn_LIBS) $(SQLITE_LIBS)
+AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS) $(SQLITE_CFLAGS) $(GCOV_CFLAGS)
+AM_LDFLAGS = $(ibrdtn_LIBS) $(SQLITE_LIBS) $(GCOV_LIBS)
 
 if ANDROID
 noinst_DATA = Android.mk

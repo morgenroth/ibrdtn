@@ -288,7 +288,7 @@ namespace dtn
 				public:
 					ProphetConfig()
 					: p_encounter_max(0), p_encounter_first(0), p_first_threshold(0), beta(0), gamma(0), delta(0),
-					  time_unit(0), i_typ(0), next_exchange_timeout(0), forwarding_strategy(), gtmx_nf_max(0)
+					  time_unit(0), i_typ(0), next_exchange_timeout(0), forwarding_strategy(), gtmx_nf_max(0), push_notification(false)
 					{ }
 
 					~ProphetConfig() { }
@@ -304,6 +304,7 @@ namespace dtn
 					ibrcommon::Timer::time_t next_exchange_timeout;
 					std::string forwarding_strategy;
 					unsigned int gtmx_nf_max;
+					bool push_notification;
 				};
 			protected:
 				Network();
@@ -315,6 +316,7 @@ namespace dtn
 				std::list<NetConfig> _interfaces;
 				std::string _routing;
 				bool _forwarding;
+				bool _accept_nonsingleton;
 				bool _prefer_direct;
 				bool _tcp_nodelay;
 				dtn::data::Length _tcp_chunksize;
@@ -356,6 +358,11 @@ namespace dtn
 				 * @return True, if forwarding is enabled.
 				 */
 				bool doForwarding() const;
+
+				/**
+				 * Define if non-singleton bundles are accepted or not.
+				 */
+				bool doAcceptNonSingleton() const;
 
 				/**
 				 * Define if direct routes are preferred instead of spreading bundles to all

@@ -17,8 +17,8 @@ security_SOURCES += \
 	SecurityCertificateManager.cpp
 endif
 
-AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS) $(OPENSSL_CFLAGS)
-AM_LDFLAGS = $(ibrdtn_LIBS) $(OPENSSL_LIBS)
+AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS) $(OPENSSL_CFLAGS) $(GCOV_CFLAGS)
+AM_LDFLAGS = $(ibrdtn_LIBS) $(OPENSSL_LIBS) $(GCOV_LIBS)
 
 libsecurity_la_LIBADD = exchange/libsecexchange.la
 

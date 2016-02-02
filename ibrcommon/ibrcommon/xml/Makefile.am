@@ -14,8 +14,8 @@ library_includedir = $(includedir)/$(GENERIC_LIBRARY_NAME)-$(GENERIC_API_VERSION
 library_include_HEADERS = $(h_sources)
 
 AUTOMAKE_OPTIONS = nostdinc
-AM_CPPFLAGS = -I$(top_srcdir) $(LIBXML_CFLAGS)
-AM_LDFLAGS = $(LIBXML_LIBS)
+AM_CPPFLAGS = -I$(top_srcdir) $(LIBXML_CFLAGS) $(GCOV_CFLAGS)
+AM_LDFLAGS = $(LIBXML_LIBS) $(GCOV_LIBS)
 
 if ANDROID
 noinst_DATA = Android.mk

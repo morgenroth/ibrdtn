@@ -1,0 +1,80 @@
+                        IBR-DTN for Android
+
+How to compile IBR-DTN for Android?
+-----------------------------------
+
+   1. Install Android NDK:
+      Get latest version of official Android NDK Version (Tested version: 8e)
+      from http://developer.android.com/tools/sdk/ndk/index.html ,
+      For old versions see http://stackoverflow.com/questions/6849981/where-do-i-find-old-versions-of-ndk
+
+      (For Windows, Cygwin is required)
+
+   2. Add the root directory of the unpacked Android NDK to your PATH variable (http://wiki.ubuntuusers.de/Umgebungsvariable)
+ 
+   3. Install git, swig, flex, and bison from your package manager: apt-get install git swig flex bison
+
+   4. Run build.sh
+
+
+FAQ
+---
+
+   o More Android NDK parameters:
+     "ndk-build clean" (delete generated libs)
+     "ndk-build -B V=1 NDK_DEBUG=1 NDK_LOG=1" (force complete rebuild (-B), showing commands and enable debug and logs from android ndk)
+
+   o Getting an error with "error: invalid conversion from 'void**' to 'JNIEnv** {aka _JNIEnv**}'"
+     Update your SWIG installation.
+
+
+SWIG
+----
+
+   o NativeSession.cpp C++ class is wrapped into Java using SWIG. To regenerate Java classes based on NativeSession.cpp run "generate_swig_classes.sh".
+
+
+Implementation details
+----------------------
+
+   o Libraries are cloned from:
+     nl-3: https://github.com/dschuermann/libnl
+     openssl: https://github.com/guardianproject/openssl-android
+
+   o  libssl, libcrypto (OpenSSL) are compiled as a shared libraries, but it could be possible to use Android's included OpenSSL.
+      Unfortunatly every Android version has a different version of OpenSSL bundled and those versions are possibly crippled or deprecated.
+      We can not include the headers of the included OpenSSL with LDLIBS as it is not part of the stable API and thus not part of the official Android NDK.
+
+   o Androgenizer currently throws away -version-info but not -release, which result in an error, thus we omit libibrcommon_la_LDFLAGS for Android.mk
+
+   o Subdirs are compiled as whole static libraries included in the main static library, they are defined as LOCAL_WHOLE_STATIC_LIBRARIES
+     to include all functions even when they are not used.
+     Because ibrcommon and ibrdtn share subdirs named the same (e.g. data), we have to prefix those subdir static libs
+     to avoid conflicts when compiling with ndk-build
+
+   o Changes to C++ sources:
+     ibrcommon/ibrcommon/data/File.cpp
+     ibrcommon/ibrcommon/thread/Thread.cpp
+     (pthread_attr_setinheritsched not implemented in Android, see https://groups.google.com/forum/?fromgroups=#!topic/android-porting/--xz_KlGZXk
+      PAGE_SIZE not defined in Android: http://stackoverflow.com/questions/11444169/error-while-compiling-boost-in-android)
+
+
+Resolve stacktraces
+-------------------
+
+   o Symbols are stripped from the compiled binaries, but available under obj/local/armearbi.
+
+   o Android's ndk_stack tool can be used to resolve stack traces logged to logcat by invoking:
+     "adb logcat | $ANDROID_NDK/ndk-stack -sym $PROJECT_DIR/android/ibrdtn/obj/local/armeabi/"
+
+
+Debugging with GDB
+------------------
+
+   o Before compiling set debuggable=true in AndroidManifest.xml
+
+   o To start GDB go to ibrdtn project directory and execute "$ANDROID_NDK/ndk-gdb --launch=de.tubs.ibr.dtn.daemon.Preferences --start --force"
+
+   o See $ANDROID_NDK/docs/NDK-GDB.html for more information
+
+

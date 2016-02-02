@@ -33,8 +33,8 @@ routing_SOURCES = \
 	SchedulingBundleIndex.h \
 	SchedulingBundleIndex.cpp
 
-AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS)
-AM_LDFLAGS = $(ibrdtn_LIBS)
+AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS) $(GCOV_CFLAGS)
+AM_LDFLAGS = $(ibrdtn_LIBS) $(GCOV_LIBS)
 
 librouting_la_LIBADD = flooding/librtflooding.la epidemic/librtepidemic.la prophet/librtprophet.la
 

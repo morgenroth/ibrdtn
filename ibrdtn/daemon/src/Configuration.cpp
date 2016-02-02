@@ -93,7 +93,7 @@ namespace dtn
 		 : _quiet(false), _options(0), _timestamps(false), _verbose(false) {}
 
 		Configuration::Network::Network()
-		 : _routing("default"), _forwarding(true), _prefer_direct(true), _tcp_nodelay(true), _tcp_chunksize(4096), _tcp_idle_timeout(0), _keepalive_timeout(60), _default_net("lo"), _use_default_net(false), _auto_connect(0), _fragmentation(false), _scheduling(false), _link_request_interval(5000)
+		 : _routing("default"), _forwarding(true), _accept_nonsingleton(true), _prefer_direct(true), _tcp_nodelay(true), _tcp_chunksize(4096), _tcp_idle_timeout(0), _keepalive_timeout(60), _default_net("lo"), _use_default_net(false), _auto_connect(0), _fragmentation(false), _scheduling(false), _managed_connectivity(false), _link_request_interval(5000)
 		{}
 
 		Configuration::Security::Security()
@@ -704,7 +704,7 @@ namespace dtn
 			{
 				const dtn::data::EID node_eid( conf.read<std::string>(prefix + "uri", "dtn:none") );
 
-				// create a address URI
+				// create an address URI
 				std::stringstream ss;
 				ss << "ip=" << conf.read<std::string>(prefix + "address", "127.0.0.1") << ";port=" << conf.read<unsigned int>(prefix + "port", 4556) << ";";
 
@@ -792,15 +792,17 @@ namespace dtn
 				_prophet_config.i_typ = conf.read<ibrcommon::Timer::time_t>("prophet_i_typ", 300);
 				if(_prophet_config.i_typ < 1)
 					_prophet_config.i_typ = 1;
-				_prophet_config.next_exchange_timeout = conf.read<ibrcommon::Timer::time_t>("prophet_next_exchange_timeout", 120);
+				_prophet_config.next_exchange_timeout = conf.read<ibrcommon::Timer::time_t>("prophet_next_exchange_timeout", 600);
 				_prophet_config.forwarding_strategy = conf.read<std::string>("prophet_forwarding_strategy", "GRTR");
 				_prophet_config.gtmx_nf_max = conf.read<unsigned int>("prophet_gtmx_nf_max", 30);
+				_prophet_config.push_notification = (conf.read<std::string>("prophet_push_notification", "no") == "yes");
 			}
 
 			/**
-			 * get the routing extension
+			 * get the routing parameters
 			 */
 			_forwarding = (conf.read<std::string>("routing_forwarding", "yes") == "yes");
+			_accept_nonsingleton = (conf.read<std::string>("routing_accept_nonsingleton", "yes") == "yes");
 
 			/**
 			 * prefer direct routes
@@ -998,6 +1000,11 @@ namespace dtn
 		bool Configuration::Network::doForwarding() const
 		{
 			return _forwarding;
+		}
+
+		bool Configuration::Network::doAcceptNonSingleton() const
+		{
+			return _accept_nonsingleton;
 		}
 
 		bool Configuration::Network::doPreferDirect() const

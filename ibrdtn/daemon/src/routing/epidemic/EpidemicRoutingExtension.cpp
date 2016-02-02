@@ -78,8 +78,20 @@ namespace dtn
 			_taskqueue.push( new SearchNextBundleTask( peer ) );
 		}
 
+		void EpidemicRoutingExtension::eventTransferSlotChanged(const dtn::data::EID &peer) throw ()
+		{
+			ibrcommon::MutexLock pending_lock(_pending_mutex);
+			if (_pending_peers.find(peer) != _pending_peers.end()) {
+				_pending_peers.erase(peer);
+				eventDataChanged(peer);
+			}
+		}
+
 		void EpidemicRoutingExtension::eventBundleQueued(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ()
 		{
+			// ignore the bundle if the scope is limited to local delivery
+			if ((meta.hopcount <= 1) && (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))) return;
+
 			// new bundles trigger a recheck for all neighbors
 			const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
 
@@ -185,6 +197,26 @@ namespace dtn
 						return false;
 					}
 
+					// request limits from neighbor database
+					try {
+						const RoutingLimitations &limits = _entry.getDataset<RoutingLimitations>();
+
+						if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+						{
+							// check if the peer accepts bundles for other nodes
+							if (limits.getLimit(RoutingLimitations::LIMIT_LOCAL_ONLY) > 0) return false;
+						}
+						else
+						{
+							// check if destination permits non-singleton bundles
+							if (limits.getLimit(RoutingLimitations::LIMIT_SINGLETON_ONLY) > 0) return false;
+						}
+
+						// check if the payload is too large for the neighbor
+						if ((limits.getLimit(RoutingLimitations::LIMIT_FOREIGN_BLOCKSIZE) > 0) &&
+							((size_t)limits.getLimit(RoutingLimitations::LIMIT_FOREIGN_BLOCKSIZE) < meta.getPayloadLength())) return false;
+					} catch (const NeighborDatabase::DatasetNotAvailableException&) { }
+
 					// if this is a singleton bundle ...
 					if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
 					{
@@ -275,7 +307,7 @@ namespace dtn
 
 								// check if enough transfer slots available (threshold reached)
 								if (!entry.isTransferThresholdReached())
-									throw NeighborDatabase::NoMoreTransfersAvailable();
+									throw NeighborDatabase::NoMoreTransfersAvailable(task.eid);
 
 								if (dtn::daemon::Configuration::getInstance().getNetwork().doPreferDirect()) {
 									// get current neighbor list
@@ -316,6 +348,10 @@ namespace dtn
 								} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 							}
 						} catch (const NeighborDatabase::NoMoreTransfersAvailable &ex) {
+							// remember that this peer has pending transfers
+							ibrcommon::MutexLock pending_lock(_pending_mutex);
+							_pending_peers.insert(ex.peer);
+
 							IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 						} catch (const NeighborDatabase::EntryNotFoundException &ex) {
 							IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;

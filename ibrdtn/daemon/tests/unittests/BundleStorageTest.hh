@@ -44,6 +44,7 @@ class BundleStorageTest : public CppUnit::TestFixture {
 		void testSelector(dtn::storage::BundleStorage &storage);
 		void testRemoveBloomfilter(dtn::storage::BundleStorage &storage);
 		void testDoubleStore(dtn::storage::BundleStorage &storage);
+		void testGet(dtn::storage::BundleStorage &storage);
 		void testFaultyGet(dtn::storage::BundleStorage &storage);
 		void testFaultyStore(dtn::storage::BundleStorage &storage);
 		void testQueryBloomFilter(dtn::storage::BundleStorage &storage);
@@ -78,6 +79,7 @@ class BundleStorageTest : public CppUnit::TestFixture {
 		void testDistinctDestinations();
 		void testSelector();
 		void testDoubleStore();
+		void testGet();
 		void testFaultyGet();
 		void testFaultyStore();
 		void testQueryBloomFilter();
@@ -113,6 +115,7 @@ class BundleStorageTest : public CppUnit::TestFixture {
 		CPPUNIT_TEST_ALL_STORAGES(testDistinctDestinations);
 		CPPUNIT_TEST_ALL_STORAGES(testSelector);
 		CPPUNIT_TEST_ALL_STORAGES(testDoubleStore);
+		CPPUNIT_TEST_ALL_STORAGES(testGet);
 		CPPUNIT_TEST_ALL_STORAGES(testFaultyGet);
 		CPPUNIT_TEST_ALL_STORAGES(testFaultyStore);
 		CPPUNIT_TEST_ALL_STORAGES(testQueryBloomFilter);

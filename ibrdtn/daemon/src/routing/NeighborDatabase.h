@@ -66,8 +66,9 @@ namespace dtn
 			class NoMoreTransfersAvailable : public ibrcommon::Exception
 			{
 			public:
-				NoMoreTransfersAvailable() : ibrcommon::Exception("No more transfers allowed.") { };
+				NoMoreTransfersAvailable(const dtn::data::EID &p) : ibrcommon::Exception("No more transfers allowed."), peer(p) { };
 				virtual ~NoMoreTransfersAvailable() throw () { };
+				const dtn::data::EID peer;
 			};
 
 			class AlreadyInTransitException : public ibrcommon::Exception

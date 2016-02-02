@@ -59,6 +59,7 @@ class ConfigurationTest : public CppUnit::TestFixture {
 		void testGetStaticRoutes();
 		void testGetRoutingExtension();
 		void testDoForwarding();
+		void testDoAcceptNonsingleton();
 		void testGetTCPOptionNoDelay();
 		void testGetTCPChunkSize();
 		/*=== END   tests for class 'Network' ===*/
@@ -101,6 +102,7 @@ class ConfigurationTest : public CppUnit::TestFixture {
 			CPPUNIT_TEST(testGetStaticRoutes);
 			CPPUNIT_TEST(testGetRoutingExtension);
 			CPPUNIT_TEST(testDoForwarding);
+			CPPUNIT_TEST(testDoAcceptNonsingleton);
 			CPPUNIT_TEST(testGetTCPOptionNoDelay);
 			CPPUNIT_TEST(testGetTCPChunkSize);
 			CPPUNIT_TEST(testGetDiscovery);

@@ -62,6 +62,8 @@ namespace dtn
 		{
 			// remove the bundleid in our list
 			RetransmissionData data(meta, peer);
+
+			ibrcommon::MutexLock l(_mutex);
 			_set.erase(data);
 		}
 
@@ -106,6 +108,8 @@ namespace dtn
 		{
 			// remove the bundleid in our list
 			RetransmissionData data(aborted.getBundleID(), aborted.getPeer());
+
+			ibrcommon::MutexLock l(_mutex);
 			_set.erase(data);
 		}
 

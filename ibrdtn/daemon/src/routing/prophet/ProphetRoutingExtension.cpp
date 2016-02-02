@@ -26,6 +26,7 @@
 #include "core/EventDispatcher.h"
 
 #include <algorithm>
+#include <set>
 #include <memory>
 #include <fstream>
 
@@ -46,11 +47,11 @@ namespace dtn
 
 		ProphetRoutingExtension::ProphetRoutingExtension(ForwardingStrategy *strategy, float p_encounter_max, float p_encounter_first, float p_first_threshold,
 								 float beta, float gamma, float delta, ibrcommon::Timer::time_t time_unit, ibrcommon::Timer::time_t i_typ,
-								 dtn::data::Timestamp next_exchange_timeout)
+								 dtn::data::Timestamp next_exchange_timeout, bool push_notification)
 			: _deliveryPredictabilityMap(time_unit, beta, gamma),
 			  _forwardingStrategy(strategy), _next_exchange_timeout(next_exchange_timeout), _next_exchange_timestamp(0),
 			  _p_encounter_max(p_encounter_max), _p_encounter_first(p_encounter_first),
-			  _p_first_threshold(p_first_threshold), _delta(delta), _i_typ(i_typ)
+			  _p_first_threshold(p_first_threshold), _delta(delta), _i_typ(i_typ), _push_notification(push_notification)
 		{
 			// assign myself to the forwarding strategy
 			strategy->setProphetRouter(this);
@@ -211,6 +212,15 @@ namespace dtn
 			_taskqueue.push( new SearchNextBundleTask( peer ) );
 		}
 
+		void ProphetRoutingExtension::eventTransferSlotChanged(const dtn::data::EID &peer) throw ()
+		{
+			ibrcommon::MutexLock pending_lock(_pending_mutex);
+			if (_pending_peers.find(peer) != _pending_peers.end()) {
+				_pending_peers.erase(peer);
+				eventDataChanged(peer);
+			}
+		}
+
 		void ProphetRoutingExtension::eventTransferCompleted(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ()
 		{
 			// add forwarded entry to GTMX strategy
@@ -222,6 +232,9 @@ namespace dtn
 
 		void ProphetRoutingExtension::eventBundleQueued(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ()
 		{
+			// ignore the bundle if the scope is limited to local delivery
+			if ((meta.hopcount <= 1) && (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))) return;
+
 			// new bundles trigger a recheck for all neighbors
 			const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
 
@@ -387,6 +400,26 @@ namespace dtn
 						return false;
 					}
 
+					// request limits from neighbor database
+					try {
+						const RoutingLimitations &limits = _entry.getDataset<RoutingLimitations>();
+
+						if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+						{
+							// check if the peer accepts bundles for other nodes
+							if (limits.getLimit(RoutingLimitations::LIMIT_LOCAL_ONLY) > 0) return false;
+						}
+						else
+						{
+							// check if destination permits non-singleton bundles
+							if (limits.getLimit(RoutingLimitations::LIMIT_SINGLETON_ONLY) > 0) return false;
+						}
+
+						// check if the payload is too large for the neighbor
+						if ((limits.getLimit(RoutingLimitations::LIMIT_FOREIGN_BLOCKSIZE) > 0) &&
+							((size_t)limits.getLimit(RoutingLimitations::LIMIT_FOREIGN_BLOCKSIZE) < meta.getPayloadLength())) return false;
+					} catch (const NeighborDatabase::DatasetNotAvailableException&) { }
+
 					// if this is a singleton bundle ...
 					if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
 					{
@@ -397,22 +430,10 @@ namespace dtn
 						{
 							return false;
 						}
-
-						// check if the neighbor data is up-to-date
-						if (!_entry.isFilterValid()) throw dtn::storage::BundleSelectorException();
 					}
-					else
-					{
-						// check if the neighbor data is up-to-date
-						if (!_entry.isFilterValid()) throw dtn::storage::BundleSelectorException();
 
-						// if this is a non-singleton, check if the peer knows a way to the source
-						try {
-							if (_dpm.get(meta.source.getNode()) <= 0.0) return false;
-						} catch (const dtn::routing::DeliveryPredictabilityMap::ValueNotFoundException&) {
-							return false;
-						}
-					}
+					// check if the neighbor data is up-to-date
+					if (!_entry.isFilterValid()) throw dtn::storage::BundleSelectorException();
 
 					// do not forward bundles already known by the destination
 					// throws BloomfilterNotAvailableException if no filter is available or it is expired
@@ -501,7 +522,7 @@ namespace dtn
 
 								// check if enough transfer slots available (threshold reached)
 								if (!entry.isTransferThresholdReached())
-									throw NeighborDatabase::NoMoreTransfersAvailable();
+									throw NeighborDatabase::NoMoreTransfersAvailable(task.eid);
 
 								// get the DeliveryPredictabilityMap of the potentially next hop
 								const DeliveryPredictabilityMap &dpm = entry.getDataset<DeliveryPredictabilityMap>();
@@ -548,6 +569,10 @@ namespace dtn
 								} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 							}
 						} catch (const NeighborDatabase::NoMoreTransfersAvailable &ex) {
+							// remember that this peer has pending transfers
+							ibrcommon::MutexLock pending_lock(_pending_mutex);
+							_pending_peers.insert(ex.peer);
+
 							IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 						} catch (const NeighborDatabase::EntryNotFoundException &ex) {
 							IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
@@ -617,14 +642,21 @@ namespace dtn
 
 		void ProphetRoutingExtension::updateNeighbor(const dtn::data::EID &neighbor, const DeliveryPredictabilityMap& neighbor_dp_map)
 		{
-			bool shouldPush = false;
+			// a set where all new endpoints are stored
+			std::set<dtn::data::EID> new_endpoints;
 
 			{
 				// update the encounter on every routing handshake
 				ibrcommon::MutexLock l(_deliveryPredictabilityMap);
 
-				// remember the size of the map before it is altered
-				const size_t numOfItems = _deliveryPredictabilityMap.size();
+				// temporary set for known endpoints
+				std::set<dtn::data::EID> known_endpoints;
+
+				if (_push_notification)
+				{
+					// copy all known endpoints to a temporary set
+					known_endpoints.insert(_deliveryPredictabilityMap.begin(), _deliveryPredictabilityMap.end());
+				}
 
 				// age the local predictability map
 				age();
@@ -654,11 +686,22 @@ namespace dtn
 				/* update the dp_map */
 				_deliveryPredictabilityMap.update(neighbor, neighbor_dp_map, _p_encounter_first);
 
-				// if the number of items has been increased by additional neighbors
-				shouldPush = numOfItems < _deliveryPredictabilityMap.size();
+				if (_push_notification)
+				{
+					// copy all known endpoints to a temporary set
+					const std::set<dtn::data::EID> updated_endpoints(_deliveryPredictabilityMap.begin(), _deliveryPredictabilityMap.end());
+
+					// determine the new endpoints
+					std::set_difference(
+							updated_endpoints.begin(), updated_endpoints.end(),
+							known_endpoints.begin(), known_endpoints.end(),
+							std::inserter(new_endpoints, new_endpoints.begin())
+					);
+				}
+
 			}
 
-			if (shouldPush)
+			if (new_endpoints.size() > 0)
 			{
 				// then push a notification to all neighbors
 				(**this).pushHandshakeUpdated(NodeHandshakeItem::DELIVERY_PREDICTABILITY_MAP);
@@ -813,6 +856,10 @@ namespace dtn
 
 		bool ProphetRoutingExtension::GRTR_Strategy::shallForward(const DeliveryPredictabilityMap& neighbor_dpm, const dtn::data::MetaBundle& bundle) const
 		{
+			if (!bundle.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON)) {
+				return isBackrouteValid(neighbor_dpm, bundle.source);
+			}
+
 			return neighborDPIsGreater(neighbor_dpm, bundle.destination);
 		}
 
@@ -838,6 +885,10 @@ namespace dtn
 
 		bool ProphetRoutingExtension::GTMX_Strategy::shallForward(const DeliveryPredictabilityMap& neighbor_dpm, const dtn::data::MetaBundle& bundle) const
 		{
+			if (!bundle.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON)) {
+				return isBackrouteValid(neighbor_dpm, bundle.source);
+			}
+
 			unsigned int NF = 0;
 
 			nf_map::const_iterator nf_it = _NF_map.find(bundle);

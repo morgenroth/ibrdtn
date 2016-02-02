@@ -11,6 +11,13 @@
 #include <ibrcommon/Logger.h>
 #include <vector>
 
+#include <ibrcommon/ibrcommon.h>
+#ifdef IBRCOMMON_SUPPORT_SSL
+#include <ibrcommon/ssl/MD5Stream.h>
+#endif
+
+#include <string.h>
+
 namespace dtn
 {
 	namespace routing
@@ -313,6 +320,35 @@ namespace dtn
 
 				num_entries--;
 			}
+		}
+
+		unsigned int DeliveryPredictabilityMap::hashCode() const
+		{
+			unsigned int hashCode = 0;
+
+#ifdef IBRCOMMON_SUPPORT_SSL
+			ibrcommon::MD5Stream stream;
+			for (predictmap::const_iterator it = _predictmap.begin(); it != _predictmap.end(); ++it) {
+				stream << (*it).first.getString();
+			}
+			std::string hash;
+			stream >> hash;
+
+			::memcpy(&hashCode, hash.c_str(), sizeof(unsigned int));
+#else
+			hashCode = _predictmap.size();
+#endif
+			return hashCode;
+		}
+
+		DeliveryPredictabilityMap::const_iterator DeliveryPredictabilityMap::begin() const
+		{
+			return _predictmap.begin();
+		}
+
+		DeliveryPredictabilityMap::const_iterator DeliveryPredictabilityMap::end() const
+		{
+			return _predictmap.end();
 		}
 	} /* namespace routing */
 } /* namespace dtn */

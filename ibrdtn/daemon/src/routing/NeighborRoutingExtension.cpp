@@ -144,7 +144,7 @@ namespace dtn
 
 							// check if enough transfer slots available (threshold reached)
 							if (!entry.isTransferThresholdReached())
-								throw NeighborDatabase::NoMoreTransfersAvailable();
+								throw NeighborDatabase::NoMoreTransfersAvailable(task.eid);
 
 							// get a list of protocols supported by both, the local BPA and the remote peer
 							const dtn::net::ConnectionManager::protocol_list plist =
@@ -243,6 +243,18 @@ namespace dtn
 				{
 					return make_pair(false, dtn::core::Node::CONN_UNDEFINED);
 				}
+
+				// request limits from neighbor database
+				try {
+					const RoutingLimitations &limits = n.getDataset<RoutingLimitations>();
+
+					// check if the payload is too large for the neighbor
+					if ((limits.getLimit(RoutingLimitations::LIMIT_BLOCKSIZE) > 0) &&
+						((size_t)limits.getLimit(RoutingLimitations::LIMIT_BLOCKSIZE) < meta.getPayloadLength()))
+					{
+						return make_pair(false, dtn::core::Node::CONN_UNDEFINED);
+					}
+				} catch (const NeighborDatabase::DatasetNotAvailableException&) { }
 			}
 			else
 			{

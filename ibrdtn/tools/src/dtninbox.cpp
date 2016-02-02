@@ -98,6 +98,10 @@ void read_configuration(int argc, char** argv)
 		case 'w':
 			_conf_workdir = std::string(optarg);
 			break;
+			// Added case 'q':
+		case 'q':
+			_conf_quiet = true;
+			break;
 		default:
 			abort();
 			break;

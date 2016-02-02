@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <PreferenceCategory android:key="prefcat_system" android:title="@string/pref_system" >
+        <CheckBoxPreference
+            android:order="-10"
+            android:defaultValue="false"
+            android:key="debugging"
+            android:summary="@string/pref_debugging"
+            android:title="@string/pref_debugging_desc" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

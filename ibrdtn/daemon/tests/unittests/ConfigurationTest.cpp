@@ -254,6 +254,13 @@ void ConfigurationTest::testDoForwarding()
 	CPPUNIT_ASSERT_EQUAL(true, conf.getNetwork().doForwarding());
 }
 
+void ConfigurationTest::testDoAcceptNonsingleton()
+{
+	/* test signature () const */
+	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	CPPUNIT_ASSERT_EQUAL(true, conf.getNetwork().doAcceptNonSingleton());
+}
+
 void ConfigurationTest::testGetTCPOptionNoDelay()
 {
 	/* test signature () const */

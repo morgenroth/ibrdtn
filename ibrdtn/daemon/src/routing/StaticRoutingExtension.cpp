@@ -107,6 +107,26 @@ namespace dtn
 						return false;
 					}
 
+					// request limits from neighbor database
+					try {
+						const RoutingLimitations &limits = _entry.getDataset<RoutingLimitations>();
+
+						if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+						{
+							// check if the peer accepts bundles for other nodes
+							if (limits.getLimit(RoutingLimitations::LIMIT_LOCAL_ONLY) > 0) return false;
+						}
+						else
+						{
+							// check if destination permits non-singleton bundles
+							if (limits.getLimit(RoutingLimitations::LIMIT_SINGLETON_ONLY) > 0) return false;
+						}
+
+						// check if the payload is too large for the neighbor
+						if ((limits.getLimit(RoutingLimitations::LIMIT_FOREIGN_BLOCKSIZE) > 0) &&
+							((size_t)limits.getLimit(RoutingLimitations::LIMIT_FOREIGN_BLOCKSIZE) < meta.getPayloadLength())) return false;
+					} catch (const NeighborDatabase::DatasetNotAvailableException&) { }
+
 					// do not forward bundles already known by the destination
 					if (_entry.has(meta))
 					{
@@ -208,7 +228,7 @@ namespace dtn
 
 								// check if enough transfer slots available (threshold reached)
 								if (!entry.isTransferThresholdReached())
-									throw NeighborDatabase::NoMoreTransfersAvailable();
+									throw NeighborDatabase::NoMoreTransfersAvailable(task.eid);
 
 								// get a list of protocols supported by both, the local BPA and the remote peer
 								const dtn::net::ConnectionManager::protocol_list plist =

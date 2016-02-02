@@ -45,12 +45,10 @@ GENERIC_LIBRARY_VERSION=PKG_LIB_VERSION
 # define the library name
 GENERIC_LIBRARY_NAME=$PACKAGE_NAME
 GENERIC_VERSION=$PACKAGE_VERSION
-GENERIC_RELEASE=PKG_MAJOR_VERSION.PKG_MINOR_VERSION
 
 AC_SUBST(GENERIC_API_VERSION)
 AC_SUBST(GENERIC_LIBRARY_VERSION)
 AC_SUBST(GENERIC_LIBRARY_NAME)
-AC_SUBST(GENERIC_RELEASE)
 AC_SUBST(GENERIC_VERSION)
 
 dnl -----------------------------------------------
@@ -201,9 +199,8 @@ ANDROID_AC_BUILD([
 		if test "x$CLANG" = xyes; then
 			AC_MSG_WARN([Code coverage is only supported in combination with GCC.])
 		else
-			CPPFLAGS="${CPPFLAGS} -fprofile-arcs -ftest-coverage -fPIC -O0"
-			CFLAGS="${CFLAGS} -fprofile-arcs -ftest-coverage -fPIC -O0"
-			LIBS="${LIBS} -lgcov"
+			AC_SUBST(GCOV_CFLAGS, "-fprofile-arcs -ftest-coverage -fPIC -O0")
+			AC_SUBST(GCOV_LIBS, "-lgcov")
 		fi
 	])
 
