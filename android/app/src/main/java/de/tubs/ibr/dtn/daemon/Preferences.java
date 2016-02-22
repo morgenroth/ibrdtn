@@ -29,7 +29,8 @@ import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Calendar;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 import java.util.HashSet;
 import java.util.Map;
 
@@ -701,11 +702,9 @@ public class Preferences extends PreferenceActivity {
 					File logPath = DaemonStorageUtils.getLogPath(Preferences.this);
 					if (logPath != null) {
 						logPath.mkdirs();
-						Calendar cal = Calendar.getInstance();
-						String time = "" + cal.get(Calendar.YEAR) + cal.get(Calendar.MONTH)
-								+ cal.get(Calendar.DAY_OF_MONTH) + cal.get(Calendar.DAY_OF_MONTH)
-								+ cal.get(Calendar.HOUR) + cal.get(Calendar.MINUTE)
-								+ cal.get(Calendar.SECOND);
+						Date now = new Date();
+						SimpleDateFormat df = new SimpleDateFormat("yyyyMMddhhmmss");
+						String time = df.format(now);
 
 						logFilePath = logPath.getPath() + File.separatorChar + "ibrdtn_" + time
 								+ ".log";
