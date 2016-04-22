@@ -14,9 +14,7 @@ a specific class.
 
 ## Links ##
 
- * [Trac](http://trac.ibr.cs.tu-bs.de/project-cm-2012-ibrdtn)
- * [Installation instructions](http://trac.ibr.cs.tu-bs.de/project-cm-2012-ibrdtn/wiki/download)
- * [Documentation](http://trac.ibr.cs.tu-bs.de/project-cm-2012-ibrdtn/wiki/docs)
+ * [Installation Instructions and Documentation](https://github.com/ibrdtn/ibrdtn/wiki)
 
 ## Features ##
 
