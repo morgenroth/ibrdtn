@@ -389,10 +389,7 @@ namespace dtn
 			switch (_scheme_type) {
 			case SCHEME_CBHE:
 				ss << getSchemeName(SCHEME_CBHE) << ":" << _cbhe_node.get<size_t>();
-
-				if (_cbhe_application > 0) {
-					ss << "." << _cbhe_application.get<size_t>();
-				}
+				ss << "." << _cbhe_application.get<size_t>();
 				break;
 
 			case SCHEME_DTN:
@@ -530,10 +527,7 @@ namespace dtn
 			{
 				std::stringstream ss;
 				ss << _cbhe_node.get<size_t>();
-
-				if (_cbhe_application > 0) {
-					ss << "." << _cbhe_application.get<size_t>();
-				}
+				ss << "." << _cbhe_application.get<size_t>();
 
 				return ss.str();
 			}
