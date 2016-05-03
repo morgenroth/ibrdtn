@@ -45,12 +45,12 @@ void TestEID::testCBHEwithApplication(void)
 
 void TestEID::testCBHEwithoutApplication(void)
 {
-	dtn::data::EID a("ipn:12");
+	dtn::data::EID a("ipn:12.0");
 
 	CPPUNIT_ASSERT(a.isCompressable());
 	CPPUNIT_ASSERT_EQUAL((size_t)12, a.getCompressed().first.get<size_t>());
 	CPPUNIT_ASSERT_EQUAL((size_t)0, a.getCompressed().second.get<size_t>());
-	CPPUNIT_ASSERT_EQUAL(std::string("ipn:12"), a.getString());
+	CPPUNIT_ASSERT_EQUAL(std::string("ipn:12.0"), a.getString());
 }
 
 void TestEID::testCBHEConstructorNumbers(void)
@@ -60,7 +60,7 @@ void TestEID::testCBHEConstructorNumbers(void)
 	CPPUNIT_ASSERT(a.isCompressable());
 	CPPUNIT_ASSERT_EQUAL((size_t)12, a.getCompressed().first.get<size_t>());
 	CPPUNIT_ASSERT_EQUAL((size_t)0, a.getCompressed().second.get<size_t>());
-	CPPUNIT_ASSERT_EQUAL(std::string("ipn:12"), a.getString());
+	CPPUNIT_ASSERT_EQUAL(std::string("ipn:12.0"), a.getString());
 }
 
 void TestEID::testCBHEConstructorSchemeSsp(void)
@@ -85,5 +85,5 @@ void TestEID::testCBHEHost(void)
 {
 	dtn::data::EID a("ipn:12.34");
 	CPPUNIT_ASSERT_EQUAL(std::string("12"), a.getHost());
-	CPPUNIT_ASSERT_EQUAL(std::string("ipn:12"), a.getNode().getString());
+	CPPUNIT_ASSERT_EQUAL(std::string("ipn:12.0"), a.getNode().getString());
 }

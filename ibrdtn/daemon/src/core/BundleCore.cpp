@@ -143,7 +143,7 @@ namespace dtn
 		{
 			// set local eid
 			dtn::core::BundleCore::local = config.getNodename();
-			IBRCOMMON_LOGGER_TAG(BundleCore::TAG, info) << "Local node name: " << config.getNodename() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG(BundleCore::TAG, info) << "Local node name: " << dtn::core::BundleCore::local.getString() << IBRCOMMON_LOGGER_ENDL;
 
 			// set block size limit
 			dtn::core::BundleCore::blocksizelimit = config.getLimit("blocksize");
