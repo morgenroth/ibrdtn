@@ -529,7 +529,7 @@ namespace dtn
 							dtn::api::Registration::processIncomingBundle(_endpoint, _bundle_reg);
 
 							ibrcommon::MutexLock l(_write_lock);
-							_stream << ClientHandler::API_STATUS_OK << " BUNDLE SENT" << std::endl;
+							_stream << ClientHandler::API_STATUS_OK << " BUNDLE SENT "; sayBundleID(_stream, _bundle_reg); _stream << std::endl;
 						}
 						else if (cmd[1] == "info")
 						{
