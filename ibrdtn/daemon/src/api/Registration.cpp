@@ -391,6 +391,11 @@ namespace dtn
 				// add endpoint to the local set
 				std::pair<std::set<dtn::data::EID>::iterator, bool> i = _endpoints.insert(endpoint);
 
+				// check if the endpoint is non-singleton
+				if (endpoint.getNode() != dtn::core::BundleCore::local) {
+					// TODO: register at multicast routing
+				}
+
 				// prepare endpoint for regex matching
 				try {
 					if (i.second) const_cast<dtn::data::EID&>(*i.first).prepare();
@@ -403,6 +408,11 @@ namespace dtn
 
 		void Registration::unsubscribe(const dtn::data::EID &endpoint)
 		{
+			// check if the endpoint is non-singleton
+			if (endpoint.getNode() != dtn::core::BundleCore::local) {
+				// TODO: unregister at multicast routing
+			}
+
 			ibrcommon::MutexLock l(_endpoints_lock);
 			_endpoints.erase(endpoint);
 		}
