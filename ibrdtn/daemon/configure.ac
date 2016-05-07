@@ -424,6 +424,7 @@ AC_CONFIG_FILES([Makefile \
 	src/routing/epidemic/Makefile \
 	src/routing/flooding/Makefile \
 	src/routing/prophet/Makefile \
+	src/routing/multicast/Makefile \
 	src/security/Makefile \
 	src/security/exchange/Makefile \
 	src/api/Makefile \

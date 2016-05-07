@@ -358,7 +358,7 @@ namespace dtn
 			return ibrcommon::ThreadsafeReference<const AcknowledgementSet>(_acknowledgementSet, const_cast<AcknowledgementSet&>(_acknowledgementSet));
 		}
 
-		void ProphetRoutingExtension::ProphetRoutingExtension::run() throw ()
+		void ProphetRoutingExtension::run() throw ()
 		{
 			class BundleFilter : public dtn::storage::BundleSelector
 			{

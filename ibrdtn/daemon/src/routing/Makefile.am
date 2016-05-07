@@ -1,5 +1,5 @@
 ## sub directory
-SUBDIRS = epidemic flooding prophet
+SUBDIRS = epidemic flooding prophet multicast
 
 routing_SOURCES = \
 	RoutingExtension.h \
@@ -36,7 +36,7 @@ routing_SOURCES = \
 AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS) $(GCOV_CFLAGS)
 AM_LDFLAGS = $(ibrdtn_LIBS) $(GCOV_LIBS)
 
-librouting_la_LIBADD = flooding/librtflooding.la epidemic/librtepidemic.la prophet/librtprophet.la
+librouting_la_LIBADD = flooding/librtflooding.la epidemic/librtepidemic.la prophet/librtprophet.la multicast/librtmulticast.la
 
 if REGEX
 routing_SOURCES += StaticRegexRoute.h StaticRegexRoute.cpp
@@ -58,6 +58,6 @@ Android.mk: Makefile.am
 		-:CPPFLAGS $(CPPFLAGS) $(AM_CPPFLAGS) \
 		-:LDFLAGS $(AM_LDFLAGS) \
 			$(subst lib,libdtnd_, $(librouting_la_LIBADD)) \
-		-:LIBFILTER_WHOLE dtnd_rtflooding dtnd_rtepidemic dtnd_rtprophet \
+		-:LIBFILTER_WHOLE dtnd_rtflooding dtnd_rtepidemic dtnd_rtprophet dtnd_rtmulticast \
 		-:SUBDIR $(patsubst %,src/routing/%, $(SUBDIRS)) \
 		> $@
