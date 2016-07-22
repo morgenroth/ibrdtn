@@ -176,7 +176,7 @@ namespace dtn
 						IBRCOMMON_LOGGER_DEBUG_TAG("ApiServer", 5) << "new connected client at the extended API server" << IBRCOMMON_LOGGER_ENDL;
 
 						// send welcome banner
-						(*conn) << "IBR-DTN " << dtn::daemon::Configuration::getInstance().version() << " API 1.0" << std::endl;
+						(*conn) << "IBR-DTN " << dtn::daemon::Configuration::getInstance().version() << " API 1.0.1" << std::endl;
 
 						// the new client object will be hold here
 						ClientHandler *obj = NULL;
