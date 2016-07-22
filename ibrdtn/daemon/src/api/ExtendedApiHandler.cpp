@@ -357,6 +357,52 @@ namespace dtn
 							}
 							_stream << std::endl;
 						}
+						else if(cmd[1]=="protocols")
+						{
+							ibrcommon::MutexLock l(_write_lock);
+							const std::set<dtn::core::Node> nlist = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
+
+							_stream << ClientHandler::API_STATUS_OK << " NEIGHBOR PROTOCOLS" << std::endl;
+							for (std::set<dtn::core::Node>::const_iterator iter = nlist.begin(); iter != nlist.end(); ++iter)
+							{
+								_stream << (*iter).getEID().getString();
+								_stream << ":";
+								std::list<Node::URI> urilist = (*iter).getAll();
+								// Store found protocols in list
+								std::set<std::string> foundProtocols;
+								for(std::list<Node::URI>::const_iterator uriIter = urilist.begin(); uriIter != urilist.end(); ++uriIter)
+								{
+									// Get protocol name
+									std::string protocol = Node::toString((*uriIter).protocol);
+									// Check if protocol is already known
+									if(foundProtocols.find(protocol) == foundProtocols.end())
+									{
+										_stream << " " << protocol;
+										foundProtocols.insert(protocol);
+									}
+								}
+								_stream << std::endl;
+							}
+							_stream << std::endl;
+						}
+						else if(cmd[1]=="connections")
+						{
+							ibrcommon::MutexLock l(_write_lock);
+							const std::set<dtn::core::Node> nlist = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
+
+							_stream << ClientHandler::API_STATUS_OK << " NEIGHBOR CONNECTIONS" << std::endl;
+							for (std::set<dtn::core::Node>::const_iterator iter = nlist.begin(); iter != nlist.end(); ++iter)
+							{
+								_stream << (*iter).getEID().getString() << ":";
+								std::list<Node::URI> urilist = (*iter).getAll();
+								for(std::list<Node::URI>::const_iterator uriIter = urilist.begin(); uriIter != urilist.end(); ++uriIter)
+								{
+									_stream << " " << (*uriIter);
+								}
+								_stream << std::endl;
+							}
+							_stream << std::endl;
+						}
 						else
 						{
 							ibrcommon::MutexLock l(_write_lock);
