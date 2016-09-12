@@ -293,6 +293,25 @@ namespace dtn
 			}
 		}
 
+		EID::EID(const EID &other)
+		{
+			_scheme_type = other._scheme_type;
+			_scheme = other._scheme;
+			_ssp = other._ssp;
+
+			_application = other._application;
+
+			_cbhe_node = other._cbhe_node;
+			_cbhe_application = other._cbhe_application;
+
+			_regex = NULL;
+
+			if(other._regex != NULL)
+			{
+				prepare();
+			}
+		}
+
 		EID::~EID()
 		{
 #ifdef HAVE_REGEX_H
