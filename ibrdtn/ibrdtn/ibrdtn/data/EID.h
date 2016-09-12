@@ -66,6 +66,8 @@ namespace dtn
 			 */
 			EID(const dtn::data::Number &node, const dtn::data::Number &application);
 
+			EID(const EID &other);
+
 			virtual ~EID();
 
 			bool operator==(const EID &other) const;
