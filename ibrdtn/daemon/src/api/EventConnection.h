@@ -28,6 +28,8 @@
 #include "core/NodeEvent.h"
 #include "core/GlobalEvent.h"
 #include "core/CustodyEvent.h"
+#include "core/BundlePurgeEvent.h"
+#include "core/BundleExpiredEvent.h"
 #include "net/TransferAbortedEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "net/ConnectionEvent.h"
@@ -44,7 +46,9 @@ namespace dtn
 			public dtn::core::EventReceiver<dtn::net::TransferAbortedEvent>,
 			public dtn::core::EventReceiver<dtn::net::TransferCompletedEvent>,
 			public dtn::core::EventReceiver<dtn::net::ConnectionEvent>,
-			public dtn::core::EventReceiver<dtn::routing::QueueBundleEvent>
+			public dtn::core::EventReceiver<dtn::routing::QueueBundleEvent>,
+			public dtn::core::EventReceiver<dtn::core::BundlePurgeEvent>,
+			public dtn::core::EventReceiver<dtn::core::BundleExpiredEvent>
 		{
 		public:
 			EventConnection(ClientHandler &client, ibrcommon::socketstream &stream);
@@ -62,6 +66,8 @@ namespace dtn
 			void raiseEvent(const dtn::net::TransferCompletedEvent &evt) throw ();
 			void raiseEvent(const dtn::net::ConnectionEvent &evt) throw ();
 			void raiseEvent(const dtn::routing::QueueBundleEvent &evt) throw ();
+			void raiseEvent(const dtn::core::BundlePurgeEvent &evt) throw ();
+			void raiseEvent(const dtn::core::BundleExpiredEvent &evt) throw ();
 
 		private:
 			ibrcommon::Mutex _mutex;
