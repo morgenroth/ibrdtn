@@ -284,6 +284,55 @@ namespace dtn
 			_stream << std::endl;
 		}
 
+		void dtn::api::EventConnection::raiseEvent(const dtn::core::BundlePurgeEvent &purged) throw () {
+			ibrcommon::MutexLock l(_mutex);
+
+			// start with the event tag
+			_stream << "Event: " << purged.getName() << std::endl;
+
+			// write the bundle data
+			_stream << "Source: " << purged.bundle.source.getString() << std::endl;
+			_stream << "Timestamp: " << purged.bundle.timestamp.toString() << std::endl;
+			_stream << "Sequencenumber: " << purged.bundle.sequencenumber.toString() << std::endl;
+			_stream << "Lifetime: " << purged.bundle.lifetime.toString() << std::endl;
+			_stream << "Procflags: " << purged.bundle.procflags.toString() << std::endl;
+
+			// write the destination eid
+			_stream << "Destination: " << purged.bundle.destination.getString() << std::endl;
+
+			if (purged.bundle.isFragment())
+			{
+				// write fragmentation values
+				_stream << "Appdatalength: " << purged.bundle.appdatalength.toString() << std::endl;
+				_stream << "Fragmentoffset: " << purged.bundle.fragmentoffset.toString() << std::endl;
+			}
+
+			// close the event
+			_stream << std::endl;
+		}
+
+		void dtn::api::EventConnection::raiseEvent(const dtn::core::BundleExpiredEvent &expired) throw () {
+			ibrcommon::MutexLock l(_mutex);
+
+			// start with the event tag
+			_stream << "Event: " << expired.getName() << std::endl;
+
+			// write the bundle data
+			_stream << "Source: " << expired.getBundle().source.getString() << std::endl;
+			_stream << "Timestamp: " << expired.getBundle().timestamp.toString() << std::endl;
+			_stream << "Sequencenumber: " << expired.getBundle().sequencenumber.toString() << std::endl;
+
+			if (expired.getBundle().isFragment())
+			{
+				// write fragmentation values
+				_stream << "Payloadlength: " << expired.getBundle().getPayloadLength() << std::endl;
+				_stream << "Fragmentoffset: " << expired.getBundle().fragmentoffset.toString() << std::endl;
+			}
+
+			// close the event
+			_stream << std::endl;
+		}
+
 		void EventConnection::run()
 		{
 			std::string buffer;
@@ -321,6 +370,8 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::BundlePurgeEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::BundleExpiredEvent>::add(this);
 		}
 
 		void EventConnection::finally()
@@ -333,6 +384,8 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::core::BundlePurgeEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::core::BundleExpiredEvent>::remove(this);
 		}
 
 		void EventConnection::__cancellation() throw ()
