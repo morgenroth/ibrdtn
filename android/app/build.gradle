@@ -1,9 +1,14 @@
 apply plugin: 'android-sdk-manager'
 apply plugin: 'com.android.application'
 
+def ndkDir = null;
 Properties properties = new Properties()
-properties.load(project.rootProject.file('local.properties').newDataInputStream())
-def ndkDir = properties.getProperty('ndk.dir')
+try {
+    properties.load(project.rootProject.file('local.properties').newDataInputStream())
+    ndkDir = properties.getProperty('ndk.dir')
+} catch (IOException e) {}
+
+
 
 def createVersionName() {
     if (System.getenv().containsKey("BUILD_NUMBER")) {
