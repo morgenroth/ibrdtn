@@ -1,6 +1,10 @@
 apply plugin: 'android-sdk-manager'
 apply plugin: 'com.android.application'
 
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+def ndkDir = properties.getProperty('ndk.dir')
+
 def createVersionName() {
     if (System.getenv().containsKey("BUILD_NUMBER")) {
         if (System.getenv().containsKey("GIT_COMMIT")) {
@@ -52,7 +56,11 @@ if (android.signingConfigs.release.storeFile.exists()) {
 task ndkBuild(type: Exec) {
     executable "sh"
     workingDir "src/main/jni"
-    args "build.sh"
+    if (ndkDir != null) {
+        args "-c", "export PATH=${ndkDir}:\$PATH; ./build.sh"
+    } else {
+        args "build.sh"
+    }
 }
 preBuild.dependsOn ndkBuild
 
