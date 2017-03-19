@@ -149,7 +149,7 @@ namespace dtn
 						if (BundleCore::getInstance().filter(BundleFilter::INPUT, context, merged) == BundleFilter::ACCEPT)
 						{
 							// inject bundle into core
-							dtn::core::BundleCore::getInstance().inject(dtn::core::BundleCore::local, merged, true);
+							dtn::core::BundleCore::getInstance().inject(dtn::core::BundleCore::local, merged, false);
 						}
 
 						// delete all fragments of the merged bundle
