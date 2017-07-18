@@ -101,7 +101,8 @@ namespace dtn
 		{}
 
 		Configuration::Daemon::Daemon()
-		 : _daemonize(false), _kill(false), _threads(0)
+		 : _daemonize(false), _kill(false), _threads(0),
+		    _start_time(-1), _stop_time(-1), _seed(-1)
 		{}
 
 		Configuration::TimeSync::TimeSync()
@@ -237,10 +238,10 @@ namespace dtn
 				int option_index = 0;
 
 #ifdef HAVE_LIBDAEMON
-				c = getopt_long (argc, argv, "qhDkp:vi:c:d:t:",
+				c = getopt_long (argc, argv, "qhDkp:vi:c:d:t:b:e:s:",
 						long_options, &option_index);
 #else
-				c = getopt_long (argc, argv, "qhvi:c:d:t:",
+				c = getopt_long (argc, argv, "qhvi:c:d:t:b:e:s:",
 						long_options, &option_index);
 #endif
 
@@ -282,6 +283,9 @@ namespace dtn
 #ifdef __WIN32__
 					std::cout << " --interfaces    list all available interfaces" << std::endl;
 #endif
+					std::cout << " -b <time>       start time (EPOCH in ms)" << std::endl;
+					std::cout << " -e <time>       stop time (EPOCH in ms)" << std::endl;
+					std::cout << " -r <seed>       random seed (uint)" << std::endl;
 					exit(0);
 					break;
 
@@ -348,6 +352,18 @@ namespace dtn
 					break;
 				}
 #endif
+
+				case 'b': 
+				  _daemon._start_time = atol(optarg);
+				  break;
+				  
+				case 'e': 
+				  _daemon._stop_time = atol(optarg);
+				  break;
+
+				case 's': 
+				  _daemon._seed = atoi(optarg);
+				  break;
 
 				case '?':
 					/* getopt_long already printed an error message. */
@@ -619,6 +635,11 @@ namespace dtn
 		int Configuration::Discovery::port() const
 		{
 			return Configuration::getInstance()._conf.read<int>("discovery_port", 4551);
+		}
+
+		int Configuration::Discovery::localPort() const
+		{
+       		  return Configuration::getInstance()._conf.read<int>("discovery_local_port", port());
 		}
 
 		unsigned int Configuration::Discovery::interval() const
@@ -1325,6 +1346,21 @@ namespace dtn
 			return _pidfile;
 		}
 
+	        long Configuration::Daemon::start_time() const
+		{
+		  return _start_time;
+		}
+
+	        long Configuration::Daemon::stop_time() const
+		{
+		  return _stop_time;
+		}
+
+	        long Configuration::Daemon::seed() const
+		{
+		  return _seed;
+		}
+	  
 		bool Configuration::TimeSync::hasReference() const
 		{
 			return _reference;
