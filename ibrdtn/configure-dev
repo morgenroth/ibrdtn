@@ -1,0 +1,47 @@
+#!/bin/sh
+#
+
+set -e
+
+# by default cppunit framework is included for unit testing
+CONF_PARAMS="--with-cppunit"
+
+# include openssl library
+CONF_PARAMS="${CONF_PARAMS} --with-openssl"
+
+# include curl library
+CONF_PARAMS="${CONF_PARAMS} --with-curl"
+
+# include lowpan (IEEE 802.15.4) features
+CONF_PARAMS="${CONF_PARAMS} --with-lowpan"
+
+# include sqlite library
+CONF_PARAMS="${CONF_PARAMS} --with-sqlite"
+
+# include compression support (zlib)
+CONF_PARAMS="${CONF_PARAMS} --with-compression"
+
+# include xml support (ibrcommon only)
+CONF_PARAMS="${CONF_PARAMS} --with-xml"
+
+# include tls support using openssl
+CONF_PARAMS="${CONF_PARAMS} --with-tls"
+
+# include dtndht library
+CONF_PARAMS="${CONF_PARAMS} --with-dht"
+
+# include libtffs
+CONF_PARAMS="${CONF_PARAMS} --with-tffs=/usr"
+
+# enable debugging options
+CONF_PARAMS="${CONF_PARAMS} --enable-debug"
+
+# enable building of documentation
+CONF_PARAMS="${CONF_PARAMS} --enable-docs"
+
+# enable code coverage
+CONF_PARAMS="${CONF_PARAMS} --enable-gcov"
+
+# configure all packages
+./configure ${CONF_PARAMS} $@
+
