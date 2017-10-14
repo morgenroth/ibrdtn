@@ -39,7 +39,7 @@ namespace ibrcommon
 	const std::string vinterface::ANY = "any";
 
 	vinterface::vinterface()
-	 : _name()
+	 : _name(ANY)
 	{
 	}
 
@@ -61,7 +61,9 @@ namespace ibrcommon
 
 	const std::string vinterface::toString() const
 	{
-		if (_name.length() == 0) return "<any>";
+		if (_name.length() == 0) return "<undefined>";
+		if (isAny()) return "<any>";
+		if (isLoopback()) return "<loopback>";
 		return _name;
 	}
 
