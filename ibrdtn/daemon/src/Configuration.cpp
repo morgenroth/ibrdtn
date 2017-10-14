@@ -639,11 +639,7 @@ namespace dtn
 
 			try {
 				const std::string interface_name = _conf.read<std::string>("api_interface");
-
-				if (interface_name != "any")
-				{
-					nc.iface = ibrcommon::vinterface(interface_name);
-				}
+				nc.iface = ibrcommon::vinterface(interface_name);
 			} catch (const ConfigFile::key_not_found&) {
 				nc.iface = ibrcommon::vinterface(ibrcommon::vinterface::LOOPBACK);
 			}
@@ -880,7 +876,8 @@ namespace dtn
 							try {
 								nc.iface = ibrcommon::vinterface(conf.read<std::string>(key_interface));
 							} catch (const ConfigFile::key_not_found&) {
-								// no interface assigned
+								// no interface specfied - use ANY
+								nc.iface = ibrcommon::vinterface(ibrcommon::vinterface::ANY);
 							}
 
 							break;
@@ -892,6 +889,24 @@ namespace dtn
 				}
 			} catch (const ConfigFile::key_not_found&) {
 				// stop the one network is not found.
+			}
+
+			/**
+			 * Set ANY as default interface if no network is configured
+			 */
+			if (_interfaces.empty())
+			{
+				// create a new netconfig object
+				Configuration::NetConfig any("default", Configuration::NetConfig::NETWORK_TCP);
+
+				// create any interface object
+				any.iface = ibrcommon::vinterface(ibrcommon::vinterface::ANY);
+
+				// set default port
+				any.port = 4556;
+
+				// add to interfaces list
+				_interfaces.push_back( any );
 			}
 
 			/**
