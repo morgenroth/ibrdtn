@@ -72,13 +72,13 @@ namespace dtn
 
 		void IPNDAgent::bind(const ibrcommon::vinterface &net)
 		{
-			IBRCOMMON_LOGGER_TAG("DiscoveryAgent", info) << "add interface " << net.toString() << IBRCOMMON_LOGGER_ENDL;
-
 			// add the interface to the stored set
 			ibrcommon::MutexLock l(_interface_lock);
 
 			// only add the interface once
 			if (_interfaces.find(net) != _interfaces.end()) return;
+
+			IBRCOMMON_LOGGER_TAG("DiscoveryAgent", info) << "add interface " << net.toString() << IBRCOMMON_LOGGER_ENDL;
 
 			// store the new interface in the list of interfaces
 			_interfaces.insert(net);
