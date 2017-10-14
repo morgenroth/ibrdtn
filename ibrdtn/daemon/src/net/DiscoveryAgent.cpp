@@ -113,8 +113,7 @@ namespace dtn
 		void DiscoveryAgent::registerService(dtn::net::DiscoveryBeaconHandler *handler)
 		{
 			ibrcommon::MutexLock l(_provider_lock);
-			handler_list &list = _providers[_any_iface];
-			list.push_back(handler);
+			_default_providers.push_back(handler);
 		}
 
 		void DiscoveryAgent::unregisterService(const dtn::net::DiscoveryBeaconHandler *handler)
@@ -260,9 +259,6 @@ namespace dtn
 
 			ibrcommon::MutexLock l(_provider_lock);
 
-			// get list for ANY interface
-			const handler_list &any_list = _providers[_any_iface];
-
 			for (handler_map::const_iterator it_p = _providers.begin(); it_p != _providers.end(); ++it_p)
 			{
 				const ibrcommon::vinterface &iface = (*it_p).first;
@@ -285,22 +281,6 @@ namespace dtn
 
 						}
 					}
-
-					// add service information for ANY interface
-					if (iface != _any_iface)
-					{
-						for (handler_list::const_iterator iter = any_list.begin(); iter != any_list.end(); ++iter)
-						{
-							DiscoveryBeaconHandler &handler = (**iter);
-
-							try {
-								// update service information
-								handler.onUpdateBeacon(iface, beacon);
-							} catch (const dtn::net::DiscoveryBeaconHandler::NoServiceHereException&) {
-
-							}
-						}
-					}
 				}
 
 				// broadcast announcement
@@ -310,6 +290,22 @@ namespace dtn
 
 					// broadcast beacon
 					handler.onAdvertiseBeacon(iface, beacon);
+				}
+			}
+
+			if (!_config.shortbeacon())
+			{
+				const ibrcommon::vinterface any;
+				for (handler_list::const_iterator iter = _default_providers.begin(); iter != _default_providers.end(); ++iter)
+				{
+					DiscoveryBeaconHandler &handler = (**iter);
+
+					try {
+						// update service information
+						handler.onUpdateBeacon(any, beacon);
+					} catch (const dtn::net::DiscoveryBeaconHandler::NoServiceHereException&) {
+
+					}
 				}
 			}
 

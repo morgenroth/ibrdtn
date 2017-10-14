@@ -66,19 +66,19 @@ namespace dtn
 		}
 
 		void IPNDAgent::add(const ibrcommon::vaddress &address) {
-			IBRCOMMON_LOGGER_TAG("DiscoveryAgent", info) << "listen to " << address.toString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG(TAG, info) << "listen to " << address.toString() << IBRCOMMON_LOGGER_ENDL;
 			_destinations.insert(address);
 		}
 
 		void IPNDAgent::bind(const ibrcommon::vinterface &net)
 		{
-			IBRCOMMON_LOGGER_TAG("DiscoveryAgent", info) << "add interface " << net.toString() << IBRCOMMON_LOGGER_ENDL;
-
 			// add the interface to the stored set
 			ibrcommon::MutexLock l(_interface_lock);
 
 			// only add the interface once
 			if (_interfaces.find(net) != _interfaces.end()) return;
+
+			IBRCOMMON_LOGGER_TAG(TAG, info) << "advertise on interface " << net.toString() << IBRCOMMON_LOGGER_ENDL;
 
 			// store the new interface in the list of interfaces
 			_interfaces.insert(net);
