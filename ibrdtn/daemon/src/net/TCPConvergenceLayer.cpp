@@ -78,11 +78,7 @@ namespace dtn
 			// do not allow any futher binding if we already bound to any interface
 			if (_any_port > 0) return;
 
-			if (net.isAny()) {
-				// bind to any interface
-				_vsocket.add(new ibrcommon::tcpserversocket(port));
-				_any_port = port;
-			} else if (net.isLoopback()) {
+			if (net.isLoopback()) {
 				// bind to v6 loopback address if supported
 				if (ibrcommon::basesocket::hasSupport(AF_INET6)) {
 					ibrcommon::vaddress addr6(ibrcommon::vaddress::VADDR_LOCALHOST, port, AF_INET6);
@@ -121,6 +117,14 @@ namespace dtn
 				{
 					ibrcommon::MutexLock l(_portmap_lock);
 					_portmap[net] = port;
+				}
+
+				if (net.isAny())
+				{
+					// Bind once to ANY interface
+					_vsocket.add(new ibrcommon::tcpserversocket(port));
+					_any_port = port;
+					return;
 				}
 
 				// create sockets for all addresses on the interface
