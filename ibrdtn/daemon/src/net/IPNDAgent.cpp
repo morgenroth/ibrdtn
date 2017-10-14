@@ -106,6 +106,9 @@ namespace dtn
 					// listen to multicast addresses
 					for (std::set<ibrcommon::vaddress>::const_iterator it_addr = _destinations.begin(); it_addr != _destinations.end(); ++it_addr)
 					{
+						// only join in the same protocol family
+						if ((*it_addr).family() != addr.family()) continue;
+
 						try {
 							msock->join(*it_addr, iface);
 						} catch (const ibrcommon::socket_raw_error &e) {

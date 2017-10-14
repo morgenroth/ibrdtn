@@ -96,6 +96,15 @@ namespace ibrcommon
 	const std::list<vaddress> vinterface::getAddresses(const std::string &scope) const
 	{
 		if (empty()) throw interface_not_set();
+
+		if (isAny()) {
+			std::list<vaddress> ret;
+			if (ibrcommon::basesocket::hasSupport(AF_INET6))
+				ret.push_back(ibrcommon::vaddress(0, (sa_family_t)AF_INET6));
+			ret.push_back(ibrcommon::vaddress(0, (sa_family_t)AF_INET));
+			return ret;
+		}
+
 		return ibrcommon::LinkManager::getInstance().getAddressList(*this, scope);
 	}
 

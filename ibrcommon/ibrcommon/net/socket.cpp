@@ -1260,7 +1260,8 @@ namespace ibrcommon
 			freeaddrinfo(res);
 
 			// set the right interface
-			__copy_device_address(&req.imr_interface, iface);
+			if (!iface.isAny())
+				__copy_device_address(&req.imr_interface, iface);
 
 			if ( __compat_setsockopt(this->fd(), level, optname, &req, sizeof(req)) == -1 )
 			{
@@ -1277,7 +1278,8 @@ namespace ibrcommon
 			freeaddrinfo(res);
 
 			// set the right interface
-			req.ipv6mr_interface = iface.getIndex();
+			if (!iface.isAny())
+				req.ipv6mr_interface = iface.getIndex();
 
 			if ( __compat_setsockopt(this->fd(), level, optname, &req, sizeof(req)) == -1 )
 			{
@@ -1295,7 +1297,8 @@ namespace ibrcommon
 		freeaddrinfo(res);
 
 		// set the right interface here
-		req.gr_interface = iface.getIndex();
+		if (!iface.isAny())
+			req.gr_interface = iface.getIndex();
 
 		if ( __compat_setsockopt(this->fd(), level, optname, &req, sizeof(req)) == -1 )
 		{

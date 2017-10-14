@@ -108,6 +108,7 @@ namespace ibrcommon
 
 		if (_scope == SCOPE_LOCAL) return true;
 		if (_address == localhost) return true;
+		if (isAny()) return false;
 
 		struct addrinfo hints;
 		struct addrinfo *res, *lo_res;
