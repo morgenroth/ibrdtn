@@ -137,6 +137,14 @@ namespace dtn
 				else
 					++it_p;
 			}
+
+			// remove from default providers
+			for (handler_list::iterator it = _default_providers.begin(); it != _default_providers.end(); ++it) {
+				if ((*it) == handler) {
+					_default_providers.erase(it);
+					break;
+				}
+			}
 		}
 
 		void DiscoveryAgent::unregisterService(const ibrcommon::vinterface &iface, const dtn::net::DiscoveryBeaconHandler *handler)
