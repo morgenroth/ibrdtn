@@ -180,7 +180,7 @@ class TUN2BundleGateway : public dtn::api::Client
 		void process(const dtn::data::EID &endpoint, unsigned int lifetime = 60) {
 			if (_fd == -1) throw ibrcommon::Exception("Tunnel closed.");
 
-			char data[65536];
+			char *data = new char[65536];
 			ssize_t ret = ::read(_fd, data, sizeof(data));
 
 			if (ret == -1) {
@@ -194,6 +194,7 @@ class TUN2BundleGateway : public dtn::api::Client
 
 			// add the data
 			blob.iostream()->write(data, ret);
+			delete[] data;
 
 			// create a new bundle
 			dtn::data::Bundle b;
@@ -229,7 +230,7 @@ class TUN2BundleGateway : public dtn::api::Client
 		{
 			ibrcommon::BLOB::Reference ref = b.find<dtn::data::PayloadBlock>().getBLOB();
 			ibrcommon::BLOB::iostream stream = ref.iostream();
-			char data[65536];
+			char *data = new char[65536];
 			stream->read(data, sizeof(data));
 			size_t ret = stream->gcount();
 
@@ -237,6 +238,7 @@ class TUN2BundleGateway : public dtn::api::Client
 			{
 				IBRCOMMON_LOGGER_TAG("Core", error) << "Error while writing" << IBRCOMMON_LOGGER_ENDL;
 			}
+			delete[] data;
 
 			add_throughput_data(ret, 0);
 		}

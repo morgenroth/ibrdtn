@@ -279,16 +279,19 @@ void CipherStreamTest::aesstream_test01()
 
 	// encrypt the test data
 	{
-		ibrcommon::AES128Stream crypt_stream(ibrcommon::CipherStream::CIPHER_ENCRYPT, data, key, salt);
+		ibrcommon::AES128Stream *crypt_stream =
+				new ibrcommon::AES128Stream(ibrcommon::CipherStream::CIPHER_ENCRYPT, data, key, salt);
 
 		// encrypt the data
-		crypt_stream << testdata << std::flush;
+		*crypt_stream << testdata << std::flush;
 
 		// get the random IV
-		crypt_stream.getIV(iv);
+		crypt_stream->getIV(iv);
 
 		// get the tag
-		crypt_stream.getTag(etag);
+		crypt_stream->getTag(etag);
+
+		delete crypt_stream;
 	}
 
 	// check the data
@@ -299,16 +302,18 @@ void CipherStreamTest::aesstream_test01()
 
 	// decrypt the test data
 	{
-		ibrcommon::AES128Stream crypt_stream(ibrcommon::CipherStream::CIPHER_DECRYPT, data, key, salt, iv);
+		ibrcommon::AES128Stream *crypt_stream =
+				new ibrcommon::AES128Stream(ibrcommon::CipherStream::CIPHER_DECRYPT, data, key, salt, iv);
 
 		// decrypt the data
-		((ibrcommon::CipherStream&)crypt_stream).decrypt(data);
+		((ibrcommon::CipherStream*)crypt_stream)->decrypt(data);
 
 		// check the tag
-		if (!crypt_stream.verify(etag))
+		if (!crypt_stream->verify(etag))
 		{
 			throw ibrcommon::Exception("aesstream_test01 failed. tags not match!");
 		}
+		delete crypt_stream;
 	}
 
 	// check the data
