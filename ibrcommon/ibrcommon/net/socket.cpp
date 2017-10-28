@@ -700,7 +700,7 @@ namespace ibrcommon
 		if (_state != SOCKET_DOWN)
 			throw socket_exception("socket is already up");
 
-		init_socket(_address, SOCK_STREAM, 0);
+		init_socket(_address, SOCK_STREAM, IPPROTO_TCP);
 
 		// enable reuse to avoid delay on process restart
 		this->set_reuseaddr(true);
@@ -1017,7 +1017,7 @@ namespace ibrcommon
 		if (_state != SOCKET_DOWN)
 			throw socket_exception("socket is already up");
 
-		init_socket(_address, SOCK_DGRAM, 0);
+		init_socket(_address, SOCK_DGRAM, IPPROTO_UDP);
 
 		try {
 			// test if the service is defined
