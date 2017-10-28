@@ -37,6 +37,7 @@
 #include <sys/un.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <net/if.h>
 #endif
 
 #include <string.h>
@@ -227,6 +228,19 @@ namespace ibrcommon
 		if (__compat_setsockopt((fd == -1) ? _fd : fd, IPPROTO_TCP, TCP_NODELAY, &set, sizeof(set)) < 0) {
 			throw socket_exception("set no delay option failed");
 		}
+	}
+
+	void basesocket::set_interface(const vinterface &iface, int fd) const throw (socket_exception)
+	{
+#ifndef __WIN32__
+		char devname[IF_NAMESIZE];
+		const std::string s_devname = iface.toString();
+		::strncpy(devname, s_devname.c_str(), IF_NAMESIZE);
+
+		if (__compat_setsockopt((fd == -1) ? _fd : fd, SOL_SOCKET, SO_BINDTODEVICE, &devname, IF_NAMESIZE) < 0) {
+			check_socket_error(errno);
+		}
+#endif
 	}
 
 	sa_family_t basesocket::get_family() const throw (socket_exception)
@@ -686,7 +700,7 @@ namespace ibrcommon
 		if (_state != SOCKET_DOWN)
 			throw socket_exception("socket is already up");
 
-		init_socket(_address, SOCK_STREAM, 0);
+		init_socket(_address, SOCK_STREAM, IPPROTO_TCP);
 
 		// enable reuse to avoid delay on process restart
 		this->set_reuseaddr(true);
@@ -976,6 +990,11 @@ namespace ibrcommon
 	{
 	}
 
+	udpsocket::udpsocket(const vinterface &iface, const vaddress &address)
+	 : _iface(iface), _address(address)
+	{
+	}
+
 	udpsocket::~udpsocket()
 	{
 		try {
@@ -988,12 +1007,17 @@ namespace ibrcommon
 		return _address;
 	}
 
+	const vinterface& udpsocket::get_interface() const
+	{
+		return _iface;
+	}
+
 	void udpsocket::up() throw (socket_exception)
 	{
 		if (_state != SOCKET_DOWN)
 			throw socket_exception("socket is already up");
 
-		init_socket(_address, SOCK_DGRAM, 0);
+		init_socket(_address, SOCK_DGRAM, IPPROTO_UDP);
 
 		try {
 			// test if the service is defined
@@ -1006,6 +1030,10 @@ namespace ibrcommon
 		try {
 			// try to bind on port and/or address
 			this->bind(_address);
+
+			if (!_iface.isAny() && !_iface.isLoopback()) {
+				this->set_interface(_iface);
+			}
 		} catch (const socket_exception&) {
 			// clean-up socket
 			__close(_fd);
@@ -1064,6 +1092,11 @@ namespace ibrcommon
 
 	multicastsocket::multicastsocket(const vaddress &address)
 	 : udpsocket(address)
+	{
+	}
+
+	multicastsocket::multicastsocket(const vinterface &iface, const vaddress &address)
+	 : udpsocket(iface, address)
 	{
 	}
 
@@ -1335,6 +1368,18 @@ namespace ibrcommon
 
 		case EPROTONOSUPPORT:
 			throw socket_exception("The protocol type or the specified protocol is not supported within this domain.");
+
+		case EBADF:
+			throw socket_exception("The argument sockfd is not a valid file descriptor.");
+
+		case EFAULT:
+			throw socket_exception("The address pointed to by optval is not in a valid part of the process address space.");
+
+		case ENOPROTOOPT:
+			throw socket_exception("The option is unknown at the level indicated.");
+
+		case ENOTSOCK:
+			throw socket_exception("The file descriptor sockfd does not refer to a socket.");
 
 		default:
 			throw socket_exception("Cannot create a socket.");
