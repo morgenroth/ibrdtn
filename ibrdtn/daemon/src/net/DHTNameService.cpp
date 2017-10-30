@@ -309,11 +309,11 @@ void dtn::dht::DHTNameService::componentRun() throw () {
 		FD_SET(_interrupt_pipe[0], &readfds);
 		if (_context.ipv4socket >= 0) {
 			FD_SET(_context.ipv4socket, &readfds);
-			high_fd = max(high_fd, _context.ipv4socket);
+			high_fd = std::max(high_fd, _context.ipv4socket);
 		}
 		if (_context.ipv6socket >= 0) {
 			FD_SET(_context.ipv6socket, &readfds);
-			high_fd = max(high_fd, _context.ipv6socket);
+			high_fd = std::max(high_fd, _context.ipv6socket);
 		}
 		rc = select(high_fd + 1, &readfds, NULL, NULL, &tv);
 		if (rc < 0) {
@@ -603,7 +603,7 @@ void dtn::dht::DHTNameService::pingNode(const dtn::core::Node &n) {
 				services.begin(); service != services.end(); ++service) {
 			std::vector<std::string> parameters = dtn::utils::Utils::tokenize(
 					";", (*service).value);
-			std::vector<string>::const_iterator param_iter = parameters.begin();
+			std::vector<std::string>::const_iterator param_iter = parameters.begin();
 			bool portFound = false;
 			while (param_iter != parameters.end()) {
 				std::vector<std::string> p = dtn::utils::Utils::tokenize("=",

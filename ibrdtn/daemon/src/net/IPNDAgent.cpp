@@ -52,11 +52,7 @@ namespace dtn
 		const std::string IPNDAgent::TAG = "IPNDAgent";
 
 		IPNDAgent::IPNDAgent(int port)
-		 :
-#ifndef __WIN32__
-		   _virtual_mcast_iface("__virtual_multicast_interface__"),
-#endif
-		   _state(false), _port(port)
+		 : _state(false), _port(port)
 		{
 		}
 
@@ -82,12 +78,74 @@ namespace dtn
 
 			// store the new interface in the list of interfaces
 			_interfaces.insert(net);
+
+			// join immediately if the component is up
+			if (_state) join(net);
+		}
+
+		void IPNDAgent::join(const ibrcommon::vinterface &iface) throw ()
+		{
+			// register as discovery handler for this interface
+			dtn::core::BundleCore::getInstance().getDiscoveryAgent().registerService(iface, this);
+
+			// do not create sockets for any interface
+			if (!iface.isAny()) {
+				// subscribe to NetLink events on our interfaces
+				ibrcommon::LinkManager::getInstance().addEventListener(iface, this);
+
+				/**
+				 * create sockets for each address on the interface
+				 */
+				const std::list<ibrcommon::vaddress> addrs = iface.getAddresses();
+
+				for (std::list<ibrcommon::vaddress>::const_iterator it = addrs.begin(); it != addrs.end(); ++it)
+				{
+					const ibrcommon::vaddress addr = (*it);
+
+					// join to all multicast addresses on this interface
+					join(iface, addr);
+				}
+			}
+
+			/**
+			 * subscribe to multicast address on this interface using the sockets bound to any address
+			 */
+			const ibrcommon::vinterface any_iface(ibrcommon::vinterface::ANY);
+			ibrcommon::socketset anysocks = _socket.get(any_iface);
+
+			for (ibrcommon::socketset::iterator it = anysocks.begin(); it != anysocks.end(); ++it)
+			{
+				ibrcommon::multicastsocket *msock = dynamic_cast<ibrcommon::multicastsocket*>(*it);
+				if (msock == NULL) continue;
+
+				for (std::set<ibrcommon::vaddress>::const_iterator addr_it = _destinations.begin(); addr_it != _destinations.end(); ++addr_it)
+				{
+					const ibrcommon::vaddress &addr = (*addr_it);
+
+					// join only if family matches
+					if (addr.family() != msock->get_family()) continue;
+
+					try {
+						msock->join(addr, iface);
+
+						IBRCOMMON_LOGGER_DEBUG_TAG(IPNDAgent::TAG, 10) << "Joined " << addr.toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
+					} catch (const ibrcommon::socket_raw_error &e) {
+						if (e.error() == EADDRINUSE) {
+							// silent error
+						} else if (e.error() == 92) {
+							// silent error - protocol not available
+						} else {
+							IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, warning) << "Join to " << addr.toString() << " failed on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
+						}
+					} catch (const ibrcommon::socket_exception &e) {
+						IBRCOMMON_LOGGER_DEBUG_TAG(IPNDAgent::TAG, 10) << "Join to " << addr.toString() << " failed on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
+					}
+				}
+			}
 		}
 
 		void IPNDAgent::join(const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr) throw ()
 		{
-			IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "Join on " << iface.toString() << " (" << addr.toString() << ", family: " << addr.family() << ")" << IBRCOMMON_LOGGER_ENDL;
-
 			// only join IPv6 and IPv4 addresses
 			if ((addr.family() != AF_INET) && (addr.family() != AF_INET6)) return;
 
@@ -97,41 +155,70 @@ namespace dtn
 			// create a multicast socket and bind to given addr
 			ibrcommon::multicastsocket *msock = new ibrcommon::multicastsocket(addr);
 
-			// if we are in UP state
-			if (_state) {
-				try {
-					// bring up
-					msock->up();
+			try {
+				// bring up
+				msock->up();
 
-					// listen to multicast addresses
-					for (std::set<ibrcommon::vaddress>::const_iterator it_addr = _destinations.begin(); it_addr != _destinations.end(); ++it_addr)
-					{
-						// only join in the same protocol family
-						if ((*it_addr).family() != addr.family()) continue;
+				// add multicast socket to _socket
+				_socket.add(msock, iface);
+			} catch (const ibrcommon::socket_exception &ex) {
+				IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << "Can not send on " << iface.toString() << " (" << addr.toString() << ", family: " << addr.family() << ")" << "; " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				delete msock;
+			}
+		}
 
-						try {
-							msock->join(*it_addr, iface);
-						} catch (const ibrcommon::socket_raw_error &e) {
-							if (e.error() == EADDRINUSE) {
-								// silent error
-							} else if (e.error() == 92) {
-								// silent error - protocol not available
-							} else {
-								IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, warning) << "Join to " << (*it_addr).toString() << " failed on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
-							}
-						} catch (const ibrcommon::socket_exception &e) {
-							IBRCOMMON_LOGGER_DEBUG_TAG(IPNDAgent::TAG, 10) << "Join to " << (*it_addr).toString() << " failed on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
-						}
+		void IPNDAgent::leave(const ibrcommon::vinterface &iface) throw ()
+		{
+			// subscribe to NetLink events on our interfaces
+			ibrcommon::LinkManager::getInstance().removeEventListener(iface, this);
+
+			// un-register as discovery handler for this interface
+			dtn::core::BundleCore::getInstance().getDiscoveryAgent().unregisterService(iface, this);
+
+			// get all sockets bound to any interface
+			ibrcommon::socketset anysocks = _socket.get(ibrcommon::vinterface(ibrcommon::vinterface::ANY));
+
+			for (ibrcommon::socketset::iterator it = anysocks.begin(); it != anysocks.end(); ++it)
+			{
+				ibrcommon::multicastsocket *msock = dynamic_cast<ibrcommon::multicastsocket*>(*it);
+				if (msock == NULL) continue;
+
+				for (std::set<ibrcommon::vaddress>::const_iterator addr_it = _destinations.begin(); addr_it != _destinations.end(); ++addr_it)
+				{
+					const ibrcommon::vaddress &addr = (*addr_it);
+
+					// leave only if family matches
+					if (addr.family() != msock->get_family()) continue;
+
+					try {
+						msock->leave(addr, iface);
+					} catch (const ibrcommon::socket_exception &e) {
+						IBRCOMMON_LOGGER_DEBUG_TAG(IPNDAgent::TAG, 10) << "Leave of " << addr.toString() << " failed on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
 					}
-				} catch (const ibrcommon::socket_exception &ex) {
-					IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << "Join failed on " << iface.toString() << " (" << addr.toString() << ", family: " << addr.family() << ")" << "; " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-					delete msock;
-					return;
 				}
 			}
 
-			// add multicast socket to _socket
-			_socket.add(msock, iface);
+			// get all sockets bound to the given interface
+			ibrcommon::socketset ifsocks = _socket.get(iface);
+
+			for (ibrcommon::socketset::iterator it = ifsocks.begin(); it != ifsocks.end(); ++it)
+			{
+				ibrcommon::multicastsocket *msock = dynamic_cast<ibrcommon::multicastsocket*>(*it);
+				if (msock == NULL) continue;
+
+				// remove the socket
+				_socket.remove(msock);
+
+				// shutdown the socket
+				try {
+					msock->down();
+				} catch (const ibrcommon::socket_exception &ex) {
+					IBRCOMMON_LOGGER_DEBUG_TAG(IPNDAgent::TAG, 10) << "Socket down failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				}
+
+				// delete the socket
+				delete msock;
+			}
 		}
 
 		void IPNDAgent::leave(const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr) throw ()
@@ -154,7 +241,7 @@ namespace dtn
 					try {
 						msock->down();
 					} catch (const ibrcommon::socket_exception &ex) {
-						IBRCOMMON_LOGGER_DEBUG_TAG(IPNDAgent::TAG, 10) << "leave failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG(IPNDAgent::TAG, 10) << "Socket down failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 
 					// delete the socket
@@ -162,43 +249,6 @@ namespace dtn
 
 					return;
 				}
-			}
-		}
-
-		void IPNDAgent::leave(const ibrcommon::vinterface &iface) throw ()
-		{
-			// get all sockets bound to the given interface
-			ibrcommon::socketset ifsocks = _socket.get(iface);
-
-			for (ibrcommon::socketset::iterator it = ifsocks.begin(); it != ifsocks.end(); ++it)
-			{
-				ibrcommon::multicastsocket *msock = dynamic_cast<ibrcommon::multicastsocket*>(*it);
-				if (msock == NULL) continue;
-
-				// remove the socket
-				_socket.remove(msock);
-
-				// shutdown the socket
-				try {
-					msock->down();
-				} catch (const ibrcommon::socket_exception &ex) {
-					IBRCOMMON_LOGGER_DEBUG_TAG(IPNDAgent::TAG, 10) << "leave failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-				}
-
-				// delete the socket
-				delete msock;
-			}
-		}
-
-		void IPNDAgent::join(const ibrcommon::vinterface &iface) throw ()
-		{
-			std::list<ibrcommon::vaddress> addrs = iface.getAddresses();
-
-			for (std::list<ibrcommon::vaddress>::const_iterator it = addrs.begin(); it != addrs.end(); ++it)
-			{
-				ibrcommon::vaddress addr = (*it);
-				addr.setService(_port);
-				join(iface, addr);
 			}
 		}
 
@@ -257,12 +307,6 @@ namespace dtn
 						_interfaces.insert(dialup.iface);
 					}
 
-					// subscribe to NetLink events on our interfaces
-					ibrcommon::LinkManager::getInstance().addEventListener(dialup.iface, this);
-
-					// register as discovery handler for this interface
-					dtn::core::BundleCore::getInstance().getDiscoveryAgent().registerService(dialup.iface, this);
-
 					// join to all multicast addresses on this interface
 					join(dialup.iface);
 					break;
@@ -280,12 +324,6 @@ namespace dtn
 						// remove the interface from the stored set
 						_interfaces.erase(dialup.iface);
 					}
-
-					// subscribe to NetLink events on our interfaces
-					ibrcommon::LinkManager::getInstance().removeEventListener(dialup.iface, this);
-
-					// un-register as discovery handler for this interface
-					dtn::core::BundleCore::getInstance().getDiscoveryAgent().unregisterService(dialup.iface, this);
 
 					// leave the multicast groups on the interface
 					leave(dialup.iface);
@@ -307,7 +345,6 @@ namespace dtn
 				case ibrcommon::LinkEvent::ACTION_ADDRESS_ADDED:
 				{
 					ibrcommon::vaddress addr = evt.getAddress();
-					addr.setService(_port);
 					join(evt.getInterface(), addr);
 					break;
 				}
@@ -315,15 +352,7 @@ namespace dtn
 				case ibrcommon::LinkEvent::ACTION_ADDRESS_REMOVED:
 				{
 					ibrcommon::vaddress addr = evt.getAddress();
-					addr.setService(_port);
 					leave(evt.getInterface(), addr);
-					break;
-				}
-
-				case ibrcommon::LinkEvent::ACTION_LINK_DOWN:
-				{
-					// leave the multicast groups on the interface
-					leave(evt.getInterface());
 					break;
 				}
 
@@ -346,58 +375,48 @@ namespace dtn
 				IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 
-#ifndef __WIN32__
-			std::set<sa_family_t> bound_set;
-
-			// create a socket for each multicast address and bind explicit
-			// to the multicast addresses
-			for (std::set<ibrcommon::vaddress>::const_iterator it_addr = _destinations.begin(); it_addr != _destinations.end(); ++it_addr)
-			{
-				const ibrcommon::vaddress &addr = (*it_addr);
-
-				try {
-					sa_family_t fam = addr.family();
-
-					if (bound_set.find(fam) == bound_set.end()) {
-						const ibrcommon::vaddress any_addr(_port, fam);
-
-						// create a multicast socket and bind to given addr
-						ibrcommon::multicastsocket *msock = new ibrcommon::multicastsocket(any_addr);
-
-						try {
-							// bring up
-							msock->up();
-
-							// add mcast socket to vsocket
-							_socket.add(msock, _virtual_mcast_iface);
-						} catch (const ibrcommon::socket_exception &ex) {
-							IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << "failed to set-up multicast socket on " << any_addr.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-							delete msock;
-						}
-
-						bound_set.insert(fam);
-					}
-				} catch (const ibrcommon::vaddress::address_exception &ex) {
-					IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << "unsupported multicast address " << addr.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-				}
-			}
-#endif
-
 			// listen to P2P dial-up events
 			dtn::core::EventDispatcher<dtn::net::P2PDialupEvent>::add(this);
 
 			// join multicast groups and register as discovery handler
 			ibrcommon::MutexLock l(_interface_lock);
 
+			/**
+			 * To receive multicast messages it is necessary to bind to 0.0.0.0 or ::/0.
+			 */
+			const ibrcommon::vinterface any_iface(ibrcommon::vinterface::ANY);
+			std::list<ibrcommon::vaddress> addrs = any_iface.getAddresses();
+
+			/**
+			 * In this block we create sockets listing on 0.0.0.0 and ::/0 if IPv6 is supported
+			 */
+			for (std::list<ibrcommon::vaddress>::const_iterator it = addrs.begin(); it != addrs.end(); ++it)
+			{
+				ibrcommon::vaddress addr = (*it);
+				addr.setService(_port);
+
+				// create a multicast socket and bind it
+				ibrcommon::multicastsocket *msock = new ibrcommon::multicastsocket(addr);
+
+				try {
+					// bring up
+					msock->up();
+
+					// add multicast socket to _socket
+					_socket.add(msock, any_iface);
+				} catch (const ibrcommon::socket_exception &ex) {
+					IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << "Failed to listen on " << any_iface.toString() << " (" << addr.toString() << ", family: " << addr.family() << ")" << "; " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					delete msock;
+				}
+			}
+
+			/**
+			 * In order to send multicast messages on each interface with a convergence layer,
+			 * we need to bind explicitly to all addresses on configured interfaces.
+			 */
 			for (std::set<ibrcommon::vinterface>::const_iterator it_iface = _interfaces.begin(); it_iface != _interfaces.end(); ++it_iface)
 			{
 				const ibrcommon::vinterface &iface = (*it_iface);
-
-				// subscribe to NetLink events on our interfaces
-				ibrcommon::LinkManager::getInstance().addEventListener(iface, this);
-
-				// register as discovery handler for this interface
-				dtn::core::BundleCore::getInstance().getDiscoveryAgent().registerService(iface, this);
 
 				// join to all multicast addresses on this interface
 				join(iface);
