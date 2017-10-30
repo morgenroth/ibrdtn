@@ -280,7 +280,7 @@ void CipherStreamTest::aesstream_test01()
 
 	// encrypt the test data
 	{
-		refcnt_ptr<ibrcommon::AES128Stream> crypt_stream = refcnt_ptr<ibrcommon::AES128Stream>(
+		refcnt_ptr<ibrcommon::AES128Stream> crypt_stream(
 				new ibrcommon::AES128Stream(ibrcommon::CipherStream::CIPHER_ENCRYPT, data, key, salt));
 
 		// encrypt the data
@@ -301,7 +301,8 @@ void CipherStreamTest::aesstream_test01()
 
 	// decrypt the test data
 	{
-		refcnt_ptr<ibrcommon::AES128Stream> crypt_stream = refcnt_ptr<ibrcommon::AES128Stream>(
+
+		refcnt_ptr<ibrcommon::AES128Stream> crypt_stream(
 				new ibrcommon::AES128Stream(ibrcommon::CipherStream::CIPHER_DECRYPT, data, key, salt, iv));
 
 		// decrypt the data
