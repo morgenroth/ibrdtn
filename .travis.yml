@@ -39,6 +39,7 @@ addons:
     - libvmime-dev
     - libxml2-dev
     - dtndht-dev
+    - dtndht1
     - git
 
 before_install:
