@@ -9,9 +9,9 @@ matrix:
     - compiler: gcc
       env: DO_COVERAGE=yes
     - compiler: clang
-      env: DO_COVERAGE=no
+      env: DO_COVERAGE=no CONFIGURE_OPTS_EXTRA="--without-vmime"
     - compiler: clang
-      env: DO_COVERAGE=no CONFIGURE_OPTS_EXTRA="--disable-netlink"
+      env: DO_COVERAGE=no CONFIGURE_OPTS_EXTRA="--disable-netlink --without-vmime"
 
 addons:
   apt:
