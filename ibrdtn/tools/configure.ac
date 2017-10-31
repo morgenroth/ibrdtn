@@ -140,10 +140,10 @@ AS_IF([test -z "${tffs_path}"], [
 	AC_MSG_WARN([tffs library path not defined. tffs support is disabled. use --with-tffs= to set path])
 ],[
 		AC_MSG_CHECKING([for LIBTFFS])
-		AS_IF([test -f "${tffs_path}/include/tffs.h"], [
+		AS_IF([test -f "${tffs_path}/inc/tffs.h"], [
 			AC_DEFINE(HAVE_LIBTFFS, [1], ["tffs found"])
 			tffs_LIBS="-L${tffs_path} -ltffs"
-			tffs_CFLAGS="-I${tffs_path}/include"
+			tffs_CFLAGS="-I${tffs_path}/inc"
 			AC_SUBST(tffs_LIBS)
 			AC_SUBST(tffs_CFLAGS)
 			AC_MSG_RESULT([yes])
