@@ -8,6 +8,8 @@ matrix:
   include:
     - compiler: gcc
       env: DO_COVERAGE=yes
+    - compiler: gcc
+      env: DO_COVERAGE=no CONFIGURE_OPTS_EXTRA="--disable-netlink"
     - compiler: clang
       env: DO_COVERAGE=no CONFIGURE_OPTS_EXTRA="--without-vmime --disable-dtndht"
     - compiler: clang
