@@ -69,6 +69,9 @@ namespace dtn
 				bool operator==(const dtn::data::block_t &type) const {
 					return (**this) == type;
 				}
+				bool operator!=(const dtn::data::block_t &type) const {
+					return !((**this) == type);
+				}
 			};
 
 			typedef std::list<block_elem> block_list;
