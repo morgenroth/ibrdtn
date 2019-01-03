@@ -119,7 +119,7 @@ namespace dtn
 			}
 
 			ibrcommon::BLOB::iostream stream = c._blob.iostream();
-			(*stream).seekp(obj.fragmentoffset.get<std::streampos>());
+			(*stream).seekp(obj.fragmentoffset.get<std::streamoff>());
 
 			const dtn::data::PayloadBlock &p = obj.find<dtn::data::PayloadBlock>();
 			const Length plength = p.getLength();

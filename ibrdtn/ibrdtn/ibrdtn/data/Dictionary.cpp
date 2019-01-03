@@ -154,11 +154,11 @@ namespace dtn
 		{
 			char buffer[1024];
 
-			_bytestream.seekg(scheme.get<std::streampos>());
+			_bytestream.seekg(scheme.get<std::streamoff>());
 			_bytestream.get(buffer, 1024, '\0');
 			std::string scheme_str(buffer);
 
-			_bytestream.seekg(ssp.get<std::streampos>());
+			_bytestream.seekg(ssp.get<std::streamoff>());
 			_bytestream.get(buffer, 1024, '\0');
 			std::string ssp_str(buffer);
 
