@@ -134,7 +134,7 @@ namespace dtn
 				// the bundles set. This happen if the MemoryBundleSet gets deserialized.
 				if (!_consistent) return true;
 
-				bundle_set::iterator iter = _bundles.find(dtn::data::MetaBundle::create(bundle));
+				bundle_set::const_iterator iter = _bundles.find(dtn::data::MetaBundle::create(bundle));
 				return (iter != _bundles.end());
 			}
 
