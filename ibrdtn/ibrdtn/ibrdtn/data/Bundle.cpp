@@ -71,9 +71,19 @@ namespace dtn
 			return other == (const PrimaryBlock&)(*this);
 		}
 
+		bool Bundle::operator!=(const BundleID& other) const
+		{
+			return other != (const PrimaryBlock&)(*this);
+		}
+
 		bool Bundle::operator==(const MetaBundle& other) const
 		{
 			return other == (const PrimaryBlock&)(*this);
+		}
+
+		bool Bundle::operator!=(const MetaBundle& other) const
+		{
+			return other != (const PrimaryBlock&)(*this);
 		}
 
 		bool Bundle::operator!=(const Bundle& other) const

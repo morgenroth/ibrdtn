@@ -66,7 +66,7 @@ namespace dtn
 		{
 			std::set<dtn::data::EID> ret;
 
-			for (dtn::data::BundleList::const_iterator iter = begin(); iter != end(); ++iter)
+			for (const_iterator iter = begin(); iter != end(); ++iter)
 			{
 				const dtn::data::MetaBundle &bundle = (*iter);
 
