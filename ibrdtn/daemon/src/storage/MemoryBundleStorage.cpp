@@ -217,7 +217,7 @@ namespace dtn
 			ibrcommon::MutexLock l(_bundleslock);
 
 			// search for the bundle in the bundle list
-			const bundle_list::const_iterator iter = find(_bundles.begin(), _bundles.end(), id);
+			const bundle_list::iterator iter = find(_bundles.begin(), _bundles.end(), id);
 
 			// if no bundle was found throw an exception
 			if (iter == _bundles.end()) throw NoBundleFoundException();

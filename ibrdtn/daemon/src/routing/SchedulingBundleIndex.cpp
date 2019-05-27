@@ -28,7 +28,7 @@ namespace dtn
 		void SchedulingBundleIndex::remove(const dtn::data::BundleID &id)
 		{
 			ibrcommon::MutexLock l(_index_mutex);
-			for (priority_index::const_iterator iter = _priority_index.begin(); iter != _priority_index.end(); ++iter)
+			for (priority_index::iterator iter = _priority_index.begin(); iter != _priority_index.end(); ++iter)
 			{
 				const dtn::data::MetaBundle &b = (*iter);
 				if (id == (const dtn::data::BundleID&)b) {
