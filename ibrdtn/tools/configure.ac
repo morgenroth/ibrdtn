@@ -16,11 +16,32 @@ AM_MAINTAINER_MODE
 # Test for new silent rules and enable only if they are available
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
+dnl Drops autotools defaults but keeps user-specific options.
+: ${CFLAGS=""}
+: ${CXXFLAGS=""}
+
 dnl -----------------------------------------------
 dnl Checks for programs.
 dnl -----------------------------------------------
 
 AC_PROG_CXX
+
+# Dynamic exception specifications were removed in C++17.
+# Respect explicit language standards and select C++14 otherwise.
+case " $CXXFLAGS " in
+  *-std=*|*/std:*) ;;
+  *) CXXFLAGS="$CXXFLAGS -std=gnu++14" ;;
+esac
+AC_LANG_PUSH([C++])
+AC_MSG_CHECKING([whether C++ dynamic exception specifications are supported])
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+void ibrdtn_exception_specification_test() throw(int) {}
+int main() { return 0; }
+]])], [AC_MSG_RESULT([yes])], [
+  AC_MSG_RESULT([no])
+  AC_MSG_ERROR([C++14 dynamic exception specifications are required; try CXXFLAGS=-std=gnu++14.])
+])
+AC_LANG_POP([C++])
 AC_PROG_CC
 
 AC_PROG_AWK
@@ -91,8 +112,13 @@ AC_HELP_STRING([--enable-gcov], [Turn on gcov coverage testing.]),
 AC_ARG_ENABLE(debug,
 AC_HELP_STRING([--enable-debug], [Turn on debugging symbols.]),
 [
-	CPPFLAGS="${CPPFLAGS} -ggdb -g3 -Wall -Wextra -pedantic -Wconversion -D__DEVELOPMENT_ASSERTIONS__"
-	CFLAGS="${CFLAGS} -ggdb -g3 -Wall -Wextra -pedantic -Wconversion -D__DEVELOPMENT_ASSERTIONS__"
+		CPPFLAGS="${CPPFLAGS} -ggdb -g3 -O0 -Wall -Wextra -pedantic -Wconversion -D__DEVELOPMENT_ASSERTIONS__ -pipe"
+		CFLAGS="${CFLAGS} -ggdb -g3 -O0 -Wall -Wextra -pedantic -Wconversion -D__DEVELOPMENT_ASSERTIONS__ -pipe"
+	AC_MSG_NOTICE([Debug symbols enabled, optimizations off])
+], [
+	CPPFLAGS="${CPPFLAGS} -O3 -g -pipe"
+	CFLAGS="${CFLAGS} -O3 -g -pipe"
+	AC_MSG_NOTICE([Building with optimizations])
 ])
 
 AC_ARG_WITH([libdaemon],
@@ -140,10 +166,10 @@ AS_IF([test -z "${tffs_path}"], [
 	AC_MSG_WARN([tffs library path not defined. tffs support is disabled. use --with-tffs= to set path])
 ],[
 		AC_MSG_CHECKING([for LIBTFFS])
-		AS_IF([test -f "${tffs_path}/include/tffs.h"], [
+		AS_IF([test -f "${tffs_path}/inc/tffs.h"], [
 			AC_DEFINE(HAVE_LIBTFFS, [1], ["tffs found"])
 			tffs_LIBS="-L${tffs_path} -ltffs"
-			tffs_CFLAGS="-I${tffs_path}/include"
+			tffs_CFLAGS="-I${tffs_path}/inc"
 			AC_SUBST(tffs_LIBS)
 			AC_SUBST(tffs_CFLAGS)
 			AC_MSG_RESULT([yes])

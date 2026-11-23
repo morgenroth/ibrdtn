@@ -23,11 +23,32 @@ dnl -----------------------------------------------
 define([buildnumber], esyscmd([sh -c "git rev-parse --short HEAD|tr -d '\n'"]))dnl
 AC_DEFINE(BUILD_NUMBER, "buildnumber", [build number based on the version control system])
 
+dnl Drops autotools defaults but keeps user-specific options.
+: ${CFLAGS=""}
+: ${CXXFLAGS=""}
+
 dnl -----------------------------------------------
 dnl Checks for programs.
 dnl -----------------------------------------------
 
 AC_PROG_CXX
+
+# Dynamic exception specifications were removed in C++17.
+# Respect explicit language standards and select C++14 otherwise.
+case " $CXXFLAGS " in
+  *-std=*|*/std:*) ;;
+  *) CXXFLAGS="$CXXFLAGS -std=gnu++14" ;;
+esac
+AC_LANG_PUSH([C++])
+AC_MSG_CHECKING([whether C++ dynamic exception specifications are supported])
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+void ibrdtn_exception_specification_test() throw(int) {}
+int main() { return 0; }
+]])], [AC_MSG_RESULT([yes])], [
+  AC_MSG_RESULT([no])
+  AC_MSG_ERROR([C++14 dynamic exception specifications are required; try CXXFLAGS=-std=gnu++14.])
+])
+AC_LANG_POP([C++])
 AC_PROG_CC
 AC_PROG_CPP
 
@@ -170,8 +191,13 @@ ANDROID_AC_BUILD([
 	AC_ARG_ENABLE(debug,
 	AC_HELP_STRING([--enable-debug], [Turn on debugging symbols.]),
 	[
-		CPPFLAGS="${CPPFLAGS} -ggdb -g3 -Wall -Wextra -pedantic -Wconversion -D__DEVELOPMENT_ASSERTIONS__"
-		CFLAGS="${CFLAGS} -ggdb -g3 -Wall -Wextra -pedantic -Wconversion -D__DEVELOPMENT_ASSERTIONS__"
+		CPPFLAGS="${CPPFLAGS} -ggdb -g3 -O0 -Wall -Wextra -pedantic -Wconversion -D__DEVELOPMENT_ASSERTIONS__ -pipe"
+		CFLAGS="${CFLAGS} -ggdb -g3 -O0 -Wall -Wextra -pedantic -Wconversion -D__DEVELOPMENT_ASSERTIONS__ -pipe"
+		AC_MSG_NOTICE([Debug symbols enabled, optimizations off])
+	], [
+		CPPFLAGS="${CPPFLAGS} -O3 -g -pipe"
+		CFLAGS="${CFLAGS} -O3 -g -pipe"
+		AC_MSG_NOTICE([Building with optimizations])
 	])
 
 	AC_ARG_ENABLE([libdaemon],
